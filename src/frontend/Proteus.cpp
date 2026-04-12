@@ -260,11 +260,3 @@ const uint32_t* Proteus::GetFrameBuffer() {
     }
     return nullptr;
 }
-
-const float* Proteus::GetAudioBuffer(int& len) {
-    if (station.get() != nullptr) {
-        return station->getAudioBuffer(len);
-    }
-    len = 0;
-    return nullptr;
-}

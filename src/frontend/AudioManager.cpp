@@ -18,7 +18,7 @@ void AudioManager::Init() {
     } else SDL_LogMessage(SDL_LOG_CATEGORY_AUDIO, SDL_LOG_PRIORITY_INFO, "SDL Input successfully initialized.\n");
 
     spec = {
-        .format = SDL_AUDIO_F32,
+        .format = SDL_AUDIO_U8,
         .channels = 1,
         .freq = 44100,
     };
@@ -64,11 +64,4 @@ void AudioManager::Deinit() {
 }
 
 void AudioManager::Update() {
-    int size;
-    const float* buffer = proteus->GetAudioBuffer(size);
-    size *= sizeof(float);
-
-    SDL_PutAudioStreamData(stream, buffer, size);
-
-    SDL_ResumeAudioDevice(dev);
 }

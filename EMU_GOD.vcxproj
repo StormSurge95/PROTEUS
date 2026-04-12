@@ -20,7 +20,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\backend\NES\NES_APU.cpp" />
     <ClCompile Include="src\backend\NES\NES_BUS.cpp" />
     <ClCompile Include="src\backend\NES\NES_CART.cpp" />
     <ClCompile Include="src\backend\NES\NES_CONT.cpp" />
@@ -37,7 +36,6 @@
     <ClInclude Include="resources\font.regular.h" />
     <ClInclude Include="resources\font.schatten.h" />
     <ClInclude Include="resources\NES_DB.h" />
-    <ClInclude Include="src\backend\NES\NES_APU.h" />
     <ClInclude Include="src\backend\NES\NES_BUS.h" />
     <ClInclude Include="src\backend\NES\NES_CART.h" />
     <ClInclude Include="src\backend\NES\NES_CONT.h" />

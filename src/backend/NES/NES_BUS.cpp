@@ -1,4 +1,3 @@
-#include "./NES_APU.h"
 #include "./NES_BUS.h"
 #include "./NES_CART.h"
 #include "./NES_CONT.h"
@@ -16,14 +15,14 @@ std::string NES_BUS::getPPUstatus() {
 }
 
 uint8_t NES_BUS::read(uint16_t addr, bool readonly) {
-    if (addr >= 0x0000 && addr <= 0x07FF)
+    if (addr >= 0x0000 && addr <= 0x1FFF)
         return ram[addr & 0x07FF];
     if (addr >= 0x2000 && addr <= 0x3FFF)
         return ppu->read(addr, readonly);
     if (addr == 0x4014)
         return ppu->readOAMByte();
     if (addr >= 0x4000 && addr <= 0x4015)
-        return apu->read(addr, readonly);
+        //return apu->read(addr, readonly);
     if (addr == 0x4016)
         return player1->onRead();
     if (addr == 0x4017)
@@ -46,8 +45,8 @@ void NES_BUS::write(uint16_t addr, uint8_t data) {
         dmaDummy = true;
     } else if (addr == 0x4016)
         player1->onWrite(data);
-    else if (addr >= 0x4000 && addr <= 0x4017)
-        apu->write(addr, data);
+    //else if (addr >= 0x4000 && addr <= 0x4017)
+        //apu->write(addr, data);
     else if (addr >= 0x4020 && addr <= 0xFFFF)
         cart->write(addr, data);
 }

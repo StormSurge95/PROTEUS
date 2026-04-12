@@ -6,7 +6,6 @@ NES_CORE::NES_CORE(bool debug) {
     bus = std::make_shared<NES_BUS>();
     cpu = std::make_shared<NES_CPU>(debug);
     ppu = std::make_shared<NES_PPU>();
-    apu = std::make_shared<NES_APU>();
     player1 = std::make_shared<NES_CONT>(1);
     player2 = std::make_shared<NES_CONT>(2);
     player1->other = player2;
@@ -17,9 +16,6 @@ NES_CORE::NES_CORE(bool debug) {
 
     bus->connectPPU(ppu);
     ppu->connectCPU(cpu);
-
-    apu->connectBUS(bus);
-    bus->connectAPU(apu);
 
     bus->connectCONT(player1, 1);
     bus->connectCONT(player2, 2);
@@ -43,7 +39,6 @@ bool NES_CORE::loadCart(const std::string& path) {
 void NES_CORE::reset() {
     cpu->reset();
     ppu->reset();
-    //apu->reset();
 }
 
 void NES_CORE::clock() {

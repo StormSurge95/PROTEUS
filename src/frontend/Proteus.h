@@ -52,7 +52,7 @@ class Proteus
 
         std::vector<ROM> GetGameList(const std::string& console);
         const uint32_t* GetFrameBuffer();
-        const float* GetAudioBuffer(int& len);
+        const uint8_t* GetAudioBuffer(int& len);
     private:
         bool debug = false;
         std::shared_ptr<IConsole> station = nullptr;
