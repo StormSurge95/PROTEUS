@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="EMU_GOD.vcxproj" Id="aaf26bd8-1d8e-45e9-853f-b88a5559750f" />
+</Solution>
