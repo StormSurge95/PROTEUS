@@ -17,43 +17,18 @@ void VideoManager::Init() {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to initialize SDL Video! Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
-    } else {
-        SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "SDL Video successfully initialized\n");
     }
 
     int mainDisp = SDL_GetPrimaryDisplay();
     if (mainDisp == 0) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to get main display ID! Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
-    } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Main Display ID: %d\n", mainDisp);
     }
 
     const SDL_DisplayMode* dm = SDL_GetDesktopDisplayMode(mainDisp);
     if (!dm) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to get display mode! Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
-    } else {
-        std::stringstream ss;
-        ss << "SDL_DisplayMode* dm = {\n\t";
-        ss << "ID: %d,\n\t";
-        ss << "Format: %X,\n\t";
-        ss << "Width: %d,\n\t";
-        ss << "Height: %d,\n\t";
-        ss << "Density: %f,\n\t";
-        ss << "Refresh Rate: %f\n\t";
-        ss << "Refresh Numerator: %d,\n\t";
-        ss << "Refresh Denominator: %d\n}";
-    
-        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-            ss.str().c_str(),
-            dm->displayID,
-            dm->format,
-            dm->w, dm->h,
-            dm->pixel_density,
-            dm->refresh_rate,
-            dm->refresh_rate_numerator,
-            dm->refresh_rate_denominator);
     }
 
     screenWidth = dm->w;
@@ -180,7 +155,7 @@ void VideoManager::RenderView() {
         if (state.currentView == CONSOLE_SELECT)
             RenderConsoleList();
         else
-            RenderGameList(CONSOLES[state.selectedConsole].first);
+            RenderGameList(CONSOLES[state.selectedConsole].first, currentPage);
         RenderSelector();
     }
 }
@@ -231,19 +206,23 @@ void VideoManager::RenderConsoleList() {
     }
 }
 
-void VideoManager::RenderGameList(std::string console) {
+void VideoManager::RenderGameList(std::string console, unsigned int page) {
+    currentMAXpage = pages[console];
+
     int rows = 3;
     int cols = 4;
     int rowH = dispHeight / rows;
     int colW = dispWidth / cols;
 
     int row = 0; int col = 0;
-    for (const std::pair<std::string, TextCache*>& p : gameCache[console]) {
-        TextCache* cache = p.second;
+    int start = page * 12;
+    int end = start + 12;
+    for (int i = start; i < end && i < gameCache[console].size(); i++) {
+        TextCache* cache = gameCache[console].at(i).second;
 
         float x = col * colW + (colW - cache->width) / 2.0f;
         float y = row * rowH + (rowH - cache->height) / 2.0f;
-        
+
         SDL_FRect dst(x, y, cache->width, cache->height);
         SDL_RenderTexture(renderer, cache->texture, NULL, &dst);
 
@@ -354,6 +333,8 @@ void VideoManager::LoadGameCache() {
         }
         std::pair<std::string, GameCacheList> consoleList(it->first, cache);
         gameCache.insert(consoleList);
+        std::pair<std::string, unsigned int> numPages(it->first, cache.size() / 12);
+        pages.insert(numPages);
     }
 }
 
@@ -377,6 +358,16 @@ void VideoManager::OnInput(Inputs* i) {
         selectedItem.RowDown();
     }
 
+    if (i->AXIS_LEFT_TRIGGER > 0 || i->L1_BUTTON) {
+        if (currentPage == 0) currentPage = currentMAXpage;
+        else currentPage--;
+    }
+
+    if (i->AXIS_RIGHT_TRIGGER > 0 || i->R1_BUTTON) {
+        if (currentPage == currentMAXpage) currentPage = 0;
+        else currentPage++;
+    }
+
     if (i->A_BUTTON) OnSelect();
     if (i->B_BUTTON) OnCancel();
 }
@@ -389,7 +380,7 @@ void VideoManager::OnSelect() const {
     if (s.currentView == CONSOLE_SELECT) {
         proteus->SetState(GAME_LIST, (CONSOLE_ID)index);
     } else if (s.currentView == GAME_LIST) {
-        proteus->LaunchGame(index);
+        proteus->LaunchGame((currentPage * 12) + index);
     }
 }
 

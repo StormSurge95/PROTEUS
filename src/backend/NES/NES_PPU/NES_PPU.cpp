@@ -1,4 +1,4 @@
-#include "Mappers/Mapper.h"
+#include "../Mappers/Mapper.h"
 #include "NES_PPU.h"
 
 // Performs intra-device read operations on the various
@@ -9,51 +9,31 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
 
         switch (addr) {
             case 0x02: // PPUSTATUS
-                {
-                    uint8_t ret = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
-                    if (!readonly) {
-                        if (scanline == 241 && cycle >= 1 && cycle <= 2) suppressVBL = true;
-                        else suppressVBL = false;
-                        inVBlank(false);
-                        w = false;
-
-                        nmiOutput = inVBlank() && getNMIEnabled();
-                    }
-                    ppuBus = ret;
-                    return ret;
+                ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
+                if (!readonly) {
+                    if (scanline == 241 && cycle <= 1) suppressVBL = true; else suppressVBL = false;
+                    inVBlank(false);
+                    w = false;
                 }
-            case 0x03: // OAMADDR
-                return OAMADDR;
+                break;
             case 0x04:
-                { // OAMDATA
-                    uint8_t ret = readOAMByte(OAMADDR);
-                    ppuBus = ret;
-                    return ret;
-                }
+                ppuBus = readOAMByte(OAMADDR);
+                break;
             case 0x07: // PPUDATA
-                {
-                    uint8_t ret = 0x00;
-
-                    uint16_t addr = v & 0x3FFF;
-                    uint8_t data = ppuRead(addr);
-
-                    if (addr >= 0x3F00) {
-                        ret = data;
-                        dataBuffer = ppuRead(addr - 0x1000);
-                    } else {
-                        ret = dataBuffer;
-                        dataBuffer = data;
-                    }
-
-                    v = (v + getVRAMIncrement()) & 0x3FFF;
-
-                    ppuBus = ret;
-                    return ret;
+                if ((v & 0x3FFF) >= 0x3F00) {
+                    ppuBus = ppuRead(v & 0x3FFF);
+                    dataBuffer = ppuRead((v & 0x3FFF) - 0x1000);
+                } else {
+                    ppuBus = dataBuffer;
+                    dataBuffer = ppuRead(v & 0x3FFF);
                 }
+
+                v = (v + getVRAMIncrement()) & 0x3FFF;
+                break;
         }
     }
 
-    return 0x00;
+    return ppuBus;
 }
 
 // Performs intra-device write operations on the various
@@ -70,9 +50,9 @@ void NES_PPU::write(uint16_t addr, uint8_t data) {
                     PPUCTRL = data;
                     t = ((t & 0xF3FF) | ((uint16_t)(data & 0x03) << 10));
 
-                    nmiOutput = inVBlank() && getNMIEnabled();
+                    nmiOutput = !prevEnabled && inVBlank() && getNMIEnabled() && !suppressNMI;
 
-                    if (!nmiOutputPrev && !prevEnabled && nmiOutput)
+                    if (!nmiOutputPrev && nmiOutput)
                         nmiRequested = true;
 
                     nmiOutputPrev = nmiOutput;
@@ -757,4 +737,30 @@ void NES_PPU::reset() {
     PPUCTRL = 0x00;
     PPUMASK = 0x00;
     PPUDATA = 0x00;
+}
+
+uint32_t NES_PPU::applyEmphasis(uint32_t color) const {
+    uint32_t r = (color >> 0) & 0xFF;
+    uint32_t g = (color >> 8) & 0xFF;
+    uint32_t b = (color >> 16) & 0xFF;
+
+    if (this->getGreyscale())
+        r = g = b = (uint32_t)std::floor((r + g + b) / 3);
+
+    bool eR = this->getMaskData(EMPHASIZE_RED);
+    bool eG = this->getMaskData(EMPHASIZE_GREEN);
+    bool eB = this->getMaskData(EMPHASIZE_BLUE);
+
+    if (eR || eG || eB) {
+        bool eA = eR && eG && eB;
+
+        if (eA || !eR)
+            r = (uint32_t)std::floor(r * 0.75);
+        if (eA || !eG)
+            g = (uint32_t)std::floor(g * 0.75);
+        if (eA || !eB)
+            b = (uint32_t)std::floor(b * 0.75);
+    }
+
+    return 0xFF000000 | (r << 0) | (g << 8) | (b << 16);
 }

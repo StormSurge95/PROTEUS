@@ -59,6 +59,9 @@ class VideoManager {
         std::vector<std::pair<std::string, TextCache*>> consoleCache = {};
         typedef std::vector<std::pair<std::string, TextCache*>> GameCacheList;
         std::map<std::string, GameCacheList> gameCache = {};
+        std::map<std::string, unsigned int> pages = {};
+        unsigned int currentMAXpage = 0;
+        unsigned int currentPage = 0;
 
         struct Selection {
             int row = 0;
@@ -86,8 +89,9 @@ class VideoManager {
         int gameWidth = 0;
         int gameHeight = 0;
 
+
         void RenderConsoleList();
-        void RenderGameList(std::string console);
+        void RenderGameList(std::string console, unsigned int page);
         void RenderGameView();
         void RenderGradientBackground();
         void RenderView();

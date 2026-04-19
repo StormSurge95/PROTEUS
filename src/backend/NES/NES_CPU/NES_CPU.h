@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../core/Helpers.h"
-#include "../../core/IDevice.h"
-#include "NES_BUS.h"
+#include "../../../core/Helpers.h"
+#include "../../../core/IDevice.h"
+#include "../NES_BUS.h"
 
 #include <memory>
 #include <string>
@@ -21,6 +21,9 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         NES_CPU(bool debug);
         ~NES_CPU();
 
+        void setState(PROCESSOR_STATE s);
+        PROCESSOR_STATE getState(std::vector<uint16_t> addrs);
+
         inline void connectBUS(std::shared_ptr<NES_BUS> b) { bus = b; }
 
         uint8_t read(uint16_t addr, bool readonly = false) override;
@@ -28,6 +31,7 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
 
         void reset();
         void clock();
+        void clockSST(uint8_t* instruction, uint8_t len);
 
         inline void enableDebug() { debugEnabled = true; }
 
@@ -42,6 +46,8 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
 
         uint64_t totalCycles = 0;
         uint8_t status = 0;
+        uint8_t dStatus = 0;
+        bool updateStatus = false;
 
         uint8_t fetched = 0x00;
         uint8_t opcode = 0x00;
@@ -154,11 +160,15 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
                 hi += h;
             }
             void add_s(int8_t val) {
-                if (val < 0 && val > lo)
-                    hi--;
-                else if (val > 0 && (val > (0xFF - lo)))
-                    hi++;
-                lo += val;
+                if (((val >> 7) & 0x01) == 0) { // positive
+                    if (val > (0xFF - lo)) hi++;
+                    lo += val;
+                } else { // negative
+                    val = ~val;
+                    val++;
+                    if (val > lo) hi--;
+                    lo -= val;
+                }
             }
             void sub(uint16_t val) {
                 uint8_t l = val & 0xFF;
@@ -179,17 +189,26 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
             V = (1 << 6),
             N = (1 << 7)
         };
+        enum INSTRUCTION_TYPE {
+            R,
+            W,
+            M,
+            J,
+            X
+        };
         struct INST {
             std::string name;
+            INSTRUCTION_TYPE type;
 
+            void (NES_CPU::* address)(void) = nullptr;
             void (NES_CPU::* operate)(void) = nullptr;
 
-            uint8_t cycles = 0;
             uint8_t bytes = 0;
         } *currInst = nullptr;
         uint8_t offset = 0x00;
         int8_t soffset = 0;
         bool paged = false;
+        bool branch = false;
         void page(uint8_t val) {
             paged =  val > (0xFF - absAddr.lo);
             absAddr.lo += val;
@@ -216,11 +235,38 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
             else
                 status &= ~f;
         }
+        inline void setFlags(uint8_t val) {
+            setFlag(C, (val & C) > 0);
+            setFlag(Z, (val & Z) > 0);
+            setFlag(I, (val & I) > 0);
+            setFlag(D, (val & D) > 0);
+            //setFlag(B, (val & B) > 0);
+            setFlag(U, true);
+            setFlag(V, (val & V) > 0);
+            setFlag(N, (val & N) > 0);
+        }
         inline void setZN(uint8_t val) {
             setFlag(Z, val == 0);
             setFlag(N, ((val >> 7) & 0x01) > 0);
         }
+
+        #pragma region Addressing Modes
+        void ABS();
+        void ABX();
+        void ABY();
+        void ZP0();
+        void ZPX();
+        void ZPY();
+        void ACC();
+        void IMM();
+        void IMP();
+        void IND();
+        void IZX();
+        void IZY();
+        void REL();
+        #pragma endregion
         
+        #pragma region Official Instructions
         void LDA(); void STA(); void LDX(); void STX(); void LDY(); void STY();
         void TAX(); void TXA(); void TAY(); void TYA();
         void ADC(); void SBC(); void INC(); void DEC(); void INX(); void DEX(); void INY(); void DEY();
@@ -231,25 +277,36 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         void JMP(); void JSR(); void RTS(); void BRK(); void RTI();
         void PHA(); void PLA(); void PHP(); void PLP(); void TXS(); void TSX();
         void CLC(); void SEC(); void CLI(); void SEI(); void CLD(); void SED(); void CLV();
-        void NOP(); void XXX(); void RST(); void IRQ(); void NMI();
+        void NOP(); void RST(); void IRQ(); void NMI();
+        #pragma endregion
 
-        void ADChelper();
-        void SBChelper();
-        void branch(bool take);
-        void shift(char dir, bool rotate);
-        void CMPop(uint8_t val);
+        #pragma region Unofficial Instructions
+        void SLO(); void RLA(); void SRE(); void RRA();
+        void SAX(); void LAX();
+        void DCP(); void ISC();
+        void SHA(); void SHS(); void SHY(); void SHX(); void LAS(); void ARR();
+        void ANC(); void ASR(); void ANE(); void LXA(); void AXS();
+        void JAM();
+        #pragma endregion
 
-        INST RST_INST = { "RESET", &NES_CPU::RST, 7, 0 };
-        INST NMI_INST = { "NMI", &NES_CPU::NMI, 7, 0 };
-        INST IRQ_INST = { "IRQ", &NES_CPU::IRQ, 7, 0 };
+        INST RST_INST = {"RST",X,nullptr,&NES_CPU::RST,0};
+        INST NMI_INST = {"NMI",X,nullptr,&NES_CPU::NMI,0};
+        INST IRQ_INST = {"IRQ",X,nullptr,&NES_CPU::IRQ,0};
 
-    #pragma region Debugging
+        #pragma region Debugging
         bool debug;
         std::ofstream* traceStream = nullptr;
+
+        enum INTERRUPT {
+            RST_INTERRUPT,
+            NMI_INTERRUPT,
+            IRQ_INTERRUPT
+        };
 
         std::string disassembleInst(uint16_t addr);
         std::string formatInst();
         std::string traceStack();
         std::string trace();
-    #pragma endregion
+        std::string traceInterrupt(INTERRUPT i);
+        #pragma endregion
 };

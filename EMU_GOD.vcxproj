@@ -20,12 +20,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\backend\NES\NES_APU\NES_APU.cpp" />
+    <ClCompile Include="src\backend\NES\NES_APU\NES_DMCChannel.cpp" />
+    <ClCompile Include="src\backend\NES\NES_APU\NES_NoiseChannel.cpp" />
+    <ClCompile Include="src\backend\NES\NES_APU\NES_PulseChannel.cpp" />
+    <ClCompile Include="src\backend\NES\NES_APU\NES_TriangleChannel.cpp" />
     <ClCompile Include="src\backend\NES\NES_BUS.cpp" />
     <ClCompile Include="src\backend\NES\NES_CART.cpp" />
     <ClCompile Include="src\backend\NES\NES_CONT.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CPU.cpp" />
     <ClCompile Include="src\backend\NES\NES_CORE.cpp" />
-    <ClCompile Include="src\backend\NES\NES_PPU.cpp" />
+    <ClCompile Include="src\backend\NES\NES_CPU\NES_CPU.cpp" />
+    <ClCompile Include="src\backend\NES\NES_PPU\NES_PPU.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />
     <ClCompile Include="src\frontend\InputManager.cpp" />
     <ClCompile Include="src\frontend\Proteus.cpp" />
@@ -36,19 +41,25 @@
     <ClInclude Include="resources\font.regular.h" />
     <ClInclude Include="resources\font.schatten.h" />
     <ClInclude Include="resources\NES_DB.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_APU.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_DMCChannel.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_LengthCounter.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_NoiseChannel.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_PulseChannel.h" />
+    <ClInclude Include="src\backend\NES\NES_APU\NES_TriangleChannel.h" />
     <ClInclude Include="src\backend\NES\NES_BUS.h" />
     <ClInclude Include="src\backend\NES\NES_CART.h" />
     <ClInclude Include="src\backend\NES\NES_CONT.h" />
-    <ClInclude Include="src\backend\NES\NES_CPU.h" />
     <ClInclude Include="src\backend\NES\Mappers\M000.h" />
     <ClInclude Include="src\backend\NES\Mappers\M001.h" />
     <ClInclude Include="src\backend\NES\Mappers\M002.h" />
     <ClInclude Include="src\backend\NES\Mappers\M003.h" />
     <ClInclude Include="src\backend\NES\Mappers\M004.h" />
     <ClInclude Include="src\backend\NES\Mappers\Mapper.h" />
+    <ClInclude Include="src\backend\NES\NES_CPU\NES_CPU.h" />
     <ClInclude Include="src\backend\NES\NES_MIRRORS.h" />
     <ClInclude Include="src\backend\NES\NES_CORE.h" />
-    <ClInclude Include="src\backend\NES\NES_PPU.h" />
+    <ClInclude Include="src\backend\NES\NES_PPU\NES_PPU.h" />
     <ClInclude Include="src\core\Helpers.h" />
     <ClInclude Include="src\core\IDataBus.h" />
     <ClInclude Include="src\core\IDevice.h" />
@@ -210,6 +221,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\openssl-native.3.5.5\build\native\openssl-native.targets" Condition="Exists('packages\openssl-native.3.5.5\build\native\openssl-native.targets')" />
+    <Import Project="packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets" Condition="Exists('packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -217,5 +229,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\openssl-native.3.5.5\build\native\openssl-native.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl-native.3.5.5\build\native\openssl-native.props'))" />
     <Error Condition="!Exists('packages\openssl-native.3.5.5\build\native\openssl-native.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl-native.3.5.5\build\native\openssl-native.targets'))" />
+    <Error Condition="!Exists('packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets'))" />
   </Target>
 </Project>

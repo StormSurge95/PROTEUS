@@ -12,7 +12,7 @@ class AudioManager {
         void Init();
         void Deinit();
 
-        void Update();
+        void Update(std::shared_ptr<IConsole>& station);
     private:
         Proteus* proteus;
         bool debug;

@@ -38,6 +38,7 @@ class Proteus
         void Deinit();
 
         void Run();
+        bool RunSSTs(CONSOLE_ID console);
 
         const AppState GetState() const { return state; }
 
@@ -52,7 +53,6 @@ class Proteus
 
         std::vector<ROM> GetGameList(const std::string& console);
         const uint32_t* GetFrameBuffer();
-        const uint8_t* GetAudioBuffer(int& len);
     private:
         bool debug = false;
         std::shared_ptr<IConsole> station = nullptr;
@@ -86,5 +86,6 @@ class Proteus
         std::string MD5(const std::string& filepath);
 
         void StartConsole();
+        void StartConsoleSST();
         void ShutDownConsole(bool shutDownApp = false);
 };

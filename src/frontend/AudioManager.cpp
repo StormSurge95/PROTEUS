@@ -18,7 +18,7 @@ void AudioManager::Init() {
     } else SDL_LogMessage(SDL_LOG_CATEGORY_AUDIO, SDL_LOG_PRIORITY_INFO, "SDL Input successfully initialized.\n");
 
     spec = {
-        .format = SDL_AUDIO_U8,
+        .format = SDL_AUDIO_F32,
         .channels = 1,
         .freq = 44100,
     };
@@ -63,5 +63,10 @@ void AudioManager::Deinit() {
     }
 }
 
-void AudioManager::Update() {
+void AudioManager::Update(std::shared_ptr<IConsole>& station) {
+    if (station == nullptr) return;
+    std::vector<float> samples;
+    station->collectAudio(samples);
+    if (!samples.empty())
+        SDL_PutAudioStreamData(stream, samples.data(), (int)samples.size() * sizeof(float));
 }

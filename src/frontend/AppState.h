@@ -12,8 +12,8 @@ enum AppView : unsigned int {
 
 enum CONSOLE_ID {
     // Following systems are 100% functional
-    NONE = -1,
     // (though likely could use some form of improvements)
+    NONE = -1,
     
     // Following systems are not yet completed, but are WIP
     NES, // only missing audio
@@ -29,9 +29,13 @@ enum CONSOLE_ID {
     XBOX_360,
     PS3,
     WII,
+
+
     // Systems below are not planned to be emulated until they
     // no longer have games being officially released to them.
+    
     //PS4, // this might be an exception due to bloodborne...
+    
     //XBOX_ONE,
     //SWITCH,
     //XBOX_XS,
