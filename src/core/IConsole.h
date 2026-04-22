@@ -11,7 +11,6 @@ class IConsole {
 
         virtual void reset() = 0;
         virtual void clock() = 0;
-        virtual bool runSST(SST test) = 0;
 
         virtual bool loadCart(const std::string& path) = 0;
 

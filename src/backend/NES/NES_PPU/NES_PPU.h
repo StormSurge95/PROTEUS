@@ -30,13 +30,49 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         NES_PPU() = default;
         ~NES_PPU() = default;
 
+        /*
+            Primary scheduling function of the PPU.
+            Determines what operations need to be performed based on
+            which pixel of the screen we are on.
+        */
         void clock();
+
+        /*
+            Reset function of the PPU.
+            Handles and performs any operations/changes necessary to
+            reset the PPU to a known and predetermined state.
+        */
         void reset();
 
+        /*
+            Performs intra-device read operations on the various
+            registers that are visible to other devices for reading.
+        */
         uint8_t read(uint16_t addr, bool readonly = false) override;
+
+        /*
+            Performs intra-device write operations on the various
+            registers that are visible to other devices for writing.
+        */
         void write(uint16_t addr, uint8_t data) override;
 
+        /*
+            Collects and returns OAM byte data from memory.
+            If `i` is provided, then the requested byte is
+            returned; otherwise, the byte pointed to by 
+            `OAMADDR` is returned.
+
+            `i`: any integer value from 0-255.
+        */
         uint8_t readOAMByte(int i = -1) const;
+
+        /*
+            Writes a provided byte of data to the requested
+            location within OAM memory.
+
+            `i`: integer value 0-255 representing where to write
+            `b`: actual byte of data to write
+        */
         void writeOAMByte(uint8_t i, uint8_t b);
 
         const uint32_t* getFrameBuffer() const { return frameBuffer.data(); }
@@ -50,9 +86,17 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         bool initComplete = false;
         bool suppressVBL = false;
         bool suppressNMI = false;
-        uint64_t frameCounter = 0;
 
+        /*
+            Performs read operations by reading from VRAM on
+            the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
+        */
         uint8_t ppuRead(uint16_t addr, bool readonly = false);
+
+        /*
+            Performs write operations by writing to VRAM on
+            the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
+        */
         void ppuWrite(uint16_t addr, uint8_t data);
 
         std::shared_ptr<NES_CART> cart = nullptr;
@@ -127,6 +171,13 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         std::array<uint8_t, 4096> nametables{ 0 };
         std::array<uint8_t, 32> palettes{ 0 };
 
+        /*
+            Performs Pre - Render Scanline operations
+            This scanline is mostly just for "priming" our rendering pipelines
+            so that we can be prepared to begin submitting pixels as soon as
+            the frame starts.
+            This includes background AND sprite pipelines.
+        */
         void onPreRenderLine();
         void onVisibleLine();
         void onStartVBlankLine();
@@ -149,7 +200,7 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
             NMI_ENABLED = 7
         };
         uint8_t getControlData(CONTROL which) const;
-        inline uint8_t getNametableBase() const { return 0x2000 + (this->getControlData(NAMETABLE_BASE) * 0x400); }
+        inline uint16_t getNametableBase() const { return 0x2000 + (this->getControlData(NAMETABLE_BASE) * 0x400); }
         inline uint8_t getVRAMIncrement() const { return (this->getControlData(VRAM_INCREMENT) ? 32 : 1); }
         inline uint16_t getSpritePatternTableAddr8x8() const { return (this->getControlData(SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
         inline uint16_t getBackgroundPatternTableAddr() const { return (this->getControlData(BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
@@ -220,7 +271,7 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         uint16_t v = 0x0000;  // during rendering, used for scroll position; outside rendering, used as current VRAM address
         uint16_t t = 0x0000;  // during rendering, specifies starting coarse-x scroll for next scanline and starting y scroll for screen; outside rendering, holds scroll or VRAM before transferring it to v
         uint8_t x = 0x00;  // fine-x position of current scroll, used during rendering alongside v
-        bool w = false; // write-latch for PPUSCROLL/PPUADDR; clears on read os PPUSTATUS
+        bool w = false; // write-latch for PPUSCROLL/PPUADDR; clears on read of PPUSTATUS
 
         inline bool renderingEnabled() const { return ((this->renderBackground() || this->renderSprites()) && !this->inVBlank()); }
 
@@ -282,9 +333,25 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
 
         void shiftBackgroundShifters();
 
+        /*
+            Performs the necessary calculations to determine the values
+            related to the background pixel at the current dot.
+        */
         void getBackgroundPixel(uint8_t& pixel, uint8_t& attr) const;
+
+        /*
+            Performs comparisons and processing necessary to determine how
+            the current pixel should be rendered (ie. via background or via
+            sprite).
+        */
         void renderPixel();
 
+        /*
+            Reinitializes secondaryOAM and clears it in preparation for
+            the next round of sprite evaluation(s). The NES expects a
+            "cleared" byte to be equal to 0xFF; so on every EVEN cycle,
+            we set the corresponding byte in secondaryOAM to 0xFF.
+        */
         void initSecondaryOAM();
 
         uint8_t spriteIndex = 0;
@@ -322,9 +389,27 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         std::vector<ActiveSprite> activeSprites;
         std::vector<ActiveSprite> nextSprites;
 
+        /*
+            Evaluates one sprite each cycle during cycles 65-256
+            This functions tests sprite position compared to scanline to ensure
+            that the sprite actually appears on the scanline. If it does,
+            then we copy its data into secondaryOAM for later testing to determine
+            whether it will be printed during any particular cycle.
+            Each scanline can only support up to 8 sprites. If more than 8 are
+            found, then the spriteOverflow flag within PPUSTATUS is set.
+        */
         void spriteEval();
+
+        /*
+            Fetches various data for the sprite being processed. Each
+            sprite takes a total of 8 cycles to fetch all necessary data.
+            This allows the process to perfectly fit in cycles 257-320.
+        */
         void spriteFetch();
 
+        /*
+            Helper function to calculate address of sprite pattern table.
+        */
         void calcSPRPatternAddr(uint8_t index, uint8_t id, uint8_t y);
 
         uint8_t getSpritePixel(uint8_t& pixel, uint8_t& attr);

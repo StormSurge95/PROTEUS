@@ -20,7 +20,6 @@ class NES_CORE : public IConsole {
 
         void reset() override;
         void clock() override;
-        bool runSST(SST test) override;
 
         bool loadCart(const std::string& path) override;
 

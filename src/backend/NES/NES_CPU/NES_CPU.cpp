@@ -41,7 +41,7 @@ NES_CPU::NES_CPU(bool d) {
         {"BEQ",J,&NES_CPU::REL,&NES_CPU::BEQ,2},{"SBC",R,&NES_CPU::IZY,&NES_CPU::SBC,2},{"JAM",X,&NES_CPU::IMP,&NES_CPU::JAM,1},{"ISC",M,&NES_CPU::IZY,&NES_CPU::ISC,2},{"NOP",R,&NES_CPU::ZPX,&NES_CPU::NOP,2},{"SBC",R,&NES_CPU::ZPX,&NES_CPU::SBC,2},{"INC",M,&NES_CPU::ZPX,&NES_CPU::INC,2},{"ISC",M,&NES_CPU::ZPX,&NES_CPU::ISC,2},{"SED",X,&NES_CPU::IMP,&NES_CPU::SED,1},{"SBC",R,&NES_CPU::ABY,&NES_CPU::SBC,3},{"NOP",X,&NES_CPU::IMP,&NES_CPU::NOP,1},{"ISC",M,&NES_CPU::ABY,&NES_CPU::ISC,3},{"NOP",R,&NES_CPU::ABX,&NES_CPU::NOP,3},{"SBC",R,&NES_CPU::ABX,&NES_CPU::SBC,3},{"INC",M,&NES_CPU::ABX,&NES_CPU::INC,3},{"ISC",M,&NES_CPU::ABX,&NES_CPU::ISC,3}
     };
     if (debug) {
-        traceStream = new std::ofstream("C:/devenv/EMU_GOD/trace.log");
+        traceStream = new std::ofstream("C:/devenv/PROTEUS/trace.log");
     }
 }
 
@@ -81,7 +81,6 @@ void NES_CPU::clock() {
             status = dStatus;
             updateStatus = false;
         }
-        #if (SST == 0)
         if (doRST) {
             currInst = &RST_INST;
             doRST = false;
@@ -92,7 +91,6 @@ void NES_CPU::clock() {
             currInst = &IRQ_INST;
             doIRQ = false;
         } else {
-        #endif
             if (debug) {
                 std::string t = trace();
                 printf(t.c_str());
@@ -101,9 +99,7 @@ void NES_CPU::clock() {
             }
             opcode = read(pc++);
             currInst = &lookup[opcode];
-        #if (SST == 0)
         }
-        #endif
     } else {
         if (currInst->address != nullptr)
             (this->*currInst->address)();
@@ -114,12 +110,10 @@ void NES_CPU::clock() {
 }
 
 void NES_CPU::pollInterrupts() {
-    if (!doNMI && nmiTrigger) {
-        if (nmiTrigger) {
-            doNMI = true;
-            nmiTrigger = false;
-            return;
-        }
+    if (nmiTrigger) {
+        doNMI = true;
+        nmiTrigger = false;
+        return;
     }
 
     if (!doIRQ && irqTrigger) {
@@ -398,30 +392,6 @@ std::string NES_CPU::traceInterrupt(INTERRUPT i) {
     return ss.str();
 }
 
-void NES_CPU::setState(PROCESSOR_STATE s) {
-    pc = s.pc;
-    sp = s.sp;
-    a = s.a;
-    x = s.x;
-    y = s.y;
-    status = s.p;
-
-    std::vector<uint16_t>::iterator iA = s.addresses.begin();
-    std::vector<uint8_t>::iterator iB = s.bytes.begin();
-
-    for (; iA != s.addresses.end() && iB != s.bytes.end(); iA++, iB++) {
-        bus->write(*iA, *iB);
-    }
-}
-
-PROCESSOR_STATE NES_CPU::getState(std::vector<uint16_t> addrs) {
-    std::vector<uint8_t> bytes;
-    for (const uint16_t& addr : addrs) {
-        bytes.push_back(bus->read(addr));
-    }
-    return PROCESSOR_STATE(pc.value(), sp, a, x, y, status, addrs, bytes);
-}
-
 #pragma region Interrupts
 void NES_CPU::IRQ() {
     switch (cycles) {
@@ -522,13 +492,16 @@ void NES_CPU::ABS() {
     switch (cycles) {
         case 2:
             absAddr.lo = read(pc++);
+            if (currInst->type == J)
+                pollInterrupts();
             break;
         case 3:
             absAddr.hi = read(pc++);
             if (currInst->type == J) {
                 (this->*currInst->operate)();
                 cycles = 0;
-            }
+            } else if (currInst->type != M)
+                pollInterrupts();
             break;
         case 4:
             if (currInst->type == W) {
@@ -562,11 +535,14 @@ void NES_CPU::ABX() {
         case 3:
             absAddr.hi = read(pc++);
             page(x);
+            if (!paged && currInst->type == R)
+                pollInterrupts();
             break;
         case 4:
             if (paged || currInst->type != R) {
                 read(absAddr.value());
                 if (paged) absAddr.hi++;
+                if (currInst->type == W) pollInterrupts();
                 break;
             }
             cycles++;
@@ -603,11 +579,14 @@ void NES_CPU::ABY() {
         case 3:
             absAddr.hi = read(pc++);
             page(y);
+            if (!paged && currInst->type == R)
+                pollInterrupts();
             break;
         case 4:
             if (paged || currInst->type != R) {
                 read(absAddr.value());
                 if (paged) absAddr.hi++;
+                if (currInst->type == W) pollInterrupts();
                 break;
             }
             cycles++;
@@ -640,6 +619,8 @@ void NES_CPU::ZP0() {
     switch (cycles) {
         case 2:
             offset = read(pc++);
+            if (currInst->type != M)
+                pollInterrupts();
             break;
         case 3:
             if (currInst->type == W) {
@@ -673,6 +654,8 @@ void NES_CPU::ZPX() {
         case 3:
             read(offset);
             offset += x;
+            if (currInst->type != M)
+                pollInterrupts();
             break;
         case 4:
             if (currInst->type == W) {
@@ -706,6 +689,8 @@ void NES_CPU::ZPY() {
         case 3:
             read(offset);
             offset += y;
+            if (currInst->type != M)
+                pollInterrupts();
             break;
         case 4:
             if (currInst->type == W) {
@@ -783,6 +768,8 @@ void NES_CPU::IZX() {
             break;
         case 5:
             absAddr.hi = read(offset);
+            if (currInst->type != M)
+                pollInterrupts();
             break;
         case 6:
             if (currInst->type == W) {
@@ -819,11 +806,14 @@ void NES_CPU::IZY() {
         case 4:
             absAddr.hi = read(offset);
             page(y);
+            if (!paged && currInst->type == R) pollInterrupts();
             break;
         case 5:
             fetched = read(absAddr.value());
-            if (paged) absAddr.hi++;
-            else if (currInst->type == R) {
+            if (paged) {
+                absAddr.hi++;
+                if (currInst->type != M) pollInterrupts();
+            } else if (currInst->type == R) {
                 (this->*currInst->operate)();
                 cycles = 0;
             }
@@ -872,7 +862,6 @@ void NES_CPU::REL() {
                 }
                 break;
             }
-            pollInterrupts();
             cycles = 0;
             break;
         case 4:
@@ -1120,17 +1109,17 @@ void NES_CPU::BRK() {
     switch (cycles) {
         case 2:
             read(pc++);
-            //if (nmiTrigger) { currInst = &NMI_INST; } else if (irqTrigger) { currInst = &IRQ_INST; }
+            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 3:
             write(0x0100 + sp, pc.hi);
             sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; } else if (irqTrigger) { currInst = &IRQ_INST; }
+            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 4:
             write(0x0100 + sp, pc.lo);
             sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; } else if (irqTrigger) { currInst = &IRQ_INST; }
+            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 5:
             setFlag(B, true);
@@ -1236,8 +1225,8 @@ void NES_CPU::PLP() {
             break;
         case 4:
             setFlags(read(0x0100 + sp));
-            delayNMI = true;
-            delayIRQ = true;
+            //delayNMI = true;
+            //delayIRQ = true;
             cycles = 0;
             break;
     }
@@ -1263,12 +1252,10 @@ void NES_CPU::SEC() {
 }
 void NES_CPU::CLI() {
     setFlag(I, false);
-    delayNMI = delayIRQ = true;
     cycles = 0;
 }
 void NES_CPU::SEI() {
     setFlag(I, true);
-    delayNMI = delayIRQ = true;
     cycles = 0;
 }
 void NES_CPU::CLD() {

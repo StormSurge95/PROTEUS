@@ -49,8 +49,10 @@ void NES_CORE::clock() {
         // clock ppu - 3ppu:1cpu
         ppu->clock();
 
-        cpu->nmiTrigger |= ppu->nmiRequested;
-        ppu->nmiRequested = false;
+        if (ppu->nmiRequested) {
+            cpu->nmiTrigger = true;
+            ppu->nmiRequested = false;
+        }
 
         if (masterClock % 3 == 0) {
             // clock cpu
@@ -69,19 +71,6 @@ void NES_CORE::clock() {
     } while (!ppu->frameComplete);
 
     ppu->frameComplete = false;
-}
-
-bool NES_CORE::runSST(SST test) {
-    cpu->setState(test.iState);
-    do {
-        cpu->clock();
-    } while (cpu->cycles != 0);
-    PROCESSOR_STATE s = cpu->getState(test.fState.addresses);
-    if (s != test.fState) {
-        return false;
-    } else {
-        return true;
-    }
 }
 
 void NES_CORE::update(uint8_t player, bool* buttons) {

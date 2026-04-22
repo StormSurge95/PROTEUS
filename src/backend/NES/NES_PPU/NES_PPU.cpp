@@ -1,8 +1,6 @@
 #include "../Mappers/Mapper.h"
 #include "NES_PPU.h"
 
-// Performs intra-device read operations on the various
-// registers that are visible to other devices for reading.
 uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         addr &= 0x0007;
@@ -36,8 +34,6 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
     return ppuBus;
 }
 
-// Performs intra-device write operations on the various
-// registers that are visible to other devices for writing.
 void NES_PPU::write(uint16_t addr, uint8_t data) {
     ppuBus = data;
     if (addr >= 0x2000 && addr <= 0x3FFF) {
@@ -52,7 +48,7 @@ void NES_PPU::write(uint16_t addr, uint8_t data) {
 
                     nmiOutput = !prevEnabled && inVBlank() && getNMIEnabled() && !suppressNMI;
 
-                    if (!nmiOutputPrev && nmiOutput)
+                    if (nmiOutput && !nmiOutputPrev)
                         nmiRequested = true;
 
                     nmiOutputPrev = nmiOutput;
@@ -110,8 +106,6 @@ void NES_PPU::write(uint16_t addr, uint8_t data) {
     }
 }
 
-// Performs read operations by reading from VRAM on
-// the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
 uint8_t NES_PPU::ppuRead(uint16_t addr, bool readonly) {
     if (addr >= 0x0000 && addr <= 0x1FFF)
         return cart->mapper->ppuRead(addr, readonly);
@@ -154,8 +148,6 @@ uint8_t NES_PPU::ppuRead(uint16_t addr, bool readonly) {
     return 0x00;
 }
 
-// Performs write operations by writing to VRAM on
-// the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
 void NES_PPU::ppuWrite(uint16_t addr, uint8_t data) {
     if (addr >= 0x0000 && addr <= 0x1FFF)
         cart->mapper->ppuWrite(addr, data);
@@ -228,9 +220,6 @@ void NES_PPU::ppuWrite(uint16_t addr, uint8_t data) {
     }
 }
 
-// Primary scheduling function of the PPU.
-// Determines what operations need to be performed based on
-// which pixel of the screen we are on.
 void NES_PPU::clock() {
     if (cycle == 0) {
         activeSprites = nextSprites;
@@ -262,11 +251,6 @@ void NES_PPU::clock() {
     }
 }
 
-// Performs Pre-Render Scanline operations
-// This scanline is mostly just for "priming" our rendering pipelines
-// so that we can be prepared to begin submitting pixels as soon as
-// the frame starts.
-// This includes background AND sprite pipelines.
 void NES_PPU::onPreRenderLine() {
     if (cycle == 1) { // if we're on cycle 1, we clear our status flags.
         inVBlank(false);
@@ -577,7 +561,7 @@ void NES_PPU::renderPixel() {
 }
 
 uint8_t NES_PPU::readOAMByte(int i) const {
-    if (i == -1) i = OAMADDR;
+    if (i < 0 || i > 255) i = OAMADDR;
 
     uint8_t s = i / 4;
     uint8_t b = i % 4;
@@ -605,10 +589,6 @@ void NES_PPU::setStatusData(STATUS which, bool v) {
     }
 }
 
-// Reinitializes secondaryOAM and clears it in preparation for
-// the next round of sprite evaluation(s). The NES expects a
-// "cleared" byte to be equal to 0xFF; so on every EVEN cycle,
-// we set the corresponding byte in secondaryOAM to 0xFF.
 void NES_PPU::initSecondaryOAM() {
     if (cycle % 2 == 0) { // 2, 4, 6, 8, ... 60, 62, 64
         uint8_t index = cycle / 2; // 1, 2, 3, 4, ... 30, 31, 32
@@ -619,13 +599,6 @@ void NES_PPU::initSecondaryOAM() {
     }
 }
 
-// Evaluates one sprite each cycle during cycles 65-256
-// This functions tests sprite position compared to scanline to ensure
-// that the sprite actually appears on the scanline. If it does,
-// then we copy its data into secondaryOAM for later testing to determine
-// whether it will be printed during any particular cycle.
-// Each scanline can only support up to 8 sprites. If more than 8 are
-// found, then the spriteOverflow flag within PPUSTATUS is set.
 void NES_PPU::spriteEval() {
     if (cycle == 65) {
         spriteIndex = 0;
@@ -666,7 +639,6 @@ void NES_PPU::spriteEval() {
     }
 }
 
-// Helper function to calculate address of sprite pattern table.
 void NES_PPU::calcSPRPatternAddr(uint8_t index, uint8_t id, uint8_t y) {
     uint16_t sprFineY = (scanline + 1) - y - 1;
 
@@ -694,9 +666,6 @@ void NES_PPU::calcSPRPatternAddr(uint8_t index, uint8_t id, uint8_t y) {
     }
 }
 
-// Fetches various data for the sprite being processed. Each
-// sprite takes a total of 8 cycles to fetch all necessary data.
-// This allows the process to perfectly fit in cycles 257-320.
 void NES_PPU::spriteFetch() {
     uint8_t sprite = (cycle - 257) / 8;
 

@@ -21,9 +21,6 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         NES_CPU(bool debug);
         ~NES_CPU();
 
-        void setState(PROCESSOR_STATE s);
-        PROCESSOR_STATE getState(std::vector<uint16_t> addrs);
-
         inline void connectBUS(std::shared_ptr<NES_BUS> b) { bus = b; }
 
         uint8_t read(uint16_t addr, bool readonly = false) override;
@@ -31,7 +28,6 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
 
         void reset();
         void clock();
-        void clockSST(uint8_t* instruction, uint8_t len);
 
         inline void enableDebug() { debugEnabled = true; }
 

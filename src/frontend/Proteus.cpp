@@ -11,7 +11,7 @@
 
 #include <algorithm>
 #include <fstream>
-#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <SDL3/SDL.h>
@@ -274,26 +274,26 @@ const uint32_t* Proteus::GetFrameBuffer() {
     return nullptr;
 }
 
-bool Proteus::RunSSTs(CONSOLE_ID console) {
-    state.selectedConsole = console;
-    StartConsoleSST();
-    bool pass = true;
-    printf("   0 1 2 3 4 5 6 7 8 9 A B C D E F\n\n");
-    for (uint16_t x = 0x0000; x <= 0x00FF; x++) {
-        if ((x & 0x0F) == 0) printf("%s  ", hex(x >> 4, 1).c_str());
-        std::string s = std::format("C:/devenv/EMU_GOD/tests/CPU_SSTs/{:02X}.json", x & 0xFF);
-        std::ifstream file(s);
-        if (!file.is_open()) exit(EXIT_FAILURE);
-        nlohmann::json data = nlohmann::json::parse(file);
-        for (const nlohmann::json& entry : data) {
-            SST sst(entry);
-            if (!station->runSST(sst)) {
-                pass = false;
-                break;
-            }
-        }
-        printf(pass ? "P " : "F ");
-        if ((x & 0x0F) == 0x0F) printf("\n");
-    }
-    return true;
-}
+//bool Proteus::RunSSTs(CONSOLE_ID console) {
+//    state.selectedConsole = console;
+//    StartConsoleSST();
+//    bool pass = true;
+//    printf("   0 1 2 3 4 5 6 7 8 9 A B C D E F\n\n");
+//    for (uint16_t x = 0x0000; x <= 0x00FF; x++) {
+//        if ((x & 0x0F) == 0) printf("%s  ", hex(x >> 4, 1).c_str());
+//        std::string s = std::format("C:/devenv/EMU_GOD/tests/CPU_SSTs/{:02X}.json", x & 0xFF);
+//        std::ifstream file(s);
+//        if (!file.is_open()) exit(EXIT_FAILURE);
+//        nlohmann::json data = nlohmann::json::parse(file);
+//        for (const nlohmann::json& entry : data) {
+//            SST sst(entry);
+//            if (!station->runSST(sst)) {
+//                pass = false;
+//                break;
+//            }
+//        }
+//        printf(pass ? "P " : "F ");
+//        if ((x & 0x0F) == 0x0F) printf("\n");
+//    }
+//    return true;
+//}
