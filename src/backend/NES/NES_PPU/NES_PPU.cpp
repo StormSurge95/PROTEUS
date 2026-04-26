@@ -9,8 +9,11 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
             case 0x02: // PPUSTATUS
                 ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
                 if (!readonly) {
-                    if (scanline == 241 && cycle <= 1) suppressVBL = true; else suppressVBL = false;
+                    if (scanline == 241) {
+                        if (cycle <= 1) suppressVBL = true; else suppressVBL = false;
+                    }
                     inVBlank(false);
+                    nmiRequested = false;
                     w = false;
                 }
                 break;
@@ -669,10 +672,6 @@ void NES_PPU::calcSPRPatternAddr(uint8_t index, uint8_t id, uint8_t y) {
 void NES_PPU::spriteFetch() {
     uint8_t sprite = (cycle - 257) / 8;
 
-    //if (sprite >= spritesOnScanline) {
-    //    return;
-    //}
-
     uint8_t step = (cycle - 257) % 8;
     switch (step) {
         case 2:
@@ -693,7 +692,6 @@ void NES_PPU::spriteFetch() {
             break;
         case 7:
             nextSprites.push_back(ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition));
-            //printf("Scanline: %03X   Sprite: {%02X, %02X, %02X, %02X, %02X}\n", scanline, sprTileIndex, sprAttributes, sprXPosition, sprPatternLo, sprPatternHi);
             break;
 
     }
@@ -706,6 +704,28 @@ void NES_PPU::reset() {
     PPUCTRL = 0x00;
     PPUMASK = 0x00;
     PPUDATA = 0x00;
+    scanline = 0;
+    cycle = 0;
+    v = 0x0000;
+    t = 0x0000;
+    dataBuffer = 0x00;
+    OAMADDR = 0x00;
+    spriteIndex = 0;
+    byteIndex = 0;
+    spritesOnScanline = 0;
+    suppressVBL = false;
+    suppressNMI = false;
+    nmiRequested = false;
+    nmiOutput = false;
+    nmiOutputPrev = false;
+    activeSprites.clear();
+    nextSprites.clear();
+    for (auto& a : primaryOAM) {
+        a.fill(0xFF);
+    }
+    for (auto& a : secondaryOAM) {
+        a.fill(0xFF);
+    }
 }
 
 uint32_t NES_PPU::applyEmphasis(uint32_t color) const {

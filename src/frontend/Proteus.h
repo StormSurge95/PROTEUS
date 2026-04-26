@@ -38,7 +38,6 @@ class Proteus
         void Deinit();
 
         void Run();
-        bool RunSSTs(CONSOLE_ID console);
 
         const AppState GetState() const { return state; }
 
@@ -86,6 +85,5 @@ class Proteus
         std::string MD5(const std::string& filepath);
 
         void StartConsole();
-        void StartConsoleSST();
         void ShutDownConsole(bool shutDownApp = false);
 };

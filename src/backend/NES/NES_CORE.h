@@ -15,7 +15,7 @@ class NES_CORE : public IConsole {
         std::shared_ptr<NES_CPU> cpu;
         uint64_t masterClock = 0x00;
 
-        NES_CORE(bool debug = false, bool sst = false);
+        NES_CORE(bool debug = false);
         ~NES_CORE() = default;
 
         void reset() override;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -18,14 +18,11 @@ class NES_BUS : IDataBus<uint8_t, uint16_t> {
         bool oamActive = false;
         bool dmcActive = false;
 
-        NES_BUS(bool sstMode = false);
+        NES_BUS();
         ~NES_BUS() = default;
 
         uint8_t read(uint16_t addr, bool readonly = false) override;
         void write(uint16_t addr, uint8_t data) override;
-
-        uint8_t readSST(uint16_t addr);
-        void writeSST(uint16_t addr, uint8_t data);
 
         void connectCPU(std::shared_ptr<NES_CPU> c) { cpu = c; }
         void connectPPU(std::shared_ptr<NES_PPU> p) { ppu = p; }
@@ -38,7 +35,7 @@ class NES_BUS : IDataBus<uint8_t, uint16_t> {
         std::string getPPUstatus();
 
     private:
-        std::vector<uint8_t> ram;
+        std::array<uint8_t, 2048> ram;
         std::shared_ptr<NES_CPU> cpu = nullptr;
         std::shared_ptr<NES_PPU> ppu = nullptr;
         std::shared_ptr<NES_APU> apu = nullptr;
@@ -49,7 +46,6 @@ class NES_BUS : IDataBus<uint8_t, uint16_t> {
         uint8_t openBus = 0x00;
 
         bool dmaDummy = true;
-        bool sstMode = false;
 
         uint8_t dmaPage = 0x00;
         uint8_t dmaAddr = 0x00;

@@ -68,9 +68,9 @@ void NES_CPU::reset() {
     offset = 0x00;
     soffset = 0x00;
     paged = false;
-    doNMI = false;
-    doIRQ = false;
-    doRST = true;
+    pendingNMI = false;
+    pendingIRQ = false;
+    pendingRST = true;
     cycles = 0;
 }
 
@@ -81,15 +81,15 @@ void NES_CPU::clock() {
             status = dStatus;
             updateStatus = false;
         }
-        if (doRST) {
+        if (pendingRST) {
             currInst = &RST_INST;
-            doRST = false;
-        } else if (doNMI) {
+            pendingRST = false;
+        } else if (pendingNMI) {
             currInst = &NMI_INST;
-            doNMI = false;
-        } else if (doIRQ) {
+            pendingNMI = false;
+        } else if (pendingIRQ) {
             currInst = &IRQ_INST;
-            doIRQ = false;
+            pendingIRQ = false;
         } else {
             if (debug) {
                 std::string t = trace();
@@ -106,24 +106,22 @@ void NES_CPU::clock() {
         else
             (this->*currInst->operate)();
     }
+    if (cycles == 0) pollInterrupts();
     totalCycles++;
 }
 
 void NES_CPU::pollInterrupts() {
     if (nmiTrigger) {
-        doNMI = true;
+        pendingNMI = true;
         nmiTrigger = false;
-        return;
     }
-
-    if (!doIRQ && irqTrigger) {
-        if (!delayIRQ) {
-            doIRQ = true;
+    if (irqTrigger && getFlag(I) == 0) {
+        if (!delayInterrupt) {
+            pendingIRQ = true;
             irqTrigger = false;
-        } else {
-            delayIRQ = false;
         }
     }
+    delayInterrupt = false;
 }
 
 std::string NES_CPU::disassembleInst(uint16_t addr) {
@@ -492,16 +490,13 @@ void NES_CPU::ABS() {
     switch (cycles) {
         case 2:
             absAddr.lo = read(pc++);
-            if (currInst->type == J)
-                pollInterrupts();
             break;
         case 3:
             absAddr.hi = read(pc++);
             if (currInst->type == J) {
                 (this->*currInst->operate)();
                 cycles = 0;
-            } else if (currInst->type != M)
-                pollInterrupts();
+            }
             break;
         case 4:
             if (currInst->type == W) {
@@ -519,7 +514,6 @@ void NES_CPU::ABS() {
         case 5:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 6:
             write(absAddr.value(), fetched);
@@ -535,14 +529,11 @@ void NES_CPU::ABX() {
         case 3:
             absAddr.hi = read(pc++);
             page(x);
-            if (!paged && currInst->type == R)
-                pollInterrupts();
             break;
         case 4:
             if (paged || currInst->type != R) {
                 read(absAddr.value());
                 if (paged) absAddr.hi++;
-                if (currInst->type == W) pollInterrupts();
                 break;
             }
             cycles++;
@@ -563,7 +554,6 @@ void NES_CPU::ABX() {
         case 6:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 7:
             write(absAddr.value(), fetched);
@@ -579,14 +569,11 @@ void NES_CPU::ABY() {
         case 3:
             absAddr.hi = read(pc++);
             page(y);
-            if (!paged && currInst->type == R)
-                pollInterrupts();
             break;
         case 4:
             if (paged || currInst->type != R) {
                 read(absAddr.value());
                 if (paged) absAddr.hi++;
-                if (currInst->type == W) pollInterrupts();
                 break;
             }
             cycles++;
@@ -607,7 +594,6 @@ void NES_CPU::ABY() {
         case 6:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 7:
             write(absAddr.value(), fetched);
@@ -619,8 +605,6 @@ void NES_CPU::ZP0() {
     switch (cycles) {
         case 2:
             offset = read(pc++);
-            if (currInst->type != M)
-                pollInterrupts();
             break;
         case 3:
             if (currInst->type == W) {
@@ -638,7 +622,6 @@ void NES_CPU::ZP0() {
         case 4:
             write(offset, fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 5:
             write(offset, fetched);
@@ -654,8 +637,6 @@ void NES_CPU::ZPX() {
         case 3:
             read(offset);
             offset += x;
-            if (currInst->type != M)
-                pollInterrupts();
             break;
         case 4:
             if (currInst->type == W) {
@@ -673,7 +654,6 @@ void NES_CPU::ZPX() {
         case 5:
             write(offset, fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 6:
             write(offset, fetched);
@@ -689,8 +669,6 @@ void NES_CPU::ZPY() {
         case 3:
             read(offset);
             offset += y;
-            if (currInst->type != M)
-                pollInterrupts();
             break;
         case 4:
             if (currInst->type == W) {
@@ -708,7 +686,6 @@ void NES_CPU::ZPY() {
         case 5:
             write(offset, fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 6:
             write(offset, fetched);
@@ -720,18 +697,15 @@ void NES_CPU::ACC() {
     fetched = a;
     (this->*currInst->operate)();
     a = fetched;
-    pollInterrupts();
     cycles = 0;
 }
 void NES_CPU::IMM() {
     fetched = read(pc++);
     (this->*currInst->operate)();
-    pollInterrupts();
     cycles = 0;
 }
 void NES_CPU::IMP() {
     (this->*currInst->operate)();
-    pollInterrupts();
     cycles = 0;
 }
 void NES_CPU::IND() {
@@ -745,7 +719,6 @@ void NES_CPU::IND() {
         case 4:
             absAddr.lo = read(indAddr.value());
             indAddr.lo++;
-            pollInterrupts();
             break;
         case 5:
             absAddr.hi = read(indAddr.value());
@@ -768,8 +741,6 @@ void NES_CPU::IZX() {
             break;
         case 5:
             absAddr.hi = read(offset);
-            if (currInst->type != M)
-                pollInterrupts();
             break;
         case 6:
             if (currInst->type == W) {
@@ -787,7 +758,6 @@ void NES_CPU::IZX() {
         case 7:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 8:
             write(absAddr.value(), fetched);
@@ -806,13 +776,11 @@ void NES_CPU::IZY() {
         case 4:
             absAddr.hi = read(offset);
             page(y);
-            if (!paged && currInst->type == R) pollInterrupts();
             break;
         case 5:
             fetched = read(absAddr.value());
             if (paged) {
                 absAddr.hi++;
-                if (currInst->type != M) pollInterrupts();
             } else if (currInst->type == R) {
                 (this->*currInst->operate)();
                 cycles = 0;
@@ -834,7 +802,6 @@ void NES_CPU::IZY() {
         case 7:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            pollInterrupts();
             break;
         case 8:
             write(absAddr.value(), fetched);
@@ -848,7 +815,6 @@ void NES_CPU::REL() {
             offset = read(pc++);
             (this->*currInst->operate)();
             if (!branch) {
-                pollInterrupts();
                 cycles = 0;
             } else spage(offset);
             break;
@@ -866,7 +832,6 @@ void NES_CPU::REL() {
             break;
         case 4:
             read(pc);
-            pollInterrupts();
             cycles = 0;
             break;
     }
@@ -1109,17 +1074,17 @@ void NES_CPU::BRK() {
     switch (cycles) {
         case 2:
             read(pc++);
-            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
+            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 3:
             write(0x0100 + sp, pc.hi);
             sp--;
-            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
+            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 4:
             write(0x0100 + sp, pc.lo);
             sp--;
-            if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
+            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 5:
             setFlag(B, true);

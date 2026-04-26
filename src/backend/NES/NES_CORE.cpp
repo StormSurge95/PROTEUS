@@ -1,9 +1,11 @@
 #include "NES_CORE.h"
 
+#include <chrono>
 #include <memory>
+#include <thread>
 
-NES_CORE::NES_CORE(bool debug, bool sst) {
-    bus = std::make_shared<NES_BUS>(sst);
+NES_CORE::NES_CORE(bool debug) {
+    bus = std::make_shared<NES_BUS>();
     cpu = std::make_shared<NES_CPU>(debug);
     ppu = std::make_shared<NES_PPU>();
     apu = std::make_shared<NES_APU>();
@@ -45,14 +47,13 @@ void NES_CORE::reset() {
 }
 
 void NES_CORE::clock() {
+    auto start = std::chrono::high_resolution_clock::now();
     do {
         // clock ppu - 3ppu:1cpu
         ppu->clock();
 
-        if (ppu->nmiRequested) {
-            cpu->nmiTrigger = true;
-            ppu->nmiRequested = false;
-        }
+        cpu->nmiTrigger |= ppu->nmiRequested;
+        ppu->nmiRequested = false;
 
         if (masterClock % 3 == 0) {
             // clock cpu
@@ -62,13 +63,19 @@ void NES_CORE::clock() {
                 cpu->clock();
                 apu->clock();
 
-                //cpu->irqTrigger |= apu->irqRequested;
+                cpu->irqTrigger |= apu->irqRequested;
                 apu->irqRequested = false;
             }
         }
 
         masterClock++;
     } while (!ppu->frameComplete);
+    auto end = std::chrono::high_resolution_clock::now();
+    double sleep = 15.0 - std::chrono::duration<double, std::milli>(end - start).count();
+
+    if (sleep > 0.0) {
+        std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(sleep));
+    }
 
     ppu->frameComplete = false;
 }

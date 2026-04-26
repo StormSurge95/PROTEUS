@@ -292,8 +292,8 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         inline uint8_t coarseY() const { return ((this->v & 0x03E0) >> 5); }
         inline uint8_t fineY() const { return ((this->v & 0x7000) >> 12); }
 
-        uint8_t primaryOAM[64][4] = { 0 };  // max of 64 sprites per game
-        uint8_t secondaryOAM[8][4] = { 0 }; // max of 8 sprites per scanline
+        std::array<std::array<uint8_t, 4>, 64> primaryOAM{ 0 };  // max of 64 sprites per game
+        std::array<std::array<uint8_t, 4>, 8> secondaryOAM{ 0 }; // max of 8 sprites per scanline
 
         enum SPRITE_ATTR {
             PALETTE,

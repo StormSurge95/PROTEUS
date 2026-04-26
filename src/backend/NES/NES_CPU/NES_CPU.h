@@ -10,13 +10,12 @@
 
 class NES_CPU : public IDevice<uint8_t, uint16_t> {
     public:
-        bool doIRQ = false;
-        bool doNMI = false;
+        bool pendingIRQ = false;
+        bool pendingNMI = false;
+        bool pendingRST = false;
         bool irqTrigger = false;
         bool nmiTrigger = false;
-        bool delayIRQ = false;
-        bool delayNMI = false;
-        bool doRST = false;
+        bool delayInterrupt = false;
 
         NES_CPU(bool debug);
         ~NES_CPU();
