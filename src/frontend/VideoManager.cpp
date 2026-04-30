@@ -6,6 +6,7 @@
 
 #include "../../resources/font.regular.h"
 #include "../../resources/font.schatten.h"
+#include "../../resources/font.mono.h"
 
 VideoManager::VideoManager(Proteus* p, bool d) {
     proteus = p;
@@ -105,6 +106,27 @@ void VideoManager::Init() {
     TTF_SetFontWrapAlignment(fontS.MD, TTF_HORIZONTAL_ALIGN_CENTER);
     TTF_SetFontWrapAlignment(fontS.LG, TTF_HORIZONTAL_ALIGN_CENTER);
     TTF_SetFontWrapAlignment(fontS.XL, TTF_HORIZONTAL_ALIGN_CENTER);
+
+    SDL_IOStream* rwM = SDL_IOFromConstMem(font_mono_h, font_mono_h_len);
+    if (!rwM) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_IOFromConstMem() failed! Error: %s\n", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    fontM.SM = TTF_OpenFontIO(rwM, false, 16);
+    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
+    fontM.MD = TTF_OpenFontIO(rwM, false, 24);
+    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
+    fontM.LG = TTF_OpenFontIO(rwM, false, 32);
+    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
+    fontM.XL = TTF_OpenFontIO(rwM, true, 48);
+    if (!fontM.SM || !fontM.MD || !fontM.LG || !fontM.XL) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_OpenFontIO() failed! Error: %s\n", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    TTF_SetFontWrapAlignment(fontM.SM, TTF_HORIZONTAL_ALIGN_LEFT);
+    TTF_SetFontWrapAlignment(fontM.MD, TTF_HORIZONTAL_ALIGN_LEFT);
+    TTF_SetFontWrapAlignment(fontM.LG, TTF_HORIZONTAL_ALIGN_LEFT);
+    TTF_SetFontWrapAlignment(fontM.XL, TTF_HORIZONTAL_ALIGN_LEFT);
 }
 
 void VideoManager::Deinit() {
@@ -149,7 +171,7 @@ void VideoManager::Deinit() {
 void VideoManager::RenderView() {
     const AppState state = proteus->GetState();
     if (state.currentView == GAME_VIEW) {
-        RenderGameView();
+        RenderGameView(proteus->InDebug());
     } else {
         RenderGradientBackground();
         if (state.currentView == CONSOLE_SELECT)
@@ -237,22 +259,37 @@ void VideoManager::RenderGameList(std::string console, unsigned int page) {
     }
 }
 
-void VideoManager::RenderGameView() {
+void VideoManager::RenderGameView(bool dbg) {
     float tgtAspect = (float)gameWidth / (float)gameHeight;
     float lglAspect = (float)dispWidth / (float)dispHeight;
 
     SDL_FRect dest = {};
 
+    float scale1 = 4.0f / 7.0f;
+    float scale2 = 3.0f / 7.0f;
+
+    if (dbg) {
+        lglAspect *= scale2;
+    }
+
     if (lglAspect > tgtAspect) {
         // pillarbox
         dest.h = (float)dispHeight;
         dest.w = dest.h * tgtAspect;
-        dest.x = (dispWidth - dest.w) / 2.0f;
+        if (dbg) {
+            dest.h *= scale2;
+            dest.w *= scale2;
+        }
+        dest.x = dbg ? 0.0f : (dispWidth - dest.w) / 2.0f;
         dest.y = 0.0f;
     } else {
         // letterbox
         dest.w = (float)dispWidth;
         dest.h = dest.w / tgtAspect;
+        if (dbg) {
+            dest.h *= scale2;
+            dest.w *= scale2;
+        }
         dest.x = 0.0f;
         dest.y = (dispHeight - dest.h) / 2.0f;
     }
@@ -270,6 +307,148 @@ void VideoManager::RenderGameView() {
     }
     SDL_UnlockTexture(gameTexture);
     SDL_RenderTexture(renderer, gameTexture, NULL, &dest);
+
+    if (dbg) {
+        SDL_FRect dbgDest = { dest.w, 0.0f, (float)dispWidth - dest.w, (float)dispHeight };
+
+        if (proteus->GetDebugView() == DebugView::CPU) {
+            // render cpu data text to screen
+            RenderDataCPU(dbgDest);
+        } else if (proteus->GetDebugView() == DebugView::PPU) {
+            // render ppu image data to screen
+            RenderDataPPU(dbgDest);
+        }
+    }
+}
+
+void VideoManager::RenderDataCPU(SDL_FRect& dest) {
+    SDL_FRect cpuDest = { dest.x, dest.y, dest.w * (2.0f / 5.0f), dest.h };
+    
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderRect(renderer, &cpuDest);
+
+    // render cpu data text to screen
+    std::istringstream cpuData(proteus->GetDebugInfoCPU());
+    std::string line;
+    uint8_t lineNum = 0;
+    SDL_FRect lineDest = {};
+    lineDest.x = cpuDest.x;
+    lineDest.y = cpuDest.y;
+    SDL_Color white = { 0xFF, 0xFF, 0xFF, 0xFF };
+    SDL_Color green = { 0x00, 0xFF, 0x00, 0xFF };
+    SDL_Surface* s;
+    SDL_Texture* t;
+    while (std::getline(cpuData, line)) {
+        if (lineNum == 19) {
+            s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, green);
+        } else {
+            s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
+        }
+        t = SDL_CreateTextureFromSurface(renderer, s);
+        SDL_DestroySurface(s);
+        float w, h;
+        SDL_GetTextureSize(t, &w, &h);
+        lineDest.w = w;
+        lineDest.h = h;
+        SDL_RenderTexture(renderer, t, NULL, &lineDest);
+        lineDest.y += lineDest.h;
+        SDL_DestroyTexture(t);
+        lineNum++;
+    }
+
+    cpuDest.x += cpuDest.w;
+    cpuDest.w = dest.w * (3.0f / 5.0f);
+    RenderDataRAM(cpuDest);
+}
+
+void VideoManager::RenderDataRAM(SDL_FRect& dest) {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderRect(renderer, &dest);
+    std::istringstream ramData(proteus->GetDebugInfoRAM());
+    std::string line;
+    uint8_t lineNum = 0;
+    uint32_t lineStart = ramPage * 16;
+    SDL_FRect lineDest = {};
+    lineDest.x = dest.x;
+    lineDest.y = dest.y;
+    SDL_Color white = { 0xFF, 0xFF, 0xFF, 0xFF };
+    std::string head = "";
+    SDL_Surface* s;
+    SDL_Texture* t;
+    uint32_t x = 0;
+    while (x < lineStart) {
+        std::getline(ramData, line);
+        x++;
+    }
+    line.resize(53);
+    // render current page
+    sprintf_s(line.data(), 53, " PG%d 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F", ramPage);
+    do {
+        s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
+        t = SDL_CreateTextureFromSurface(renderer, s);
+        SDL_DestroySurface(s);
+        float w, h;
+        SDL_GetTextureSize(t, &w, &h);
+        lineDest.w = w;
+        lineDest.h = h;
+        SDL_RenderTexture(renderer, t, NULL, &lineDest);
+        lineDest.y += lineDest.h;
+        SDL_DestroyTexture(t);
+        lineNum++;
+    } while (std::getline(ramData, line) && lineNum < 17);
+    lineDest.y += (lineDest.h / 2.0f); // add blank line for spacing
+    lineNum = 0; // reset lineNum so we don't have to do math
+    // render next page
+    sprintf_s(line.data(), 53, " PG%d 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F", ramPage + 1);
+    do {
+        s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
+        t = SDL_CreateTextureFromSurface(renderer, s);
+        SDL_DestroySurface(s);
+        float w, h;
+        SDL_GetTextureSize(t, &w, &h);
+        lineDest.w = w;
+        lineDest.h = h;
+        SDL_RenderTexture(renderer, t, NULL, &lineDest);
+        lineDest.y += lineDest.h;
+        SDL_DestroyTexture(t);
+        lineNum++;
+    } while (std::getline(ramData, line) && lineNum < 17);
+}
+
+void VideoManager::RenderDataPPU(SDL_FRect& dest) {
+    SDL_FRect paletteDest = { dest.x, dest.y, dest.w, (dest.h / 5) };
+    RenderPalettes(paletteDest);
+
+    SDL_FRect pattTableDest = { dest.x, dest.y + paletteDest.h, dest.w / 2.0f, dest.w / 2.0f };
+    RenderPatternTables(pattTableDest);
+}
+
+void VideoManager::RenderPalettes(SDL_FRect& dest) {
+    std::vector<uint32_t> colors = proteus->GetDebugPaletteColors();
+    float w = dest.w / 17;
+    float h = w;
+    for (int i = 0; i < colors.size() && i < 16; ++i) {
+        SDL_FRect swatch = { dest.x + i * (w + 4), dest.y, w, h };
+        uint32_t color = colors[i];
+        uint8_t b = (color >> 16) & 0xFF;
+        uint8_t g = (color >> 8) & 0xFF;
+        uint8_t r = color & 0xFF;
+        SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+        SDL_RenderFillRect(renderer, &swatch);
+    }
+}
+
+void VideoManager::RenderPatternTables(SDL_FRect& dest) {
+    SDL_FRect ptDest = { dest.x, dest.y, dest.h, dest.h };
+    for (uint8_t i = 0; i < 2; i++) {
+        std::vector<uint32_t> pixels = proteus->GetDebugPatternTable(i);
+        SDL_Surface* s = SDL_CreateSurfaceFrom(128, 128, SDL_PIXELFORMAT_ABGR8888, pixels.data(), 128 * sizeof(uint32_t));
+        SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
+        SDL_DestroySurface(s);
+        SDL_RenderTexture(renderer, t, nullptr, &ptDest);
+        SDL_DestroyTexture(t);
+        ptDest.x += ptDest.w;
+    }
 }
 
 void VideoManager::Render() {
@@ -333,7 +512,7 @@ void VideoManager::LoadGameCache() {
         }
         std::pair<std::string, GameCacheList> consoleList(it->first, cache);
         gameCache.insert(consoleList);
-        std::pair<std::string, unsigned int> numPages(it->first, cache.size() / 12);
+        std::pair<std::string, unsigned int> numPages(it->first, (unsigned int)cache.size() / 12);
         pages.insert(numPages);
     }
 }
@@ -358,18 +537,54 @@ void VideoManager::OnInput(Inputs* i) {
         selectedItem.RowDown();
     }
 
-    if (i->AXIS_LEFT_TRIGGER > 0 || i->L1_BUTTON) {
-        if (currentPage == 0) currentPage = currentMAXpage;
-        else currentPage--;
-    }
+    if (i->AXIS_LEFT_TRIGGER > 0 || i->L1_BUTTON)
+        PageLeft();
 
-    if (i->AXIS_RIGHT_TRIGGER > 0 || i->R1_BUTTON) {
-        if (currentPage == currentMAXpage) currentPage = 0;
-        else currentPage++;
-    }
+    if (i->AXIS_RIGHT_TRIGGER > 0 || i->R1_BUTTON)
+        PageRight();
 
     if (i->A_BUTTON) OnSelect();
     if (i->B_BUTTON) OnCancel();
+}
+
+void VideoManager::PageLeft() {
+    if (currentPage == 0) currentPage = currentMAXpage;
+    else currentPage--;
+}
+
+void VideoManager::PageRight() {
+    if (currentPage == currentMAXpage) currentPage = 0;
+    else currentPage++;
+}
+
+void VideoManager::PageUp() {
+    if (ramPage == 0) ramPage = 6;
+    else ramPage -= 2;
+}
+
+void VideoManager::PageDown() {
+    if (ramPage == 6) ramPage = 0;
+    else ramPage += 2;
+}
+
+void VideoManager::OnMouseMove(float x, float y) {
+    selectedItem.col = (int)(x / ((float)dispWidth / 4)); // TODO: convert to actual column value
+    selectedItem.row = (int)(y / ((float)dispHeight / 3)); // TODO: convert to actual row value
+}
+
+void VideoManager::OnMouseScroll(int dir) {
+    const AppState state = proteus->GetState();
+    if (dir == 1) { // scroll up -> page left
+        if (state.currentView == GAME_VIEW && proteus->InDebug())
+            PageUp();
+        else
+            PageLeft();
+    } else if (dir == -1) { // scroll down -> page right
+        if (state.currentView == GAME_VIEW && proteus->InDebug())
+            PageDown();
+        else
+            PageRight();
+    }
 }
 
 void VideoManager::OnSelect() const {

@@ -11,6 +11,7 @@
 #include <memory>
 
 class NES_CORE : public IConsole {
+        friend class NES_DBG;
     public:
         std::shared_ptr<NES_CPU> cpu;
         uint64_t masterClock = 0x00;

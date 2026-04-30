@@ -8,7 +8,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int i, int args[]) {
 #endif
-    Proteus* proteus = new Proteus(0);
+    Proteus* proteus = new Proteus();
 
     proteus->Init();
     proteus->Run();

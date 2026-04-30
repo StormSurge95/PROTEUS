@@ -6,6 +6,14 @@
 #include "./AppState.h"
 #include "./Proteus.h"
 
+enum MouseButton {
+    LEFT = 1,
+    MIDDLE,
+    RIGHT,
+    BTN4,
+    BTN5
+};
+
 struct Inputs {
     bool A_BUTTON = false;          //  0 - SOUTH
     bool B_BUTTON = false;          //  1 - EAST

@@ -1,28 +1,24 @@
 #include "./Proteus.h"
 
-#include "../core/Helpers.h"
-
 #include "../../resources/NES_DB.h"
 #include "../backend/NES/NES_CORE.h"
 
 #include "./AudioManager.h"
 #include "./InputManager.h"
 #include "./VideoManager.h"
+#include "./DebugManager.h"
 
 #include <algorithm>
 #include <fstream>
-//#include <nlohmann/json.hpp>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <SDL3/SDL.h>
 
-Proteus::Proteus(bool d) {
-    debug = d;
-    if (debug) SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
-
-    videoManager = std::make_shared<VideoManager>(this, debug);
-    inputManager = std::make_shared<InputManager>(this, debug);
-    audioManager = std::make_shared<AudioManager>(this, debug);
+Proteus::Proteus() {
+    videoManager = std::make_shared<VideoManager>(this);
+    inputManager = std::make_shared<InputManager>(this);
+    audioManager = std::make_shared<AudioManager>(this);
+    debugManager = std::make_shared<DebugManager>();
 }
 
 Proteus::~Proteus() {
@@ -60,7 +56,7 @@ void Proteus::Run() {
         if (state.currentView == GAME_VIEW) {
             station->clock();
         }
-        videoManager->Render();
+        if (state.currentView != GAME_VIEW || ROMactive) videoManager->Render();
         audioManager->Update(station);
     }
 }
@@ -89,12 +85,33 @@ void Proteus::SetMetadata() {
     );
 }
 
+void Proteus::ToggleDebug() {
+    debug = !debug;
+    if (station != nullptr) {
+        if (debug) {
+            debugManager->SetDebugger(NES, station);
+            debugManager->CycleDebugViews();
+        } else debugManager->CycleDebugViews(false);
+    }
+}
+
 void Proteus::ProcessEvents() {
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_EVENT_KEY_DOWN:
                 if (event.key.key == SDLK_ESCAPE)
                     quit = true;
+                else if (event.key.key == SDLK_F8)
+                    ToggleDebug();
+                else if (event.key.key == SDLK_F5) {
+                    // TODO: backstep/rewind rom
+                } else if (event.key.key == SDLK_F6) {
+                    // TODO: pause/resume rom
+                } else if (event.key.key == SDLK_F7) {
+                    // TODO: fowardstep/fastforward rom
+                } else if (event.key.key == SDLK_TAB) {
+                    debugManager->CycleDebugViews();
+                }
                 break;
             case SDL_EVENT_QUIT:
                 quit = true;
@@ -112,6 +129,18 @@ void Proteus::ProcessEvents() {
                 // TODO: Open overlay menu instead of immediate shutdown
                 if (event.gbutton.button == SDL_GAMEPAD_BUTTON_GUIDE && state.currentView == GAME_VIEW)
                     ShutDownConsole(false);
+                break;
+            case SDL_EVENT_MOUSE_MOTION:
+                videoManager->OnMouseMove(event.motion.x, event.motion.y);
+                break;
+            case SDL_EVENT_MOUSE_WHEEL:
+                videoManager->OnMouseScroll(event.wheel.integer_y);
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                if (static_cast<MouseButton>(event.button.button) == MouseButton::LEFT)
+                    videoManager->OnSelect();
+                else if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT)
+                    videoManager->OnCancel();
                 break;
         }
     }
@@ -223,8 +252,6 @@ std::vector<ROM> Proteus::GetGameList(const std::string& console) {
 }
 
 void Proteus::LaunchGame(int index) {
-    state.currentView = GAME_VIEW;
-
     StartConsole();
 
     ROM game = gameList[GetConsoleFromID(state.selectedConsole)][index];
@@ -236,13 +263,22 @@ void Proteus::LaunchGame(int index) {
 
     videoManager->InitGameTexture(title, station->SCREEN_WIDTH(), station->SCREEN_HEIGHT());
 
-    station->loadCart(path);
+    if (station->loadCart(path)) {
+        state.currentView = GAME_VIEW;
+        ROMactive = true;
+    } else {
+        ROMactive = false;
+    }
 }
 
 void Proteus::StartConsole() {
     switch (state.selectedConsole) {
-        case CONSOLE_ID::NES:
-            station = std::make_shared<NES_CORE>(debug);
+        case NES:
+            station = std::make_shared<NES_CORE>();
+            if (debug) {
+                debugManager->SetDebugger(NES, station);
+                debugManager->CycleDebugViews();
+            }
             return;
         default:
             exit(EXIT_FAILURE);
@@ -254,6 +290,7 @@ void Proteus::ShutDownConsole(bool shutdownApp) {
         exit(EXIT_SUCCESS);
 
     station.reset();
+    ROMactive = false;
     SetState(GAME_LIST, state.selectedConsole);
 }
 
@@ -262,4 +299,24 @@ const uint32_t* Proteus::GetFrameBuffer() {
         return station->getFrameBuffer();
     }
     return nullptr;
+}
+
+std::string Proteus::GetDebugInfoCPU() {
+    if (!ROMactive) return "No ROM active...\n";
+    return debugManager->GetDebugger()->GetStateCPU();
+}
+
+std::string Proteus::GetDebugInfoRAM() {
+    if (!ROMactive) return "No ROM active...\n";
+    return debugManager->GetDebugger()->GetStateRAM();
+}
+
+std::vector<uint32_t> Proteus::GetDebugPaletteColors() {
+    if (!ROMactive) return {};
+    return debugManager->GetDebugger()->GetPaletteColors();
+}
+
+std::vector<uint32_t> Proteus::GetDebugPatternTable(int index) {
+    if (!ROMactive) return {};
+    return debugManager->GetDebugger()->GetPatternTable(index);
 }

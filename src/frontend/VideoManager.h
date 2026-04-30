@@ -25,6 +25,8 @@ class VideoManager {
         void Render();
 
         void OnInput(Inputs* i);
+        void OnMouseMove(float, float);
+        void OnMouseScroll(int);
         void OnSelect() const;
         void OnCancel();
         void OnResize(size_t width, size_t height);
@@ -47,7 +49,7 @@ class VideoManager {
             TTF_Font* XL = nullptr;
 
             Font() = default;
-        } fontR, fontS;
+        } fontR, fontS, fontM;
 
         struct TextCache {
             SDL_Texture* texture = nullptr;
@@ -89,12 +91,25 @@ class VideoManager {
         int gameWidth = 0;
         int gameHeight = 0;
 
+        int ramPage = 0x00;
+
+        void PageUp();
+        void PageDown();
+        void PageLeft();
+        void PageRight();
 
         void RenderConsoleList();
         void RenderGameList(std::string console, unsigned int page);
-        void RenderGameView();
+        void RenderGameView(bool dbg = false);
         void RenderGradientBackground();
         void RenderView();
+
+        void RenderDataCPU(SDL_FRect&);
+        void RenderDataRAM(SDL_FRect&);
+
+        void RenderDataPPU(SDL_FRect&);
+        void RenderPalettes(SDL_FRect&);
+        void RenderPatternTables(SDL_FRect&);
 
         void LoadConsoleCache();
         void LoadGameCache();

@@ -9,6 +9,7 @@
 #include <vector>
 
 class NES_CPU : public IDevice<uint8_t, uint16_t> {
+    friend class NES_DBG;
     public:
         bool pendingIRQ = false;
         bool pendingNMI = false;
@@ -184,7 +185,7 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
             V = (1 << 6),
             N = (1 << 7)
         };
-        enum INSTRUCTION_TYPE {
+        enum INSTRUCTION_TYPE : uint8_t {
             R,
             W,
             M,
@@ -194,11 +195,10 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         struct INST {
             std::string name;
             INSTRUCTION_TYPE type;
+            uint8_t bytes = 0;
 
             void (NES_CPU::* address)(void) = nullptr;
             void (NES_CPU::* operate)(void) = nullptr;
-
-            uint8_t bytes = 0;
         } *currInst = nullptr;
         uint8_t offset = 0x00;
         int8_t soffset = 0;
@@ -284,9 +284,9 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         void JAM();
         #pragma endregion
 
-        INST RST_INST = {"RST",X,nullptr,&NES_CPU::RST,0};
-        INST NMI_INST = {"NMI",X,nullptr,&NES_CPU::NMI,0};
-        INST IRQ_INST = {"IRQ",X,nullptr,&NES_CPU::IRQ,0};
+        INST RST_INST = {"RST",X,0,nullptr,&NES_CPU::RST};
+        INST NMI_INST = {"NMI",X,0,nullptr,&NES_CPU::NMI};
+        INST IRQ_INST = {"IRQ",X,0,nullptr,&NES_CPU::IRQ};
 
         #pragma region Debugging
         bool debug;
@@ -299,7 +299,7 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         };
 
         std::string disassembleInst(uint16_t addr);
-        std::string formatInst();
+        std::string formatInst() const;
         std::string traceStack();
         std::string trace();
         std::string traceInterrupt(INTERRUPT i);

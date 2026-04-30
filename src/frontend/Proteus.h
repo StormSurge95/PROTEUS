@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../core/IConsole.h"
+#include "./DebugManager.h"
 #include "AppState.h"
 
 class AudioManager;
@@ -26,7 +27,7 @@ struct ROM {
 class Proteus
 {
     public:
-        Proteus(bool debug = false);
+        Proteus();
         ~Proteus();
 
         Proteus(const Proteus&) = delete;
@@ -39,6 +40,8 @@ class Proteus
 
         void Run();
 
+        bool InDebug() const { return debug; }
+
         const AppState GetState() const { return state; }
 
         void ProcessInputs();
@@ -50,16 +53,24 @@ class Proteus
 
         void LaunchGame(int index);
 
+        DebugView GetDebugView() { return debugManager->currentView; }
+        std::string GetDebugInfoCPU();
+        std::string GetDebugInfoRAM();
+        std::vector<uint32_t> GetDebugPaletteColors();
+        std::vector<uint32_t> GetDebugPatternTable(int);
+
         std::vector<ROM> GetGameList(const std::string& console);
         const uint32_t* GetFrameBuffer();
     private:
         bool debug = false;
+        bool ROMactive = false;
         std::shared_ptr<IConsole> station = nullptr;
 
         static std::shared_ptr<Proteus> instance;
         std::shared_ptr<AudioManager> audioManager;
         std::shared_ptr<VideoManager> videoManager;
         std::shared_ptr<InputManager> inputManager;
+        std::shared_ptr<DebugManager> debugManager;
 
         std::map<std::string, std::vector<ROM>> gameList;
 
@@ -73,6 +84,8 @@ class Proteus
 
         bool quit = false;
         SDL_Event event = {};
+
+        void ToggleDebug();
 
         void SetMetadata();
 

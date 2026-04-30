@@ -17,6 +17,7 @@ enum NES_BUTTONS {
 };
 
 class NES_CONT : public IODevice<uint8_t> {
+    friend class NES_DBG;
     public:
         bool strobe = false;
         uint8_t cursor = 0x00;

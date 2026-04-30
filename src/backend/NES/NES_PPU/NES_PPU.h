@@ -21,6 +21,7 @@ struct SpriteUnit {
 };
 
 class NES_PPU : public IDevice<uint8_t, uint16_t> {
+    friend class NES_DBG;
     public:
         uint16_t scanline = 0;
         uint16_t cycle = 0;
@@ -76,8 +77,8 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         void writeOAMByte(uint8_t i, uint8_t b);
 
         const uint32_t* getFrameBuffer() const { return frameBuffer.data(); }
-        void connectCART(std::shared_ptr<NES_CART> cart) { this->cart = cart; }
-        void connectCPU(std::shared_ptr<NES_CPU> cpu) { this->cpu = cpu; }
+        void connectCART(std::shared_ptr<NES_CART> c) { cart = c; }
+        void connectCPU(std::shared_ptr<NES_CPU> c) { cpu = c; }
     private:
         bool nmiOutput = false;
         bool nmiOutputPrev = false;
@@ -200,12 +201,12 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
             NMI_ENABLED = 7
         };
         uint8_t getControlData(CONTROL which) const;
-        inline uint16_t getNametableBase() const { return 0x2000 + (this->getControlData(NAMETABLE_BASE) * 0x400); }
-        inline uint8_t getVRAMIncrement() const { return (this->getControlData(VRAM_INCREMENT) ? 32 : 1); }
-        inline uint16_t getSpritePatternTableAddr8x8() const { return (this->getControlData(SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
-        inline uint16_t getBackgroundPatternTableAddr() const { return (this->getControlData(BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
-        inline uint8_t getSpriteHeight() const { return (this->getControlData(SPRITE_SIZE) ? 16 : 8); }
-        inline bool getNMIEnabled() const { return !!(this->getControlData(NMI_ENABLED)); }
+        inline uint16_t getNametableBase() const { return 0x2000 + (getControlData(NAMETABLE_BASE) * 0x400); }
+        inline uint8_t getVRAMIncrement() const { return (getControlData(VRAM_INCREMENT) ? 32 : 1); }
+        inline uint16_t getSpritePatternTableAddr8x8() const { return (getControlData(SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+        inline uint16_t getBackgroundPatternTableAddr() const { return (getControlData(BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+        inline uint8_t getSpriteHeight() const { return (getControlData(SPRITE_SIZE) ? 16 : 8); }
+        inline bool getNMIEnabled() const { return !!(getControlData(NMI_ENABLED)); }
 
         // 76543210
         // bgrSBlLG
@@ -227,12 +228,12 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
             EMPHASIZE_GREEN,
             EMPHASIZE_BLUE
         };
-        uint8_t getMaskData(MASK which) const { return ((this->PPUMASK >> which) & 0x01); }
-        inline bool getGreyscale() const { return !!(this->getMaskData(GREYSCALE)); }
-        inline bool renderBackgroundLeft() const { return !!(this->getMaskData(ENABLE_BACKGROUND_LEFT)); }
-        inline bool renderSpritesLeft() const { return !!(this->getMaskData(ENABLE_SPRITES_LEFT)); }
-        inline bool renderBackground() const { return !!(this->getMaskData(ENABLE_BACKGROUND)); }
-        inline bool renderSprites() const { return !!(this->getMaskData(ENABLE_SPRITES)); }
+        uint8_t getMaskData(MASK which) const { return ((PPUMASK >> which) & 0x01); }
+        inline bool getGreyscale() const { return !!(getMaskData(GREYSCALE)); }
+        inline bool renderBackgroundLeft() const { return !!(getMaskData(ENABLE_BACKGROUND_LEFT)); }
+        inline bool renderSpritesLeft() const { return !!(getMaskData(ENABLE_SPRITES_LEFT)); }
+        inline bool renderBackground() const { return !!(getMaskData(ENABLE_BACKGROUND)); }
+        inline bool renderSprites() const { return !!(getMaskData(ENABLE_SPRITES)); }
         uint32_t applyEmphasis(uint32_t color) const;
 
         // 76543210
@@ -246,14 +247,14 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
             SPRITE_ZERO_HIT,
             VBLANK
         };
-        bool getStatusData(STATUS which) const { return ((this->PPUSTATUS >> which) & 0x01); }
+        bool getStatusData(STATUS which) const { return ((PPUSTATUS >> which) & 0x01); }
         void setStatusData(STATUS which, bool v);
-        inline bool spritesOverflowed() const { return this->getStatusData(SPRITE_OVERFLOW); }
-        inline void spritesOverflowed(bool v) { this->setStatusData(SPRITE_OVERFLOW, v); }
-        inline bool spriteZeroHit() const { return this->getStatusData(SPRITE_ZERO_HIT); }
-        inline void spriteZeroHit(bool v) { this->setStatusData(SPRITE_ZERO_HIT, v); }
-        inline bool inVBlank() const { return this->getStatusData(VBLANK); }
-        inline void inVBlank(bool v) { this->setStatusData(VBLANK, v); }
+        inline bool spritesOverflowed() const { return getStatusData(SPRITE_OVERFLOW); }
+        inline void spritesOverflowed(bool v) { setStatusData(SPRITE_OVERFLOW, v); }
+        inline bool spriteZeroHit() const { return getStatusData(SPRITE_ZERO_HIT); }
+        inline void spriteZeroHit(bool v) { setStatusData(SPRITE_ZERO_HIT, v); }
+        inline bool inVBlank() const { return getStatusData(VBLANK); }
+        inline void inVBlank(bool v) { setStatusData(VBLANK, v); if (!v) nmiRequested = false; }
 
         // REGISTERS
         uint8_t PPUCTRL = 0x00;     // $2000 write
@@ -273,7 +274,7 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         uint8_t x = 0x00;  // fine-x position of current scroll, used during rendering alongside v
         bool w = false; // write-latch for PPUSCROLL/PPUADDR; clears on read of PPUSTATUS
 
-        inline bool renderingEnabled() const { return ((this->renderBackground() || this->renderSprites()) && !this->inVBlank()); }
+        inline bool renderingEnabled() const { return ((renderBackground() || renderSprites()) && !inVBlank()); }
 
         uint8_t nextNametableByte = 0x00;
         uint8_t nextAttributeByte = 0x00;
@@ -286,11 +287,11 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         uint16_t attributeShiftLo = 0x0000;
         uint16_t attributeShiftHi = 0x0000;
 
-        inline void copyHorizontalBits() { if (this->renderingEnabled()) this->v = (this->v & ~0b0000010000011111) | (this->t & 0b0000010000011111); }
-        inline void copyVerticalBits() { if (this->renderingEnabled()) this->v = (this->v & ~0b0111101111100000) | (this->t & 0b0111101111100000); }
-        inline uint8_t coarseX() const { return this->v & 0x1F; }
-        inline uint8_t coarseY() const { return ((this->v & 0x03E0) >> 5); }
-        inline uint8_t fineY() const { return ((this->v & 0x7000) >> 12); }
+        inline void copyHorizontalBits() { if (renderingEnabled()) v = (v & ~0b0000010000011111) | (t & 0b0000010000011111); }
+        inline void copyVerticalBits() { if (renderingEnabled()) v = (v & ~0b0111101111100000) | (t & 0b0111101111100000); }
+        inline uint8_t coarseX() const { return v & 0x1F; }
+        inline uint8_t coarseY() const { return ((v & 0x03E0) >> 5); }
+        inline uint8_t fineY() const { return ((v & 0x7000) >> 12); }
 
         std::array<std::array<uint8_t, 4>, 64> primaryOAM{ 0 };  // max of 64 sprites per game
         std::array<std::array<uint8_t, 4>, 8> secondaryOAM{ 0 }; // max of 8 sprites per scanline
@@ -313,10 +314,10 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
                     return ((attr >> 7) & 0x01);
             }
         }
-        inline uint8_t getSpritePalette(uint8_t attr) { return this->readSpriteAttr(PALETTE, attr); }
-        inline bool spriteAboveBackground(uint8_t attr) { return this->readSpriteAttr(PRIORITY, attr) == 0; }
-        inline bool flipX(uint8_t attr) { return this->readSpriteAttr(XFLIP, attr) > 0; }
-        inline bool flipY(uint8_t attr) { return this->readSpriteAttr(YFLIP, attr) > 0; }
+        inline uint8_t getSpritePalette(uint8_t attr) { return readSpriteAttr(PALETTE, attr); }
+        inline bool spriteAboveBackground(uint8_t attr) { return readSpriteAttr(PRIORITY, attr) == 0; }
+        inline bool flipX(uint8_t attr) { return readSpriteAttr(XFLIP, attr) > 0; }
+        inline bool flipY(uint8_t attr) { return readSpriteAttr(YFLIP, attr) > 0; }
 
         void backgroundPipeline();
 
@@ -412,5 +413,9 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
         */
         void calcSPRPatternAddr(uint8_t index, uint8_t id, uint8_t y);
 
+        /*
+            Performs the necessary calculations to determine the values
+            related to the sprite pixel (if there is one) at the current dot.
+        */
         uint8_t getSpritePixel(uint8_t& pixel, uint8_t& attr);
 };

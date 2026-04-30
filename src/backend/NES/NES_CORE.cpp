@@ -34,7 +34,8 @@ bool NES_CORE::loadCart(const std::string& path) {
         bus->connectCART(cart);
         ppu->connectCART(cart);
 
-        reset();
+        cpu->pc.lo = bus->read(0xFFFC);
+        cpu->pc.hi = bus->read(0xFFFD);
 
         return true;
     }
@@ -52,13 +53,14 @@ void NES_CORE::clock() {
         // clock ppu - 3ppu:1cpu
         ppu->clock();
 
-        cpu->nmiTrigger |= ppu->nmiRequested;
-        ppu->nmiRequested = false;
 
         if (masterClock % 3 == 0) {
             // clock cpu
             if (bus->oamActive) bus->clockOAM(masterClock);
             else {
+                cpu->nmiTrigger |= ppu->nmiRequested;
+                ppu->nmiRequested = false;
+
                 cart->mapper->clock(masterClock);
                 cpu->clock();
                 apu->clock();

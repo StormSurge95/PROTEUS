@@ -30,14 +30,17 @@
     <ClCompile Include="src\backend\NES\NES_CONT.cpp" />
     <ClCompile Include="src\backend\NES\NES_CORE.cpp" />
     <ClCompile Include="src\backend\NES\NES_CPU\NES_CPU.cpp" />
+    <ClCompile Include="src\backend\NES\NES_DBG\NES_DBG.cpp" />
     <ClCompile Include="src\backend\NES\NES_PPU\NES_PPU.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />
+    <ClCompile Include="src\frontend\DebugManager.cpp" />
     <ClCompile Include="src\frontend\InputManager.cpp" />
     <ClCompile Include="src\frontend\Proteus.cpp" />
     <ClCompile Include="src\frontend\VideoManager.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resources\font.mono.h" />
     <ClInclude Include="resources\font.regular.h" />
     <ClInclude Include="resources\font.schatten.h" />
     <ClInclude Include="resources\NES_DB.h" />
@@ -57,15 +60,18 @@
     <ClInclude Include="src\backend\NES\Mappers\M004.h" />
     <ClInclude Include="src\backend\NES\Mappers\Mapper.h" />
     <ClInclude Include="src\backend\NES\NES_CPU\NES_CPU.h" />
+    <ClInclude Include="src\backend\NES\NES_DBG\NES_DBG.h" />
     <ClInclude Include="src\backend\NES\NES_MIRRORS.h" />
     <ClInclude Include="src\backend\NES\NES_CORE.h" />
     <ClInclude Include="src\backend\NES\NES_PPU\NES_PPU.h" />
+    <ClInclude Include="src\core\IDebugger.h" />
     <ClInclude Include="src\core\Helpers.h" />
     <ClInclude Include="src\core\IDataBus.h" />
     <ClInclude Include="src\core\IDevice.h" />
     <ClInclude Include="src\core\IConsole.h" />
     <ClInclude Include="src\frontend\AppState.h" />
     <ClInclude Include="src\frontend\AudioManager.h" />
+    <ClInclude Include="src\frontend\DebugManager.h" />
     <ClInclude Include="src\frontend\InputManager.h" />
     <ClInclude Include="src\frontend\Proteus.h" />
     <ClInclude Include="src\frontend\VideoManager.h" />

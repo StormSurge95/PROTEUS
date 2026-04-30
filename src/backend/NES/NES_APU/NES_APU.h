@@ -10,6 +10,7 @@
 #include "./NES_DMCChannel.h"
 
 class NES_APU : IDevice<uint8_t, uint16_t> {
+    friend class NES_DBG;
     public:
         std::shared_ptr<NES_BUS> bus;
         bool irqRequested = false;

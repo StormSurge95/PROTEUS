@@ -55,6 +55,12 @@
     <Filter Include="Header Files\backend\NES\NES_PPU">
       <UniqueIdentifier>{d32f4699-6507-4563-a59a-8513b9c3c5ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\backend\NES\NES_DBG">
+      <UniqueIdentifier>{cb3d3c52-bece-4ea6-9578-062c63cd7031}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backend\NES\NES_DBG">
+      <UniqueIdentifier>{4a66cbba-bee3-4443-814e-dfb88964d80a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\frontend\Proteus.h">
@@ -150,6 +156,18 @@
     <ClInclude Include="src\backend\NES\NES_APU\NES_DMCChannel.h">
       <Filter>Header Files\backend\NES\NES_APU</Filter>
     </ClInclude>
+    <ClInclude Include="src\backend\NES\NES_DBG\NES_DBG.h">
+      <Filter>Header Files\backend\NES\NES_DBG</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\IDebugger.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\DebugManager.h">
+      <Filter>Header Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\font.mono.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">
@@ -199,6 +217,12 @@
     </ClCompile>
     <ClCompile Include="src\backend\NES\NES_APU\NES_DMCChannel.cpp">
       <Filter>Source Files\backend\NES\NES_APU</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\NES_DBG\NES_DBG.cpp">
+      <Filter>Source Files\backend\NES\NES_DBG</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\DebugManager.cpp">
+      <Filter>Source Files\frontend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

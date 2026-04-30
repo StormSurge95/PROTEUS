@@ -8,8 +8,6 @@
 #include "./Mappers/Mapper.h"
 #include "./NES_MIRRORS.h"
 
-class NES;
-
 struct INESHeader {
     char name[4] = { 0 };
     uint8_t prgChunks = 0;
@@ -23,6 +21,7 @@ struct INESHeader {
 };
 
 class NES_CART : IDevice<uint8_t, uint16_t> {
+    friend class NES_DBG;
     public:
         std::shared_ptr<Mapper> mapper = nullptr;
 

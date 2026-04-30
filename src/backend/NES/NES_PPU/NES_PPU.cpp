@@ -13,7 +13,6 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
                         if (cycle <= 1) suppressVBL = true; else suppressVBL = false;
                     }
                     inVBlank(false);
-                    nmiRequested = false;
                     w = false;
                 }
                 break;

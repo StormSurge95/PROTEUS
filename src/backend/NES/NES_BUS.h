@@ -14,6 +14,7 @@ class NES_CONT;
 class NES_CART;
 
 class NES_BUS : IDataBus<uint8_t, uint16_t> {
+    friend class NES_DBG;
     public:
         bool oamActive = false;
         bool dmcActive = false;
