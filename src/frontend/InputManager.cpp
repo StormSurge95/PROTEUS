@@ -109,6 +109,7 @@ Gamepad::AxisDirection Gamepad::GetDirection(short value) {
 InputManager::InputManager(Proteus* p, bool d) {
     proteus = p;
     debug = d;
+    kbState = std::make_unique<Inputs>();
 }
 
 void InputManager::Init() {
@@ -138,6 +139,7 @@ void InputManager::Deinit() {
 }
 
 void InputManager::Connect(SDL_JoystickID id) {
+    useKB = false;
     for (int i = 0; i < 4; i++) {
         if (gamepads[i] == nullptr) {
             gamepads[i] = new Gamepad(id);
@@ -180,6 +182,7 @@ void InputManager::DisconnectGP0() {
         DisconnectGP1();            // swap GP0 and GP1, then disconnect GP1
     } else { // no other gamepads, safe to disconnect GP0
         delete gamepads[0]; gamepads[0] = nullptr;
+        useKB = true;
     }
 }
 
@@ -210,10 +213,26 @@ void InputManager::DisconnectGP3() {
 }
 
 Inputs* InputManager::ReadInputs(int gp, bool ui) {
+    Inputs* i = nullptr;
     if (ui) gp = 0;
     if (gamepads[gp] != nullptr)
-        return gamepads[gp]->read(ui);
-    else return nullptr;
+        i = gamepads[gp]->read(ui);
+    else if (gp == 0) i = ReadKeyboard(ui);
+    
+    return i;
+}
+
+Inputs* InputManager::ReadKeyboard(bool ui) {
+    const bool* kb = SDL_GetKeyboardState(nullptr);
+    bool btns[15] = {
+        kb[kbs.A_BUTTON], kb[kbs.B_BUTTON], kb[kbs.X_BUTTON], kb[kbs.Y_BUTTON],
+        kb[kbs.SELECT], kb[kbs.MENU], kb[kbs.START],
+        kb[kbs.LEFT_SHOULDER], kb[kbs.RIGHT_SHOULDER],
+        kb[kbs.DPAD_UP], kb[kbs.DPAD_DOWN], kb[kbs.DPAD_LEFT], kb[kbs.DPAD_RIGHT]
+    };
+    kbState->SetButtons(btns);
+
+    return kbState.get();
 }
 
 void InputManager::TranslateInputs(std::shared_ptr<IConsole>& station, CONSOLE_ID console) {

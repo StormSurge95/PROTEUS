@@ -28,7 +28,7 @@ NES_CART::NES_CART(const std::string& path) {
     chrBanks = header.chrChunks;
 
     // get mapper id
-    mapperID = (header.flags7 & 0x0F) | (header.flags6 >> 4);
+    mapperID = (header.flags7 & 0xF0) | (header.flags6 >> 4);
     initMapper(mapperID);
 
     mirror = ((header.flags6 & 0x08) ? FOUR_SCREEN : ((header.flags6 & 0x01) ? VERTICAL : HORIZONTAL));

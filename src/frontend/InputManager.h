@@ -14,6 +14,37 @@ enum MouseButton {
     BTN5
 };
 
+struct KeyBinds {
+    uint32_t A_BUTTON = SDLK_LESS;
+    uint32_t B_BUTTON = SDLK_GREATER;
+    uint32_t X_BUTTON = SDLK_N;
+    uint32_t Y_BUTTON = SDLK_M;
+    uint32_t SELECT = SDLK_BACKSPACE;
+    uint32_t MENU = SDLK_ESCAPE;
+    uint32_t START = SDLK_RETURN;
+    uint32_t LEFT_SHOULDER = SDLK_Q;
+    uint32_t RIGHT_SHOULDER = SDLK_E;
+    uint32_t DPAD_UP = SDLK_W;
+    uint32_t DPAD_DOWN = SDLK_S;
+    uint32_t DPAD_LEFT = SDLK_A;
+    uint32_t DPAD_RIGHT = SDLK_D;
+
+    KeyBinds() = default;
+    void SetA(uint32_t v) { A_BUTTON = v; }
+    void SetB(uint32_t v) { B_BUTTON = v; }
+    void SetX(uint32_t v) { X_BUTTON = v; }
+    void SetY(uint32_t v) { Y_BUTTON = v; }
+    void SetSelect(uint32_t v) { SELECT = v; }
+    void SetMenu(uint32_t v) { MENU = v; }
+    void SetStart(uint32_t v) { START = v; }
+    void SetLeftShoulder(uint32_t v) { LEFT_SHOULDER = v; }
+    void SetRightShoulder(uint32_t v) { RIGHT_SHOULDER = v; }
+    void SetUp(uint32_t v) { DPAD_UP = v; }
+    void SetDown(uint32_t v) { DPAD_DOWN = v; }
+    void SetLeft(uint32_t v) { DPAD_LEFT = v; }
+    void SetRight(uint32_t v) { DPAD_RIGHT = v; }
+};
+
 struct Inputs {
     bool A_BUTTON = false;          //  0 - SOUTH
     bool B_BUTTON = false;          //  1 - EAST
@@ -52,6 +83,24 @@ struct Inputs {
         DPAD_UP(btns[11]), DPAD_DOWN(btns[12]), DPAD_LEFT(btns[13]), DPAD_RIGHT(btns[14]), AXIS_LEFTX(axes[0]),
         AXIS_LEFTY(axes[1]), AXIS_RIGHTX(axes[2]), AXIS_RIGHTY(3), AXIS_LEFT_TRIGGER(axes[4]),
         AXIS_RIGHT_TRIGGER(axes[5]) {}
+
+    void SetButtons(bool vals[15]) {
+        A_BUTTON = vals[0];
+        B_BUTTON = vals[1];
+        X_BUTTON = vals[2];
+        Y_BUTTON = vals[3];
+        SELECT = vals[4];
+        MENU = vals[5];
+        START = vals[6];
+        L3_BUTTON = vals[7];
+        R3_BUTTON = vals[8];
+        L1_BUTTON = vals[9];
+        R1_BUTTON = vals[10];
+        DPAD_UP = vals[11];
+        DPAD_DOWN = vals[12];
+        DPAD_LEFT = vals[13];
+        DPAD_RIGHT = vals[14];
+    }
 
     void copy(const Inputs& other) {
         A_BUTTON = other.A_BUTTON;
@@ -220,6 +269,8 @@ struct Gamepad {
 
 class InputManager {
     public:
+        bool useKB = true;
+
         InputManager(Proteus* proteus, bool debug = false);
         ~InputManager() { Deinit(); }
 
@@ -232,6 +283,7 @@ class InputManager {
         void Deinit();
 
         Inputs* ReadInputs(int gp = 0, bool ui = false);
+        Inputs* ReadKeyboard(bool ui);
         void TranslateInputs(std::shared_ptr<IConsole>& station, CONSOLE_ID console);
 
         void Connect(SDL_JoystickID id);
@@ -244,6 +296,8 @@ class InputManager {
         const int MAX_PLAYERS = 4;
         int numPlayers = 0;
         std::array<Gamepad*, 4> gamepads = { nullptr, nullptr, nullptr, nullptr };
+        KeyBinds kbs;
+        std::unique_ptr<Inputs> kbState;
 
         void DisconnectGP0();
         void DisconnectGP1();

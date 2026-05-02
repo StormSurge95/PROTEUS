@@ -1,6 +1,6 @@
 #include "NES_CPU.h"
 
-#pragma region ACCESS
+// ACCESS
 void NES_CPU::LDA() {
     a = fetched;
     setZN(a);
@@ -22,8 +22,8 @@ void NES_CPU::LDY() {
 void NES_CPU::STY() {
     fetched = y;
 }
-#pragma endregion
-#pragma region TRANSFER
+
+// TRANSFER
 void NES_CPU::TAX() {
     x = a;
     setZN(x);
@@ -44,8 +44,8 @@ void NES_CPU::TYA() {
     setZN(a);
     cycles = 0;
 }
-#pragma endregion
-#pragma region ARITHMETIC
+
+// ARITHMETIC
 void NES_CPU::ADC() {
     uint16_t temp = a + fetched + getFlag(C);
     uint8_t res = temp & 0xFF;
@@ -90,8 +90,8 @@ void NES_CPU::DEY() {
     setZN(y);
     cycles = 0;
 }
-#pragma endregion
-#pragma region SHIFT
+
+// SHIFT
 void NES_CPU::ASL() {
     setFlag(C, ((fetched >> 7) & 0x01) > 0);
     fetched <<= 1;
@@ -114,8 +114,8 @@ void NES_CPU::ROR() {
     fetched = temp;
     setZN(fetched);
 }
-#pragma endregion
-#pragma region BITWISE
+
+// BITWISE
 void NES_CPU::AND() {
     a &= fetched;
     setZN(a);
@@ -134,8 +134,8 @@ void NES_CPU::BIT() {
     fetched &= a;
     setFlag(Z, fetched == 0);
 }
-#pragma endregion
-#pragma region COMPARE
+
+// COMPARE
 void NES_CPU::CMP() {
     setFlag(C, a >= fetched);
     setFlag(Z, a == fetched);
@@ -154,8 +154,8 @@ void NES_CPU::CPY() {
     uint8_t temp = y - fetched;
     setFlag(N, ((temp >> 7) & 0x01) > 0);
 }
-#pragma endregion
-#pragma region BRANCH
+
+// BRANCH
 void NES_CPU::BCC() {
     branch = getFlag(C) == 0;
 }
@@ -180,8 +180,8 @@ void NES_CPU::BVC() {
 void NES_CPU::BVS() {
     branch = getFlag(V) == 1;
 }
-#pragma endregion
-#pragma region JUMP
+
+// JUMP
 void NES_CPU::JMP() {
     pc.hi = absAddr.hi;
     pc.lo = absAddr.lo;
@@ -295,8 +295,8 @@ void NES_CPU::RTI() {
             break;
     }
 }
-#pragma endregion
-#pragma region STACK
+
+// STACK
 void NES_CPU::PHA() {
     switch (cycles) {
         case 2:
@@ -366,8 +366,8 @@ void NES_CPU::TSX() {
     setZN(x);
     cycles = 0;
 }
-#pragma endregion
-#pragma region FLAGS
+
+// FLAGS
 void NES_CPU::CLC() {
     setFlag(C, false);
     cycles = 0;
@@ -396,13 +396,13 @@ void NES_CPU::CLV() {
     setFlag(V, false);
     cycles = 0;
 }
-#pragma endregion
-#pragma region OTHER
+
+// OTHER
 void NES_CPU::NOP() {
     cycles = 0;
 }
-#pragma endregion
-#pragma region UNOFFICIAL
+
+// UNOFFICIAL
 void NES_CPU::JAM() {
     switch (cycles) {
         case 2:
@@ -549,4 +549,3 @@ void NES_CPU::AXS() {
     setFlag(Z, x == 0);
     cycles = 0;
 }
-#pragma endregion

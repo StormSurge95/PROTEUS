@@ -30,8 +30,9 @@ uint8_t NES_BUS::read(uint16_t addr, bool readonly) {
         openBus = (openBus & 0xE0) | (player1->onRead() & 0x1F);
     else if (addr == 0x4017)
         openBus = (openBus & 0xE0) | (player2->onRead() & 0x1F);
-    else if (addr >= 0x4020 && addr <= 0xFFFF)
+    else if (addr >= 0x5FFF && addr <= 0xFFFF)
         openBus = cart->read(addr, readonly);
+    // TODO: Handle PRG-RAM open bus stuff
 
     return openBus;
 }
@@ -55,7 +56,7 @@ void NES_BUS::write(uint16_t addr, uint8_t data) {
             dmaDummy = true;
         }
         apu->write(addr, data);
-    } else if (addr >= 0x4020 && addr <= 0xFFFF)
+    } else if (addr >= 0x5FFF && addr <= 0xFFFF)
         cart->write(addr, data);
 }
 
