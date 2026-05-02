@@ -29,7 +29,9 @@
     <ClCompile Include="src\backend\NES\NES_CART.cpp" />
     <ClCompile Include="src\backend\NES\NES_CONT.cpp" />
     <ClCompile Include="src\backend\NES\NES_CORE.cpp" />
+    <ClCompile Include="src\backend\NES\NES_CPU\NES_ADDR_MODES.cpp" />
     <ClCompile Include="src\backend\NES\NES_CPU\NES_CPU.cpp" />
+    <ClCompile Include="src\backend\NES\NES_CPU\NES_INSTRUCTIONS.cpp" />
     <ClCompile Include="src\backend\NES\NES_DBG\NES_DBG.cpp" />
     <ClCompile Include="src\backend\NES\NES_PPU\NES_PPU.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />

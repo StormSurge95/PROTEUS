@@ -8,7 +8,7 @@
 #include <memory>
 
 NES_BUS::NES_BUS() {
-    ram.fill(0xFF);
+    ram.fill(0x00);
 }
 
 std::string NES_BUS::getPPUstatus() {
@@ -43,17 +43,17 @@ void NES_BUS::write(uint16_t addr, uint8_t data) {
     else if (addr >= 0x2000 && addr <= 0x3FFF)
         ppu->write(addr, data);
     else if (addr == 0x4014) {
-        oamActive = true;
         dmaPage = data;
         dmaAddr = 0x00;
+        oamActive = true;
         dmaDummy = true;
     } else if (addr == 0x4016)
         player1->onWrite(data);
     else if (addr >= 0x4000 && addr <= 0x4017) {
-        if (addr == 0x4015) {
-            dmcActive = true;
-            dmaDummy = true;
-        }
+        //if (addr == 0x4015) {
+        //    dmcActive = true;
+        //    dmaDummy = true;
+        //}
         apu->write(addr, data);
     } else if (addr >= 0x8000 && addr <= 0xFFFF)
         cart->write(addr, data);
@@ -78,7 +78,7 @@ void NES_BUS::clockOAM(uint64_t counter) {
         if (!odd)
             dmaData = read(((uint16_t)dmaPage << 8) | dmaAddr);
         else {
-            uint8_t i = (ppu->read(0x2003, true) + dmaAddr) & 0xFF;
+            uint8_t i = (ppu->getOAMADDR() + dmaAddr) & 0xFF;
             ppu->writeOAMByte(i, dmaData);
 
             dmaAddr++;

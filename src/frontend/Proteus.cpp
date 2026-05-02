@@ -141,6 +141,9 @@ void Proteus::ProcessEvents() {
                     videoManager->OnSelect();
                 else if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT)
                     videoManager->OnCancel();
+                // TODO: Open overlay menu instead of immediate shutdown
+                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE && state.currentView == GAME_VIEW)
+                    ShutDownConsole(false);
                 break;
         }
     }

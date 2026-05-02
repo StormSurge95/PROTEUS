@@ -50,6 +50,7 @@ class NES_PPU : public IDevice<uint8_t, uint16_t> {
             registers that are visible to other devices for reading.
         */
         uint8_t read(uint16_t addr, bool readonly = false) override;
+        uint8_t getOAMADDR() const { return OAMADDR; };
 
         /*
             Performs intra-device write operations on the various

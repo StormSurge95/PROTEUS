@@ -14,21 +14,32 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
                     }
                     inVBlank(false);
                     w = false;
+
+                    nmiOutput = inVBlank() && getNMIEnabled();
                 }
                 break;
             case 0x04:
                 ppuBus = readOAMByte(OAMADDR);
                 break;
             case 0x07: // PPUDATA
-                if ((v & 0x3FFF) >= 0x3F00) {
-                    ppuBus = ppuRead(v & 0x3FFF);
-                    dataBuffer = ppuRead((v & 0x3FFF) - 0x1000);
-                } else {
-                    ppuBus = dataBuffer;
-                    dataBuffer = ppuRead(v & 0x3FFF);
-                }
+                {
+                    uint8_t ret = 0x00;
 
-                v = (v + getVRAMIncrement()) & 0x3FFF;
+                    uint16_t addr = v & 0x3FFF;
+                    uint8_t data = ppuRead(addr);
+
+                    if (addr >= 0x3F00) {
+                        ret = data;
+                        dataBuffer = ppuRead(addr - 0x1000);
+                    } else {
+                        ret = dataBuffer;
+                        dataBuffer = data;
+                    }
+
+                    v = (v + getVRAMIncrement()) & 0x3FFF;
+
+                    ppuBus = ret;
+                }
                 break;
         }
     }
@@ -37,8 +48,8 @@ uint8_t NES_PPU::read(uint16_t addr, bool readonly) {
 }
 
 void NES_PPU::write(uint16_t addr, uint8_t data) {
-    ppuBus = data;
     if (addr >= 0x2000 && addr <= 0x3FFF) {
+        ppuBus = data;
         addr &= 0x0007;
 
         switch (addr) {
@@ -48,9 +59,9 @@ void NES_PPU::write(uint16_t addr, uint8_t data) {
                     PPUCTRL = data;
                     t = ((t & 0xF3FF) | ((uint16_t)(data & 0x03) << 10));
 
-                    nmiOutput = !prevEnabled && inVBlank() && getNMIEnabled() && !suppressNMI;
+                    nmiOutput = inVBlank() && getNMIEnabled();
 
-                    if (nmiOutput && !nmiOutputPrev)
+                    if (!nmiOutputPrev && !prevEnabled && nmiOutput)
                         nmiRequested = true;
 
                     nmiOutputPrev = nmiOutput;

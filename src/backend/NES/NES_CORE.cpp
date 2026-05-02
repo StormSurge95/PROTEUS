@@ -48,19 +48,19 @@ void NES_CORE::reset() {
 }
 
 void NES_CORE::clock() {
-    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::steady_clock::time_point start = std::chrono::high_resolution_clock::now();
     do {
         // clock ppu - 3ppu:1cpu
         ppu->clock();
 
+        cpu->nmiTrigger |= ppu->nmiRequested;
+        ppu->nmiRequested = false;
 
         if (masterClock % 3 == 0) {
             // clock cpu
-            if (bus->oamActive) bus->clockOAM(masterClock);
+            if (bus->oamActive)
+                bus->clockOAM(masterClock);
             else {
-                cpu->nmiTrigger |= ppu->nmiRequested;
-                ppu->nmiRequested = false;
-
                 cart->mapper->clock(masterClock);
                 cpu->clock();
                 apu->clock();
@@ -72,7 +72,7 @@ void NES_CORE::clock() {
 
         masterClock++;
     } while (!ppu->frameComplete);
-    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::steady_clock::time_point end = std::chrono::high_resolution_clock::now();
     double sleep = 15.0 - std::chrono::duration<double, std::milli>(end - start).count();
 
     if (sleep > 0.0) {

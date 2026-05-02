@@ -185,16 +185,8 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
             V = (1 << 6),
             N = (1 << 7)
         };
-        enum INSTRUCTION_TYPE : uint8_t {
-            R,
-            W,
-            M,
-            J,
-            X
-        };
         struct INST {
             std::string name;
-            INSTRUCTION_TYPE type;
             uint8_t bytes = 0;
 
             void (NES_CPU::* address)(void) = nullptr;
@@ -246,19 +238,19 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         }
 
         #pragma region Addressing Modes
-        void ABS();
-        void ABX();
-        void ABY();
-        void ZP0();
-        void ZPX();
-        void ZPY();
-        void ACC();
-        void IMM();
-        void IMP();
-        void IND();
-        void IZX();
-        void IZY();
-        void REL();
+        void ACC_A();
+        void IMM_A();
+        void IMP_A();
+        void IND_J();
+        void REL_B();
+        void ABS_W(); void ABS_R(); void ABS_M(); void ABS_J();
+        void ABX_W(); void ABX_R(); void ABX_M();
+        void ABY_W(); void ABY_R(); void ABY_M();
+        void ZP0_W(); void ZP0_R(); void ZP0_M();
+        void ZPX_W(); void ZPX_R(); void ZPX_M();
+        void ZPY_W(); void ZPY_R(); void ZPY_M();
+        void IZX_W(); void IZX_R(); void IZX_M();
+        void IZY_W(); void IZY_R(); void IZY_M();
         #pragma endregion
         
         #pragma region Official Instructions
@@ -272,7 +264,14 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         void JMP(); void JSR(); void RTS(); void BRK(); void RTI();
         void PHA(); void PLA(); void PHP(); void PLP(); void TXS(); void TSX();
         void CLC(); void SEC(); void CLI(); void SEI(); void CLD(); void SED(); void CLV();
-        void NOP(); void RST(); void IRQ(); void NMI();
+        void NOP();
+        #pragma endregion
+
+        #pragma region Interrupts
+        void RST(); void IRQ(); void NMI();
+        INST RST_INST = { "RST",0,nullptr,&NES_CPU::RST };
+        INST NMI_INST = { "NMI",0,nullptr,&NES_CPU::NMI };
+        INST IRQ_INST = { "IRQ",0,nullptr,&NES_CPU::IRQ };
         #pragma endregion
 
         #pragma region Unofficial Instructions
@@ -283,10 +282,6 @@ class NES_CPU : public IDevice<uint8_t, uint16_t> {
         void ANC(); void ASR(); void ANE(); void LXA(); void AXS();
         void JAM();
         #pragma endregion
-
-        INST RST_INST = {"RST",X,0,nullptr,&NES_CPU::RST};
-        INST NMI_INST = {"NMI",X,0,nullptr,&NES_CPU::NMI};
-        INST IRQ_INST = {"IRQ",X,0,nullptr,&NES_CPU::IRQ};
 
         #pragma region Debugging
         bool debug;

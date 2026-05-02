@@ -224,6 +224,12 @@
     <ClCompile Include="src\frontend\DebugManager.cpp">
       <Filter>Source Files\frontend</Filter>
     </ClCompile>
+    <ClCompile Include="src\backend\NES\NES_CPU\NES_INSTRUCTIONS.cpp">
+      <Filter>Source Files\backend\NES\NES_CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\NES_CPU\NES_ADDR_MODES.cpp">
+      <Filter>Source Files\backend\NES\NES_CPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
