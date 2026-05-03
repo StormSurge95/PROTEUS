@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-
+#include "./FrontendPCH.h"
 #include "./AppState.h"
-#include "../core/IDebugger.h"
-#include "../core/IConsole.h"
+#include "../backend/shared/IDebugger.h"
+#include "../backend/shared/IConsole.h"
 
 enum class DebugView {
     NONE = -1,

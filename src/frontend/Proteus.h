@@ -1,14 +1,9 @@
 #pragma once
 
-#include <filesystem>
-#include <map>
-#include <memory>
-#include <SDL3/SDL.h>
-#include <vector>
-
-#include "../core/IConsole.h"
+#include "./FrontendPCH.h"
+#include "./AppState.h"
 #include "./DebugManager.h"
-#include "AppState.h"
+#include "../backend/SHARED/IConsole.h"
 
 class AudioManager;
 class InputManager;
@@ -56,11 +51,11 @@ class Proteus
         DebugView GetDebugView() { return debugManager->currentView; }
         std::string GetDebugInfoCPU();
         std::string GetDebugInfoRAM();
-        std::vector<uint32_t> GetDebugPaletteColors();
-        std::vector<uint32_t> GetDebugPatternTable(int);
+        std::vector<u32> GetDebugPaletteColors();
+        std::vector<u32> GetDebugPatternTable(int);
 
         std::vector<ROM> GetGameList(const std::string& console);
-        const uint32_t* GetFrameBuffer();
+        const u32* GetFrameBuffer();
     private:
         bool debug = false;
         bool ROMactive = false;

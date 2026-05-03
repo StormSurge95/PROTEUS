@@ -20,20 +20,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_APU.cpp" />
-    <ClCompile Include="src\backend\NES\NES_APU\NES_DMCChannel.cpp" />
-    <ClCompile Include="src\backend\NES\NES_APU\NES_NoiseChannel.cpp" />
-    <ClCompile Include="src\backend\NES\NES_APU\NES_PulseChannel.cpp" />
-    <ClCompile Include="src\backend\NES\NES_APU\NES_TriangleChannel.cpp" />
-    <ClCompile Include="src\backend\NES\NES_BUS.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CART.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CONT.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CORE.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_ADDR_MODES.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_CPU.cpp" />
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_INSTRUCTIONS.cpp" />
-    <ClCompile Include="src\backend\NES\NES_DBG\NES_DBG.cpp" />
-    <ClCompile Include="src\backend\NES\NES_PPU\NES_PPU.cpp" />
+    <ClCompile Include="src\backend\NES\APU.cpp" />
+    <ClCompile Include="src\backend\NES\BUS.cpp" />
+    <ClCompile Include="src\backend\NES\Controller.cpp" />
+    <ClCompile Include="src\backend\NES\CPU.cpp" />
+    <ClCompile Include="src\backend\NES\CPU_AddressModes.cpp" />
+    <ClCompile Include="src\backend\NES\CPU_Instructions.cpp" />
+    <ClCompile Include="src\backend\NES\Debugger.cpp" />
+    <ClCompile Include="src\backend\NES\DMC_Channel.cpp" />
+    <ClCompile Include="src\backend\NES\Gamepak.cpp" />
+    <ClCompile Include="src\backend\NES\NES.cpp" />
+    <ClCompile Include="src\backend\NES\NoiseChannel.cpp" />
+    <ClCompile Include="src\backend\NES\PPU.cpp" />
+    <ClCompile Include="src\backend\NES\PPU_BG.cpp" />
+    <ClCompile Include="src\backend\NES\PPU_Sprites.cpp" />
+    <ClCompile Include="src\backend\NES\PulseChannel.cpp" />
+    <ClCompile Include="src\backend\NES\TriangleChannel.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />
     <ClCompile Include="src\frontend\DebugManager.cpp" />
     <ClCompile Include="src\frontend\InputManager.cpp" />
@@ -46,37 +48,40 @@
     <ClInclude Include="resources\font.regular.h" />
     <ClInclude Include="resources\font.schatten.h" />
     <ClInclude Include="resources\NES_DB.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_APU.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_DMCChannel.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_LengthCounter.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_NoiseChannel.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_PulseChannel.h" />
-    <ClInclude Include="src\backend\NES\NES_APU\NES_TriangleChannel.h" />
-    <ClInclude Include="src\backend\NES\NES_BUS.h" />
-    <ClInclude Include="src\backend\NES\NES_CART.h" />
-    <ClInclude Include="src\backend\NES\NES_CONT.h" />
+    <ClInclude Include="src\backend\BackendPCH.h" />
+    <ClInclude Include="src\backend\NES\APU.h" />
+    <ClInclude Include="src\backend\NES\BUS.h" />
+    <ClInclude Include="src\backend\NES\Controller.h" />
+    <ClInclude Include="src\backend\NES\CPU.h" />
+    <ClInclude Include="src\backend\NES\Debugger.h" />
+    <ClInclude Include="src\backend\NES\DMC_Channel.h" />
+    <ClInclude Include="src\backend\NES\Gamepak.h" />
     <ClInclude Include="src\backend\NES\Mappers\M000.h" />
     <ClInclude Include="src\backend\NES\Mappers\M001.h" />
     <ClInclude Include="src\backend\NES\Mappers\M002.h" />
     <ClInclude Include="src\backend\NES\Mappers\M003.h" />
     <ClInclude Include="src\backend\NES\Mappers\M004.h" />
     <ClInclude Include="src\backend\NES\Mappers\Mapper.h" />
-    <ClInclude Include="src\backend\NES\NES_CPU\NES_CPU.h" />
-    <ClInclude Include="src\backend\NES\NES_DBG\NES_DBG.h" />
-    <ClInclude Include="src\backend\NES\NES_MIRRORS.h" />
-    <ClInclude Include="src\backend\NES\NES_CORE.h" />
-    <ClInclude Include="src\backend\NES\NES_PPU\NES_PPU.h" />
-    <ClInclude Include="src\core\IDebugger.h" />
-    <ClInclude Include="src\core\Helpers.h" />
-    <ClInclude Include="src\core\IDataBus.h" />
-    <ClInclude Include="src\core\IDevice.h" />
-    <ClInclude Include="src\core\IConsole.h" />
+    <ClInclude Include="src\backend\NES\NES.h" />
+    <ClInclude Include="src\backend\NES\Constants.h" />
+    <ClInclude Include="src\backend\NES\NES_PCH.h" />
+    <ClInclude Include="src\backend\NES\Types.h" />
+    <ClInclude Include="src\backend\NES\NoiseChannel.h" />
+    <ClInclude Include="src\backend\NES\PPU.h" />
+    <ClInclude Include="src\backend\NES\PulseChannel.h" />
+    <ClInclude Include="src\backend\NES\TriangleChannel.h" />
+    <ClInclude Include="src\backend\SHARED\IConsole.h" />
+    <ClInclude Include="src\backend\SHARED\IDebugger.h" />
+    <ClInclude Include="src\backend\SHARED\IDevice.h" />
     <ClInclude Include="src\frontend\AppState.h" />
     <ClInclude Include="src\frontend\AudioManager.h" />
     <ClInclude Include="src\frontend\DebugManager.h" />
+    <ClInclude Include="src\frontend\FrontendPCH.h" />
     <ClInclude Include="src\frontend\InputManager.h" />
     <ClInclude Include="src\frontend\Proteus.h" />
     <ClInclude Include="src\frontend\VideoManager.h" />
+    <ClInclude Include="src\shared\Utilities.h" />
+    <ClInclude Include="src\shared\SharedPCH.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -166,6 +171,11 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\SDL3_ttf\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>SharedPCH.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -200,6 +210,11 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\SDL3_ttf\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>SharedPCH.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

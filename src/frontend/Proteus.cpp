@@ -1,7 +1,9 @@
 #include "./Proteus.h"
 
+#include "FrontendPCH.h"
+
 #include "../../resources/NES_DB.h"
-#include "../backend/NES/NES_CORE.h"
+#include "../backend/NES/NES.h"
 
 #include "./AudioManager.h"
 #include "./InputManager.h"
@@ -89,7 +91,7 @@ void Proteus::ToggleDebug() {
     debug = !debug;
     if (station != nullptr) {
         if (debug) {
-            debugManager->SetDebugger(NES, station);
+            debugManager->SetDebugger(CONSOLE_ID::NES, station);
             debugManager->CycleDebugViews();
         } else debugManager->CycleDebugViews(false);
     }
@@ -199,32 +201,32 @@ std::string Proteus::MD5(const std::string& filepath) {
 }
 
 void Proteus::IdentifyROMs() {
-    const std::filesystem::path base = "C:/ROMS/";
-    if (!std::filesystem::exists(base)) std::filesystem::create_directory(base);
+    const path base = "C:/ROMS/";
+    if (!exists(base)) create_directory(base);
 
-    for (const std::pair<std::string, std::string>& pair : CONSOLES) {
-        if (pair.first != "NES") continue;
-        std::filesystem::path path = base.string() + pair.first + "/";
-        if (!std::filesystem::exists(path)) {
-            std::filesystem::create_directory(path);
+    for (const pair<string, string>& p : CONSOLES) {
+        if (p.first != "NES") continue;
+        path path = base.string() + p.first + "/";
+        if (!exists(path)) {
+            create_directory(path);
             continue;
         }
-        std::vector<ROM> games = {};
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        vector<ROM> games = {};
+        for (const auto& entry : directory_iterator(path)) {
             // get text data
-            std::string file = entry.path().string();
-            std::string filename = file.substr(file.find_last_of('/') + 1);
+            string file = entry.path().string();
+            string filename = file.substr(file.find_last_of('/') + 1);
             
             // get hash
-            std::string hash = MD5(file);
+            string hash = MD5(file);
 
-            std::string gameName = Lookup(pair.first, hash);
+            string gameName = Lookup(p.first, hash);
             if (gameName == "Unknown") gameName = filename.substr(0, filename.length() - 4);
             games.push_back({ .gameName = gameName, .path = file });
         }
 
-        std::pair<std::string, std::vector<ROM>> p(pair.first, games);
-        gameList.insert(p);
+        pair<string, vector<ROM>> p2(p.first, games);
+        gameList.insert(p2);
     }
 }
 
@@ -276,10 +278,10 @@ void Proteus::LaunchGame(int index) {
 
 void Proteus::StartConsole() {
     switch (state.selectedConsole) {
-        case NES:
-            station = std::make_shared<NES_CORE>();
+        case CONSOLE_ID::NES:
+            station = std::make_shared<NES_NS::NES>();
             if (debug) {
-                debugManager->SetDebugger(NES, station);
+                debugManager->SetDebugger(CONSOLE_ID::NES, station);
                 debugManager->CycleDebugViews();
             }
             return;
@@ -297,7 +299,7 @@ void Proteus::ShutDownConsole(bool shutdownApp) {
     SetState(GAME_LIST, state.selectedConsole);
 }
 
-const uint32_t* Proteus::GetFrameBuffer() {
+const u32* Proteus::GetFrameBuffer() {
     if (station.get() != nullptr) {
         return station->getFrameBuffer();
     }
@@ -314,12 +316,12 @@ std::string Proteus::GetDebugInfoRAM() {
     return debugManager->GetDebugger()->GetStateRAM();
 }
 
-std::vector<uint32_t> Proteus::GetDebugPaletteColors() {
+std::vector<u32> Proteus::GetDebugPaletteColors() {
     if (!ROMactive) return {};
     return debugManager->GetDebugger()->GetPaletteColors();
 }
 
-std::vector<uint32_t> Proteus::GetDebugPatternTable(int index) {
+std::vector<u32> Proteus::GetDebugPatternTable(int index) {
     if (!ROMactive) return {};
     return debugManager->GetDebugger()->GetPatternTable(index);
 }

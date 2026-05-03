@@ -1,8 +1,6 @@
 #pragma once
 
-#include <array>
-#include <SDL3/SDL.h>
-
+#include "./FrontendPCH.h"
 #include "./AppState.h"
 #include "./Proteus.h"
 
@@ -15,34 +13,34 @@ enum MouseButton {
 };
 
 struct KeyBinds {
-    uint32_t A_BUTTON = SDLK_LESS;
-    uint32_t B_BUTTON = SDLK_GREATER;
-    uint32_t X_BUTTON = SDLK_N;
-    uint32_t Y_BUTTON = SDLK_M;
-    uint32_t SELECT = SDLK_BACKSPACE;
-    uint32_t MENU = SDLK_ESCAPE;
-    uint32_t START = SDLK_RETURN;
-    uint32_t LEFT_SHOULDER = SDLK_Q;
-    uint32_t RIGHT_SHOULDER = SDLK_E;
-    uint32_t DPAD_UP = SDLK_W;
-    uint32_t DPAD_DOWN = SDLK_S;
-    uint32_t DPAD_LEFT = SDLK_A;
-    uint32_t DPAD_RIGHT = SDLK_D;
+    u32 A_BUTTON = SDLK_LESS;
+    u32 B_BUTTON = SDLK_GREATER;
+    u32 X_BUTTON = SDLK_N;
+    u32 Y_BUTTON = SDLK_M;
+    u32 SELECT = SDLK_BACKSPACE;
+    u32 MENU = SDLK_ESCAPE;
+    u32 START = SDLK_RETURN;
+    u32 LEFT_SHOULDER = SDLK_Q;
+    u32 RIGHT_SHOULDER = SDLK_E;
+    u32 DPAD_UP = SDLK_W;
+    u32 DPAD_DOWN = SDLK_S;
+    u32 DPAD_LEFT = SDLK_A;
+    u32 DPAD_RIGHT = SDLK_D;
 
     KeyBinds() = default;
-    void SetA(uint32_t v) { A_BUTTON = v; }
-    void SetB(uint32_t v) { B_BUTTON = v; }
-    void SetX(uint32_t v) { X_BUTTON = v; }
-    void SetY(uint32_t v) { Y_BUTTON = v; }
-    void SetSelect(uint32_t v) { SELECT = v; }
-    void SetMenu(uint32_t v) { MENU = v; }
-    void SetStart(uint32_t v) { START = v; }
-    void SetLeftShoulder(uint32_t v) { LEFT_SHOULDER = v; }
-    void SetRightShoulder(uint32_t v) { RIGHT_SHOULDER = v; }
-    void SetUp(uint32_t v) { DPAD_UP = v; }
-    void SetDown(uint32_t v) { DPAD_DOWN = v; }
-    void SetLeft(uint32_t v) { DPAD_LEFT = v; }
-    void SetRight(uint32_t v) { DPAD_RIGHT = v; }
+    void SetA(u32 v) { A_BUTTON = v; }
+    void SetB(u32 v) { B_BUTTON = v; }
+    void SetX(u32 v) { X_BUTTON = v; }
+    void SetY(u32 v) { Y_BUTTON = v; }
+    void SetSelect(u32 v) { SELECT = v; }
+    void SetMenu(u32 v) { MENU = v; }
+    void SetStart(u32 v) { START = v; }
+    void SetLeftShoulder(u32 v) { LEFT_SHOULDER = v; }
+    void SetRightShoulder(u32 v) { RIGHT_SHOULDER = v; }
+    void SetUp(u32 v) { DPAD_UP = v; }
+    void SetDown(u32 v) { DPAD_DOWN = v; }
+    void SetLeft(u32 v) { DPAD_LEFT = v; }
+    void SetRight(u32 v) { DPAD_RIGHT = v; }
 };
 
 struct Inputs {
@@ -61,12 +59,12 @@ struct Inputs {
     bool DPAD_DOWN = false;         // 12
     bool DPAD_LEFT = false;         // 13
     bool DPAD_RIGHT = false;        // 14
-    int16_t AXIS_LEFTX = 0;
-    int16_t AXIS_LEFTY = 0;
-    int16_t AXIS_RIGHTX = 0;
-    int16_t AXIS_RIGHTY = 0;
-    int16_t AXIS_LEFT_TRIGGER = 0;
-    int16_t AXIS_RIGHT_TRIGGER = 0;
+    s16 AXIS_LEFTX = 0;
+    s16 AXIS_LEFTY = 0;
+    s16 AXIS_RIGHTX = 0;
+    s16 AXIS_RIGHTY = 0;
+    s16 AXIS_LEFT_TRIGGER = 0;
+    s16 AXIS_RIGHT_TRIGGER = 0;
 
     Inputs() = default;
     Inputs(bool a, bool b, bool x, bool y, bool se, bool m, bool st,

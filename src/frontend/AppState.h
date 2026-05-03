@@ -1,7 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
+#include "./FrontendPCH.h"
 
 enum AppView : unsigned int {
     CONSOLE_SELECT,

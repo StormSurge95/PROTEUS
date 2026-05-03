@@ -1,0 +1,98 @@
+#include "./NES.h"
+#include "./Controller.h"
+#include "./APU.h"
+
+using namespace NES_NS;
+
+NES::NES() {
+    bus = make_shared<BUS>();
+    cpu = make_shared<CPU>();
+    ppu = make_shared<PPU>();
+    apu = make_shared<APU>();
+    player1 = make_shared<Controller>(1);
+    player2 = make_shared<Controller>(2);
+    player1->other = player2;
+    player2->other = player1;
+
+    cpu->connectBUS(bus);
+    bus->connectCPU(cpu);
+
+    bus->connectPPU(ppu);
+    ppu->connectCPU(cpu);
+
+    bus->connectAPU(apu);
+    apu->connectBUS(bus);
+
+    bus->connectCONT(player1, 1);
+    bus->connectCONT(player2, 2);
+}
+
+bool NES::loadCart(const string& path) {
+    cart = make_shared<Gamepak>(path);
+
+    if (cart->isValid()) {
+        bus->connectCART(cart);
+        ppu->connectCART(cart);
+
+        cpu->start();
+
+        return true;
+    }
+    return false;
+}
+
+void NES::reset() {
+    cpu->reset();
+    ppu->reset();
+}
+
+void NES::clock() {
+    steady_clock::time_point start = high_resolution_clock::now();
+    do {
+        // clock ppu - 3ppu:1cpu
+        ppu->clock();
+
+        cpu->nmiTrigger |= ppu->nmiRequested;
+        ppu->nmiRequested = false;
+
+        if (masterClock % 3 == 0) {
+            // clock cpu
+            if (bus->oamActive)
+                bus->clockOAM(masterClock);
+            else {
+                cart->mapper->clock(masterClock);
+                cpu->clock();
+                apu->clock();
+
+                cpu->irqTrigger |= apu->irqRequested;
+                apu->irqRequested = false;
+            }
+        }
+
+        masterClock++;
+    } while (!ppu->frameComplete);
+    steady_clock::time_point end = high_resolution_clock::now();
+    double sleep = 15.0 - duration<double, milli>(end - start).count();
+
+    if (sleep > 0.0) {
+        sleep_for(duration<double, milli>(sleep));
+    }
+
+    ppu->frameComplete = false;
+}
+
+void NES::update(u8 player, bool* buttons) {
+    if (player == 0) {
+        for (int x = 0; x < 8; x++) {
+            player1->update(static_cast<BUTTONS>(x), buttons[x]);
+        }
+    } else if (player == 1) {
+        for (int x = 0; x < 8; x++) {
+            player2->update(static_cast<BUTTONS>(x), buttons[x]);
+        }
+    }
+}
+
+void NES::collectAudio(vector<float>& samples) {
+    apu->collectSamples(samples);
+}

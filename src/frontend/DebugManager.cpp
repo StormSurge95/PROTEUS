@@ -1,12 +1,13 @@
 #include "./DebugManager.h"
 
-#include "../backend/NES/NES_DBG/NES_DBG.h"
+#include "../backend/NES/NES.h"
+#include "../backend/NES/Debugger.h"
 
 void DebugManager::SetDebugger(CONSOLE_ID dbgType, std::shared_ptr<IConsole> station) {
     switch (dbgType) {
         default:
-        case NES:
-            activeDebugger = std::make_shared<NES_DBG>(std::dynamic_pointer_cast<NES_CORE>(station));
+        case CONSOLE_ID::NES:
+            activeDebugger = make_shared<NES_NS::Debugger>(std::dynamic_pointer_cast<NES_NS::NES>(station));
             return;
     }
 }

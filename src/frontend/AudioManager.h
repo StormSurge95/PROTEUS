@@ -1,7 +1,6 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
+#include "./FrontendPCH.h"
 #include "./Proteus.h"
 
 class AudioManager {

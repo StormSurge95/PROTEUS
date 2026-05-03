@@ -26,7 +26,7 @@ Inputs* Gamepad::read(bool ui) {
 
 void Gamepad::processButton(int btn, bool ui) {
     bool pressed = SDL_GetGamepadButton(gamepad, (SDL_GamepadButton)btn);
-    uint64_t now = SDL_GetTicks();
+    u64 now = SDL_GetTicks();
 
     if (ui) {
         if (pressed) {
@@ -65,7 +65,7 @@ void Gamepad::processAxis(int index, bool ui) {
     int axis = index - 15;
     short dir = SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)axis);
     if (ui) dir = GetDirection(dir);
-    uint64_t now = SDL_GetTicks();
+    u64 now = SDL_GetTicks();
 
     if (ui) {
         if (dir != INACTIVE) {

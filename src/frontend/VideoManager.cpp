@@ -294,15 +294,15 @@ void VideoManager::RenderGameView(bool dbg) {
         dest.y = (dispHeight - dest.h) / 2.0f;
     }
 
-    const uint32_t* buffer = proteus->GetFrameBuffer();
+    const u32* buffer = proteus->GetFrameBuffer();
     void* pixels;
     int pitch;
     SDL_LockTexture(gameTexture, NULL, &pixels, &pitch);
     for (int y = 0; y < gameHeight; y++) {
         memcpy(
-            (uint8_t*)pixels + y * pitch,
-            (uint8_t*)buffer + y * (gameWidth * sizeof(uint32_t)),
-            gameWidth * sizeof(uint32_t)
+            (u8*)pixels + y * pitch,
+            (u8*)buffer + y * (gameWidth * sizeof(u32)),
+            gameWidth * sizeof(u32)
         );
     }
     SDL_UnlockTexture(gameTexture);
@@ -330,7 +330,7 @@ void VideoManager::RenderDataCPU(SDL_FRect& dest) {
     // render cpu data text to screen
     std::istringstream cpuData(proteus->GetDebugInfoCPU());
     std::string line;
-    uint8_t lineNum = 0;
+    u8 lineNum = 0;
     SDL_FRect lineDest = {};
     lineDest.x = cpuDest.x;
     lineDest.y = cpuDest.y;
@@ -366,8 +366,8 @@ void VideoManager::RenderDataRAM(SDL_FRect& dest) {
     SDL_RenderRect(renderer, &dest);
     std::istringstream ramData(proteus->GetDebugInfoRAM());
     std::string line;
-    uint8_t lineNum = 0;
-    uint32_t lineStart = ramPage * 16;
+    u8 lineNum = 0;
+    u32 lineStart = ramPage * 16;
     SDL_FRect lineDest = {};
     lineDest.x = dest.x;
     lineDest.y = dest.y;
@@ -375,7 +375,7 @@ void VideoManager::RenderDataRAM(SDL_FRect& dest) {
     std::string head = "";
     SDL_Surface* s;
     SDL_Texture* t;
-    uint32_t x = 0;
+    u32 x = 0;
     while (x < lineStart) {
         std::getline(ramData, line);
         x++;
@@ -424,15 +424,15 @@ void VideoManager::RenderDataPPU(SDL_FRect& dest) {
 }
 
 void VideoManager::RenderPalettes(SDL_FRect& dest) {
-    std::vector<uint32_t> colors = proteus->GetDebugPaletteColors();
+    std::vector<u32> colors = proteus->GetDebugPaletteColors();
     float w = dest.w / 17;
     float h = w;
     for (int i = 0; i < colors.size() && i < 16; ++i) {
         SDL_FRect swatch = { dest.x + i * (w + 4), dest.y, w, h };
-        uint32_t color = colors[i];
-        uint8_t b = (color >> 16) & 0xFF;
-        uint8_t g = (color >> 8) & 0xFF;
-        uint8_t r = color & 0xFF;
+        u32 color = colors[i];
+        u8 b = (color >> 16) & 0xFF;
+        u8 g = (color >> 8) & 0xFF;
+        u8 r = color & 0xFF;
         SDL_SetRenderDrawColor(renderer, r, g, b, 255);
         SDL_RenderFillRect(renderer, &swatch);
     }
@@ -440,9 +440,9 @@ void VideoManager::RenderPalettes(SDL_FRect& dest) {
 
 void VideoManager::RenderPatternTables(SDL_FRect& dest) {
     SDL_FRect ptDest = { dest.x, dest.y, dest.h, dest.h };
-    for (uint8_t i = 0; i < 2; i++) {
-        std::vector<uint32_t> pixels = proteus->GetDebugPatternTable(i);
-        SDL_Surface* s = SDL_CreateSurfaceFrom(128, 128, SDL_PIXELFORMAT_ABGR8888, pixels.data(), 128 * sizeof(uint32_t));
+    for (u8 i = 0; i < 2; i++) {
+        std::vector<u32> pixels = proteus->GetDebugPatternTable(i);
+        SDL_Surface* s = SDL_CreateSurfaceFrom(128, 128, SDL_PIXELFORMAT_ABGR8888, pixels.data(), 128 * sizeof(u32));
         SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
         SDL_DestroySurface(s);
         SDL_RenderTexture(renderer, t, nullptr, &ptDest);

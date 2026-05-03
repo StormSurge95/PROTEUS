@@ -19,9 +19,6 @@
     <Filter Include="Source Files\frontend">
       <UniqueIdentifier>{c623cc32-b275-4b9c-bbca-f1070b02100b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\core">
-      <UniqueIdentifier>{eae356c3-39f0-4f7e-bcdc-1efa2215e1e7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\backend">
       <UniqueIdentifier>{2d4422cf-e4a1-44e6-b9bf-0497338588b7}</UniqueIdentifier>
     </Filter>
@@ -37,46 +34,19 @@
     <Filter Include="Header Files\backend\NES\Mappers">
       <UniqueIdentifier>{734f7581-3be5-4f5b-abd5-3a1d2c5ef2ae}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\backend\NES\NES_APU">
-      <UniqueIdentifier>{91737a2b-990f-4ea4-bac2-bd67fd497983}</UniqueIdentifier>
+    <Filter Include="Header Files\backend\SHARED">
+      <UniqueIdentifier>{7d9621a5-a205-48e1-bc01-55df3985adc8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\backend\NES\NES_CPU">
-      <UniqueIdentifier>{e1338323-498e-4c1a-ae18-21c062b966d4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\backend\NES\NES_PPU">
-      <UniqueIdentifier>{e7b94a0a-2521-41d3-8596-2df20fae20d0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\backend\NES\NES_APU">
-      <UniqueIdentifier>{4b52772e-b25a-46bc-b012-32c00c6e4dcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\backend\NES\NES_CPU">
-      <UniqueIdentifier>{4426a708-bd43-4c52-a8f7-67a3410aef68}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\backend\NES\NES_PPU">
-      <UniqueIdentifier>{d32f4699-6507-4563-a59a-8513b9c3c5ed}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\backend\NES\NES_DBG">
-      <UniqueIdentifier>{cb3d3c52-bece-4ea6-9578-062c63cd7031}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\backend\NES\NES_DBG">
-      <UniqueIdentifier>{4a66cbba-bee3-4443-814e-dfb88964d80a}</UniqueIdentifier>
+    <Filter Include="Header Files\shared">
+      <UniqueIdentifier>{51de0b2b-d4c4-4b3f-b3bf-f9621a1a302c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\frontend\Proteus.h">
       <Filter>Header Files\frontend</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\IConsole.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\AppState.h">
       <Filter>Header Files\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\IDataBus.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\IDevice.h">
-      <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="resources\font.regular.h">
       <Filter>Resource Files</Filter>
@@ -87,23 +57,8 @@
     <ClInclude Include="resources\NES_DB.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_CORE.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_CART.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_BUS.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
     <ClInclude Include="src\backend\NES\Mappers\Mapper.h">
       <Filter>Header Files\backend\NES\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_MIRRORS.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_CONT.h">
-      <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\NES\Mappers\M000.h">
       <Filter>Header Files\backend\NES\Mappers</Filter>
@@ -120,9 +75,6 @@
     <ClInclude Include="src\backend\NES\Mappers\M004.h">
       <Filter>Header Files\backend\NES\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Helpers.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\AudioManager.h">
       <Filter>Header Files\frontend</Filter>
     </ClInclude>
@@ -132,41 +84,77 @@
     <ClInclude Include="src\frontend\VideoManager.h">
       <Filter>Header Files\frontend</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_PPU\NES_PPU.h">
-      <Filter>Header Files\backend\NES\NES_PPU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_CPU\NES_CPU.h">
-      <Filter>Header Files\backend\NES\NES_CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_APU.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_PulseChannel.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_TriangleChannel.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_LengthCounter.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_NoiseChannel.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_APU\NES_DMCChannel.h">
-      <Filter>Header Files\backend\NES\NES_APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\NES_DBG\NES_DBG.h">
-      <Filter>Header Files\backend\NES\NES_DBG</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\IDebugger.h">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\DebugManager.h">
       <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="resources\font.mono.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\SHARED\IConsole.h">
+      <Filter>Header Files\backend\SHARED</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\SHARED\IDebugger.h">
+      <Filter>Header Files\backend\SHARED</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\SHARED\IDevice.h">
+      <Filter>Header Files\backend\SHARED</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared\Utilities.h">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared\SharedPCH.h">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\BackendPCH.h">
+      <Filter>Header Files\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\FrontendPCH.h">
+      <Filter>Header Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\APU.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\BUS.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Controller.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\CPU.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Debugger.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\DMC_Channel.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Gamepak.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\NES.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Constants.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\NES_PCH.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Types.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\NoiseChannel.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\PPU.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\PulseChannel.h">
+      <Filter>Header Files\backend\NES</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\TriangleChannel.h">
+      <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -175,18 +163,6 @@
     </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CORE.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CART.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_BUS.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CONT.cpp">
-      <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
     <ClCompile Include="src\frontend\InputManager.cpp">
       <Filter>Source Files\frontend</Filter>
@@ -197,38 +173,56 @@
     <ClCompile Include="src\frontend\AudioManager.cpp">
       <Filter>Source Files\frontend</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_APU.cpp">
-      <Filter>Source Files\backend\NES\NES_APU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_CPU.cpp">
-      <Filter>Source Files\backend\NES\NES_CPU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_PPU\NES_PPU.cpp">
-      <Filter>Source Files\backend\NES\NES_PPU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_PulseChannel.cpp">
-      <Filter>Source Files\backend\NES\NES_APU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_TriangleChannel.cpp">
-      <Filter>Source Files\backend\NES\NES_APU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_NoiseChannel.cpp">
-      <Filter>Source Files\backend\NES\NES_APU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_APU\NES_DMCChannel.cpp">
-      <Filter>Source Files\backend\NES\NES_APU</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_DBG\NES_DBG.cpp">
-      <Filter>Source Files\backend\NES\NES_DBG</Filter>
-    </ClCompile>
     <ClCompile Include="src\frontend\DebugManager.cpp">
       <Filter>Source Files\frontend</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_INSTRUCTIONS.cpp">
-      <Filter>Source Files\backend\NES\NES_CPU</Filter>
+    <ClCompile Include="src\backend\NES\APU.cpp">
+      <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend\NES\NES_CPU\NES_ADDR_MODES.cpp">
-      <Filter>Source Files\backend\NES\NES_CPU</Filter>
+    <ClCompile Include="src\backend\NES\BUS.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Controller.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\CPU.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\CPU_AddressModes.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\CPU_Instructions.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Debugger.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\DMC_Channel.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Gamepak.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\NES.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\NoiseChannel.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\PPU.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\PPU_BG.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\PPU_Sprites.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\PulseChannel.cpp">
+      <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\TriangleChannel.cpp">
+      <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
