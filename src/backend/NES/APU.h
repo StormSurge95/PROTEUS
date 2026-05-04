@@ -1,10 +1,6 @@
 #pragma once
 
 #include "./NES_PCH.h"
-#include "./PulseChannel.h"
-#include "./TriangleChannel.h"
-#include "./NoiseChannel.h"
-#include "./DMC_Channel.h"
 
 namespace NES_NS {
     class APU : IDevice<u8, u16> {
@@ -14,7 +10,7 @@ namespace NES_NS {
             bool irqRequested = false;
 
             APU();
-            ~APU() = default;
+            ~APU();
 
             inline void connectBUS(sptr<BUS> b) { bus = b; }
 

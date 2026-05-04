@@ -36,12 +36,12 @@ namespace NES_NS {
         428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54
     };
 
-    static u32 GetClockRate(SYSTEM_TYPE system) {
+    static u32 GetClockRate(REGION system) {
         switch (system) {
             default:
-            case SYSTEM_TYPE::NTSC: return CLOCK_RATE_NTSC;
-            case SYSTEM_TYPE::PAL: return CLOCK_RATE_PAL;
-            case SYSTEM_TYPE::DENDY: return CLOCK_RATE_DENDY;
+            case REGION::NTSC: return CLOCK_RATE_NTSC;
+            case REGION::PAL: return CLOCK_RATE_PAL;
+            case REGION::DENDY: return CLOCK_RATE_DENDY;
         }
     }
 }

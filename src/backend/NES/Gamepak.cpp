@@ -25,16 +25,16 @@ Gamepak::Gamepak(const string& path) {
         header.name[2] != 'S' || header.name[3] != 0x1A) return;
 
     // get number of PRG/CHR banks
-    prgBanks = header.prgChunks;
-    chrBanks = header.chrChunks;
+    prgBanks = header.byte4;
+    chrBanks = header.byte5;
 
     // get mapper id
-    mapperID = (header.flags7 & 0xF0) | (header.flags6 >> 4);
+    mapperID = (header.byte7 & 0xF0) | (header.byte6 >> 4);
     initMapper(mapperID);
 
-    mirror = ((header.flags6 & 0x08) ? MIRROR::FOUR_SCREEN : ((header.flags6 & 0x01) ? MIRROR::VERTICAL : MIRROR::HORIZONTAL));
+    mirror = ((header.byte6 & 0x08) ? MIRROR::FOUR_SCREEN : ((header.byte6 & 0x01) ? MIRROR::VERTICAL : MIRROR::HORIZONTAL));
 
-    if (header.flags6 & 0x04) file.seekg(512, ios::cur);
+    if (header.byte6 & 0x04) file.seekg(512, ios::cur);
 
     // read prg memory
     prgMemory.resize((size_t)prgBanks * 16384);

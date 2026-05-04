@@ -27,6 +27,7 @@ namespace NES_NS {
             string GetStateCPU() override;
             string GetDisassembly() override;
             string GetStateRAM() override;
+            string GetFlags(int) override;
 
             void ScanInstructions(u16, bool) override;
 

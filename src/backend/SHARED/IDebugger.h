@@ -19,4 +19,12 @@ class IDebugger {
         virtual void ScanInstructions(u16, bool) = 0;
         virtual vector<u32> GetPaletteColors() = 0;
         virtual vector<u32> GetPatternTable(int) = 0;
+
+        /**
+        * @brief Outputs the current status flags of the processor.
+        * @param status The number value holding all of the flags to be checked.
+        * @return A string representation of each flag using its single-letter
+        *      mnemonic (capital for `set`, lowercase for `clear`)
+        */
+        virtual string GetFlags(int) = 0;
 };

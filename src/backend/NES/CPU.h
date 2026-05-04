@@ -56,31 +56,9 @@ namespace NES_NS {
                 else
                     status &= ~static_cast<u8>(f);
             }
-            inline void setFlags(u8 val) {
-                setFlag(FLAGS::C, (val & static_cast<u8>(FLAGS::C)) > 0);
-                setFlag(FLAGS::Z, (val & static_cast<u8>(FLAGS::Z)) > 0);
-                setFlag(FLAGS::I, (val & static_cast<u8>(FLAGS::I)) > 0);
-                setFlag(FLAGS::D, (val & static_cast<u8>(FLAGS::D)) > 0);
-                //setFlag(B, (val & B) > 0);
-                setFlag(FLAGS::U, true);
-                setFlag(FLAGS::V, (val & static_cast<u8>(FLAGS::V)) > 0);
-                setFlag(FLAGS::N, (val & static_cast<u8>(FLAGS::N)) > 0);
-            }
             inline void setZN(u8 val) {
                 setFlag(FLAGS::Z, val == 0);
                 setFlag(FLAGS::N, ((val >> 7) & 0x01) > 0);
-            }
-            inline string getFlags() {
-                stringstream ss;
-                ss << to_string(getFlag(FLAGS::N)) << " " <<
-                    to_string(getFlag(FLAGS::V)) << " " <<
-                    to_string(getFlag(FLAGS::U)) << " " <<
-                    to_string(getFlag(FLAGS::B)) << " " <<
-                    to_string(getFlag(FLAGS::D)) << " " <<
-                    to_string(getFlag(FLAGS::I)) << " " <<
-                    to_string(getFlag(FLAGS::Z)) << " " <<
-                    to_string(getFlag(FLAGS::C));
-                return ss.str();
             }
 
             vector<INST> lookup;

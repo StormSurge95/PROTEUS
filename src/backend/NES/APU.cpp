@@ -1,4 +1,8 @@
 #include "./APU.h"
+#include "./PulseChannel.h"
+#include "./TriangleChannel.h"
+#include "./NoiseChannel.h"
+#include "./DMC_Channel.h"
 
 using namespace NES_NS;
 
@@ -8,6 +12,14 @@ APU::APU() {
     triangle = make_unique<TriangleChannel>();
     noise = make_unique<NoiseChannel>();
     dmc = make_unique<DMC_Channel>(this);
+}
+
+APU::~APU() {
+    if (pulse1 != nullptr) pulse1.release();
+    if (pulse2 != nullptr) pulse2.release();
+    if (triangle != nullptr) triangle.release();
+    if (noise != nullptr) noise.release();
+    if (dmc != nullptr) dmc.release();
 }
 
 u8 APU::read(u16 addr, bool readonly) {

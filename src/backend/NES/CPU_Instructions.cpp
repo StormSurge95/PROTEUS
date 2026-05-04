@@ -352,7 +352,7 @@ void CPU::PLP() {
             sp++;
             break;
         case 4:
-            setFlags(read(0x0100 + sp));
+            status = (read(0x0100 + sp) & ~static_cast<u8>(FLAGS::B));
             //delayNMI = true;
             //delayIRQ = true;
             cycles = 0;
