@@ -294,6 +294,7 @@ void Proteus::ShutDownConsole(bool shutdownApp) {
     if (shutdownApp)
         exit(EXIT_SUCCESS);
 
+    // TODO: Why does sdt::shared_ptr::reset() not result in Gamepak::~Gamepak() call?
     station.reset();
     ROMactive = false;
     SetState(GAME_LIST, state.selectedConsole);

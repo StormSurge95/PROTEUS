@@ -12,7 +12,6 @@ namespace NES_NS {
             u64 masterClock = 0x00;
 
             NES();
-            ~NES() = default;
 
             void reset() override;
             void clock() override;

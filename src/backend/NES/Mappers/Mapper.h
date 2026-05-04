@@ -6,8 +6,8 @@ namespace NES_NS {
     class Mapper {
         public:
             Mapper() = default;
-            Mapper(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem, bool hasRam = false) :
-                PRGBanks(pBnk), PRGMemory(&pMem), CHRBanks(cBnk), CHRMemory(&cMem), hasPRG_RAM(hasRam) {
+            Mapper(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem, u32 rSize, vector<u8>& rMem) :
+                PRGBanks(pBnk), PRGMemory(&pMem), CHRBanks(cBnk), CHRMemory(&cMem), RAMSize(rSize), SAVMemory(&rMem) {
                 hasCHR_RAM = CHRBanks == 0;
             }
             virtual ~Mapper() = default;
@@ -23,9 +23,10 @@ namespace NES_NS {
         protected:
             u8 PRGBanks = 0;
             u8 CHRBanks = 0;
-            bool hasPRG_RAM = false;
+            u32 RAMSize = 0;
             bool hasCHR_RAM = false;
             vector<u8>* PRGMemory = nullptr;
             vector<u8>* CHRMemory = nullptr;
+            vector<u8>* SAVMemory = nullptr;
     };
 }
