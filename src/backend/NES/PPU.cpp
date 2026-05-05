@@ -127,14 +127,14 @@ void PPU::write(u16 addr, u8 data) {
 
 u8 PPU::ppuRead(u16 addr, bool readonly) {
     if (addr >= 0x0000 && addr <= 0x1FFF)
-        return cart.lock()->mapper->ppuRead(addr, readonly);
+        return cart->mapper->ppuRead(addr, readonly);
     else if (addr >= 0x2000 && addr <= 0x3EFF) {
         addr &= 0x0FFF;
         u16 A = addr & 0x03FF;
         u16 B = A + 0x0400;
         u16 C = B + 0x0400;
         u16 D = C + 0x0400;
-        switch (cart.lock()->getMirror()) {
+        switch (cart->getMirror()) {
             case MIRROR::VERTICAL:
                 if (addr <= 0x03FF) return nametables[A];
                 if (addr <= 0x07FF) return nametables[B];
@@ -174,14 +174,14 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
 
 void PPU::ppuWrite(u16 addr, u8 data) {
     if (addr >= 0x0000 && addr <= 0x1FFF)
-        cart.lock()->mapper->ppuWrite(addr, data);
+        cart->mapper->ppuWrite(addr, data);
     else if (addr >= 0x2000 && addr <= 0x3EFF) {
         addr &= 0x0FFF;
         u16 A = addr & 0x03FF;
         u16 B = A + 0x0400;
         u16 C = B + 0x0400;
         u16 D = C + 0x0400;
-        switch (cart.lock()->getMirror()) {
+        switch (cart->getMirror()) {
             case MIRROR::VERTICAL:
                 if (addr <= 0x03FF) {
                     nametables[A] = data;

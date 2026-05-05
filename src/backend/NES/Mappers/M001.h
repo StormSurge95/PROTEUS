@@ -5,8 +5,8 @@
 namespace NES_NS {
     class M001 : public Mapper {
         public:
-            M001(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem, u32 rSize, vector<u8>& rMem) :
-                Mapper(pBnk, pMem, cBnk, cMem, rSize, rMem) {}
+            M001(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem) :
+                Mapper(pBnk, pMem, cBnk, cMem), PRGRam(0x2000, 0x00) {}
 
             void reset() {
                 shiftReg = 0x10;
@@ -18,19 +18,19 @@ namespace NES_NS {
             }
 
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                if (addr >= 0x6000 && addr <= 0x7FFF) {
-                    if (!RamDisabled)
-                        return SAVMemory->at(addr & 0x1FFF);
-                } else {
+                if (addr >= 0x8000) {
                     u32 mappedAddr = mapPRG(addr);
                     return PRGMemory->at(mappedAddr % PRGMemory->size());
-                }
+                } else if (addr >= 0x6000 && !PRGRamDisabled)
+                    return PRGRam[addr & 0x1FFF];
+
+                return 0x00;
             }
 
             void cpuWrite(u16 addr, u8 data) override {
                 if (addr < 0x8000) {
-                    if (RamDisabled) return;
-                    SAVMemory->at(addr & 0x1FFF) = data;
+                    if (PRGRamDisabled) return;
+                    PRGRam[addr & 0x1FFF] = data;
                     return;
                 }
 
@@ -95,7 +95,8 @@ namespace NES_NS {
             u8 CHRBank0 = 0;
             u8 CHRBank1 = 0;
             u8 PRGBank = 0;
-            bool RamDisabled = false;
+            bool PRGRamDisabled = false;
+            std::vector<u8> PRGRam;
 
             u64 cpuCycle = 0;
             u64 lastWriteCycle = 0xFFFFFFFFFFFFFFFF;
@@ -106,7 +107,7 @@ namespace NES_NS {
                     case 1: CHRBank0 = val; break;
                     case 2: CHRBank1 = val; break;
                     case 3:
-                        RamDisabled = !!(val & 0x10);
+                        PRGRamDisabled = !!(val & 0x10);
                         PRGBank = val % PRGBanks;
                         break;
                 }

@@ -5,12 +5,10 @@
 namespace NES_NS {
     class M002 : public Mapper {
         public:
-            M002(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem, u32 rSize, vector<u8>& rMem) :
-                Mapper(pBnk, pMem, cBnk, cMem, rSize, rMem) {};
+            M002(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem) :
+                Mapper(pBnk, pMem, cBnk, cMem) {};
 
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                if (addr >= 0x6000 && addr <= 0x7FFF) return SAVMemory->at(addr & 0x1FFF);
-
                 if (addr >= 0x8000 && addr <= 0xBFFF) addr = (PRGBankSelect * 0x4000) + (addr & 0x3FFF);
                 else if (addr >= 0xC000) addr = ((PRGBanks - 1) * 0x4000) + (addr & 0x3FFF);
 
@@ -18,10 +16,7 @@ namespace NES_NS {
             }
 
             void cpuWrite(u16 addr, u8 data) override {
-                if (addr >= 0x6000 && addr <= 0x7FFF)
-                    SAVMemory->at(addr & 0x1FFF) = data;
-                else
-                    PRGBankSelect = data & (PRGBanks - 1);
+                if (addr >= 0x8000) PRGBankSelect = data & (PRGBanks - 1);
             }
 
             u8 ppuRead(u16 addr, bool readonly = false) override {

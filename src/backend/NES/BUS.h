@@ -16,11 +16,11 @@ namespace NES_NS {
             u8 read(u16 addr, bool readonly = false) override;
             void write(u16 addr, u8 data) override;
 
-            void connectCPU(sptr<CPU>& c) { cpu = c; }
-            void connectPPU(sptr<PPU>& p) { ppu = p; }
-            void connectAPU(sptr<APU>& a) { apu = a; }
-            void connectCART(sptr<Gamepak>& c) { cart = c; }
-            void connectCONT(sptr<Controller>&, u8);
+            void connectCPU(sptr<CPU> c) { cpu = c; }
+            void connectPPU(sptr<PPU> p) { ppu = p; }
+            void connectAPU(sptr<APU> a) { apu = a; }
+            void connectCART(sptr<Gamepak> c) { cart = c; }
+            void connectCONT(sptr<Controller>, u8);
             void clockOAM(u64);
             void clockDMC(u64);
 
@@ -28,12 +28,12 @@ namespace NES_NS {
 
         private:
             array<u8, 2048> ram;
-            wptr<CPU> cpu;
-            wptr<PPU> ppu;
-            wptr<APU> apu;
-            wptr<Gamepak> cart;
-            wptr<Controller> player1;
-            wptr<Controller> player2;
+            sptr<CPU> cpu = nullptr;
+            sptr<PPU> ppu = nullptr;
+            sptr<APU> apu = nullptr;
+            sptr<Gamepak> cart = nullptr;
+            sptr<Controller> player1 = nullptr;
+            sptr<Controller> player2 = nullptr;
 
             u8 openBus = 0x00;
 

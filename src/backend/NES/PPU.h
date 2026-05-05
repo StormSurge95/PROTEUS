@@ -64,8 +64,8 @@ namespace NES_NS {
             void writeOAMByte(u8, u8);
 
             const u32* getFrameBuffer() const { return frameBuffer.data(); }
-            void connectCART(sptr<Gamepak>& c) { cart = c; }
-            void connectCPU(sptr<CPU>& c) { cpu = c; }
+            void connectCART(sptr<Gamepak> c) { cart = c; }
+            void connectCPU(sptr<CPU> c) { cpu = c; }
         private:
             bool nmiOutput = false;
             bool nmiOutputPrev = false;
@@ -94,8 +94,8 @@ namespace NES_NS {
             void updateCounters(u8);
             u8 decayCounters[8] = { 20, 20, 20, 20, 20, 20, 20, 20 };
 
-            wptr<Gamepak> cart;
-            wptr<CPU> cpu;
+            sptr<Gamepak> cart = nullptr;
+            sptr<CPU> cpu = nullptr;
             array<u32, 61440> frameBuffer{ 0 };
             array<u32, 64> masterPalette = {
                 /* 0x00 */ 0xff626262,

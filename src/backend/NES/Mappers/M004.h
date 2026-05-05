@@ -5,8 +5,8 @@
 namespace NES_NS {
     class M004 : public Mapper {
         public:
-            M004(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem, u32 rSize, vector<u8>& rMem) :
-                Mapper(pBnk, pMem, cBnk, cMem, rSize, rMem) {}
+            M004(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem) :
+                Mapper(pBnk, pMem, cBnk, cMem) {}
 
             enum BANK {
                 R0, R1, R2, R3, R4, R5, R6, R7

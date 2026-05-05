@@ -52,13 +52,13 @@ void DMC_Channel::newOutputCycle() {
         silent = false;
         shifter = sampleBuffer;
         noSample = true;
-        apu->bus.lock()->dmcActive = true;
+        apu->bus->dmcActive = true;
     }
 }
 
 void DMC_Channel::fetchSample(bool first) {
     if (first) {
-        sampleBuffer = apu->bus.lock()->read(currAddr);
+        sampleBuffer = apu->bus->read(currAddr);
         if (currAddr == 0xFFFF) currAddr = 0x8000;
         else currAddr++;
     } else {
@@ -69,8 +69,8 @@ void DMC_Channel::fetchSample(bool first) {
                 bytesRemaining = sampleLength;
             } else if (irqEnabled) interrupt = true;
         }
-        apu->bus.lock()->dmcActive = false;
-        apu->bus.lock()->dmaDummy = true;
+        apu->bus->dmcActive = false;
+        apu->bus->dmaDummy = true;
     }
 }
 

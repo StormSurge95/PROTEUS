@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iomanip>
-#include <filesystem>
 #include <fstream>
 #include <cstdint>
 #include <array>
@@ -21,8 +20,6 @@ using std::this_thread::sleep_for;
 
 using std::vector;
 using std::array;
-
-namespace fs = std::filesystem;
 
 using std::ifstream;
 using std::ios;
@@ -48,6 +45,3 @@ using std::make_unique;
 template <class T>
 using sptr = std::shared_ptr<T>;
 using std::make_shared;
-
-template <class T>
-using wptr = std::weak_ptr<T>;

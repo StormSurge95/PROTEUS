@@ -8,7 +8,7 @@ namespace NES_NS {
         public:
             bool strobe = false;
             u8 cursor = 0x00;
-            wptr<Controller> other;
+            sptr<Controller> other = nullptr;
 
             Controller(u8 p) { player = p; }
             
