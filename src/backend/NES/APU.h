@@ -6,7 +6,7 @@ namespace NES_NS {
     class APU : IDevice<u8, u16> {
         friend class Debugger;
         public:
-            sptr<BUS> bus;
+            wptr<BUS> bus;
             bool irqRequested = false;
 
             APU();

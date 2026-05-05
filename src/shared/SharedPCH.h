@@ -45,3 +45,6 @@ using std::make_unique;
 template <class T>
 using sptr = std::shared_ptr<T>;
 using std::make_shared;
+
+template <class T>
+using wptr = std::weak_ptr<T>;

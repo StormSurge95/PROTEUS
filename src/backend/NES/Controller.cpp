@@ -3,7 +3,7 @@
 using namespace NES_NS;
 
 u8 Controller::onRead() {
-    bool isStrobe = (player == 1 ? strobe : other->strobe);
+    bool isStrobe = (player == 1 ? strobe : other.lock()->strobe);
     if (cursor >= 8) return 1;
 
     if (isStrobe)
@@ -19,6 +19,6 @@ void Controller::onWrite(u8 data) {
     strobe = data & 0x01;
 
     if (strobe) {
-        cursor = other->cursor = 0;
+        cursor = other.lock()->cursor = 0;
     }
 }
