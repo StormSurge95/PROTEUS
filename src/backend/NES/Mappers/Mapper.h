@@ -18,7 +18,8 @@ namespace NES_NS {
             virtual u8 ppuRead(u16 addr, bool readonly = false) { return 0x00; }
             virtual void ppuWrite(u16 addr, u8 data) {}
 
-            virtual void clock(u64 counter = 0x00) {};
+            virtual void cpuclock(u64 counter = 0x00) {};
+            virtual void ppuclock(u64 counter = 0x00) {};
             virtual MIRROR getMirrorMode() const { return MIRROR::HARDWARE; }
         protected:
             u8 PRGBanks = 0;
