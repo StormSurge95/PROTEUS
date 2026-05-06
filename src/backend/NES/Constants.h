@@ -44,4 +44,8 @@ namespace NES_NS {
             case REGION::DENDY: return CLOCK_RATE_DENDY;
         }
     }
+
+    static double GetAudioRate(REGION system) {
+        return GetClockRate(system) / 44100.0;
+    }
 }

@@ -32,8 +32,8 @@ namespace NES_NS {
             u8 chrBanks = 0;
             MIRROR mirror = MIRROR::HORIZONTAL;
 
-            vector<u8> prgMemory = { 0 };
-            vector<u8> chrMemory = { 0 };
+            vector<u8> prgMemory = {};
+            vector<u8> chrMemory = {};
 
             void initMapper(u8 mapperID);
     };

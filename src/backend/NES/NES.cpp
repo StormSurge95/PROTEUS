@@ -60,7 +60,7 @@ void NES::clock() {
             if (bus->oamActive)
                 bus->clockOAM(masterClock);
             else {
-                cart->mapper->clock(masterClock);
+                cart->mapper->cpuclock(masterClock);
                 cpu->clock();
                 apu->clock();
 

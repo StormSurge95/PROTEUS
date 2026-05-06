@@ -49,7 +49,7 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M001(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem) :
+            M001(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem) :
                 Mapper(pBnk, pMem, cBnk, cMem), PRGRam(0x2000, 0x00) {}
 
             /**
@@ -73,7 +73,11 @@ namespace NES_NS {
             u8 cpuRead(u16 addr, bool readonly = false) override {
                 if (addr >= 0x8000) { // return PRG-ROM for addresses over $7FFF
                     u32 mappedAddr = mapPRG(addr); // properly map/mask the address
-                    return PRGMemory->at(mappedAddr % PRGMemory->size());
+                    size_t size = PRGMemory->size();
+                    if ((size & (size - 1)) == 0)
+                        return PRGMemory->at(mappedAddr & (size - 1));
+                    else
+                        return PRGMemory->at(mappedAddr % size);
                 } else if (addr >= 0x6000 && !PRGRamDisabled) // return PRG-RAM for addresses over $5FFF
                     return PRGRam[addr & 0x1FFF]; // properly mask the address
                 // return 0 for invalid addresses
@@ -321,7 +325,7 @@ namespace NES_NS {
                 bool mode = !!((control >> 4) & 0x01);
                 
                 // determine what values to use for bank0 and bank1
-                u32 count = CHRMemory->size() / 0x1000;
+                u32 count = (u32)CHRMemory->size() >> 12;
                 u32 b0 = CHRBank0 % count;
                 u32 b1 = CHRBank1 % count;
                 if (hasCHR_RAM) {
@@ -329,14 +333,23 @@ namespace NES_NS {
                     b1 = CHRBank1;
                 }
 
+                u32 size = (u32)CHRMemory->size();
+                bool bit = (size & (size - 1)) == 0;
+
                 if (mode) { // switch two separate 4KB banks
-                    if (addr < 0x1000) // use first 4KB bank
-                        return ((b0 << 12) + addr) % (u32)CHRMemory->size();
-                    else // use second 4KB bank
-                        return ((b1 << 12) + (addr & 0x0FFF)) % (u32)CHRMemory->size();
+                    if (addr < 0x1000) { // use first 4KB bank
+                        addr += (b0 << 12);
+                        if (bit) return addr & (size - 1);
+                        else return addr % size;
+                    } else { // use second 4KB bank
+                        addr = ((b1 << 12) + (addr & 0x0FFF));
+                        if (bit) return addr & (size - 1);
+                        else return addr % size;
+                    }
                 } else { // switch 8KB at a time
-                    u32 bank = (u32)(b0 & 0x1E) << 12;
-                    return (bank + addr) % (u32)CHRMemory->size();
+                    addr += (u32)(b0 & 0x1E) << 12;
+                    if (bit) return addr & (size - 1);
+                    else return addr % size;
                 }
             }
     };

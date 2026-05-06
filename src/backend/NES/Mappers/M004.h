@@ -44,7 +44,7 @@ namespace NES_NS {
      */
     class M004 : public Mapper {
         public:
-            M004(u8 pBnk, std::vector<u8>& pMem, u8 cBnk, std::vector<u8>& cMem) :
+            M004(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem) :
                 Mapper(pBnk, pMem, cBnk, cMem) {}
 
             /**
@@ -234,10 +234,17 @@ namespace NES_NS {
             }
 
         private:
-            struct {
-                u8 R0, R1, R2, R3, R4, R5, R6, R7;
-                bool pMode;
-                bool cMode;
+            struct BANK_DATA {
+                u8 R0 = 0;
+                u8 R1 = 0;
+                u8 R2 = 0;
+                u8 R3 = 0;
+                u8 R4 = 0;
+                u8 R5 = 0;
+                u8 R6 = 0;
+                u8 R7 = 0;
+                bool pMode = false;
+                bool cMode = false;
             } bankData;
 
             /**
@@ -266,7 +273,7 @@ namespace NES_NS {
              *                  0: Two 2KB banks at $0000-$0FFF; four 1KB banks at $1000-$1FFF
              *                  1: Two 2KB banks at $1000-$1FFF; four 1KB banks at $0000-$0FFF
              */
-            u8 bankSelect;
+            u8 bankSelect = 0;
 
             /**
              * @brief This bit has no effect on cartridges with hardwired 4-screen VRAM (identified through bit 3 of byte 6 of the header).
@@ -277,7 +284,7 @@ namespace NES_NS {
              *         |
              *         +-- Nametable arrangement (0: horizontal [A10]; 1: vertical [A11])
              */
-            MIRROR nametableArrangement;
+            MIRROR nametableArrangement = MIRROR::HORIZONTAL;
 
             /**
              * @brief Disabling PRG-RAM through bit 7 causes reads from the PRG-RAM region to return open bus.
@@ -301,21 +308,21 @@ namespace NES_NS {
              * |+--------- Enable writing to RAM at $7200-$73FF
              * +---------- Enable reading RAM at $7200-$73FF
              */
-            struct {
-                bool allowWrites;
-                bool chipEnable;
-                bool write_70_71;
-                bool read_70_71;
-                bool write_72_73;
-                bool read_72_73;
+            struct RAM_PROTECT {
+                bool allowWrites = false;
+                bool chipEnable = false;
+                bool write_70_71 = false;
+                bool read_70_71 = false;
+                bool write_72_73 = false;
+                bool read_72_73 = false;
             } ramProtect;
 
             struct {
-                u8 irqCounter;
-                u8 irqReload;
+                u8 irqCounter = 0;
+                u8 irqReload = 0;
             } irqLatch;
 
-            bool irqEnabled;
+            bool irqEnabled = false;
 
             bool MMC6 = false;
     };

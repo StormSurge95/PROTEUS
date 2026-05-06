@@ -5,7 +5,7 @@
 namespace NES_NS {
     class DMC_Channel {
         private:
-            sptr<APU> apu = nullptr;
+            APU* apu = nullptr;
             bool irqEnabled = false;
             bool silent = false;
             bool noSample = false;
