@@ -105,7 +105,7 @@ namespace NES_NS {
                 }
 
                 // prevent consecutive writes
-                if (cpuCycle - lastWriteCycle < 2) {
+                if (cpuCycle == lastWriteCycle + 1) {
                     // update last attempted write cycle
                     lastWriteCycle = cpuCycle;
                     return;
@@ -322,7 +322,7 @@ namespace NES_NS {
              */
             u32 mapCHR(u16 addr) {
                 // determine CHR bank mode
-                bool mode = !!((control >> 4) & 0x01);
+                bool mode = ((control >> 4) & 0x01) == 1; // true means 4KB mode
                 
                 // determine what values to use for bank0 and bank1
                 u32 count = (u32)CHRMemory->size() >> 12;

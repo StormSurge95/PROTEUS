@@ -91,7 +91,7 @@ namespace NES_NS {
                     if (CHRBanks == 0)
                         return CHRMemory->at(addr);
 
-                    addr += ((u16)bankSelect << 14);
+                    addr += ((u16)bankSelect << 13);
 
                     return CHRMemory->at(addr);
                 }

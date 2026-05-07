@@ -13,6 +13,7 @@ namespace NES_NS {
             u16 cycle = 0;
             bool nmiRequested = false;
             bool frameComplete = false;
+            bool suppressNMI = false;
 
             PPU() = default;
             ~PPU() = default;
@@ -73,7 +74,6 @@ namespace NES_NS {
             bool oddFrame = false;
             bool initComplete = false;
             bool suppressVBL = false;
-            bool suppressNMI = false;
 
             /*
                 Performs read operations by reading from VRAM on

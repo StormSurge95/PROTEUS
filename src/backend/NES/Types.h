@@ -609,6 +609,43 @@ namespace NES_NS {
         u8 volume;              /// @brief The "max" volume of the envelope.
     };
 
+    struct HighPassFilter {
+        float alpha = 0.0f;
+        float prevInput = 0.0f;
+        float prevOutput = 0.0f;
+
+        HighPassFilter(float cutoff, float rate) {
+            float dt = 1.0f / rate;
+            float rc = 1.0f / (2.0f * 3.1415927f * cutoff);
+            alpha = rc / (rc + dt);
+        }
+
+        void process(float& input) {
+            float output = alpha * (prevOutput + input - prevInput);
+
+            prevInput = input;
+            prevOutput = output;
+
+            input = output;
+        }
+    };
+
+    struct LowPassFilter {
+        float alpha = 0.0f;
+        float prevOutput = 0.0f;
+
+        LowPassFilter(float cutoff, float rate) {
+            float dt = 1.0f / rate;
+            float rc = 1.0f / (2.0f * 3.1415927f * cutoff);
+            alpha = dt / (rc + dt);
+        }
+
+        void process(float& input) {
+            input = alpha * input + (1.0f - alpha) * prevOutput;
+            prevOutput = input;
+        }
+    };
+
     /**
      * @brief The console region the ROM was developed for.
      */

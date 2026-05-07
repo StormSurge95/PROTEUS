@@ -126,6 +126,9 @@ namespace NES_NS {
             /// @brief Delta modulation channel
             uptr<DMC_Channel> dmc = nullptr;
 
+            HighPassFilter HPF1, HPF2;
+            LowPassFilter LPF;
+
             /**
              * @brief Performs necessary logic for producing half/quarter/end frame clock signals.
              */

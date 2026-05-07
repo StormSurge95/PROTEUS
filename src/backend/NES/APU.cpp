@@ -2,7 +2,7 @@
 
 using namespace NES_NS;
 
-APU::APU() {
+APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.0f) {
     pulse1 = make_unique<PulseChannel>(true);
     pulse2 = make_unique<PulseChannel>(false);
     triangle = make_unique<TriangleChannel>();
@@ -193,5 +193,11 @@ float APU::mixSamples(u8 p1, u8 p2, u8 t, u8 n, u8 d) {
     float p = ((p1 + p2) * 1.0f);
     float pulseOut = 0.00752f * p;
     float tndOut = (0.00851f * t) + (0.00494f * n) + (0.00335f * d);
-    return pulseOut + tndOut;
+    float sample = pulseOut + tndOut;
+
+    HPF1.process(sample);
+    HPF2.process(sample);
+    LPF.process(sample);
+
+    return sample;
 }

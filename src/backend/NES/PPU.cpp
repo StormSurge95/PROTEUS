@@ -13,7 +13,15 @@ u8 PPU::read(u16 addr, bool readonly) {
                 updateCounters(0xE0);
                 if (!readonly) {
                     if (scanline == 241) {
-                        if (cycle <= 1) suppressVBL = true; else suppressVBL = false;
+                        if (cycle <= 1) {
+                            suppressVBL = true;
+                            suppressNMI = false;
+                        } else if (cycle == 2) {
+                            suppressVBL = false;
+                            suppressNMI = true;
+                        } else {
+                            suppressVBL = suppressNMI = false;
+                        }
                     }
                     inVBlank(false);
                     w = false;
@@ -346,9 +354,9 @@ void PPU::onStartVBlankLine() {
     if (cycle == 1 && !suppressVBL) {
         bool prev = inVBlank();
         inVBlank(true);
-        if (!prev && inVBlank() && getNMIEnabled()) {
+        if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
             nmiRequested = true;
-        }
+        } else suppressNMI = false;
     } else suppressVBL = false;
 }
 
