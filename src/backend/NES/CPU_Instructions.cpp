@@ -3,52 +3,52 @@
 using namespace NES_NS;
 
 // ACCESS
-void CPU::LDA() {
+void CPU::LDA() { // load Accumulator with fetched value and update flags
     a = fetched;
     setZN(a);
 }
-void CPU::STA() {
+void CPU::STA() { // store Accumulator into memory
     fetched = a;
 }
-void CPU::LDX() {
+void CPU::LDX() { // load X register with fetched value and update flags
     x = fetched;
     setZN(x);
 }
-void CPU::STX() {
+void CPU::STX() { // store X register into memory
     fetched = x;
 }
-void CPU::LDY() {
+void CPU::LDY() { // load Y register with fetched value and update flags
     y = fetched;
     setZN(y);
 }
-void CPU::STY() {
+void CPU::STY() { // store Y register into memory
     fetched = y;
 }
 
 // TRANSFER
-void CPU::TAX() {
+void CPU::TAX() { // transfer Accumulator to X register and update flags
     x = a;
     setZN(x);
     cycles = 0;
 }
-void CPU::TXA() {
+void CPU::TXA() { // transfer X register to Accumulator and update flags
     a = x;
     setZN(a);
     cycles = 0;
 }
-void CPU::TAY() {
+void CPU::TAY() { // transfer Accumulator to Y register and update flags
     y = a;
     setZN(y);
     cycles = 0;
 }
-void CPU::TYA() {
+void CPU::TYA() { // transfer Y register to Accumulator and update flags
     a = y;
     setZN(a);
     cycles = 0;
 }
 
 // ARITHMETIC
-void CPU::ADC() {
+void CPU::ADC() { // add fetched data to accumulator with carry and update flags
     u16 temp = a + fetched + getFlag(FLAGS::C);
     u8 res = temp & 0xFF;
     setZN(res);
@@ -56,7 +56,7 @@ void CPU::ADC() {
     setFlag(FLAGS::V, (temp ^ a) & (temp ^ fetched) & 0x80);
     a = res;
 }
-void CPU::SBC() {
+void CPU::SBC() { // subtract fetched data from accumulator with carry and update flags
     s16 temp = a + (~fetched) + getFlag(FLAGS::C);
     u8 res = temp & 0xFF;
     setZN(res);
@@ -64,53 +64,53 @@ void CPU::SBC() {
     setFlag(FLAGS::V, (res ^ a) & (res ^ ~fetched) & 0x80);
     a = res;
 }
-void CPU::INC() {
+void CPU::INC() { // increment memory
     fetched++;
     setZN(fetched);
 }
-void CPU::DEC() {
+void CPU::DEC() { // decrement memory
     fetched--;
     setZN(fetched);
 }
-void CPU::INX() {
+void CPU::INX() { // increment X register
     x++;
     setZN(x);
     cycles = 0;
 }
-void CPU::DEX() {
+void CPU::DEX() { // decrement X register
     x--;
     setZN(x);
     cycles = 0;
 }
-void CPU::INY() {
+void CPU::INY() { // increment Y register
     y++;
     setZN(y);
     cycles = 0;
 }
-void CPU::DEY() {
+void CPU::DEY() { // decrement Y register
     y--;
     setZN(y);
     cycles = 0;
 }
 
 // SHIFT
-void CPU::ASL() {
+void CPU::ASL() { // shift fetched value left by 1 and update flags
     setFlag(FLAGS::C, ((fetched >> 7) & 0x01) > 0);
     fetched <<= 1;
     setZN(fetched);
 }
-void CPU::LSR() {
+void CPU::LSR() { // shift fetched value right by 1 and update flags
     setFlag(FLAGS::C, (fetched & 0x01) > 0);
     fetched >>= 1;
     setZN(fetched);
 }
-void CPU::ROL() {
+void CPU::ROL() { // rotate fetched value left with carry and update flags
     u8 temp = (fetched << 1) | getFlag(FLAGS::C);
     setFlag(FLAGS::C, ((fetched >> 7) & 0x01) > 0);
     fetched = temp;
     setZN(fetched);
 }
-void CPU::ROR() {
+void CPU::ROR() { // rotate fetched value right with carry and update flags
     u8 temp = (fetched >> 1) | (getFlag(FLAGS::C) << 7);
     setFlag(FLAGS::C, (fetched & 0x01) > 0);
     fetched = temp;
@@ -118,19 +118,19 @@ void CPU::ROR() {
 }
 
 // BITWISE
-void CPU::AND() {
+void CPU::AND() { // bitwise AND with Accumulator
     a &= fetched;
     setZN(a);
 }
-void CPU::ORA() {
+void CPU::ORA() { // bitwise OR with Accumulator
     a |= fetched;
     setZN(a);
 }
-void CPU::EOR() {
+void CPU::EOR() { // bitwise EXCLUSIVE-OR with Accumulator
     a ^= fetched;
     setZN(a);
 }
-void CPU::BIT() {
+void CPU::BIT() { // bit test; implemented as a bitwise AND that only effects flags
     setFlag(FLAGS::V, ((fetched >> 6) & 0x01) > 0);
     setFlag(FLAGS::N, ((fetched >> 7) & 0x01) > 0);
     fetched &= a;
@@ -138,19 +138,19 @@ void CPU::BIT() {
 }
 
 // COMPARE
-void CPU::CMP() {
+void CPU::CMP() { // logical compare memory to accumulator; implemented as a subtraction that only effects flags
     setFlag(FLAGS::C, a >= fetched);
     setFlag(FLAGS::Z, a == fetched);
     u8 temp = a - fetched;
     setFlag(FLAGS::N, ((temp >> 7) & 0x01) > 0);
 }
-void CPU::CPX() {
+void CPU::CPX() { // logical compare memory to X
     setFlag(FLAGS::C, x >= fetched);
     setFlag(FLAGS::Z, x == fetched);
     u8 temp = x - fetched;
     setFlag(FLAGS::N, ((temp >> 7) & 0x01) > 0);
 }
-void CPU::CPY() {
+void CPU::CPY() { // logical compare memory to Y
     setFlag(FLAGS::C, y >= fetched);
     setFlag(FLAGS::Z, y == fetched);
     u8 temp = y - fetched;
@@ -158,124 +158,125 @@ void CPU::CPY() {
 }
 
 // BRANCH
-void CPU::BCC() {
+void CPU::BCC() { // branch if C clear
     branch = getFlag(FLAGS::C) == 0;
 }
-void CPU::BCS() {
+void CPU::BCS() { // branch if C set
     branch = getFlag(FLAGS::C) == 1;
 }
-void CPU::BEQ() {
+void CPU::BEQ() { // branch if Z set (equal)
     branch = getFlag(FLAGS::Z) == 1;
 }
-void CPU::BNE() {
+void CPU::BNE() { // branch if Z clear (not equal)
     branch = getFlag(FLAGS::Z) == 0;
 }
-void CPU::BPL() {
+void CPU::BPL() { // branch if N clear (positive)
     branch = getFlag(FLAGS::N) == 0;
 }
-void CPU::BMI() {
+void CPU::BMI() { // branch if N set (negative)
     branch = getFlag(FLAGS::N) == 1;
 }
-void CPU::BVC() {
+void CPU::BVC() { // branch if V clear
     branch = getFlag(FLAGS::V) == 0;
 }
-void CPU::BVS() {
+void CPU::BVS() { // branch if V set
     branch = getFlag(FLAGS::V) == 1;
 }
 
 // JUMP
-void CPU::JMP() {
+void CPU::JMP() { // unconditional jump
     pc.hi = absAddr.hi;
     pc.lo = absAddr.lo;
 }
-void CPU::JSR() {
+void CPU::JSR() { // jump to a subroutine
     switch (cycles) {
-        case 2:
+        case 2: // first byte after opcode is pc.lo; but second byte is pc.hi, so we can't update pc just yet
             fetched = read(pc++);
             break;
-        case 3:
-            //???
+        case 3: // ???
+            // idk what happens here
             break;
-        case 4:
+        case 4: // write current pc.hi to stack
             write(0x0100 | sp, pc.hi);
             sp--;
             break;
-        case 5:
+        case 5: // write current pc.lo to stack
             write(0x0100 | sp, pc.lo);
             sp--;
             break;
-        case 6:
+        case 6: // now that current pc has been saved to the stack, we can update pc to the address of the subroutine
             pc.hi = read(pc);
             pc.lo = fetched;
             cycles = 0;
             break;
     }
 }
-void CPU::RTS() {
+void CPU::RTS() { // return from subroutine
     switch (cycles) {
-        case 2:
+        case 2: // read pc and discard
             read(pc++);
             break;
-        case 3:
+        case 3: // increment SP
+            read(0x0100 + sp);
             sp++;
             break;
-        case 4:
+        case 4: // read pc.lo from stack
             absAddr.lo = read(0x0100 + sp);
             sp++;
             break;
-        case 5:
+        case 5: // read pc.hi from stack
             absAddr.hi = read(0x0100 + sp);
             break;
-        case 6:
+        case 6: // update pc to the read values and increment
             pc = absAddr;
             pc++;
             cycles = 0;
             break;
     }
 }
-void CPU::BRK() {
+void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
     switch (cycles) {
-        case 2:
+        case 2: // read pc and discard
             read(pc++);
             //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
-        case 3:
+        case 3: // save pc.hi to stack
             write(0x0100 + sp, pc.hi);
             sp--;
             //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
-        case 4:
+        case 4: // save pc.lo to stack
             write(0x0100 + sp, pc.lo);
             sp--;
             //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
-        case 5:
+        case 5: // save status to stack with B flag SET
             setFlag(FLAGS::B, true);
             setFlag(FLAGS::U, true);
             write(0x0100 + sp, status);
             sp--;
             setFlag(FLAGS::B, false);
             break;
-        case 6:
+        case 6: // set I flag and read pc.lo from BRK vector
             setFlag(FLAGS::I, true);
             pc.lo = read(0xFFFE);
             break;
-        case 7:
+        case 7: // read pc.hi from BRK vector and reset cycles
             pc.hi = read(0xFFFF);
             cycles = 0;
             break;
     }
 }
-void CPU::RTI() {
+void CPU::RTI() { // return from interrupt
     switch (cycles) {
-        case 2:
+        case 2: // read pc and discard
             read(pc);
             break;
-        case 3:
+        case 3: // read from stack and discard
             read(0x0100 + sp);
             sp++;
             break;
-        case 4:
+        case 4: // read status from stack
             {
                 u8 p = read(0x0100 + sp);
                 setFlag(FLAGS::C, (p & 0x01) > 0);
@@ -287,11 +288,11 @@ void CPU::RTI() {
             }
             sp++;
             break;
-        case 5:
+        case 5: // read pc.lo from stack
             pc.lo = read(0x0100 + sp);
             sp++;
             break;
-        case 6:
+        case 6: // read pc.hi from stack
             pc.hi = read(0x0100 + sp);
             cycles = 0;
             break;

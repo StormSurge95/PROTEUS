@@ -3,6 +3,8 @@
 using namespace NES_NS;
 
 CPU::CPU() {
+    // The only thing we do within the constructor is initialize the lookup table
+    // TODO: Maybe there is some way to remove this massive wall of code and have something a little more streamlined?
     lookup = {
         //0x00                            0x01                            0x02                            0x03                            0x04                            0x05                            0x06                            0x07                            0x08                            0x09                            0x0A                            0x0B                            0x0C                            0x0D                            0x0E                            0x0F
         {"BRK",2,nullptr,    &CPU::BRK},{"ORA",2,&CPU::IZX_R,&CPU::ORA},{"JAM",1,&CPU::IMP_A,&CPU::JAM},{"SLO",2,&CPU::IZX_M,&CPU::SLO},{"NOP",2,&CPU::ZP0_R,&CPU::NOP},{"ORA",2,&CPU::ZP0_R,&CPU::ORA},{"ASL",2,&CPU::ZP0_M,&CPU::ASL},{"SLO",2,&CPU::ZP0_M,&CPU::SLO},{"PHP",1,nullptr,    &CPU::PHP},{"ORA",2,&CPU::IMM_A,&CPU::ORA},{"ASL",1,&CPU::ACC_A,&CPU::ASL},{"ANC",2,&CPU::IMM_A,&CPU::ANC},{"NOP",3,&CPU::ABS_R,&CPU::NOP},{"ORA",3,&CPU::ABS_R,&CPU::ORA},{"ASL",3,&CPU::ABS_M,&CPU::ASL},{"SLO",3,&CPU::ABS_M,&CPU::SLO},
@@ -48,17 +50,19 @@ void CPU::write(u16 addr, u8 data) {
 }
 
 void CPU::start() {
+    // During power on, we simply have to read the first pc value from the reset vector of the cartridge
     pc.lo = bus->read(0xFFFC);
     pc.hi = bus->read(0xFFFD);
 }
 
 void CPU::reset() {
+    // During reset, we set the state of the CPU to a known value by clearing everything
+    // and then triggering our reset function
     fetched = 0x00;
     absAddr = 0x0000;
     relAddr = 0x0000;
     indAddr = 0x0000;
     offset = 0x00;
-    soffset = 0x00;
     paged = false;
     pendingNMI = false;
     pendingIRQ = false;
@@ -67,44 +71,55 @@ void CPU::reset() {
 }
 
 void CPU::clock() {
+    /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
     cycles++;
     if (cycles == 1) {
+        /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
+        /// @todo figure out why this didn't work properly before and fix it
         //if (updateStatus) {
         //    status = dStatus;
         //    updateStatus = false;
         //}
         if (pendingRST) {
+            // if a reset is pending, set next 'instruction' to be a reset
             currInst = &RST_INST;
             pendingRST = false;
         } else if (pendingNMI) {
+            // if a NMI is pending, set next 'instruction' to be a NMI
             currInst = &NMI_INST;
             pendingNMI = false;
         } else if (pendingIRQ) {
+            // if an IRQ is pending, set next 'instruction' to be an IRQ
             currInst = &IRQ_INST;
             pendingIRQ = false;
         } else {
+            // otherwise, read next opcode and set next instruction as necessary
             opcode = read(pc++);
             currInst = &lookup[opcode];
         }
     } else {
-        if (currInst->address != nullptr)
+        if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
             (this->*currInst->address)();
-        else
+        else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
             (this->*currInst->operate)();
     }
     if (cycles == 0) {
+        /// when `cycles == 0`, the most recent instruction is completed; so let's poll the interrupts
         pollInterrupts();
     }
+    // increment total cycles
     totalCycles++;
 }
 
 void CPU::pollInterrupts() {
     if (nmiTrigger) {
+        // acknowledge NMI
         pendingNMI = true;
         nmiTrigger = false;
     }
     if (irqTrigger && getFlag(FLAGS::I) == 0) {
         if (!delayInterrupt) {
+            // acknolege IRQ
             pendingIRQ = true;
             irqTrigger = false;
         }
@@ -122,10 +137,10 @@ string CPU::disassembleInst(u16 addr) {
     ADDR ind = 0x0000;
 
     stringstream ss;
-    ss << lookup[oc].name << " ";
+    ss << lookup[oc].name << " "; // print instruction name
     switch (oc) {
         case 0x0A: case 0x2A: case 0x4A: case 0x6A: // Accumulator
-            ss << "A";
+            ss << "A"; // print A for Accumulator
             break;
         case 0x09: case 0x0B: case 0x29: case 0x2B:
         case 0x49: case 0x4B: case 0x69: case 0x6B:
@@ -134,7 +149,7 @@ string CPU::disassembleInst(u16 addr) {
         case 0xC0: case 0xC2: case 0xC9: case 0xCB:
         case 0xE0: case 0xE2: case 0xE9: case 0xEB: // Immediate
             val = read(addr++, true);
-            ss << "#$" << hex(val, 2);
+            ss << "#$" << hex(val, 2); // print argument
             break;
         case 0x04: case 0x05: case 0x06: case 0x07:
         case 0x24: case 0x25: case 0x26: case 0x27:
@@ -145,8 +160,8 @@ string CPU::disassembleInst(u16 addr) {
         case 0xC4: case 0xC5: case 0xC6: case 0xC7:
         case 0xE4: case 0xE5: case 0xE6: case 0xE7: // Zero Page
             addr8 = read(addr++, true);
-            ss << "$" << hex(addr8, 2);
-            ss << " = " << hex(read(addr8, true), 2);
+            ss << "$" << hex(addr8, 2); // print zero page address
+            ss << " = " << hex(read(addr8, true), 2); // print value at that address
             break;
         case 0x14: case 0x15: case 0x16: case 0x17:
         case 0x34: case 0x35: case 0x36: case 0x37:
@@ -156,17 +171,17 @@ string CPU::disassembleInst(u16 addr) {
         case 0xD4: case 0xD5: case 0xD6: case 0xD7:
         case 0xF4: case 0xF5: case 0xF6: case 0xF7: // Zero Page,X
             addr8 = read(addr++, true);
-            ss << "$" << hex(addr8, 2) << ",X";
+            ss << "$" << hex(addr8, 2) << ",X"; // print zero page address and index register
             addr8 += x;
-            ss << " @ " << hex(addr8, 2);
-            ss << " = " << hex(read(addr8, true), 2);
+            ss << " @ " << hex(addr8, 2); // print actual zero page address
+            ss << " = " << hex(read(addr8, true), 2); // print value at that address
             break;
         case 0x96: case 0x97: case 0xB6: case 0xB7: // Zero Page,Y
             addr8 = read(addr++, true);
-            ss << "$" << hex(addr8, 2) << ",Y";
+            ss << "$" << hex(addr8, 2) << ",Y"; // print zero page address and index register
             addr8 += y;
-            ss << " @ " << hex(addr8, 2);
-            ss << " = " << hex(read(addr8, true), 2);
+            ss << " @ " << hex(addr8, 2); // print actual zero page address
+            ss << " = " << hex(read(addr8, true), 2); // print value at that address
             break;
         case 0x0C: case 0x0D: case 0x0E: case 0x0F:
         case 0x20: case 0x2C: case 0x2D: case 0x2E:
@@ -178,9 +193,9 @@ string CPU::disassembleInst(u16 addr) {
         case 0xEC: case 0xED: case 0xEE: case 0xEF: // Absolute
             addr16.lo = read(addr++, true);
             addr16.hi = read(addr++, true);
-            ss << "$" << hex(addr16.value(), 4);
-            if (oc != 0x4C && oc != 0x20)
-                ss << " = " << hex(read(addr16.value(), true), 2);
+            ss << "$" << hex(addr16.value(), 4); // print the absolute address
+            if (oc != 0x4C && oc != 0x20) // if this instruction is not JMP or JSR:
+                ss << " = " << hex(read(addr16.value(), true), 2); // print the value at that address
             break;
         case 0x1C: case 0x1D: case 0x1E: case 0x1F:
         case 0x3C: case 0x3D: case 0x3E: case 0x3F:
@@ -191,10 +206,10 @@ string CPU::disassembleInst(u16 addr) {
         case 0xFC: case 0xFD: case 0xFE: case 0xFF: // Absolute,X
             addr16.lo = read(addr++, true);
             addr16.hi = read(addr++, true);
-            ss << "$" << hex(addr16.value(), 4) << ",X";
+            ss << "$" << hex(addr16.value(), 4) << ",X"; // print the absolute address and the index register
             addr16.add(x);
-            ss << " @ " << hex(addr16.value(), 4);
-            ss << " = " << hex(read(addr16.value(), true), 2);
+            ss << " @ " << hex(addr16.value(), 4); // print the actual absolute address
+            ss << " = " << hex(read(addr16.value(), true), 2); // print the value at that address
             break;
         case 0x19: case 0x1B: case 0x39: case 0x3B:
         case 0x59: case 0x5B: case 0x79: case 0x7B:
@@ -203,54 +218,54 @@ string CPU::disassembleInst(u16 addr) {
         case 0xD9: case 0xDB: case 0xF9: case 0xFB: // Absolute,Y
             addr16.lo = read(addr++, true);
             addr16.hi = read(addr++, true);
-            ss << "$" << hex(addr16.value(), 4) << ",Y";
+            ss << "$" << hex(addr16.value(), 4) << ",Y"; // print the absolute address and the index register
             addr16.add(y);
-            ss << " @ " << hex(addr16.value(), 4);
-            ss << " = " << hex(read(addr16.value(), true), 2);
+            ss << " @ " << hex(addr16.value(), 4); // print the actual absolute address
+            ss << " = " << hex(read(addr16.value(), true), 2); // print the value at that address
             break;
         case 0x6C: // Indirect
             ind.lo = read(addr++, true);
             ind.hi = read(addr++, true);
-            ss << "($" << hex(ind.value(), 4) << ")";
+            ss << "($" << hex(ind.value(), 4) << ")"; // print the indirect address
             addr16.lo = read(ind, true);
             ind.lo++;
             addr16.hi = read(ind, true);
-            ss << " = " << hex(addr16.value(), 4);
+            ss << " = " << hex(addr16.value(), 4); // print the absolute address
             break;
         case 0x01: case 0x03: case 0x21: case 0x23:
         case 0x41: case 0x43: case 0x61: case 0x63:
         case 0x81: case 0x83: case 0xA1: case 0xA3:
         case 0xC1: case 0xC3: case 0xE1: case 0xE3: // (Indirect,X)
             val = read(addr++, true);
-            ss << "($" << hex(val, 2) << ",X)";
+            ss << "($" << hex(val, 2) << ",X)"; // print the indirect zero page address and the index register
             val += x;
-            ss << " @ " << hex(val, 2);
+            ss << " @ " << hex(val, 2); // print the actual zero page address
             addr16.lo = read(val++, true);
             addr16.hi = read(val++, true);
-            ss << " = " << hex(addr16.value(), 4);
+            ss << " = " << hex(addr16.value(), 4); // print the absolute address
             val = read(addr16.value());
-            ss << " = " << hex(val, 2);
+            ss << " = " << hex(val, 2); // print the value at that address
             break;
         case 0x11: case 0x13: case 0x31: case 0x33:
         case 0x51: case 0x53: case 0x71: case 0x73:
         case 0x91: case 0x93: case 0xB1: case 0xB3:
         case 0xD1: case 0xD3: case 0xF1: case 0xF3: // (Indirect),Y
             val = read(addr++, true);
-            ss << "($" << hex(val, 2) << "),Y";
+            ss << "($" << hex(val, 2) << "),Y"; // print the indirect zero page address and the index register
             addr16.lo = read(val++, true);
             addr16.hi = read(val++, true);
-            ss << " = " << hex(addr16.value(), 4);
+            ss << " = " << hex(addr16.value(), 4); // print the absolute address
             addr16.add(y);
-            ss << " @ " << hex(addr16.value(), 4);
+            ss << " @ " << hex(addr16.value(), 4); // print the actual absolute address
             val = read(addr16.value(), true);
-            ss << " = " << hex(val, 2);
+            ss << " = " << hex(val, 2); // print the value at that address
             break;
         case 0x10: case 0x30: case 0x50: case 0x70:
         case 0x90: case 0xB0: case 0xD0: case 0xF0: // Relative
             sval = read(addr++, true);
             addr16 = addr;
             addr16.add_s(sval);
-            ss << "$" << hex(addr16.value(), 4);
+            ss << "$" << hex(addr16.value(), 4); // print the offset value
             break;
     }
 
@@ -259,21 +274,21 @@ string CPU::disassembleInst(u16 addr) {
 
 void CPU::IRQ() {
     switch (cycles) {
-        case 2:
+        case 2: // read pc and discard
             read(pc.value());
             //if (nmiTrigger) { currInst = &NMI_INST; }
             break;
-        case 3:
+        case 3: // write pc.hi to stack
             write(0x0100 + sp, pc.hi);
             sp--;
             //if (nmiTrigger) { currInst = &NMI_INST; }
             break;
-        case 4:
+        case 4: // write pc.lo to stack
             write(0x0100 + sp, pc.lo);
             sp--;
             //if (nmiTrigger) { currInst = &NMI_INST; }
             break;
-        case 5:
+        case 5: // write status to stack with B flag NOT set
             setFlag(FLAGS::U, true);
             setFlag(FLAGS::B, false);
             write(0x0100 + sp, status);
@@ -281,10 +296,12 @@ void CPU::IRQ() {
             setFlag(FLAGS::B, false);
             break;
         case 6:
+            // set I flag and read pc.lo from IRQ vector
             setFlag(FLAGS::I, true);
             pc.lo = read(0xFFFE);
             break;
         case 7:
+            // read pc.hi from IRQ vector and reset cycles
             pc.hi = read(0xFFFF);
             cycles = 0;
             break;
@@ -292,29 +309,29 @@ void CPU::IRQ() {
 }
 void CPU::NMI() {
     switch (cycles) {
-        case 2:
-            read(pc);
+        case 2: // read pc and discard
+            read(pc.value());
             break;
-        case 3:
+        case 3: // write pc.hi to stack
             write(0x0100 + sp, pc.hi);
             sp--;
             break;
-        case 4:
+        case 4: // write pc.lo to stack
             write(0x0100 + sp, pc.lo);
             sp--;
             break;
-        case 5:
+        case 5: // write status to stack with B flag NOT set
             setFlag(FLAGS::U, true);
             setFlag(FLAGS::B, false);
             write(0x0100 + sp, status);
             sp--;
             setFlag(FLAGS::B, false);
             break;
-        case 6:
+        case 6: // set I flag and read pc.lo from NMI vector
             setFlag(FLAGS::I, true);
             pc.lo = read(0xFFFA);
             break;
-        case 7:
+        case 7: // read pc.hi from NMI vector and reset cycles
             pc.hi = read(0xFFFB);
             cycles = 0;
             break;
@@ -322,29 +339,29 @@ void CPU::NMI() {
 }
 void CPU::RST() {
     switch (cycles) {
-        case 2:
+        case 2: // read pc and discard
             read(pc);
             break;
-        case 3:
+        case 3: // decrement SP
             sp--;
             // writes ignored during reset
             break;
-        case 4:
+        case 4: // decrement SP
             sp--;
             // writes ignored during reset
             break;
-        case 5:
+        case 5: // decrement SP and set I/U flags
             sp--;
             // writes ignored during reset
             setFlag(FLAGS::I, true);
             setFlag(FLAGS::U, true);
             break;
-        case 6:
+        case 6: // read pc.lo from reset vector
             pc.lo = read(0xFFFC);
             break;
-        case 7:
+        case 7: // read pc.hi from reset vector and reset cycles
             pc.hi = read(0xFFFD);
-            //pc = 0xC000;
+            //pc = 0xC000; // manually set pc for running nestest without functional PPU
             cycles = 0;
             break;
     }
