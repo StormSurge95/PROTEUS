@@ -71,15 +71,11 @@ void CPU::reset() {
 }
 
 void CPU::clock() {
+    //if (pollScheduled) pollInterrupts();
     /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
     cycles++;
     if (cycles == 1) {
         /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
-        /// @todo figure out why this didn't work properly before and fix it
-        //if (updateStatus) {
-        //    status = dStatus;
-        //    updateStatus = false;
-        //}
         if (pendingRST) {
             // if a reset is pending, set next 'instruction' to be a reset
             currInst = &RST_INST;
@@ -98,16 +94,17 @@ void CPU::clock() {
             if (prevInstAddrs.size() > 12) prevInstAddrs.pop_front();
             opcode = read(pc++);
             currInst = &lookup[opcode];
+            if (currInst->address == &CPU::IMM_A ||
+                currInst->address == &CPU::ACC_A ||
+                currInst->address == &CPU::IMP_A ||
+                currInst->address == &CPU::REL_B)
+                schedulePoll();
         }
     } else {
         if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
             (this->*currInst->address)();
         else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
             (this->*currInst->operate)();
-    }
-    if (cycles == 0) {
-        /// when `cycles == 0`, the most recent instruction is completed; so let's poll the interrupts
-        pollInterrupts();
     }
     // increment total cycles
     totalCycles++;
@@ -127,6 +124,7 @@ void CPU::pollInterrupts() {
         }
     }
     delayInterrupt = false;
+    pollScheduled = false;
 }
 
 void CPU::IRQ() {

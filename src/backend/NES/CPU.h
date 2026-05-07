@@ -87,8 +87,12 @@ namespace NES_NS {
                 }
             }
 
+            /// @brief flag to poll interrupts
+            bool pollScheduled = false;
             /// @brief Poll the interrupt lines to determine if the next instruction should be an interrupt.
             void pollInterrupts();
+            /// @brief Set flag to poll interrupts at beginning of next cycle
+            inline void schedulePoll() { pollInterrupts(); }
 
             /**
              * @brief Helper function to obtain the value of a specific status flag

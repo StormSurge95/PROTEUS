@@ -2,8 +2,6 @@
 #include "./BUS.h"
 #include "./Debugger.h"
 
-#include <algorithm>
-
 using namespace NES_NS;
 
 Debugger::Debugger(sptr<NES> station) {

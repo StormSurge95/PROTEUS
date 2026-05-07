@@ -44,6 +44,7 @@ bool NES::loadCart(const string& path) {
 void NES::reset() {
     cpu->reset();
     ppu->reset();
+    masterClock = 0x00;
 }
 
 void NES::clockCyclePPU() {

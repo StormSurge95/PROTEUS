@@ -8,8 +8,8 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <chrono>
 #include <thread>
+#include <chrono>
 #include <deque>
 
 using std::chrono::steady_clock;

@@ -10,7 +10,6 @@
 #include "./VideoManager.h"
 #include "./DebugManager.h"
 
-#include <algorithm>
 #include <fstream>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
