@@ -18,7 +18,7 @@ namespace NES_NS {
             Debugger(sptr<NES>);
             ~Debugger() { Clear(); }
 
-            void Toggle(bool enable) override { enabled = enabled; }
+            void Toggle(bool enable) override { enabled = enable; }
             void StepInstruction() override;
             void StepCycle() override;
             bool IsEnabled() const override { return enabled; }

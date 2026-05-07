@@ -46,39 +46,47 @@ void NES::reset() {
     ppu->reset();
 }
 
-void NES::clock() {
-    steady_clock::time_point start = high_resolution_clock::now();
+void NES::clockCyclePPU() {
+    ppu->clock();
+
+    cpu->nmiTrigger |= ppu->nmiRequested;
+    ppu->nmiRequested = false;
+}
+
+void NES::clockCycleCPU() {
+    if (bus->oamActive && cpu->cycles == 0)
+        bus->clockOAM(masterClock);
+    else {
+        cart->mapper->cpuclock(masterClock);
+        cpu->clock();
+        apu->clock();
+
+        cpu->irqTrigger |= apu->irqRequested;
+        apu->irqRequested = false;
+    }
+}
+
+void NES::clockFrame() {
     do {
-        // clock ppu - 3ppu:1cpu
-        ppu->clock();
+        clockCyclePPU();
 
-        cpu->nmiTrigger |= ppu->nmiRequested;
-        ppu->nmiRequested = false;
-
-        if (masterClock % 3 == 0) {
-            // clock cpu
-            if (bus->oamActive)
-                bus->clockOAM(masterClock);
-            else {
-                cart->mapper->cpuclock(masterClock);
-                cpu->clock();
-                apu->clock();
-
-                cpu->irqTrigger |= apu->irqRequested;
-                apu->irqRequested = false;
-            }
-        }
+        if (masterClock % 3 == 0)
+            clockCycleCPU();
 
         masterClock++;
     } while (!ppu->frameComplete);
+
+    ppu->frameComplete = false;
+}
+
+void NES::clock() {
+    steady_clock::time_point start = high_resolution_clock::now();
+    clockFrame();
     steady_clock::time_point end = high_resolution_clock::now();
     double sleep = 15.0 - duration<double, milli>(end - start).count();
-
     if (sleep > 0.0) {
         sleep_for(duration<double, milli>(sleep));
     }
-
-    ppu->frameComplete = false;
 }
 
 void NES::update(u8 player, bool* buttons) {

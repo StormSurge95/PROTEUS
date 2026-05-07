@@ -34,5 +34,9 @@ namespace NES_NS {
             sptr<APU> apu;
             sptr<Controller> player1;
             sptr<Controller> player2;
+
+            void clockFrame();
+            void clockCycleCPU();
+            void clockCyclePPU();
     };
 }
