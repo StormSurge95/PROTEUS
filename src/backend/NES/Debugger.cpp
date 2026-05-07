@@ -2,6 +2,8 @@
 #include "./BUS.h"
 #include "./Debugger.h"
 
+#include <algorithm>
+
 using namespace NES_NS;
 
 Debugger::Debugger(sptr<NES> station) {
@@ -77,24 +79,11 @@ string Debugger::GetStateRAM() {
 void Debugger::ScanInstructions(u16 maxOffset = 0x3F, bool allowPage = false) {
     instAddrs.clear();
 
-    u8 pI = 0;
+    for (const u16& e : nes->cpu->prevInstAddrs)
+        instAddrs.push_back(e);
+
     u16 first = nes->cpu->pc.value();
     u16 start = first;
-
-    while (instAddrs.size() < 12) {
-        start--;
-        u8 offset = first - start;
-        if (offset > maxOffset) break;
-        u8 opcode = nes->bus->read(start, true);
-        INST i = nes->cpu->lookup[opcode];
-        if (i.name == "JAM") continue;
-        if (i.bytes == offset) {
-            instAddrs.push_back(start);
-        }
-    }
-
-    first = nes->cpu->pc.value();
-    start = first;
     instAddrs.push_back(start);
 
     while (instAddrs.size() < 25) {
@@ -304,13 +293,13 @@ vector<u32> Debugger::GetPatternTable(int index) {
 
 string Debugger::GetFlags(int status) {
     stringstream ss;
-    ss << ((status & 0x80) > 0 ? "N" : "n");
-    ss << ((status & 0x40) > 0 ? "V" : "v");
-    ss << ((status & 0x20) > 0 ? "U" : "u");
-    ss << ((status & 0x10) > 0 ? "B" : "b");
-    ss << ((status & 0x08) > 0 ? "D" : "d");
-    ss << ((status & 0x04) > 0 ? "I" : "i");
-    ss << ((status & 0x02) > 0 ? "Z" : "z");
-    ss << ((status & 0x01) > 0 ? "C" : "c");
+    ss << ((status & 0x80) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x40) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x20) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x10) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x08) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x04) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x02) > 0 ? "1 " : "0 ");
+    ss << ((status & 0x01) > 0 ? "1 " : "0 ");
     return ss.str();
 }

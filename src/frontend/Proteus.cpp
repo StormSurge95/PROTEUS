@@ -105,11 +105,11 @@ void Proteus::ProcessEvents() {
                     quit = true;
                 else if (event.key.key == SDLK_F8)
                     ToggleDebug();
-                else if (event.key.key == SDLK_F5) {
+                else if (event.key.key == SDLK_F5 && dbgPause) {
                     // TODO: backstep/rewind rom
                 } else if (event.key.key == SDLK_F6) {
                     dbgPause = !dbgPause;
-                } else if (event.key.key == SDLK_F7) {
+                } else if (event.key.key == SDLK_F7 && dbgPause) {
                     if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
                         debugManager->GetDebugger()->StepCycle();
                     else

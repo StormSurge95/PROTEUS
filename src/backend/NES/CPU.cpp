@@ -94,6 +94,8 @@ void CPU::clock() {
             pendingIRQ = false;
         } else {
             // otherwise, read next opcode and set next instruction as necessary
+            prevInstAddrs.push_back(pc);
+            if (prevInstAddrs.size() > 12) prevInstAddrs.pop_front();
             opcode = read(pc++);
             currInst = &lookup[opcode];
         }

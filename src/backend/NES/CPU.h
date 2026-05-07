@@ -20,6 +20,8 @@ namespace NES_NS {
             /// @brief data bus of console
             sptr<BUS> bus = nullptr;
 
+            deque<u16> prevInstAddrs = {};
+
             /// @brief Current program counter
             ADDR pc;
             /// @brief Current accumulator register

@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <deque>
 
 using std::chrono::steady_clock;
 using std::chrono::high_resolution_clock;
@@ -17,6 +18,8 @@ using std::chrono::duration;
 using std::milli;
 
 using std::this_thread::sleep_for;
+
+using std::deque;
 
 using std::vector;
 using std::array;
