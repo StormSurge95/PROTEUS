@@ -190,16 +190,6 @@ namespace NES_NS {
             void ANC(); void ASR(); void ANE(); void LXA(); void AXS();
             void JAM();
             #pragma endregion
-
-            #pragma region Debugging
-            /**
-             * @brief Helper function for disassembly within Debugger
-             * @param addr PC value to disassemble instruction at
-             * @return String format of instruction at supplied address.
-             * @todo Move this to the Debugger class
-             */
-            string disassembleInst(u16 addr);
-            #pragma endregion
         public:
             /// @brief irq flag
             bool irqTrigger = false;

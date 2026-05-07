@@ -38,5 +38,6 @@ namespace NES_NS {
             void clockFrame();
             void clockCycleCPU();
             void clockCyclePPU();
+            void clockMaster();
     };
 }

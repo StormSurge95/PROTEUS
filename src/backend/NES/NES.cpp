@@ -66,14 +66,18 @@ void NES::clockCycleCPU() {
     }
 }
 
+void NES::clockMaster() {
+    clockCyclePPU();
+
+    if (masterClock % 3 == 0)
+        clockCycleCPU();
+
+    masterClock++;
+}
+
 void NES::clockFrame() {
     do {
-        clockCyclePPU();
-
-        if (masterClock % 3 == 0)
-            clockCycleCPU();
-
-        masterClock++;
+        clockMaster();
     } while (!ppu->frameComplete);
 
     ppu->frameComplete = false;

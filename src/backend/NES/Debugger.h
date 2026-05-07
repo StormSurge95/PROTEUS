@@ -7,10 +7,10 @@ namespace NES_NS {
     class Debugger : public IDebugger {
         private:
             bool enabled = false;
-            sptr<BUS> bus = nullptr;
-            sptr<CPU> cpu = nullptr;
-            sptr<PPU> ppu = nullptr;
+            sptr<NES> nes = nullptr;
             vector<u16> instAddrs;
+
+            string DisassembleInstruction(u16 addr);
 
             u32 debugPalette[4] = { 0xFF000000, 0xFF323232, 0xFF646464, 0xFFFFFFFF };
         public:

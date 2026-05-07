@@ -55,10 +55,10 @@ void Proteus::Run() {
     while (!quit) {
         ProcessEvents();
         ProcessInputs();
-        if (state.currentView == GAME_VIEW) {
-            station->clock();
-        }
         if (state.currentView != GAME_VIEW || ROMactive) videoManager->Render();
+        if (state.currentView == GAME_VIEW) {
+            if (!debug || !dbgPause) station->clock();
+        }
         audioManager->Update(station);
     }
 }
@@ -108,9 +108,12 @@ void Proteus::ProcessEvents() {
                 else if (event.key.key == SDLK_F5) {
                     // TODO: backstep/rewind rom
                 } else if (event.key.key == SDLK_F6) {
-                    // TODO: pause/resume rom
+                    dbgPause = !dbgPause;
                 } else if (event.key.key == SDLK_F7) {
-                    // TODO: fowardstep/fastforward rom
+                    if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
+                        debugManager->GetDebugger()->StepCycle();
+                    else
+                        debugManager->GetDebugger()->StepInstruction();
                 } else if (event.key.key == SDLK_TAB) {
                     debugManager->CycleDebugViews();
                 }

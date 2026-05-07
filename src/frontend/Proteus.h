@@ -58,6 +58,7 @@ class Proteus
         const u32* GetFrameBuffer();
     private:
         bool debug = false;
+        bool dbgPause = false;
         bool ROMactive = false;
         std::shared_ptr<IConsole> station = nullptr;
 
