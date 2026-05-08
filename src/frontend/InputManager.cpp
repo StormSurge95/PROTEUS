@@ -1,6 +1,8 @@
 #include "../frontend/Proteus.h"
 #include "InputManager.h"
 
+using namespace NS_Proteus;
+
 Gamepad::Gamepad(int i) : id(i) {
     gamepad = SDL_OpenGamepad(id);
     state = std::make_unique<Inputs>();

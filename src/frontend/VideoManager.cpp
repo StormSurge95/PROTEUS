@@ -8,6 +8,8 @@
 #include "../../resources/font.schatten.h"
 #include "../../resources/font.mono.h"
 
+using namespace NS_Proteus;
+
 VideoManager::VideoManager(Proteus* p, bool d) {
     proteus = p;
     debug = d;
@@ -151,6 +153,7 @@ void VideoManager::Deinit() {
 
     TTF_CloseFont(fontR.SM); TTF_CloseFont(fontR.MD); TTF_CloseFont(fontR.LG); TTF_CloseFont(fontR.XL);
     TTF_CloseFont(fontS.SM); TTF_CloseFont(fontS.MD); TTF_CloseFont(fontS.LG); TTF_CloseFont(fontS.XL);
+    TTF_CloseFont(fontM.SM); TTF_CloseFont(fontM.MD); TTF_CloseFont(fontM.LG); TTF_CloseFont(fontM.XL);
 
     if (texture != nullptr) {
         SDL_DestroyTexture(texture);
@@ -180,6 +183,10 @@ void VideoManager::RenderView() {
             RenderGameList(CONSOLES[state.selectedConsole].first, currentPage);
         RenderSelector();
     }
+    if (overlayActive) RenderOverlay();
+}
+
+void VideoManager::RenderOverlay() {
 }
 
 void VideoManager::RenderGradientBackground() {
@@ -231,8 +238,8 @@ void VideoManager::RenderConsoleList() {
 void VideoManager::RenderGameList(std::string console, unsigned int page) {
     currentMAXpage = pages[console];
 
-    int rows = 3;
-    int cols = 4;
+    int rows = 4;
+    int cols = 5;
     int rowH = dispHeight / rows;
     int colW = dispWidth / cols;
 
@@ -463,23 +470,129 @@ void VideoManager::Render() {
     SDL_RenderPresent(renderer);
 }
 
+array<FontChoice, 4> VideoManager::GetOrderedFonts(const Font& family) const {
+    return { {
+        { family.XL, FontSize::XL },
+        { family.LG, FontSize::LG },
+        { family.MD, FontSize::MD },
+        { family.SM, FontSize::SM }
+    } };
+}
+
+TextSize VideoManager::MeasureWrappedText(TTF_Font* font, const string& text, int wrapWidth) const {
+    SDL_Color transparentWhite = { 255, 255, 255, 255 };
+
+    SDL_Surface* s = TTF_RenderText_Blended_Wrapped(
+        font,
+        text.c_str(),
+        0,
+        transparentWhite,
+        wrapWidth
+    );
+
+    // if we fail to create a surface, return absurdly large values.
+    if (!s) return { FLT_MAX, FLT_MAX };
+
+    // create TextSize object for returning
+    TextSize size = {
+        static_cast<float>(s->w),
+        static_cast<float>(s->h)
+    };
+
+    // destroy SDL_Surface for memory management
+    SDL_DestroySurface(s);
+
+    // return the calculated size
+    return size;
+}
+
+FontChoice VideoManager::PickTextboxFont(const Font& family, const string& text, float maxW, float maxH, int wrapW) const {
+    // search through the list of possible choices, starting at the largest option
+    // to find the largest font size that can fit within our properties
+    for (const FontChoice& choice : GetOrderedFonts(family)) {
+        if (choice.font == nullptr) continue;
+
+        // get the measured text size of the current font option
+        TextSize measured = MeasureWrappedText(choice.font, text, wrapW);
+
+        // if our measured size is not larger than our max size, return this option
+        if (measured.w <= maxW && measured.h <= maxH) return choice;
+    }
+
+    // default to smallest font size.
+    return { family.SM, FontSize::SM };
+}
+
+FontChoice VideoManager::PickMenuFont(const Font& family, const string& label) const {
+    // calculate width of cell based on view
+    float cellW = CellWidth();
+    // calculate heigh of cell based on view
+    float cellH = CellHeight();
+
+    // calculate usable width/height to give text breathing room
+    float uW = cellW * 0.85f;
+    float uH = cellH * 0.75f;
+
+    // calculate whole-number wrap width
+    int wrapWidth = static_cast<int>(floor(uW));
+
+    // use calculated values to select font size
+    return PickTextboxFont(family, label, uW, uH, wrapWidth);
+}
+
+float VideoManager::MeasureLineWidth(TTF_Font* font, const string& line) const {
+    int w = 0;
+    int h = 0;
+
+    if (!TTF_GetStringSize(font, line.c_str(), 0, &w, &h)) return 0.0f;
+
+    return static_cast<float>(w);
+}
+
+FontChoice VideoManager::PickDebugFont(const vector<string>& lines, float maxW, float maxH) const {
+    for (const FontChoice& choice : GetOrderedFonts(fontM)) {
+        float lineH = static_cast<float>(TTF_GetFontHeight(choice.font));
+
+        float totalH = lineH * lines.size();
+
+        if (totalH > maxH) continue;
+
+        float widestLineW = 0.0f;
+        for (const string& line : lines) {
+            float lineW = MeasureLineWidth(choice.font, line);
+            widestLineW = max(widestLineW, lineW);
+        }
+
+        if (widestLineW <= maxW) return choice;
+    }
+
+    return { fontM.SM, FontSize::SM };
+}
+
+TextCache* VideoManager::CreateTextCacheForMenuLabel(const string& label, const Font& family, SDL_Color color) const {
+    int uW = static_cast<int>(CellWidth() * 0.85f);
+
+    // dynamically select select font size based on window size
+    FontChoice c = PickMenuFont(family, label);
+
+    SDL_Surface* s = TTF_RenderText_Blended_Wrapped(c.font, label.c_str(), 0, color, uW);
+    SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
+    SDL_DestroySurface(s);
+    TextSize size;
+    SDL_GetTextureSize(t, &size.w, &size.h);
+
+    return new TextCache(t, size.w, size.h);
+}
+
 void VideoManager::LoadConsoleCache() {
     consoleCache.clear();
 
     SDL_Color c(255, 255, 255, 255);
 
-    TTF_Font* font = fontR.XL;
-
-    // why is this suddenly failing to create other caches?
-    //for (const std::pair<std::string, std::string>& p : CONSOLES) {
     for (auto it = CONSOLES.begin(); it != CONSOLES.end(); it++) {
-        SDL_Surface* s = TTF_RenderText_Blended_Wrapped(font, it->second.c_str(), 0, c, dispWidth / 4);
-        SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        float w, h;
-        SDL_GetTextureSize(t, &w, &h);
-
-        std::pair<std::string, TextCache*> pair(it->first, new TextCache(t, w, h));
+        // Create text cache with dynamic font selection based on window size
+        TextCache* t = CreateTextCacheForMenuLabel(it->second, fontR, c);
+        CacheItem pair(it->first, t);
         consoleCache.push_back(pair);
     }
 }
@@ -489,30 +602,18 @@ void VideoManager::LoadGameCache() {
 
     SDL_Color c(255, 255, 255, 255);
 
-    TTF_Font* font = fontR.LG; // TODO: select font based on window size
-
     for (auto it = CONSOLES.begin(); it != CONSOLES.end(); it++) {
-        //if (it->first != "NES") continue;
         const std::vector<ROM> gameList = proteus->GetGameList(it->first);
-        GameCacheList cache;
+        CacheList cache;
         cache.clear();
         for (const ROM& entry : gameList) {
-            SDL_Surface* s = TTF_RenderText_Blended_Wrapped(font, FormatDisplayName(entry.gameName).c_str(), 0, c, dispWidth / 4);
-            if (!s) {
-                SDL_Log("TTF_RenderText failed: %s\n", SDL_GetError());
-                continue;
-            }
-            SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
-            SDL_DestroySurface(s);
-            float w, h;
-            SDL_GetTextureSize(t, &w, &h);
-
-            std::pair<std::string, TextCache*> pair(entry.gameName, new TextCache(t, w, h));
+            TextCache* t = CreateTextCacheForMenuLabel(FormatDisplayName(entry.gameName), fontR, c);
+            CacheItem pair(entry.gameName, t);
             cache.push_back(pair);
         }
-        std::pair<std::string, GameCacheList> consoleList(it->first, cache);
+        std::pair<std::string, CacheList> consoleList(it->first, cache);
         gameCache.insert(consoleList);
-        std::pair<std::string, unsigned int> numPages(it->first, (unsigned int)cache.size() / 12);
+        std::pair<std::string, unsigned int> numPages(it->first, (unsigned int)cache.size() / 20);
         pages.insert(numPages);
     }
 }
@@ -520,6 +621,11 @@ void VideoManager::LoadGameCache() {
 void VideoManager::LoadCaches() {
     LoadConsoleCache();
     LoadGameCache();
+}
+
+void VideoManager::ClearCaches() {
+    consoleCache.clear();
+    gameCache.clear();
 }
 
 void VideoManager::OnInput(Inputs* i) {
@@ -568,8 +674,8 @@ void VideoManager::PageDown() {
 }
 
 void VideoManager::OnMouseMove(float x, float y) {
-    selectedItem.col = (int)(x / ((float)dispWidth / 4)); // TODO: convert to actual column value
-    selectedItem.row = (int)(y / ((float)dispHeight / 3)); // TODO: convert to actual row value
+    selectedItem.col = (int)(x / ((float)dispWidth / 4));
+    selectedItem.row = (int)(y / ((float)dispHeight / 3));
 }
 
 void VideoManager::OnMouseScroll(int dir) {
@@ -593,8 +699,8 @@ void VideoManager::OnSelect() const {
     int index = (selectedItem.row * 4) + selectedItem.col;
 
     if (s.currentView == CONSOLE_SELECT) {
-        proteus->SetState(GAME_LIST, (CONSOLE_ID)index);
-    } else if (s.currentView == GAME_LIST) {
+        proteus->SetState(AppView::GAME_LIST, (CONSOLE_ID)index);
+    } else if (s.currentView == AppView::GAME_LIST) {
         proteus->LaunchGame((currentPage * 12) + index);
     }
 }
@@ -604,7 +710,7 @@ void VideoManager::OnCancel() {
 
     int index = s.selectedConsole;
 
-    if (s.currentView == GAME_LIST) {
+    if (s.currentView == AppView::GAME_LIST) {
         proteus->SetState(CONSOLE_SELECT);
         int row = index / 4;
         int col = index % 4;
@@ -618,12 +724,14 @@ void VideoManager::OnResize(size_t width, size_t height) {
     dispHeight = (int)height;
 
     SDL_SetRenderLogicalPresentation(renderer, dispWidth, dispHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+    LoadCaches();
 }
 
 void VideoManager::RenderSelector() {
     AppView v = proteus->GetState().currentView;
-    float w = (float)dispWidth / 4;
-    float h = (float)dispHeight / 3;
+    float w = (float)dispWidth / (v == AppView::CONSOLE_SELECT ? 4.0f : 5.0f);
+    float h = (float)dispHeight / (v == AppView::CONSOLE_SELECT ? 3.0f : 4.0f);
     float x = selectedItem.col * w;
     float y = selectedItem.row * h;
     float thickness = 25;

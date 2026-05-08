@@ -3,6 +3,8 @@
 #include "../backend/NES/NES.h"
 #include "../backend/NES/Debugger.h"
 
+using namespace NS_Proteus;
+
 void DebugManager::SetDebugger(CONSOLE_ID dbgType, std::shared_ptr<IConsole> station) {
     switch (dbgType) {
         default:

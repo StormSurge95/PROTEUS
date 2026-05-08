@@ -156,6 +156,9 @@
     <ClInclude Include="src\backend\NES\TriangleChannel.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
+    <ClInclude Include="src\frontend\Types.h">
+      <Filter>Header Files\frontend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">

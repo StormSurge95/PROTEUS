@@ -25,3 +25,7 @@ static u64 max(const u64& n1, const u64& n2) {
     if (n1 > n2) return n1;
     else return n2;
 }
+static float max(const float& n1, const float& n2) {
+    if (n1 > n2) return n1;
+    else return n2;
+}

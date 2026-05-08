@@ -1,5 +1,7 @@
 #include "./frontend/Proteus.h"
 
+using namespace NS_Proteus;
+
 #define WINSUB 0
 
 // TODO: switch to WINDOWS mode instead of CONSOLE

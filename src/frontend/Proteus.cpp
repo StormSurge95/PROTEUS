@@ -15,6 +15,8 @@
 #include <openssl/md5.h>
 #include <SDL3/SDL.h>
 
+using namespace NS_Proteus;
+
 Proteus::Proteus() {
     videoManager = std::make_shared<VideoManager>(this);
     inputManager = std::make_shared<InputManager>(this);
@@ -130,9 +132,8 @@ void Proteus::ProcessEvents() {
                 videoManager->OnResize(event.window.data1, event.window.data2);
                 break;
             case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-                // TODO: Open overlay menu instead of immediate shutdown
-                if (event.gbutton.button == SDL_GAMEPAD_BUTTON_GUIDE && state.currentView == GAME_VIEW)
-                    ShutDownConsole(false);
+                if (event.gbutton.button == SDL_GAMEPAD_BUTTON_GUIDE)
+                    videoManager->ToggleOverlay();
                 break;
             case SDL_EVENT_MOUSE_MOTION:
                 videoManager->OnMouseMove(event.motion.x, event.motion.y);
@@ -145,9 +146,8 @@ void Proteus::ProcessEvents() {
                     videoManager->OnSelect();
                 else if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT)
                     videoManager->OnCancel();
-                // TODO: Open overlay menu instead of immediate shutdown
-                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE && state.currentView == GAME_VIEW)
-                    ShutDownConsole(false);
+                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE)
+                    videoManager->ToggleOverlay();
                 break;
         }
     }

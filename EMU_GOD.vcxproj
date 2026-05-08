@@ -79,6 +79,7 @@
     <ClInclude Include="src\frontend\FrontendPCH.h" />
     <ClInclude Include="src\frontend\InputManager.h" />
     <ClInclude Include="src\frontend\Proteus.h" />
+    <ClInclude Include="src\frontend\Types.h" />
     <ClInclude Include="src\frontend\VideoManager.h" />
     <ClInclude Include="src\shared\Utilities.h" />
     <ClInclude Include="src\shared\SharedPCH.h" />

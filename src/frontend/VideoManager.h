@@ -4,113 +4,106 @@
 #include "./InputManager.h"
 #include "./Proteus.h"
 
-class VideoManager {
-    public:
-        VideoManager(Proteus* proteus, bool debug = false);
-        ~VideoManager() { Deinit(); }
+namespace NS_Proteus {
+    class VideoManager {
+        public:
+            VideoManager(Proteus* proteus, bool debug = false);
+            ~VideoManager() { Deinit(); }
 
-        VideoManager(const VideoManager&) = delete;
-        VideoManager& operator=(const VideoManager&) = delete;
-        VideoManager(VideoManager&&) = delete;
-        VideoManager& operator=(VideoManager&&) = delete;
+            VideoManager(const VideoManager&) = delete;
+            VideoManager& operator=(const VideoManager&) = delete;
+            VideoManager(VideoManager&&) = delete;
+            VideoManager& operator=(VideoManager&&) = delete;
 
-        void Init();
-        void InitGameTexture(std::string title, size_t width, size_t height);
-        void Deinit();
+            void Init();
+            void InitGameTexture(std::string title, size_t width, size_t height);
+            void Deinit();
 
-        void Render();
+            void Render();
 
-        void OnInput(Inputs* i);
-        void OnMouseMove(float, float);
-        void OnMouseScroll(int);
-        void OnSelect() const;
-        void OnCancel();
-        void OnResize(size_t width, size_t height);
+            void OnInput(Inputs* i);
+            void OnMouseMove(float, float);
+            void OnMouseScroll(int);
+            void OnSelect() const;
+            void OnCancel();
+            void OnResize(size_t width, size_t height);
 
-        void LoadCaches();
+            void ToggleOverlay() { overlayActive = !overlayActive; }
 
-    private:
-        bool debug = false;
-        Proteus* proteus = nullptr;
+            void LoadCaches();
+            void ClearCaches();
 
-        SDL_Window* window = nullptr;
-        SDL_Renderer* renderer = nullptr;
-        SDL_Texture* texture = nullptr;
-        SDL_Texture* gameTexture = nullptr;
-        TTF_TextEngine* engine = nullptr;
-        struct Font {
-            TTF_Font* SM = nullptr;
-            TTF_Font* MD = nullptr;
-            TTF_Font* LG = nullptr;
-            TTF_Font* XL = nullptr;
+        private:
+            bool debug = false;
+            bool overlayActive = false;
+            Proteus* proteus = nullptr;
 
-            Font() = default;
-        } fontR, fontS, fontM;
-
-        struct TextCache {
+            SDL_Window* window = nullptr;
+            SDL_Renderer* renderer = nullptr;
             SDL_Texture* texture = nullptr;
-            float width, height;
+            SDL_Texture* gameTexture = nullptr;
+            TTF_TextEngine* engine = nullptr;
+            Font fontR, fontS, fontM;
 
-            TextCache(SDL_Texture* t, float w, float h) : texture(t), width(w), height(h) {}
-        };
+            CacheList consoleCache = {};
+            GameCache gameCache = {};
+            PageCounts pages = {};
+            unsigned int currentMAXpage = 0;
+            unsigned int currentPage = 0;
 
-        std::vector<std::pair<std::string, TextCache*>> consoleCache = {};
-        typedef std::vector<std::pair<std::string, TextCache*>> GameCacheList;
-        std::map<std::string, GameCacheList> gameCache = {};
-        std::map<std::string, unsigned int> pages = {};
-        unsigned int currentMAXpage = 0;
-        unsigned int currentPage = 0;
+            MenuSelection selectedItem;
 
-        struct Selection {
-            int row = 0;
-            int col = 0;
+            int screenWidth = 0;
+            int screenHeight = 0;
+            int dispWidth = 0;
+            int dispHeight = 0;
+            int gameWidth = 0;
+            int gameHeight = 0;
 
-            Selection() = default;
-            void RowDown() {
-                row = (row == 2) ? 0 : row + 1;
-            }
-            void RowUp() {
-                row = (row == 0) ? 2 : row - 1;
-            }
-            void ColLeft() {
-                col = (col == 0) ? 3 : col - 1;
-            }
-            void ColRight() {
-                col = (col == 3) ? 0 : col + 1;
-            }
-        } selectedItem;
+            int ramPage = 0x00;
 
-        int screenWidth = 0;
-        int screenHeight = 0;
-        int dispWidth = 0;
-        int dispHeight = 0;
-        int gameWidth = 0;
-        int gameHeight = 0;
+            void PageUp();
+            void PageDown();
+            void PageLeft();
+            void PageRight();
 
-        int ramPage = 0x00;
+            void RenderConsoleList();
+            void RenderGameList(std::string console, unsigned int page);
+            void RenderGameView(bool dbg = false);
+            void RenderGradientBackground();
+            void RenderOverlay();
+            void RenderView();
 
-        void PageUp();
-        void PageDown();
-        void PageLeft();
-        void PageRight();
+            void RenderDataCPU(SDL_FRect&);
+            void RenderDataRAM(SDL_FRect&);
 
-        void RenderConsoleList();
-        void RenderGameList(std::string console, unsigned int page);
-        void RenderGameView(bool dbg = false);
-        void RenderGradientBackground();
-        void RenderView();
+            void RenderDataPPU(SDL_FRect&);
+            void RenderPalettes(SDL_FRect&);
+            void RenderPatternTables(SDL_FRect&);
 
-        void RenderDataCPU(SDL_FRect&);
-        void RenderDataRAM(SDL_FRect&);
+            FontChoice CONSOLE_LIST, GAME_LIST, DEBUG;
 
-        void RenderDataPPU(SDL_FRect&);
-        void RenderPalettes(SDL_FRect&);
-        void RenderPatternTables(SDL_FRect&);
+            float MeasureLineWidth(TTF_Font* font, const string& line) const;
+            TextSize MeasureWrappedText(TTF_Font* font, const string& text, int wrapWidth) const;
+            /**
+             * @brief Get an ordered list of the fonts of the provided family.
+             * @param family The font family to get an ordered list for.
+             * @return An array of font choices, ordered from largest to smallest.
+             */
+            array<FontChoice, 4> GetOrderedFonts(const Font& family) const;
+            FontChoice PickMenuFont(const Font& family, const string& label) const;
+            FontChoice PickTextboxFont(const Font& family, const string& text, float maxW, float maxH, int wrapW) const;
+            FontChoice PickDebugFont(const vector<string>& lines, float maxW, float maxH) const;
+            TextCache* CreateTextCacheForMenuLabel(const string& label, const Font& family, SDL_Color color) const;
 
-        void LoadConsoleCache();
-        void LoadGameCache();
+            float CellWidth() const { return static_cast<float>(dispWidth) / (proteus->GetState().currentView == AppView::CONSOLE_SELECT ? 3.0f : 4.0f); }
+            float CellHeight() const { return static_cast<float>(dispHeight) / (proteus->GetState().currentView == AppView::CONSOLE_SELECT ? 4.0f : 5.0f); }
 
-        void RenderSelector();
+            void LoadConsoleCache();
+            void LoadGameCache();
 
-        std::string FormatDisplayName(const std::string& name);
-};
+            void RenderSelector();
+
+            std::string FormatDisplayName(const std::string& name);
+    };
+}
