@@ -753,24 +753,27 @@ void VideoManager::RenderSelector() {
     SDL_RenderFillRect(renderer, &b);
 }
 
-std::string VideoManager::FormatDisplayName(const std::string& fullname) {
+string VideoManager::FormatDisplayName(const string& fullname) {
     size_t header = fullname.find(" (");
-    std::string name = fullname.substr(0, header);
+    string name = fullname.substr(0, header);
 
     size_t comma = name.rfind(", ");
-    if (comma == std::string::npos)
-        return name;
+    if (comma != string::npos) {
+        string base = name.substr(0, comma);
+        string suff = name.substr(comma + 2);
 
-    std::string base = name.substr(0, comma);
-    std::string suff = name.substr(comma + 2);
+        if (suff == "The" || suff == "A" || suff == "An")
+            name = suff.append(" ").append(base);
+    }
 
-    if (suff == "The" || suff == "A" || suff == "An")
-        return suff.append(" ").append(base);
+    replace(name.begin(), name.end(), '_', ' ');
+
+    // TODO: replace "<char>.<char>" with "<char> - <char>"
 
     return name;
 }
 
-void VideoManager::InitGameTexture(std::string title, size_t width, size_t height) {
+void VideoManager::InitGameTexture(string title, size_t width, size_t height) {
     SDL_SetWindowTitle(window, FormatDisplayName(title).c_str());
 
     gameWidth = (int)width;
