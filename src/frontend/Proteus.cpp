@@ -15,6 +15,8 @@
 #include <openssl/md5.h>
 #include <SDL3/SDL.h>
 
+using namespace NS_Proteus;
+
 Proteus::Proteus() {
     videoManager = std::make_shared<VideoManager>(this);
     inputManager = std::make_shared<InputManager>(this);
@@ -34,7 +36,6 @@ void Proteus::Init() {
     IdentifyROMs();
 
     videoManager->Init();
-    videoManager->LoadCaches();
 
     inputManager->Init();
 
@@ -53,9 +54,16 @@ void Proteus::Deinit() {
 void Proteus::Run() {
     while (!quit) {
         ProcessEvents();
-        ProcessInputs();
-        if (state.currentView != GAME_VIEW || ROMactive) videoManager->Render();
-        if (state.currentView == GAME_VIEW) {
+
+        if (SDL_GetWindowFlags(videoManager->GetWindow()) & SDL_WINDOW_MINIMIZED) {
+            SDL_Delay(10);
+            continue;
+        }
+
+        //ProcessInputs();
+        videoManager->Render(state);
+        if (state.currentView == AppView::GAME_VIEW && !videoManager->OverlayActive()) {
+            inputManager->TranslateInputs(station, state.selectedConsole);
             if (!debug || !dbgPause) station->clock();
         }
         audioManager->Update(station);
@@ -90,35 +98,27 @@ void Proteus::ToggleDebug() {
     debug = !debug;
     if (station != nullptr) {
         if (debug) {
-            debugManager->SetDebugger(CONSOLE_ID::NES, station);
+            debugManager->SetDebugger(ConsoleID::NES, station);
             debugManager->CycleDebugViews();
         } else debugManager->CycleDebugViews(false);
+        videoManager->ToggleDebug();
     }
 }
 
 void Proteus::ProcessEvents() {
     while (SDL_PollEvent(&event)) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
         switch (event.type) {
             case SDL_EVENT_KEY_DOWN:
                 if (event.key.key == SDLK_ESCAPE)
                     quit = true;
-                else if (event.key.key == SDLK_F8)
-                    ToggleDebug();
-                else if (event.key.key == SDLK_F5 && dbgPause) {
-                    // TODO: backstep/rewind rom
-                } else if (event.key.key == SDLK_F6) {
-                    dbgPause = !dbgPause;
-                } else if (event.key.key == SDLK_F7 && dbgPause) {
-                    if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
-                        debugManager->GetDebugger()->StepCycle();
-                    else
-                        debugManager->GetDebugger()->StepInstruction();
-                } else if (event.key.key == SDLK_TAB) {
-                    debugManager->CycleDebugViews();
-                }
+                else ProcessKeyInput(event.key.key);
                 break;
             case SDL_EVENT_QUIT:
                 quit = true;
+                break;
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                if (event.window.windowID == SDL_GetWindowID(videoManager->GetWindow())) quit = true;
                 break;
             case SDL_EVENT_GAMEPAD_ADDED:
                 inputManager->Connect(event.gdevice.which);
@@ -130,43 +130,65 @@ void Proteus::ProcessEvents() {
                 videoManager->OnResize(event.window.data1, event.window.data2);
                 break;
             case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-                // TODO: Open overlay menu instead of immediate shutdown
-                if (event.gbutton.button == SDL_GAMEPAD_BUTTON_GUIDE && state.currentView == GAME_VIEW)
-                    ShutDownConsole(false);
-                break;
-            case SDL_EVENT_MOUSE_MOTION:
-                videoManager->OnMouseMove(event.motion.x, event.motion.y);
+                ProcessButtonInput(event.gbutton.button);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 videoManager->OnMouseScroll(event.wheel.integer_y);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                if (static_cast<MouseButton>(event.button.button) == MouseButton::LEFT)
-                    videoManager->OnSelect();
-                else if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT)
-                    videoManager->OnCancel();
-                // TODO: Open overlay menu instead of immediate shutdown
-                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE && state.currentView == GAME_VIEW)
-                    ShutDownConsole(false);
+                //if (static_cast<MouseButton>(event.button.button) == MouseButton::LEFT)
+                //    videoManager->OnSelect();
+                if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT) {
+                    if (state.currentView == AppView::GAME_LIST)
+                        SetState(AppView::CONSOLE_SELECT);
+                }
+                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE)
+                    videoManager->ToggleOverlay();
                 break;
         }
     }
 }
 
-void Proteus::ProcessInputs() {
-    switch (GetState().currentView) {
-        case CONSOLE_SELECT:
-        case GAME_LIST:
-            {
-                Inputs* i = inputManager->ReadInputs(0, true);
-                videoManager->OnInput(i);
+void Proteus::ProcessKeyInput(SDL_Keycode key) {
+    switch (key) {
+        case SDLK_F5:
+            // TODO: backstep/rewind
+            break;
+        case SDLK_F6:
+            dbgPause = !dbgPause;
+            break;
+        case SDLK_F7:
+            if (dbgPause) {
+                if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
+                    debugManager->GetDebugger()->StepCycle();
+                else
+                    debugManager->GetDebugger()->StepInstruction();
             }
             break;
-        case GAME_VIEW:
-            inputManager->TranslateInputs(station, state.selectedConsole);
+        case SDLK_F8:
+            ToggleDebug();
             break;
-        default:
-            SDL_Log("Seriously? What the hell?");
+        case SDLK_TAB:
+            debugManager->CycleDebugViews();
+            break;
+    }
+}
+
+void Proteus::ProcessButtonInput(u8 button) {
+    switch (button) {
+        case SDL_GAMEPAD_BUTTON_GUIDE:
+            if (state.currentView == AppView::GAME_VIEW)
+                videoManager->ToggleOverlay();
+            break;
+        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:
+            videoManager->PageRight();
+            break;
+        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:
+            videoManager->PageLeft();
+            break;
+        case SDL_GAMEPAD_BUTTON_EAST:
+            if (state.currentView == AppView::GAME_LIST)
+                SetState(AppView::CONSOLE_SELECT);
             break;
     }
 }
@@ -206,14 +228,15 @@ void Proteus::IdentifyROMs() {
     const path base = "C:/ROMS/";
     if (!exists(base)) create_directory(base);
 
-    for (const pair<string, string>& p : CONSOLES) {
-        if (p.first != "NES") continue;
-        path path = base.string() + p.first + "/";
+    for (const pair<ConsoleID, string>& p : ConsoleNamesShort) {
+        string console = p.second;
+        if (console != "NES") continue;
+        path path = base.string() + console + "/";
         if (!exists(path)) {
             create_directory(path);
             continue;
         }
-        vector<ROM> games = {};
+        vector<ROM_DATA> games = {};
         for (const auto& entry : directory_iterator(path)) {
             // get text data
             string file = entry.path().string();
@@ -222,13 +245,11 @@ void Proteus::IdentifyROMs() {
             // get hash
             string hash = MD5(file);
 
-            string gameName = Lookup(p.first, hash);
+            string gameName = Lookup(console, hash);
             if (gameName == "Unknown") gameName = filename.substr(0, filename.length() - 4);
             games.push_back({ .gameName = gameName, .path = file });
         }
-
-        pair<string, vector<ROM>> p2(p.first, games);
-        gameList.insert(p2);
+        gameList[p.first] = games;
     }
 }
 
@@ -254,14 +275,14 @@ std::string Proteus::Lookup(const std::string& console, const std::string& hash)
     return "Unknown";
 }
 
-std::vector<ROM> Proteus::GetGameList(const std::string& console) {
+std::vector<ROM_DATA> Proteus::GetGameList(ConsoleID console) {
     return gameList[console];
 }
 
 void Proteus::LaunchGame(int index) {
     StartConsole();
 
-    ROM game = gameList[GetConsoleFromID(state.selectedConsole)][index];
+    ROM_DATA game = gameList[state.selectedConsole][index];
 
     state.selectedGame = game.gameName;
     std::string path = game.path;
@@ -271,7 +292,7 @@ void Proteus::LaunchGame(int index) {
     videoManager->InitGameTexture(title, station->SCREEN_WIDTH(), station->SCREEN_HEIGHT());
 
     if (station->loadCart(path)) {
-        state.currentView = GAME_VIEW;
+        state.currentView = AppView::GAME_VIEW;
         ROMactive = true;
     } else {
         ROMactive = false;
@@ -280,10 +301,10 @@ void Proteus::LaunchGame(int index) {
 
 void Proteus::StartConsole() {
     switch (state.selectedConsole) {
-        case CONSOLE_ID::NES:
+        case ConsoleID::NES:
             station = std::make_shared<NES_NS::NES>();
             if (debug) {
-                debugManager->SetDebugger(CONSOLE_ID::NES, station);
+                debugManager->SetDebugger(ConsoleID::NES, station);
                 debugManager->CycleDebugViews();
             }
             return;
@@ -298,7 +319,7 @@ void Proteus::ShutDownConsole(bool shutdownApp) {
 
     station.reset();
     ROMactive = false;
-    SetState(GAME_LIST, state.selectedConsole);
+    SetState(AppView::GAME_LIST, state.selectedConsole);
 }
 
 const u32* Proteus::GetFrameBuffer() {

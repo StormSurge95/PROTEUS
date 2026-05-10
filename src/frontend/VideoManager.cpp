@@ -1,16 +1,16 @@
-#include <filesystem>
-
-#include "./AppState.h"
 #include "./Proteus.h"
 #include "./VideoManager.h"
 
-#include "../../resources/font.regular.h"
-#include "../../resources/font.schatten.h"
-#include "../../resources/font.mono.h"
+#include "../../resources/inter_font.h"
+#include "../../resources/debug_font.h"
+#include "../../resources/NintendoFont.h"
+#include "../../resources/SonyFont.h"
+#include "../../resources/MicrosoftFont.h"
 
-VideoManager::VideoManager(Proteus* p, bool d) {
+using namespace NS_Proteus;
+
+VideoManager::VideoManager(Proteus* p) {
     proteus = p;
-    debug = d;
 }
 
 void VideoManager::Init() {
@@ -20,6 +20,7 @@ void VideoManager::Init() {
         exit(EXIT_FAILURE);
     }
 
+    // get display resolution and scale
     int mainDisp = SDL_GetPrimaryDisplay();
     if (mainDisp == 0) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to get main display ID! Error: %s\n", SDL_GetError());
@@ -32,519 +33,96 @@ void VideoManager::Init() {
         exit(EXIT_FAILURE);
     }
 
-    screenWidth = dm->w;
-    screenHeight = dm->h;
-    dispWidth = screenWidth / 2;
-    dispHeight = screenHeight / 2;
+    // get display information (ignore size if equal to default)
+    dispInfo.scale = dm->pixel_density;
+    if (dispInfo.screenWidth != dm->w || dispInfo.screenHeight != dm->h) {
+        dispInfo.screenWidth = dm->w;
+        dispInfo.screenHeight = dm->h;
+        dispInfo.dispWidth = u32(dm->w * (2.0 / 3.0));
+        dispInfo.dispHeight = u32(dm->h * (2.0 / 3.0));
+    }
 
-    window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), dispWidth, dispHeight, SDL_WINDOW_RESIZABLE);
+    // create window
+    window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), dispInfo.dispWidth, dispInfo.dispHeight, WindowFlags);
     if (!window) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_CreateWindow() failed! Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-
-    renderer = SDL_CreateRenderer(window, NULL);
+    // create renderer
+    renderer = SDL_CreateRenderer(window, nullptr);
     if (!renderer) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_CreateRenderer() failed! Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-
     SDL_SetRenderVSync(renderer, 1);
-
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STATIC, dispWidth, dispHeight);
-    
-    if (texture == nullptr) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_CreateTexture() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-
     SDL_SetDefaultTextureScaleMode(renderer, SDL_SCALEMODE_PIXELART);
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+    SDL_ShowWindow(window);
 
-    if (!TTF_Init()) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "TTF_Init() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
+    // setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
 
-    SDL_IOStream* rwR = SDL_IOFromConstMem(font_regular_ttf, font_regular_ttf_len);
-    if (!rwR) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_IOFromConstMem() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    fontR.SM = TTF_OpenFontIO(rwR, false, 16);
-    SDL_SeekIO(rwR, 0, SDL_IO_SEEK_SET);
-    fontR.MD = TTF_OpenFontIO(rwR, false, 24);
-    SDL_SeekIO(rwR, 0, SDL_IO_SEEK_SET);
-    fontR.LG = TTF_OpenFontIO(rwR, false, 32);
-    SDL_SeekIO(rwR, 0, SDL_IO_SEEK_SET);
-    fontR.XL = TTF_OpenFontIO(rwR, true, 48);
-    if (!fontR.SM || !fontR.MD || !fontR.LG || !fontR.XL) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_OpenFontIO() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    TTF_SetFontWrapAlignment(fontR.SM, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontR.MD, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontR.LG, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontR.XL, TTF_HORIZONTAL_ALIGN_CENTER);
+    // get io object
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    SDL_IOStream* rwS = SDL_IOFromConstMem(font_schatten_ttf, font_schatten_ttf_len);
-    if (!rwS) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_IOFromConstMem() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    fontS.SM = TTF_OpenFontIO(rwS, false, 16);
-    SDL_SeekIO(rwS, 0, SDL_IO_SEEK_SET);
-    fontS.MD = TTF_OpenFontIO(rwS, false, 24);
-    SDL_SeekIO(rwS, 0, SDL_IO_SEEK_SET);
-    fontS.LG = TTF_OpenFontIO(rwS, false, 32);
-    SDL_SeekIO(rwS, 0, SDL_IO_SEEK_SET);
-    fontS.XL = TTF_OpenFontIO(rwS, true, 48);
-    if (!fontS.SM || !fontS.MD || !fontS.LG || !fontS.XL) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_OpenFontIO() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    TTF_SetFontWrapAlignment(fontS.SM, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontS.MD, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontS.LG, TTF_HORIZONTAL_ALIGN_CENTER);
-    TTF_SetFontWrapAlignment(fontS.XL, TTF_HORIZONTAL_ALIGN_CENTER);
+    // enabled keyboard & gamepad navigation
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-    SDL_IOStream* rwM = SDL_IOFromConstMem(font_mono_h, font_mono_h_len);
-    if (!rwM) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_IOFromConstMem() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    fontM.SM = TTF_OpenFontIO(rwM, false, 16);
-    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
-    fontM.MD = TTF_OpenFontIO(rwM, false, 24);
-    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
-    fontM.LG = TTF_OpenFontIO(rwM, false, 32);
-    SDL_SeekIO(rwM, 0, SDL_IO_SEEK_SET);
-    fontM.XL = TTF_OpenFontIO(rwM, true, 48);
-    if (!fontM.SM || !fontM.MD || !fontM.LG || !fontM.XL) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_OpenFontIO() failed! Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    TTF_SetFontWrapAlignment(fontM.SM, TTF_HORIZONTAL_ALIGN_LEFT);
-    TTF_SetFontWrapAlignment(fontM.MD, TTF_HORIZONTAL_ALIGN_LEFT);
-    TTF_SetFontWrapAlignment(fontM.LG, TTF_HORIZONTAL_ALIGN_LEFT);
-    TTF_SetFontWrapAlignment(fontM.XL, TTF_HORIZONTAL_ALIGN_LEFT);
+    // set dark theme cuz we aren't psychotic
+    ImGui::StyleColorsDark();
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(dispInfo.scale);
+    style.FontScaleDpi = dispInfo.scale;
+
+    // Setup platform/renderer backends
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
+
+    // create the various fonts for use in the application
+    style.FontSizeBase = fontSize;
+    fonts.UI = io.Fonts->AddFontFromMemoryCompressedTTF(InterFont_data, InterFont_size);
+    fonts.Debug = io.Fonts->AddFontFromMemoryCompressedTTF(DebugFont_data, DebugFont_size);
+    //fonts.Nintendo = io.Fonts->AddFontFromMemoryCompressedTTF(NintendoFont_data, NintendoFont_size);
+    //fonts.Sony = io.Fonts->AddFontFromMemoryCompressedTTF(SonyFont_data, SonyFont_size);
+    //fonts.Microsoft = io.Fonts->AddFontFromMemoryCompressedTTF(MicrosoftFont_data, MicrosoftFont_size);
 }
 
 void VideoManager::Deinit() {
-    // TODO: Destroy other created video related SDL objects
-    if (gameCache.size() > 0) {
-        for (auto it1 = gameCache.begin(); it1 != gameCache.end(); it1++) {
-            auto &cache = (*it1).second;
-            for (auto it2 = cache.begin(); it2 != cache.end(); it2++) {
-                SDL_DestroyTexture((*it2).second->texture);
-                delete (*it2).second;
-            }
-        }
+
+    // remove fonts from ImGui
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.Fonts->RemoveFont(fonts.UI);
+    io.Fonts->RemoveFont(fonts.Debug);
+    //io.Fonts->RemoveFont(fonts.Nintendo);
+    //io.Fonts->RemoveFont(fonts.Sony);
+    //io.Fonts->RemoveFont(fonts.Microsoft);
+
+    // Shutdown ImGui
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+
+    // destroy created texture
+    if (gameTexture != nullptr) {
+        SDL_DestroyTexture(gameTexture);
+        gameTexture = nullptr;
     }
 
-    if (consoleCache.size() > 0) {
-        for (auto& p : consoleCache) {
-            SDL_DestroyTexture(p.second->texture);
-            delete p.second;
-        }
-        consoleCache.clear();
-    }
-
-    TTF_CloseFont(fontR.SM); TTF_CloseFont(fontR.MD); TTF_CloseFont(fontR.LG); TTF_CloseFont(fontR.XL);
-    TTF_CloseFont(fontS.SM); TTF_CloseFont(fontS.MD); TTF_CloseFont(fontS.LG); TTF_CloseFont(fontS.XL);
-
-    if (texture != nullptr) {
-        SDL_DestroyTexture(texture);
-        texture = nullptr;
-    }
-
+    // destroy renderer
     if (renderer != nullptr) {
         SDL_DestroyRenderer(renderer);
         renderer = nullptr;
     }
 
+    // destroy window
     if (window != nullptr) {
         SDL_DestroyWindow(window);
         window = nullptr;
     }
-}
-
-void VideoManager::RenderView() {
-    const AppState state = proteus->GetState();
-    if (state.currentView == GAME_VIEW) {
-        RenderGameView(proteus->InDebug());
-    } else {
-        RenderGradientBackground();
-        if (state.currentView == CONSOLE_SELECT)
-            RenderConsoleList();
-        else
-            RenderGameList(CONSOLES[state.selectedConsole].first, currentPage);
-        RenderSelector();
-    }
-}
-
-void VideoManager::RenderGradientBackground() {
-    // render a gradient background
-    SDL_FColor out = { .r = 0.12f, .g = 0.2f, .b = 0.12f, .a = 1.0f };
-    SDL_FColor cen = { .r = 0.0f, .g = 0.2f, .b = 0.0f, .a = 1.0f };
-    SDL_Vertex verts[5] = {
-        {.position = {.x = 0, .y = 0}, .color = out},   // top left
-        {.position = {.x = (float)dispWidth, .y = 0}, .color = out},   // top right
-        {.position = {.x = 0, .y = (float)dispHeight}, .color = out},   // bottom left
-        {.position = {.x = (float)dispWidth, .y = (float)dispHeight}, .color = out},   // bottom right
-        {.position = {.x = (float)dispWidth / 2, .y = (float)dispHeight / 2}, .color = cen} // center
-    };
-
-    int indices[12] = { 0, 1, 4,
-                       4, 1, 3,
-                       3, 2, 4,
-                       4, 2, 0 };
-
-    SDL_RenderGeometry(renderer, NULL, verts, 5, indices, 12);
-}
-
-void VideoManager::RenderConsoleList() {
-    // set up a 4x3 grid to hold our emulation engines
-    int rows = 3;
-    int cols = 4;
-    int rowH = dispHeight / rows;
-    int colW = dispWidth / cols;
-
-    int row = 0; int col = 0;
-    for (const std::pair<std::string, TextCache*>& p : consoleCache) {
-        TextCache* cache = p.second;
-
-        float x = col * colW + (colW - cache->width) / 2.0f;
-        float y = row * rowH + (rowH - cache->height) / 2.0f;
-
-        SDL_FRect dst(x, y, cache->width, cache->height);
-        SDL_RenderTexture(renderer, cache->texture, NULL, &dst);
-
-        col++;
-
-        if (col >= cols) {
-            col = 0;
-            row++;
-        }
-    }
-}
-
-void VideoManager::RenderGameList(std::string console, unsigned int page) {
-    currentMAXpage = pages[console];
-
-    int rows = 3;
-    int cols = 4;
-    int rowH = dispHeight / rows;
-    int colW = dispWidth / cols;
-
-    int row = 0; int col = 0;
-    int start = page * 12;
-    int end = start + 12;
-    for (int i = start; i < end && i < gameCache[console].size(); i++) {
-        TextCache* cache = gameCache[console].at(i).second;
-
-        float x = col * colW + (colW - cache->width) / 2.0f;
-        float y = row * rowH + (rowH - cache->height) / 2.0f;
-
-        SDL_FRect dst(x, y, cache->width, cache->height);
-        SDL_RenderTexture(renderer, cache->texture, NULL, &dst);
-
-        col++;
-
-        if (col >= cols) {
-            col = 0;
-            row++;
-
-            if (row >= rows) return;
-        }
-    }
-}
-
-void VideoManager::RenderGameView(bool dbg) {
-    float tgtAspect = (float)gameWidth / (float)gameHeight;
-    float lglAspect = (float)dispWidth / (float)dispHeight;
-
-    SDL_FRect dest = {};
-
-    float scale1 = 4.0f / 7.0f;
-    float scale2 = 3.0f / 7.0f;
-
-    if (dbg) {
-        lglAspect *= scale2;
-    }
-
-    if (lglAspect > tgtAspect) {
-        // pillarbox
-        dest.h = (float)dispHeight;
-        dest.w = dest.h * tgtAspect;
-        if (dbg) {
-            dest.h *= scale2;
-            dest.w *= scale2;
-        }
-        dest.x = dbg ? 0.0f : (dispWidth - dest.w) / 2.0f;
-        dest.y = 0.0f;
-    } else {
-        // letterbox
-        dest.w = (float)dispWidth;
-        dest.h = dest.w / tgtAspect;
-        if (dbg) {
-            dest.h *= scale2;
-            dest.w *= scale2;
-        }
-        dest.x = 0.0f;
-        dest.y = (dispHeight - dest.h) / 2.0f;
-    }
-
-    const u32* buffer = proteus->GetFrameBuffer();
-    void* pixels;
-    int pitch;
-    SDL_LockTexture(gameTexture, NULL, &pixels, &pitch);
-    for (int y = 0; y < gameHeight; y++) {
-        memcpy(
-            (u8*)pixels + y * pitch,
-            (u8*)buffer + y * (gameWidth * sizeof(u32)),
-            gameWidth * sizeof(u32)
-        );
-    }
-    SDL_UnlockTexture(gameTexture);
-    SDL_RenderTexture(renderer, gameTexture, NULL, &dest);
-
-    if (dbg) {
-        SDL_FRect dbgDest = { dest.w, 0.0f, (float)dispWidth - dest.w, (float)dispHeight };
-
-        if (proteus->GetDebugView() == DebugView::CPU) {
-            // render cpu data text to screen
-            RenderDataCPU(dbgDest);
-        } else if (proteus->GetDebugView() == DebugView::PPU) {
-            // render ppu image data to screen
-            RenderDataPPU(dbgDest);
-        }
-    }
-}
-
-void VideoManager::RenderDataCPU(SDL_FRect& dest) {
-    SDL_FRect cpuDest = { dest.x, dest.y, dest.w * (2.0f / 5.0f), dest.h };
-    
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderRect(renderer, &cpuDest);
-
-    // render cpu data text to screen
-    std::istringstream cpuData(proteus->GetDebugInfoCPU());
-    std::string line;
-    u8 lineNum = 0;
-    SDL_FRect lineDest = {};
-    lineDest.x = cpuDest.x;
-    lineDest.y = cpuDest.y;
-    SDL_Color white = { 0xFF, 0xFF, 0xFF, 0xFF };
-    SDL_Color green = { 0x00, 0xFF, 0x00, 0xFF };
-    SDL_Surface* s;
-    SDL_Texture* t;
-    while (std::getline(cpuData, line)) {
-        if (lineNum == 19) {
-            s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, green);
-        } else {
-            s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
-        }
-        t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        float w, h;
-        SDL_GetTextureSize(t, &w, &h);
-        lineDest.w = w;
-        lineDest.h = h;
-        SDL_RenderTexture(renderer, t, NULL, &lineDest);
-        lineDest.y += lineDest.h;
-        SDL_DestroyTexture(t);
-        lineNum++;
-    }
-
-    cpuDest.x += cpuDest.w;
-    cpuDest.w = dest.w * (3.0f / 5.0f);
-    RenderDataRAM(cpuDest);
-}
-
-void VideoManager::RenderDataRAM(SDL_FRect& dest) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderRect(renderer, &dest);
-    std::istringstream ramData(proteus->GetDebugInfoRAM());
-    std::string line;
-    u8 lineNum = 0;
-    u32 lineStart = ramPage * 16;
-    SDL_FRect lineDest = {};
-    lineDest.x = dest.x;
-    lineDest.y = dest.y;
-    SDL_Color white = { 0xFF, 0xFF, 0xFF, 0xFF };
-    std::string head = "";
-    SDL_Surface* s;
-    SDL_Texture* t;
-    u32 x = 0;
-    while (x < lineStart) {
-        std::getline(ramData, line);
-        x++;
-    }
-    line.resize(53);
-    // render current page
-    sprintf_s(line.data(), 53, " PG%d 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F", ramPage);
-    do {
-        s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
-        t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        float w, h;
-        SDL_GetTextureSize(t, &w, &h);
-        lineDest.w = w;
-        lineDest.h = h;
-        SDL_RenderTexture(renderer, t, NULL, &lineDest);
-        lineDest.y += lineDest.h;
-        SDL_DestroyTexture(t);
-        lineNum++;
-    } while (std::getline(ramData, line) && lineNum < 17);
-    lineDest.y += (lineDest.h / 2.0f); // add blank line for spacing
-    lineNum = 0; // reset lineNum so we don't have to do math
-    // render next page
-    sprintf_s(line.data(), 53, " PG%d 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F", ramPage + 1);
-    do {
-        s = TTF_RenderText_Solid(fontM.MD, line.c_str(), 0, white);
-        t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        float w, h;
-        SDL_GetTextureSize(t, &w, &h);
-        lineDest.w = w;
-        lineDest.h = h;
-        SDL_RenderTexture(renderer, t, NULL, &lineDest);
-        lineDest.y += lineDest.h;
-        SDL_DestroyTexture(t);
-        lineNum++;
-    } while (std::getline(ramData, line) && lineNum < 17);
-}
-
-void VideoManager::RenderDataPPU(SDL_FRect& dest) {
-    SDL_FRect paletteDest = { dest.x, dest.y, dest.w, (dest.h / 5) };
-    RenderPalettes(paletteDest);
-
-    SDL_FRect pattTableDest = { dest.x, dest.y + paletteDest.h, dest.w / 2.0f, dest.w / 2.0f };
-    RenderPatternTables(pattTableDest);
-}
-
-void VideoManager::RenderPalettes(SDL_FRect& dest) {
-    std::vector<u32> colors = proteus->GetDebugPaletteColors();
-    float w = dest.w / 17;
-    float h = w;
-    for (int i = 0; i < colors.size() && i < 16; ++i) {
-        SDL_FRect swatch = { dest.x + i * (w + 4), dest.y, w, h };
-        u32 color = colors[i];
-        u8 b = (color >> 16) & 0xFF;
-        u8 g = (color >> 8) & 0xFF;
-        u8 r = color & 0xFF;
-        SDL_SetRenderDrawColor(renderer, r, g, b, 255);
-        SDL_RenderFillRect(renderer, &swatch);
-    }
-}
-
-void VideoManager::RenderPatternTables(SDL_FRect& dest) {
-    SDL_FRect ptDest = { dest.x, dest.y, dest.h, dest.h };
-    for (u8 i = 0; i < 2; i++) {
-        std::vector<u32> pixels = proteus->GetDebugPatternTable(i);
-        SDL_Surface* s = SDL_CreateSurfaceFrom(128, 128, SDL_PIXELFORMAT_ABGR8888, pixels.data(), 128 * sizeof(u32));
-        SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        SDL_RenderTexture(renderer, t, nullptr, &ptDest);
-        SDL_DestroyTexture(t);
-        ptDest.x += ptDest.w;
-    }
-}
-
-void VideoManager::Render() {
-    // clear the renderer to prepare for the next frame
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    // render the current view to the texture
-    RenderView();
-
-    // Present the renderer to the display
-    SDL_RenderPresent(renderer);
-}
-
-void VideoManager::LoadConsoleCache() {
-    consoleCache.clear();
-
-    SDL_Color c(255, 255, 255, 255);
-
-    TTF_Font* font = fontR.XL;
-
-    // why is this suddenly failing to create other caches?
-    //for (const std::pair<std::string, std::string>& p : CONSOLES) {
-    for (auto it = CONSOLES.begin(); it != CONSOLES.end(); it++) {
-        SDL_Surface* s = TTF_RenderText_Blended_Wrapped(font, it->second.c_str(), 0, c, dispWidth / 4);
-        SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
-        SDL_DestroySurface(s);
-        float w, h;
-        SDL_GetTextureSize(t, &w, &h);
-
-        std::pair<std::string, TextCache*> pair(it->first, new TextCache(t, w, h));
-        consoleCache.push_back(pair);
-    }
-}
-
-void VideoManager::LoadGameCache() {
-    gameCache.clear();
-
-    SDL_Color c(255, 255, 255, 255);
-
-    TTF_Font* font = fontR.LG; // TODO: select font based on window size
-
-    for (auto it = CONSOLES.begin(); it != CONSOLES.end(); it++) {
-        //if (it->first != "NES") continue;
-        const std::vector<ROM> gameList = proteus->GetGameList(it->first);
-        GameCacheList cache;
-        cache.clear();
-        for (const ROM& entry : gameList) {
-            SDL_Surface* s = TTF_RenderText_Blended_Wrapped(font, FormatDisplayName(entry.gameName).c_str(), 0, c, dispWidth / 4);
-            if (!s) {
-                SDL_Log("TTF_RenderText failed: %s\n", SDL_GetError());
-                continue;
-            }
-            SDL_Texture* t = SDL_CreateTextureFromSurface(renderer, s);
-            SDL_DestroySurface(s);
-            float w, h;
-            SDL_GetTextureSize(t, &w, &h);
-
-            std::pair<std::string, TextCache*> pair(entry.gameName, new TextCache(t, w, h));
-            cache.push_back(pair);
-        }
-        std::pair<std::string, GameCacheList> consoleList(it->first, cache);
-        gameCache.insert(consoleList);
-        std::pair<std::string, unsigned int> numPages(it->first, (unsigned int)cache.size() / 12);
-        pages.insert(numPages);
-    }
-}
-
-void VideoManager::LoadCaches() {
-    LoadConsoleCache();
-    LoadGameCache();
-}
-
-void VideoManager::OnInput(Inputs* i) {
-    if (i == nullptr) return;
-
-    if (i->DPAD_LEFT || i->AXIS_LEFTX < 0) {
-        selectedItem.ColLeft();
-    } else if (i->DPAD_RIGHT || i->AXIS_LEFTX > 0) {
-        selectedItem.ColRight();
-    }
-    
-    if (i->DPAD_UP || i->AXIS_LEFTY < 0) {
-        selectedItem.RowUp();
-    } else if (i->DPAD_DOWN || i->AXIS_LEFTY > 0) {
-        selectedItem.RowDown();
-    }
-
-    if (i->AXIS_LEFT_TRIGGER > 0 || i->L1_BUTTON)
-        PageLeft();
-
-    if (i->AXIS_RIGHT_TRIGGER > 0 || i->R1_BUTTON)
-        PageRight();
-
-    if (i->A_BUTTON) OnSelect();
-    if (i->B_BUTTON) OnCancel();
 }
 
 void VideoManager::PageLeft() {
@@ -557,126 +135,303 @@ void VideoManager::PageRight() {
     else currentPage++;
 }
 
-void VideoManager::PageUp() {
-    if (ramPage == 0) ramPage = 6;
-    else ramPage -= 2;
-}
-
-void VideoManager::PageDown() {
-    if (ramPage == 6) ramPage = 0;
-    else ramPage += 2;
-}
-
-void VideoManager::OnMouseMove(float x, float y) {
-    selectedItem.col = (int)(x / ((float)dispWidth / 4)); // TODO: convert to actual column value
-    selectedItem.row = (int)(y / ((float)dispHeight / 3)); // TODO: convert to actual row value
-}
-
-void VideoManager::OnMouseScroll(int dir) {
-    const AppState state = proteus->GetState();
-    if (dir == 1) { // scroll up -> page left
-        if (state.currentView == GAME_VIEW && proteus->InDebug())
-            PageUp();
-        else
-            PageLeft();
-    } else if (dir == -1) { // scroll down -> page right
-        if (state.currentView == GAME_VIEW && proteus->InDebug())
-            PageDown();
-        else
-            PageRight();
-    }
-}
-
-void VideoManager::OnSelect() const {
-    AppState s = proteus->GetState();
-
-    int index = (selectedItem.row * 4) + selectedItem.col;
-
-    if (s.currentView == CONSOLE_SELECT) {
-        proteus->SetState(GAME_LIST, (CONSOLE_ID)index);
-    } else if (s.currentView == GAME_LIST) {
-        proteus->LaunchGame((currentPage * 12) + index);
-    }
-}
-
-void VideoManager::OnCancel() {
-    AppState s = proteus->GetState();
-
-    int index = s.selectedConsole;
-
-    if (s.currentView == GAME_LIST) {
-        proteus->SetState(CONSOLE_SELECT);
-        int row = index / 4;
-        int col = index % 4;
-        selectedItem.row = row;
-        selectedItem.col = col;
-    }
-}
-
 void VideoManager::OnResize(size_t width, size_t height) {
-    dispWidth = (int)width;
-    dispHeight = (int)height;
-
-    SDL_SetRenderLogicalPresentation(renderer, dispWidth, dispHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    dispInfo.dispWidth = (int)width;
+    dispInfo.dispHeight = (int)height;
 }
 
-void VideoManager::RenderSelector() {
-    AppView v = proteus->GetState().currentView;
-    float w = (float)dispWidth / 4;
-    float h = (float)dispHeight / 3;
-    float x = selectedItem.col * w;
-    float y = selectedItem.row * h;
-    float thickness = 25;
-
-    // top
-    SDL_FRect t = { x, y, w, thickness };
-    // right
-    SDL_FRect r = { (x + (w - thickness)), y, thickness, h };
-    // left
-    SDL_FRect l = { x, y, thickness, h };
-    // bottom
-    SDL_FRect b = { x, (y + (h - thickness)), w, thickness };
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    SDL_RenderFillRect(renderer, &t);
-    SDL_RenderFillRect(renderer, &r);
-    SDL_RenderFillRect(renderer, &l);
-    SDL_RenderFillRect(renderer, &b);
-}
-
-std::string VideoManager::FormatDisplayName(const std::string& fullname) {
-    size_t header = fullname.find(" (");
-    std::string name = fullname.substr(0, header);
-
-    size_t comma = name.rfind(", ");
-    if (comma == std::string::npos)
-        return name;
-
-    std::string base = name.substr(0, comma);
-    std::string suff = name.substr(comma + 2);
-
-    if (suff == "The" || suff == "A" || suff == "An")
-        return suff.append(" ").append(base);
-
-    return name;
-}
-
-void VideoManager::InitGameTexture(std::string title, size_t width, size_t height) {
+void VideoManager::InitGameTexture(string title, size_t width, size_t height) {
     SDL_SetWindowTitle(window, FormatDisplayName(title).c_str());
 
-    gameWidth = (int)width;
-    gameHeight = (int)height;
+    dispInfo.gameWidth = (u32)width;
+    dispInfo.gameHeight = (u32)height;
 
     if (gameTexture) {
         SDL_DestroyTexture(gameTexture);
-        gameTexture = nullptr;
     }
 
-    gameTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, gameWidth, gameHeight);
-
+    gameTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, dispInfo.gameWidth, dispInfo.gameHeight);
     if (!gameTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create game texture, error: %s\n", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create game texture; error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
+    }
+}
+
+//ImFont* VideoManager::GetConsoleFont(ConsoleID console) {
+//    // TODO: Get better font for NES
+//    switch (console) {
+//        default:
+//        case ConsoleID::NONE:
+//            return fonts.UI;
+//        case ConsoleID::NES:
+//        case ConsoleID::GBA:
+//        case ConsoleID::GBC:
+//        case ConsoleID::NGC:
+//        case ConsoleID::N64:
+//        case ConsoleID::NDS:
+//        case ConsoleID::SNS:
+//            return fonts.Nintendo;
+//        case ConsoleID::PS1:
+//        case ConsoleID::PS2:
+//        case ConsoleID::PS3:
+//            return fonts.Sony;
+//        case ConsoleID::XBX:
+//        case ConsoleID::XB3:
+//            return fonts.Microsoft;
+//    }
+//}
+
+void VideoManager::PrepViewport(ImGuiViewport* vp) {
+    // set next window to cover entire main viewport
+    ImGui::SetNextWindowPos(vp->WorkPos);
+    ImGui::SetNextWindowSize(vp->WorkSize);
+
+    // push styles to make it 'invisible'
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+}
+
+void VideoManager::PrepUI(ImGuiViewport* vp, ConsoleID console) {
+    // base viewport prep
+    PrepViewport(vp);
+
+    // push styles to actually style our UI view
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));           // no bg color
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));             // no default button color
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0.10f));  // hovered buttons dim background a little
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0.25f));   // active buttons dim background more
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 0, 1));
+
+    // push font for rendering text on buttons
+    ImGui::PushFont(fonts.UI); // get font based on console
+}
+
+void VideoManager::DeprepUI() {
+    // pop font (we're done with it)
+    ImGui::PopFont();
+
+    // pop style colors & vars to return to normal
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(4);
+}
+
+void VideoManager::Render(const AppState& state) {
+    switch (state.currentView) {
+        default:
+        case AppView::CONSOLE_SELECT:
+            RenderConsoleSelection();
+            break;
+        case AppView::GAME_LIST:
+            RenderGameSelection(state.selectedConsole);
+            break;
+        case AppView::GAME_VIEW:
+            return RenderGameView(proteus->InDebug());
+            break;
+    }
+    if (overlayActive) RenderOverlay();
+}
+
+void VideoManager::RenderConsoleSelection() {
+    // start the imgui frame
+    StartGUI(MenuType::MAIN, "CONSOLE_SELECTION");
+
+    // calculate button dimensions
+    ImVec2 btnSize(vp->WorkSize.x / 4.0f, vp->WorkSize.y / 3.0f);
+    ImGui::PushFont(nullptr, GetFontSize(btnSize, ConsoleTextWidth));
+    // render the console buttons
+    for (u8 i = 0; i < (u8)ConsoleID::TOTAL; i++) {
+        ConsoleID console = ConsoleID(i);
+        if (ImGui::ButtonCentered(ConsoleNamesShort.at(console).c_str(), btnSize)) {
+            proteus->SetState(AppView::GAME_LIST, console);
+        }
+        // only 4 buttons per row
+        if (i % 4 != 3) ImGui::SameLine();
+    }
+    ImGui::PopFont();
+    // end subwindow
+    EndGUI(MenuType::MAIN);
+}
+
+void VideoManager::RenderGameSelection(ConsoleID console) {
+    // start the imgui frame
+    StartGUI(MenuType::MAIN, "GAME_SELECTION");
+
+    // get list of games
+    vector<ROM_DATA> games = proteus->GetGameList(console);
+    // only attempt to render gamelist buttons if there are actually games in the list
+    if (games.size() != 0) {
+        // calculate button dimensions
+        ImVec2 btnSize(vp->WorkSize.x / 5.0f, vp->WorkSize.y / 4.0f);
+        ImGui::PushFont(nullptr, GetFontSize(btnSize, GameTextWidth));
+        // render the gamelist buttons
+        for (u16 i = 0; i < 20; i++) {
+            string name = FormatDisplayName(games[i].gameName, true);
+            if (ImGui::ButtonCentered(name.c_str(), btnSize)) {
+                proteus->LaunchGame(i);
+            }
+            // only 5 buttons per row
+            if (i % 5 != 4) ImGui::SameLine();
+        }
+        ImGui::PopFont();
+    } else if (!ConsoleEmuStarted.at(console)) {
+        char msg[100];
+        sprintf_s(msg, 100, "EMULATION DEVELOPMENT OF THE %s HAS NOT STARTED YET; PLEASE CHECK BACK LATER", ConsoleNamesShort.at(console).c_str());
+        ImGui::TextWrappedCentered(msg);
+    } else {
+        char msg[50];
+        sprintf_s(msg, 50, "NO %s GAMES FOUND", ConsoleNamesShort.at(console).c_str());
+        ImGui::TextWrappedCentered(msg);
+    }
+
+    EndGUI(MenuType::MAIN);
+}
+
+void VideoManager::RenderGameView(bool dbg) {
+    float tgtAspect = (float)dispInfo.gameWidth / (float)dispInfo.gameHeight;
+    float lglAspect = (float)dispInfo.dispWidth / (float)dispInfo.dispHeight;
+
+    SDL_FRect dest = {};
+
+    float scale1 = 4.0f / 7.0f;
+    float scale2 = 3.0f / 7.0f;
+
+    if (dbg) {
+        lglAspect *= scale2;
+    }
+
+    if (lglAspect > tgtAspect) {
+        // pillarbox
+        dest.h = (float)dispInfo.dispHeight;
+        dest.w = dest.h * tgtAspect;
+        if (dbg) {
+            dest.h *= scale2;
+            dest.w *= scale2;
+        }
+        dest.x = dbg ? 0.0f : (dispInfo.dispWidth - dest.w) / 2.0f;
+        dest.y = 0.0f;
+    } else {
+        // letterbox
+        dest.w = (float)dispInfo.dispWidth;
+        dest.h = dest.w / tgtAspect;
+        if (dbg) {
+            dest.h *= scale2;
+            dest.w *= scale2;
+        }
+        dest.x = 0.0f;
+        dest.y = (dispInfo.dispHeight - dest.h) / 2.0f;
+    }
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    const u32* buffer = proteus->GetFrameBuffer();
+    void* pixels;
+    int pitch;
+    SDL_LockTexture(gameTexture, NULL, &pixels, &pitch);
+    for (u32 y = 0; y < dispInfo.gameHeight; y++) {
+        memcpy(
+            (u8*)pixels + y * pitch,
+            (u8*)buffer + y * (dispInfo.gameWidth * sizeof(u32)),
+            dispInfo.gameWidth * sizeof(u32)
+        );
+    }
+    SDL_UnlockTexture(gameTexture);
+    SDL_RenderTexture(renderer, gameTexture, NULL, &dest);
+
+    if (dbg) {
+        RenderDebug();
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
+void VideoManager::RenderOverlay() {
+    // TODO: Why are the buttons misplaced and why does the menu not seem to capture the mouse?
+    StartGUI(MenuType::OVERLAY, "OVERLAY");
+
+    ImVec2 btnSize(vp->WorkSize.x, vp->WorkSize.y / 8.0f);
+
+    if (ImGui::Button("RESUME", btnSize)) {}
+    if (ImGui::Button("RESTART", btnSize)) {}
+    if (ImGui::Button("CLOSE GAME", btnSize)) {}
+    if (ImGui::Button("SAVE STATES", btnSize)) {}
+    if (ImGui::Button("OPTIONS", btnSize)) {}
+    if (ImGui::Button("CONTROLS", btnSize)) {}
+    if (ImGui::Button("CHEATS", btnSize)) {}
+    if (ImGui::Button("INFORMATION", btnSize)) {}
+
+    EndGUI(MenuType::OVERLAY);
+}
+
+void VideoManager::OnMouseScroll(s32 dir) {
+    // TODO: Handle debug input (maybe)
+    const AppState state = proteus->GetState();
+    if (dir == 1) {
+        PageLeft();
+    } else if (dir == -1) {
+        PageRight();
+    }
+}
+
+float VideoManager::GetFontSize(ImVec2 space, const float& base) const {
+    float r = space.x / base;
+
+    return fontSize * r * 0.75f * dispInfo.scale;
+}
+
+void VideoManager::RenderDebug() {
+    StartGUI(MenuType::DEBUG, "DEBUG MENU");
+
+    ImGui::Text("THIS IS THE DEBUG WINDOW");
+
+    EndGUI(MenuType::DEBUG);
+}
+
+void VideoManager::StartGUI(MenuType type, const char* name) {
+    if (type != MenuType::OVERLAY) {
+        ImGui_ImplSDLRenderer3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+    }
+
+    vp = ImGui::GetMainViewport();
+
+    switch (type) {
+        default:
+        case MenuType::MAIN:
+            PrepUI(vp);
+            ImGui::Begin(name, nullptr, ImMenuFlags);
+            break;
+        case MenuType::DEBUG:
+            ImGui::Begin(name, &debugActive, ImDebugFlags);
+            break;
+        case MenuType::OVERLAY:
+            ImGui::Begin(name, &overlayActive, ImMenuFlags);
+            break;
+    }
+}
+
+void VideoManager::EndGUI(MenuType type) {
+    ImGui::End();
+
+    if (type == MenuType::MAIN)
+        DeprepUI();
+
+    if (!overlayActive || type == MenuType::OVERLAY) {
+        ImGui::Render();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+
+        if (type == MenuType::MAIN) {
+            SDL_SetRenderDrawColorFloat(renderer, 0, 0.55f, 0, 1);
+            SDL_RenderClear(renderer);
+        }
+
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+
+        SDL_RenderPresent(renderer);
     }
 }

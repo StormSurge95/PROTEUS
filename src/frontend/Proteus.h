@@ -1,98 +1,92 @@
 #pragma once
 
 #include "./FrontendPCH.h"
-#include "./AppState.h"
 #include "./DebugManager.h"
 #include "../backend/SHARED/IConsole.h"
 
-class AudioManager;
-class InputManager;
-class VideoManager;
+namespace NS_Proteus {
+    /**
+     * Singleton class for maintaining the entire application.
+     * This class will be responsible for owning and controlling
+     * all SDL objects.
+     */
+    class Proteus
+    {
+        public:
+            Proteus();
+            ~Proteus();
 
-struct ROM {
-    std::string gameName;
-    std::string path;
-};
+            Proteus(const Proteus&) = delete;
+            Proteus& operator=(const Proteus&) = delete;
+            Proteus(Proteus&&) = delete;
+            Proteus& operator=(Proteus&&) = delete;
 
-/**
- * Singleton class for maintaining the entire application.
- * This class will be responsible for owning and controlling
- * all SDL objects.
- */
-class Proteus
-{
-    public:
-        Proteus();
-        ~Proteus();
+            void Init();
+            void Deinit();
 
-        Proteus(const Proteus&) = delete;
-        Proteus& operator=(const Proteus&) = delete;
-        Proteus(Proteus&&) = delete;
-        Proteus& operator=(Proteus&&) = delete;
+            void Run();
 
-        void Init();
-        void Deinit();
+            bool InDebug() const { return debug; }
 
-        void Run();
+            const AppState GetState() const { return state; }
 
-        bool InDebug() const { return debug; }
+            void ProcessKeyInput(SDL_Keycode key);
+            void ProcessButtonInput(u8 button);
+            void ProcessMouseWheelInput(s32 dir);
 
-        const AppState GetState() const { return state; }
+            inline void SetState(AppView view, ConsoleID console = ConsoleID::NONE) {
+                state.currentView = view;
+                if (view == AppView::GAME_LIST) state.selectedConsole = console;
+            }
 
-        void ProcessInputs();
+            void LaunchGame(int index);
 
-        inline void SetState(AppView view, CONSOLE_ID console = NONE) {
-            state.currentView = view;
-            if (view == GAME_LIST) state.selectedConsole = console;
-        }
+            DebugView GetDebugView() { return debugManager->currentView; }
+            std::string GetDebugInfoCPU();
+            std::string GetDebugInfoRAM();
+            std::vector<u32> GetDebugPaletteColors();
+            std::vector<u32> GetDebugPatternTable(int);
 
-        void LaunchGame(int index);
+            std::vector<ROM_DATA> GetGameList(ConsoleID console);
+            const u32* GetFrameBuffer();
+        private:
+            bool debug = false;
+            bool dbgPause = false;
+            bool ROMactive = false;
+            std::shared_ptr<IConsole> station = nullptr;
 
-        DebugView GetDebugView() { return debugManager->currentView; }
-        std::string GetDebugInfoCPU();
-        std::string GetDebugInfoRAM();
-        std::vector<u32> GetDebugPaletteColors();
-        std::vector<u32> GetDebugPatternTable(int);
+            static std::shared_ptr<Proteus> instance;
+            std::shared_ptr<AudioManager> audioManager;
+            std::shared_ptr<VideoManager> videoManager;
+            std::shared_ptr<InputManager> inputManager;
+            std::shared_ptr<DebugManager> debugManager;
 
-        std::vector<ROM> GetGameList(const std::string& console);
-        const u32* GetFrameBuffer();
-    private:
-        bool debug = false;
-        bool dbgPause = false;
-        bool ROMactive = false;
-        std::shared_ptr<IConsole> station = nullptr;
+            map<ConsoleID, vector<ROM_DATA>> gameList;
 
-        static std::shared_ptr<Proteus> instance;
-        std::shared_ptr<AudioManager> audioManager;
-        std::shared_ptr<VideoManager> videoManager;
-        std::shared_ptr<InputManager> inputManager;
-        std::shared_ptr<DebugManager> debugManager;
+            AppState state;
 
-        std::map<std::string, std::vector<ROM>> gameList;
+            SDL_Window* window = nullptr;
+            SDL_Renderer* renderer = nullptr;
 
-        AppState state;
+            int dispWidth = 0;
+            int dispHeight = 0;
 
-        SDL_Window* window = nullptr;
-        SDL_Renderer* renderer = nullptr;
+            bool quit = false;
+            SDL_Event event = {};
 
-        int dispWidth = 0;
-        int dispHeight = 0;
+            void ToggleDebug();
 
-        bool quit = false;
-        SDL_Event event = {};
+            void SetMetadata();
 
-        void ToggleDebug();
+            void ProcessEvents();
 
-        void SetMetadata();
+            void IdentifyROMs();
 
-        void ProcessEvents();
+            std::string Lookup(const std::string& console, const std::string& hash);
 
-        void IdentifyROMs();
+            std::string MD5(const std::string& filepath);
 
-        std::string Lookup(const std::string& console, const std::string& hash);
-
-        std::string MD5(const std::string& filepath);
-
-        void StartConsole();
-        void ShutDownConsole(bool shutDownApp = false);
-};
+            void StartConsole();
+            void ShutDownConsole(bool shutDownApp = false);
+    };
+}

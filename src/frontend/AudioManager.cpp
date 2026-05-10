@@ -1,6 +1,6 @@
-#include "./AudioManager.h"
+#include "AudioManager.h"
 
-#include <SDL3/SDL.h>
+using namespace NS_Proteus;
 
 AudioManager::AudioManager(Proteus* p, bool d) {
     proteus = p;

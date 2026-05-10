@@ -1,6 +1,8 @@
 #include "../frontend/Proteus.h"
 #include "InputManager.h"
 
+using namespace NS_Proteus;
+
 Gamepad::Gamepad(int i) : id(i) {
     gamepad = SDL_OpenGamepad(id);
     state = std::make_unique<Inputs>();
@@ -235,13 +237,13 @@ Inputs* InputManager::ReadKeyboard(bool ui) {
     return kbState.get();
 }
 
-void InputManager::TranslateInputs(std::shared_ptr<IConsole>& station, CONSOLE_ID console) {
+void InputManager::TranslateInputs(std::shared_ptr<IConsole>& station, ConsoleID console) {
     for (int i = 0; i < numPlayers; i++) {
         Inputs* inputs = ReadInputs(i);
         if (inputs == nullptr) throw std::exception();
 
         switch (console) {
-            case NES:
+            case ConsoleID::NES:
                 std::array<bool, 8> btns = { inputs->A_BUTTON, inputs->B_BUTTON, inputs->SELECT, inputs->START,
                     inputs->DPAD_UP, inputs->DPAD_DOWN, inputs->DPAD_LEFT, inputs->DPAD_RIGHT };
                 station->update(i, btns.data());

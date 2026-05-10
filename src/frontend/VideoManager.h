@@ -1,116 +1,128 @@
 #pragma once
 
 #include "./FrontendPCH.h"
-#include "./InputManager.h"
+#include "./Types.h"
 #include "./Proteus.h"
 
-class VideoManager {
-    public:
-        VideoManager(Proteus* proteus, bool debug = false);
-        ~VideoManager() { Deinit(); }
+namespace NS_Proteus {
+    class VideoManager {
+        public:
+            /**
+             * @brief Explicit Constructor
+             * @param proteus Pointer to the Proteus instance.
+             * @param debug Whether or not debug is enabled
+             * @todo Is `debug` even necessary anymore?
+             */
+            VideoManager(Proteus* proteus);
+            /**
+             * @brief Explicit Destructor (simply calls `Deinit()`)
+             */
+            ~VideoManager() { Deinit(); }
 
-        VideoManager(const VideoManager&) = delete;
-        VideoManager& operator=(const VideoManager&) = delete;
-        VideoManager(VideoManager&&) = delete;
-        VideoManager& operator=(VideoManager&&) = delete;
+            /// Remove all copy constructors; VideoManager is meant to be singleton
+            VideoManager(const VideoManager&) = delete;
+            VideoManager& operator=(const VideoManager&) = delete;
+            VideoManager(VideoManager&&) = delete;
+            VideoManager& operator=(VideoManager&&) = delete;
 
-        void Init();
-        void InitGameTexture(std::string title, size_t width, size_t height);
-        void Deinit();
+            /// @brief Initilize VideoManager
+            void Init();
+            /**
+             * @brief Initialize GameView texture
+             * @param title The new window title to use
+             * @param width The width of the game window
+             * @param height The heigh of the game window
+             * @details
+             * Allows us to change the name of the window to something more relevant
+             * and prepare a texture for rendering the pixels provided by the emulated
+             * game station to the screen.
+             * 
+             * The provided `title` argument is appended to the default window title
+             * of "PROTEUS" in the format "PROTEUS: <title>"
+             * 
+             * The `width` and `height` provided are meant to be the width and
+             * height of the natural game screen as viewed on its original console.
+             */
+            void InitGameTexture(std::string title, size_t width, size_t height);
 
-        void Render();
+            /// @brief Deinitialize VideoManager and clean up memory
+            void Deinit();
 
-        void OnInput(Inputs* i);
-        void OnMouseMove(float, float);
-        void OnMouseScroll(int);
-        void OnSelect() const;
-        void OnCancel();
-        void OnResize(size_t width, size_t height);
+            /// @brief Render necessary image data to the screen
+            void Render(const AppState& state);
 
-        void LoadCaches();
+            /// @brief Handles the resizing of our application window
+            void OnResize(size_t width, size_t height);
+            void OnMouseScroll(s32 dir);
 
-    private:
-        bool debug = false;
-        Proteus* proteus = nullptr;
+            /// @brief Toggles whether or not to display the Overlay Menu
+            inline void ToggleOverlay() { overlayActive = !overlayActive; }
 
-        SDL_Window* window = nullptr;
-        SDL_Renderer* renderer = nullptr;
-        SDL_Texture* texture = nullptr;
-        SDL_Texture* gameTexture = nullptr;
-        TTF_TextEngine* engine = nullptr;
-        struct Font {
-            TTF_Font* SM = nullptr;
-            TTF_Font* MD = nullptr;
-            TTF_Font* LG = nullptr;
-            TTF_Font* XL = nullptr;
+            /// @brief Toggles whether or not to display the Debug Menu
+            inline void ToggleDebug() { debugActive = !debugActive; }
 
-            Font() = default;
-        } fontR, fontS, fontM;
+            void PageLeft();
+            void PageRight();
 
-        struct TextCache {
-            SDL_Texture* texture = nullptr;
-            float width, height;
+            SDL_Window* GetWindow() const { return window; }
+            const bool OverlayActive() const { return overlayActive; }
 
-            TextCache(SDL_Texture* t, float w, float h) : texture(t), width(w), height(h) {}
-        };
+        private:
+            bool debugActive = false;
+            bool overlayActive = false;
+            Proteus* proteus = nullptr;
 
-        std::vector<std::pair<std::string, TextCache*>> consoleCache = {};
-        typedef std::vector<std::pair<std::string, TextCache*>> GameCacheList;
-        std::map<std::string, GameCacheList> gameCache = {};
-        std::map<std::string, unsigned int> pages = {};
-        unsigned int currentMAXpage = 0;
-        unsigned int currentPage = 0;
+            DisplayInfo dispInfo;
 
-        struct Selection {
-            int row = 0;
-            int col = 0;
+            SDL_Window* window = nullptr;
+            SDL_Renderer* renderer = nullptr;
+            SDL_Texture* gameTexture = nullptr;
 
-            Selection() = default;
-            void RowDown() {
-                row = (row == 2) ? 0 : row + 1;
-            }
-            void RowUp() {
-                row = (row == 0) ? 2 : row - 1;
-            }
-            void ColLeft() {
-                col = (col == 0) ? 3 : col - 1;
-            }
-            void ColRight() {
-                col = (col == 3) ? 0 : col + 1;
-            }
-        } selectedItem;
+            ImGuiViewport* vp = nullptr;
 
-        int screenWidth = 0;
-        int screenHeight = 0;
-        int dispWidth = 0;
-        int dispHeight = 0;
-        int gameWidth = 0;
-        int gameHeight = 0;
+            struct Fonts {
+                ImFont* UI = nullptr;
+                ImFont* Debug = nullptr;
+                //ImFont* Nintendo = nullptr;
+                //ImFont* Sony = nullptr;
+                //ImFont* Microsoft = nullptr;
+            } fonts = {};
+            float fontSize = 64.0f;
+            float ConsoleTextWidth = 275.0f;
+            float GameTextWidth = 400.0f;
+            float GetFontSize(ImVec2 space, const float& base) const;
+            //ImFont* GetConsoleFont(ConsoleID console);
 
-        int ramPage = 0x00;
+            PageCounts pages = {};
+            u16 currentMAXpage = 0;
+            u16 currentPage = 0;
 
-        void PageUp();
-        void PageDown();
-        void PageLeft();
-        void PageRight();
+            MenuSelection selectedItem;
 
-        void RenderConsoleList();
-        void RenderGameList(std::string console, unsigned int page);
-        void RenderGameView(bool dbg = false);
-        void RenderGradientBackground();
-        void RenderView();
+            u8 ramPage = 0x00;
 
-        void RenderDataCPU(SDL_FRect&);
-        void RenderDataRAM(SDL_FRect&);
+            void RenderConsoleSelection();
+            void RenderGameSelection(ConsoleID console);
+            void RenderGameView(bool debug);
+            void RenderDebug();
+            void RenderOverlay();
 
-        void RenderDataPPU(SDL_FRect&);
-        void RenderPalettes(SDL_FRect&);
-        void RenderPatternTables(SDL_FRect&);
+            void PrepViewport(ImGuiViewport* vp);
+            void PrepUI(ImGuiViewport* vp, ConsoleID console = ConsoleID::NONE);
+            void DeprepUI();
 
-        void LoadConsoleCache();
-        void LoadGameCache();
+            const ImGuiWindowFlags ImMenuFlags =
+                ImGuiWindowFlags_NoDecoration |         // no titlebar, resize, scrollbar, or collapse
+                ImGuiWindowFlags_NoMove |               // prevent moving the window
+                ImGuiWindowFlags_NoSavedSettings |      // prevent .ini modification
+                ImGuiWindowFlags_NoBringToFrontOnFocus; // prevent automatically bringing window to front on focus
 
-        void RenderSelector();
+            const ImGuiWindowFlags ImDebugFlags =
+                ImGuiWindowFlags_MenuBar                // Has a menu-bar
+                | ImGuiWindowFlags_AlwaysAutoResize     // make sure content always fits in window
+                | ImGuiWindowFlags_NoNav;               // make sure that gamepad inputs only effect gameplay
 
-        std::string FormatDisplayName(const std::string& name);
-};
+            void StartGUI(MenuType type, const char* name);
+            void EndGUI(MenuType type);
+    };
+}
