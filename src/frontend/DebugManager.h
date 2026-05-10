@@ -2,7 +2,6 @@
 
 #include "./FrontendPCH.h"
 #include "./Types.h"
-#include "./AppState.h"
 #include "../backend/shared/IDebugger.h"
 #include "../backend/shared/IConsole.h"
 
@@ -15,7 +14,7 @@ namespace NS_Proteus {
 
             DebugManager() = default;
 
-            void SetDebugger(CONSOLE_ID, std::shared_ptr<IConsole>);
+            void SetDebugger(ConsoleID, std::shared_ptr<IConsole>);
             IDebugger* GetDebugger() const;
 
             void CycleDebugViews(bool = true);

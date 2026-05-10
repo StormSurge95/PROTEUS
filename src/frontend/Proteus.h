@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./FrontendPCH.h"
-#include "./AppState.h"
 #include "./DebugManager.h"
 #include "../backend/SHARED/IConsole.h"
 
@@ -31,11 +30,13 @@ namespace NS_Proteus {
 
             const AppState GetState() const { return state; }
 
-            void ProcessInputs();
+            void ProcessKeyInput(SDL_Keycode key);
+            void ProcessButtonInput(u8 button);
+            void ProcessMouseWheelInput(s32 dir);
 
-            inline void SetState(AppView view, CONSOLE_ID console = NONE) {
+            inline void SetState(AppView view, ConsoleID console = ConsoleID::NONE) {
                 state.currentView = view;
-                if (view == GAME_LIST) state.selectedConsole = console;
+                if (view == AppView::GAME_LIST) state.selectedConsole = console;
             }
 
             void LaunchGame(int index);
@@ -46,7 +47,7 @@ namespace NS_Proteus {
             std::vector<u32> GetDebugPaletteColors();
             std::vector<u32> GetDebugPatternTable(int);
 
-            std::vector<ROM> GetGameList(const std::string& console);
+            std::vector<ROM_DATA> GetGameList(ConsoleID console);
             const u32* GetFrameBuffer();
         private:
             bool debug = false;
@@ -60,7 +61,7 @@ namespace NS_Proteus {
             std::shared_ptr<InputManager> inputManager;
             std::shared_ptr<DebugManager> debugManager;
 
-            std::map<std::string, std::vector<ROM>> gameList;
+            map<ConsoleID, vector<ROM_DATA>> gameList;
 
             AppState state;
 

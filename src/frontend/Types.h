@@ -8,7 +8,91 @@ namespace NS_Proteus {
     class VideoManager;
     class DebugManager;
 
-    struct ROM {
+    enum class AppView {
+        CONSOLE_SELECT,
+        GAME_LIST,
+        GAME_VIEW,
+    };
+
+    enum class ConsoleID : u8 {
+        NES,
+        SNS,
+        PS1,
+        N64,
+        PS2,
+        GBC,
+        GBA,
+        NGC,
+        XBX,
+        NDS,
+        XB3,
+        PS3,
+        WII,
+        TOTAL,
+        NONE
+        //XB1,
+        //NSW,
+        //XXS,
+        //PS5,
+        //NS2
+    };
+
+    struct AppState {
+        AppView currentView = AppView::CONSOLE_SELECT;
+        ConsoleID selectedConsole = ConsoleID::NONE;
+        string selectedGame = "";
+        bool isLoading = false;
+    };
+
+    const map<ConsoleID, string> ConsoleNamesShort = {
+        { ConsoleID::NES, "NES" },
+        { ConsoleID::SNS, "SNES" },
+        { ConsoleID::PS1, "PS1" },
+        { ConsoleID::N64, "N64" },
+        { ConsoleID::PS2, "PS2" },
+        { ConsoleID::GBC, "GBC" },
+        { ConsoleID::GBA, "GBA" },
+        { ConsoleID::NGC, "GAMECUBE" },
+        { ConsoleID::XBX, "XBOX" },
+        { ConsoleID::NDS, "NDS" },
+        { ConsoleID::XB3, "X360" },
+        { ConsoleID::PS3, "PS3" },
+        { ConsoleID::WII, "WII" }
+    };
+
+    const map<ConsoleID, string> ConsoleNamesLong = {
+        { ConsoleID::NES, "NINTENDO ENTERNTAINMENT SYSTEM" },
+        { ConsoleID::SNS, "SUPER NINTENDO ENTERTAINMENT SYSTEM" },
+        { ConsoleID::PS1, "PLAYSTATION" },
+        { ConsoleID::N64, "NINTENDO 64" },
+        { ConsoleID::PS2, "PLAYSTATION 2" },
+        { ConsoleID::GBC, "GAMEBOY COLOR" },
+        { ConsoleID::GBA, "GAMEBOY ADVANCE" },
+        { ConsoleID::NGC, "NINTENDO GAMECUBE" },
+        { ConsoleID::NDS, "NINTENDO DS" },
+        { ConsoleID::XBX, "XBOX" },
+        { ConsoleID::XB3, "XBOX 360" },
+        { ConsoleID::PS3, "PLAYSTATION 3" },
+        { ConsoleID::WII, "NINTENTO WII" }
+    };
+
+    const map<ConsoleID, bool> ConsoleEmuStarted = {
+        { ConsoleID::NES, true },
+        { ConsoleID::SNS, true },
+        { ConsoleID::PS1, false },
+        { ConsoleID::N64, false },
+        { ConsoleID::PS2, false },
+        { ConsoleID::GBC, false },
+        { ConsoleID::GBA, false },
+        { ConsoleID::NGC, false },
+        { ConsoleID::NDS, false },
+        { ConsoleID::XBX, false },
+        { ConsoleID::XB3, false },
+        { ConsoleID::PS3, false },
+        { ConsoleID::WII, false }
+    };
+
+    struct ROM_DATA {
         string gameName;
         string path;
     };
@@ -291,47 +375,46 @@ namespace NS_Proteus {
         AxisDirection GetDirection(short value);
     };
 
-    struct Font {
-        TTF_Font* SM = nullptr;
-        TTF_Font* MD = nullptr;
-        TTF_Font* LG = nullptr;
-        TTF_Font* XL = nullptr;
+    typedef map<ConsoleID, u16> PageCounts;
 
-        Font() = default;
+    enum class MenuType {
+        MAIN, OVERLAY, DEBUG
     };
-
-    struct TextCache {
-        SDL_Texture* texture = nullptr;
-        float width, height;
-
-        TextCache(SDL_Texture* t, float w, float h) : texture(t), width(w), height(h) {}
-    };
-
-    typedef pair<string, TextCache*> CacheItem;
-    typedef vector<CacheItem> CacheList;
-    typedef map<string, CacheList> GameCache;
-    typedef map<string, unsigned int> PageCounts;
 
     struct MenuSelection {
         int row = 0;
         int col = 0;
+        int maxRow = 2;
+        int maxCol = 3;
 
         MenuSelection() = default;
-        void RowDown() { row = (row == 2) ? 0 : row + 1; }
+        void Update(u8 r, u8 c) { maxRow = r; maxCol = c; }
+        void RowDown() { row = (row == maxRow) ? 0 : row + 1; }
         void RowUp() { row = (row == 0) ? 2 : row - 1; }
         void ColLeft() { col = (col == 0) ? 3 : col - 1; }
-        void ColRight() { col = (col == 3) ? 0 : col + 1; }
+        void ColRight() { col = (col == maxCol) ? 0 : col + 1; }
     };
 
-    enum class FontSize { SM, MD, LG, XL };
+    static const SDL_GPUShaderFormat ShaderFlags =
+        SDL_GPU_SHADERFORMAT_PRIVATE |
+        SDL_GPU_SHADERFORMAT_SPIRV |
+        SDL_GPU_SHADERFORMAT_DXBC |
+        SDL_GPU_SHADERFORMAT_DXIL |
+        SDL_GPU_SHADERFORMAT_MSL |
+        SDL_GPU_SHADERFORMAT_METALLIB;
 
-    struct FontChoice {
-        TTF_Font* font = nullptr;
-        FontSize size = FontSize::LG;
-    };
+    static const SDL_WindowFlags WindowFlags =
+        SDL_WINDOW_RESIZABLE |
+        SDL_WINDOW_HIDDEN |
+        SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
-    struct TextSize {
-        float w = 0.0f;
-        float h = 0.0f;
+    struct DisplayInfo {
+        float scale = 2.0f;
+        u32 screenWidth = 3840;
+        u32 screenHeight = 2160;
+        u32 dispWidth = 2560;
+        u32 dispHeight = 1440;
+        u32 gameWidth = 0;
+        u32 gameHeight = 0;
     };
 }

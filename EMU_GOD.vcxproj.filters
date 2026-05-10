@@ -40,19 +40,19 @@
     <Filter Include="Header Files\shared">
       <UniqueIdentifier>{51de0b2b-d4c4-4b3f-b3bf-f9621a1a302c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\frontend\ImGui">
+      <UniqueIdentifier>{90159bdd-54a7-42a6-a7b3-deaa11cd4ea4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\frontend\ImGui">
+      <UniqueIdentifier>{d08855a8-3b5e-483c-90d3-c21560aceb44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Fonts">
+      <UniqueIdentifier>{cabc4275-4084-4b03-b70e-5fd9a3222154}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\frontend\Proteus.h">
       <Filter>Header Files\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\AppState.h">
-      <Filter>Header Files\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\font.regular.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\font.schatten.h">
-      <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="resources\NES_DB.h">
       <Filter>Resource Files</Filter>
@@ -86,9 +86,6 @@
     </ClInclude>
     <ClInclude Include="src\frontend\DebugManager.h">
       <Filter>Header Files\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\font.mono.h">
-      <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\SHARED\IConsole.h">
       <Filter>Header Files\backend\SHARED</Filter>
@@ -159,6 +156,45 @@
     <ClInclude Include="src\frontend\Types.h">
       <Filter>Header Files\frontend</Filter>
     </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imconfig.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_impl_sdl3.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_internal.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_rectpack.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_textedit.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_truetype.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\SonyFont.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\NintendoFont.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\debug_font.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\inter_font.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\MicrosoftFont.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.h">
+      <Filter>Header Files\frontend\ImGui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">
@@ -226,6 +262,27 @@
     </ClCompile>
     <ClCompile Include="src\backend\NES\TriangleChannel.cpp">
       <Filter>Source Files\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_demo.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_draw.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_impl_sdl3.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_tables.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_widgets.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Source Files\frontend\ImGui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

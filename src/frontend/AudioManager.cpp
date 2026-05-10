@@ -1,6 +1,4 @@
-#include "./AudioManager.h"
-
-#include <SDL3/SDL.h>
+#include "AudioManager.h"
 
 using namespace NS_Proteus;
 
