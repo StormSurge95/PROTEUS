@@ -78,7 +78,7 @@ namespace NS_Proteus {
 
     const map<ConsoleID, bool> ConsoleEmuStarted = {
         { ConsoleID::NES, true },
-        { ConsoleID::SNS, true },
+        { ConsoleID::SNS, false },
         { ConsoleID::PS1, false },
         { ConsoleID::N64, false },
         { ConsoleID::PS2, false },

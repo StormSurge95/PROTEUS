@@ -62,7 +62,7 @@ void Proteus::Run() {
 
         //ProcessInputs();
         videoManager->Render(state);
-        if (state.currentView == AppView::GAME_VIEW) {
+        if (state.currentView == AppView::GAME_VIEW && !videoManager->OverlayActive()) {
             inputManager->TranslateInputs(station, state.selectedConsole);
             if (!debug || !dbgPause) station->clock();
         }
@@ -101,6 +101,7 @@ void Proteus::ToggleDebug() {
             debugManager->SetDebugger(ConsoleID::NES, station);
             debugManager->CycleDebugViews();
         } else debugManager->CycleDebugViews(false);
+        videoManager->ToggleDebug();
     }
 }
 
@@ -141,8 +142,8 @@ void Proteus::ProcessEvents() {
                     if (state.currentView == AppView::GAME_LIST)
                         SetState(AppView::CONSOLE_SELECT);
                 }
-                //else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE)
-                //    videoManager->ToggleOverlay();
+                else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE)
+                    videoManager->ToggleOverlay();
                 break;
         }
     }
@@ -177,7 +178,7 @@ void Proteus::ProcessButtonInput(u8 button) {
     switch (button) {
         case SDL_GAMEPAD_BUTTON_GUIDE:
             if (state.currentView == AppView::GAME_VIEW)
-                ShutDownConsole(false);
+                videoManager->ToggleOverlay();
             break;
         case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:
             videoManager->PageRight();

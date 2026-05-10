@@ -286,7 +286,6 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
         ImGui::TextWrappedCentered(msg);
     }
 
-
     EndGUI(MenuType::MAIN);
 }
 
@@ -350,9 +349,19 @@ void VideoManager::RenderGameView(bool dbg) {
 }
 
 void VideoManager::RenderOverlay() {
+    // TODO: Why are the buttons misplaced and why does the menu not seem to capture the mouse?
     StartGUI(MenuType::OVERLAY, "OVERLAY");
 
-    ImGui::Text("THIS IS THE OVERLAY");
+    ImVec2 btnSize(vp->WorkSize.x, vp->WorkSize.y / 8.0f);
+
+    if (ImGui::Button("RESUME", btnSize)) {}
+    if (ImGui::Button("RESTART", btnSize)) {}
+    if (ImGui::Button("CLOSE GAME", btnSize)) {}
+    if (ImGui::Button("SAVE STATES", btnSize)) {}
+    if (ImGui::Button("OPTIONS", btnSize)) {}
+    if (ImGui::Button("CONTROLS", btnSize)) {}
+    if (ImGui::Button("CHEATS", btnSize)) {}
+    if (ImGui::Button("INFORMATION", btnSize)) {}
 
     EndGUI(MenuType::OVERLAY);
 }
@@ -382,9 +391,11 @@ void VideoManager::RenderDebug() {
 }
 
 void VideoManager::StartGUI(MenuType type, const char* name) {
-    ImGui_ImplSDLRenderer3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
+    if (type != MenuType::OVERLAY) {
+        ImGui_ImplSDLRenderer3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+    }
 
     vp = ImGui::GetMainViewport();
 
@@ -392,13 +403,13 @@ void VideoManager::StartGUI(MenuType type, const char* name) {
         default:
         case MenuType::MAIN:
             PrepUI(vp);
-            ImGui::Begin(name, nullptr, MenuFlags);
+            ImGui::Begin(name, nullptr, ImMenuFlags);
             break;
         case MenuType::DEBUG:
-            ImGui::Begin(name, &debugActive, DebugWindowFlags);
+            ImGui::Begin(name, &debugActive, ImDebugFlags);
             break;
         case MenuType::OVERLAY:
-            ImGui::Begin(name, &overlayActive, MenuFlags);
+            ImGui::Begin(name, &overlayActive, ImMenuFlags);
             break;
     }
 }
@@ -409,16 +420,18 @@ void VideoManager::EndGUI(MenuType type) {
     if (type == MenuType::MAIN)
         DeprepUI();
 
-    ImGui::Render();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    if (!overlayActive || type == MenuType::OVERLAY) {
+        ImGui::Render();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
 
-    if (type == MenuType::MAIN) {
-        SDL_SetRenderDrawColorFloat(renderer, 0, 0.55f, 0, 1);
-        SDL_RenderClear(renderer);
+        if (type == MenuType::MAIN) {
+            SDL_SetRenderDrawColorFloat(renderer, 0, 0.55f, 0, 1);
+            SDL_RenderClear(renderer);
+        }
+
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+
+        SDL_RenderPresent(renderer);
     }
-
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-
-    SDL_RenderPresent(renderer);
 }
