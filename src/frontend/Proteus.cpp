@@ -132,15 +132,13 @@ void Proteus::ProcessEvents() {
             case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
                 ProcessButtonInput(event.gbutton.button);
                 break;
-            case SDL_EVENT_MOUSE_WHEEL:
-                videoManager->OnMouseScroll(event.wheel.integer_y);
-                break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 //if (static_cast<MouseButton>(event.button.button) == MouseButton::LEFT)
                 //    videoManager->OnSelect();
                 if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT) {
-                    if (state.currentView == AppView::GAME_LIST)
+                    if (state.currentView == AppView::GAME_LIST && !videoManager->OverlayActive())
                         SetState(AppView::CONSOLE_SELECT);
+                    else if (videoManager->OverlayActive()) videoManager->ToggleOverlay();
                 }
                 else if (static_cast<MouseButton>(event.button.button) == MouseButton::MIDDLE)
                     videoManager->ToggleOverlay();
@@ -180,15 +178,10 @@ void Proteus::ProcessButtonInput(u8 button) {
             if (state.currentView == AppView::GAME_VIEW)
                 videoManager->ToggleOverlay();
             break;
-        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:
-            videoManager->PageRight();
-            break;
-        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:
-            videoManager->PageLeft();
-            break;
         case SDL_GAMEPAD_BUTTON_EAST:
-            if (state.currentView == AppView::GAME_LIST)
+            if (state.currentView == AppView::GAME_LIST && !videoManager->OverlayActive())
                 SetState(AppView::CONSOLE_SELECT);
+            else if (videoManager->OverlayActive()) videoManager->ToggleOverlay();
             break;
     }
 }
@@ -313,10 +306,11 @@ void Proteus::StartConsole() {
     }
 }
 
-void Proteus::ShutDownConsole(bool shutdownApp) {
-    if (shutdownApp)
-        exit(EXIT_SUCCESS);
+void Proteus::ResetConsole() {
+    station->reset();
+}
 
+void Proteus::ShutDownConsole() {
     station.reset();
     ROMactive = false;
     SetState(AppView::GAME_LIST, state.selectedConsole);

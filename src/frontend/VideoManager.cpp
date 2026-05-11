@@ -125,16 +125,6 @@ void VideoManager::Deinit() {
     }
 }
 
-void VideoManager::PageLeft() {
-    if (currentPage == 0) currentPage = currentMAXpage;
-    else currentPage--;
-}
-
-void VideoManager::PageRight() {
-    if (currentPage == currentMAXpage) currentPage = 0;
-    else currentPage++;
-}
-
 void VideoManager::OnResize(size_t width, size_t height) {
     dispInfo.dispWidth = (int)width;
     dispInfo.dispHeight = (int)height;
@@ -194,12 +184,15 @@ void VideoManager::PrepViewport(ImGuiViewport* vp) {
 
 }
 
-void VideoManager::PrepUI(ImGuiViewport* vp, ConsoleID console) {
+void VideoManager::PrepUI(ImGuiViewport* vp, MenuType type) {
     // base viewport prep
     PrepViewport(vp);
 
     // push styles to actually style our UI view
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));           // no bg color
+    if (type == MenuType::OVERLAY)
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(200, 200, 200, 0.15f));   // have overlay dim the screen
+    else
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));       // have main menu(s) not effect bg color
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));             // no default button color
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0.10f));  // hovered buttons dim background a little
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0.25f));   // active buttons dim background more
@@ -219,6 +212,11 @@ void VideoManager::DeprepUI() {
 }
 
 void VideoManager::Render(const AppState& state) {
+    // start new ImGui frame
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
     switch (state.currentView) {
         default:
         case AppView::CONSOLE_SELECT:
@@ -228,65 +226,99 @@ void VideoManager::Render(const AppState& state) {
             RenderGameSelection(state.selectedConsole);
             break;
         case AppView::GAME_VIEW:
-            return RenderGameView(proteus->InDebug());
+            RenderGameView(proteus->InDebug());
             break;
     }
     if (overlayActive) RenderOverlay();
+
+    FinalizeFrame(proteus->GetState().currentView != AppView::GAME_VIEW);
 }
 
 void VideoManager::RenderConsoleSelection() {
-    // start the imgui frame
-    StartGUI(MenuType::MAIN, "CONSOLE_SELECTION");
+    // prep Viewport for Main menu
+    vp = ImGui::GetMainViewport();
+    PrepUI(vp, MenuType::MAIN);
 
+    // begin console selection menu window
+    ImGui::Begin("CONSOLE_SELECTION", nullptr, ImMenuFlags);
+
+    // disable all console selection buttons when overlay menu is active
+    ImGui::BeginDisabled(overlayActive);
     // calculate button dimensions
     ImVec2 btnSize(vp->WorkSize.x / 4.0f, vp->WorkSize.y / 3.0f);
+    // push new font size based on window size
     ImGui::PushFont(nullptr, GetFontSize(btnSize, ConsoleTextWidth));
     // render the console buttons
     for (u8 i = 0; i < (u8)ConsoleID::TOTAL; i++) {
         ConsoleID console = ConsoleID(i);
         if (ImGui::ButtonCentered(ConsoleNamesShort.at(console).c_str(), btnSize)) {
+            // if this button is clicked, proceed to the game selection menu
             proteus->SetState(AppView::GAME_LIST, console);
         }
         // only 4 buttons per row
         if (i % 4 != 3) ImGui::SameLine();
     }
+    // return to previous font size
     ImGui::PopFont();
+    // allow any following inputs to be enabled (the only inputs drawn
+    // after this should be overlay inputs and only if overlay is active)
+    ImGui::EndDisabled();
     // end subwindow
-    EndGUI(MenuType::MAIN);
+    ImGui::End();
+    // undo viewport modifications
+    DeprepUI();
 }
 
 void VideoManager::RenderGameSelection(ConsoleID console) {
-    // start the imgui frame
-    StartGUI(MenuType::MAIN, "GAME_SELECTION");
+    // prep Viewport for Main menu
+    vp = ImGui::GetMainViewport();
+    PrepUI(vp, MenuType::MAIN);
 
-    // get list of games
-    vector<ROM_DATA> games = proteus->GetGameList(console);
-    // only attempt to render gamelist buttons if there are actually games in the list
-    if (games.size() != 0) {
-        // calculate button dimensions
-        ImVec2 btnSize(vp->WorkSize.x / 5.0f, vp->WorkSize.y / 4.0f);
-        ImGui::PushFont(nullptr, GetFontSize(btnSize, GameTextWidth));
-        // render the gamelist buttons
-        for (u16 i = 0; i < 20; i++) {
-            string name = FormatDisplayName(games[i].gameName, true);
-            if (ImGui::ButtonCentered(name.c_str(), btnSize)) {
-                proteus->LaunchGame(i);
-            }
-            // only 5 buttons per row
-            if (i % 5 != 4) ImGui::SameLine();
-        }
-        ImGui::PopFont();
-    } else if (!ConsoleEmuStarted.at(console)) {
+    // begin game selection menu window
+    ImGui::Begin("GAME_SELECTION", nullptr, ImMenuFlags);
+    
+    // if we haven't even started developing an emulator for `console`,
+    // then there's no point in letting the user attempt to start a ROM
+    if (!ConsoleEmuStarted.at(console)) {
         char msg[100];
         sprintf_s(msg, 100, "EMULATION DEVELOPMENT OF THE %s HAS NOT STARTED YET; PLEASE CHECK BACK LATER", ConsoleNamesShort.at(console).c_str());
         ImGui::TextWrappedCentered(msg);
     } else {
-        char msg[50];
-        sprintf_s(msg, 50, "NO %s GAMES FOUND", ConsoleNamesShort.at(console).c_str());
-        ImGui::TextWrappedCentered(msg);
+        // get list of games
+        vector<ROM_DATA> games = proteus->GetGameList(console);
+        if (games.size() != 0) { // only attempt to render gamelist buttons if there are actually games in the list
+            // disable following ImGui items if the overlay is active
+            ImGui::BeginDisabled(overlayActive);
+            // calculate button dimensions
+            ImVec2 btnSize(vp->WorkSize.x / 5.0f, vp->WorkSize.y / 4.0f);
+            // push new font size based on window size
+            ImGui::PushFont(nullptr, GetFontSize(btnSize, GameTextWidth));
+            // render the gamelist buttons
+            for (u16 i = 0; i < 20; i++) {
+                string name = FormatDisplayName(games[i].gameName, true);
+                if (ImGui::ButtonCentered(name.c_str(), btnSize)) {
+                    // if this button is clicked, proceed and attempt to launch the selected ROM
+                    proteus->LaunchGame(i);
+                }
+                // only 5 buttons per row
+                if (i % 5 != 4) ImGui::SameLine();
+            }
+            // return to previous font size
+            ImGui::PopFont();
+            // enable following ImGui items (only items after here should be within overlay menu)
+            ImGui::EndDisabled();
+        } else { // if there are no games in the list, display a message to let user know we didn't find anything
+            char msg[50];
+            sprintf_s(msg, 50, "NO %s GAMES FOUND", ConsoleNamesShort.at(console).c_str());
+            ImGui::TextWrappedCentered(msg);
+        }
     }
 
-    EndGUI(MenuType::MAIN);
+    // end subwindow
+    ImGui::End();
+
+    // undo viewport modifications
+    DeprepUI();
 }
 
 void VideoManager::RenderGameView(bool dbg) {
@@ -295,31 +327,16 @@ void VideoManager::RenderGameView(bool dbg) {
 
     SDL_FRect dest = {};
 
-    float scale1 = 4.0f / 7.0f;
-    float scale2 = 3.0f / 7.0f;
-
-    if (dbg) {
-        lglAspect *= scale2;
-    }
-
     if (lglAspect > tgtAspect) {
         // pillarbox
         dest.h = (float)dispInfo.dispHeight;
         dest.w = dest.h * tgtAspect;
-        if (dbg) {
-            dest.h *= scale2;
-            dest.w *= scale2;
-        }
-        dest.x = dbg ? 0.0f : (dispInfo.dispWidth - dest.w) / 2.0f;
+        dest.x = (dispInfo.dispWidth - dest.w) / 2.0f;
         dest.y = 0.0f;
     } else {
         // letterbox
         dest.w = (float)dispInfo.dispWidth;
         dest.h = dest.w / tgtAspect;
-        if (dbg) {
-            dest.h *= scale2;
-            dest.w *= scale2;
-        }
         dest.x = 0.0f;
         dest.y = (dispInfo.dispHeight - dest.h) / 2.0f;
     }
@@ -344,36 +361,76 @@ void VideoManager::RenderGameView(bool dbg) {
     if (dbg) {
         RenderDebug();
     }
-
-    SDL_RenderPresent(renderer);
 }
 
+/* TODO: FIGURE OUT THESE BUGS
+ *      BUG 1) When starting the application, console selection menu opens as expected.
+ *              When opening the overlay menu from within the console selection, none of
+ *              the buttons respond; but the overlay itself still disappears as expected
+ *              when it is toggled via button input. No matter what, this bug persists.
+ *      BUG 2) When starting the application and proceeding to the game selection menu,
+ *              two separate and opposite outcomes are possible:
+ *              - When Bug #1 is performed, the overlay menu acts as expected from
+ *                within the game selection menu.
+ *              - When Bug #1 is NOT performed, the same bug now happens here as well,
+ *                and then persists throughout the lifetime of the application.
+ */
 void VideoManager::RenderOverlay() {
-    // TODO: Why are the buttons misplaced and why does the menu not seem to capture the mouse?
-    StartGUI(MenuType::OVERLAY, "OVERLAY");
-
-    ImVec2 btnSize(vp->WorkSize.x, vp->WorkSize.y / 8.0f);
-
-    if (ImGui::Button("RESUME", btnSize)) {}
-    if (ImGui::Button("RESTART", btnSize)) {}
-    if (ImGui::Button("CLOSE GAME", btnSize)) {}
-    if (ImGui::Button("SAVE STATES", btnSize)) {}
-    if (ImGui::Button("OPTIONS", btnSize)) {}
-    if (ImGui::Button("CONTROLS", btnSize)) {}
-    if (ImGui::Button("CHEATS", btnSize)) {}
-    if (ImGui::Button("INFORMATION", btnSize)) {}
-
-    EndGUI(MenuType::OVERLAY);
-}
-
-void VideoManager::OnMouseScroll(s32 dir) {
-    // TODO: Handle debug input (maybe)
-    const AppState state = proteus->GetState();
-    if (dir == 1) {
-        PageLeft();
-    } else if (dir == -1) {
-        PageRight();
+    // prepare viewport for overlay menu
+    vp = ImGui::GetMainViewport();
+    PrepUI(vp, MenuType::OVERLAY);
+    ImGui::Begin("OVERLAY", &overlayActive, ImOverlayFlags);
+    AppView view = proteus->GetState().currentView;
+    // calculate button size
+    float numBtns = view == AppView::GAME_VIEW ? 8.0f : 5.0f;
+    ImVec2 btnSize(vp->WorkSize.x, vp->WorkSize.y / numBtns);
+    // add buttons to window
+    if (ImGui::Button("RESUME", btnSize)) {
+        // this button simply turns the overlay back off
+        printf("RESUME CLICKED\n");
+        ToggleOverlay();
     }
+    if (view == AppView::GAME_VIEW) {
+        if (ImGui::Button("RESTART", btnSize)) {
+            // this button will reset whatever console is currently running
+            ToggleOverlay();
+            proteus->ResetConsole();
+        }
+        if (ImGui::Button("CLOSE GAME", btnSize)) {
+            // this button will close the current ROM and return us to the game list
+            ToggleOverlay();
+            proteus->ShutDownConsole();
+        }
+        if (ImGui::Button("SAVE STATES", btnSize)) { /// TODO
+            // this button will allow us to access the save states created for the
+            // currently running ROM.
+            // NOTE: THIS DOES NOT LEAD TO GAME SAVES; ONLY EMULATOR SAVE STATES
+        }
+    }
+    if (ImGui::Button("OPTIONS", btnSize)) {
+        // during GAME_LIST or GAME_VIEW, this leads to console-specific options
+        // during CONSOLE_SELECT, this leads to global application options
+    }
+    if (ImGui::Button("CONTROLS", btnSize)) {
+        // during CONSOLE_SELECT or GAME_LIST, this leads to global application controls
+        // during GAME_VIEW, this leads to console-specific control binding options
+    }
+    if (ImGui::Button("CHEATS", btnSize)) {
+        // this leads to cheat list/save/create options
+        // TODO: should this depend on view in some way?
+        //      maybe during GAME_VIEW we lead to specific game cheats
+        //      and otherwise we go to the broader application cheat options?
+    }
+    if (ImGui::Button("INFORMATION", btnSize)) {
+        // this leads to a basic information screen
+        // CONSOLE_SELECT: application information/credits
+        // GAME_LIST: console information
+        // GAME_VIEW: game information
+    }
+    // end overlay subwindow
+    ImGui::End();
+    // undo any viewport changes
+    DeprepUI();
 }
 
 float VideoManager::GetFontSize(ImVec2 space, const float& base) const {
@@ -383,55 +440,27 @@ float VideoManager::GetFontSize(ImVec2 space, const float& base) const {
 }
 
 void VideoManager::RenderDebug() {
-    StartGUI(MenuType::DEBUG, "DEBUG MENU");
+    ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
 
     ImGui::Text("THIS IS THE DEBUG WINDOW");
 
-    EndGUI(MenuType::DEBUG);
-}
-
-void VideoManager::StartGUI(MenuType type, const char* name) {
-    if (type != MenuType::OVERLAY) {
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-    }
-
-    vp = ImGui::GetMainViewport();
-
-    switch (type) {
-        default:
-        case MenuType::MAIN:
-            PrepUI(vp);
-            ImGui::Begin(name, nullptr, ImMenuFlags);
-            break;
-        case MenuType::DEBUG:
-            ImGui::Begin(name, &debugActive, ImDebugFlags);
-            break;
-        case MenuType::OVERLAY:
-            ImGui::Begin(name, &overlayActive, ImMenuFlags);
-            break;
-    }
-}
-
-void VideoManager::EndGUI(MenuType type) {
     ImGui::End();
+}
 
-    if (type == MenuType::MAIN)
-        DeprepUI();
-
-    if (!overlayActive || type == MenuType::OVERLAY) {
-        ImGui::Render();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-
-        if (type == MenuType::MAIN) {
-            SDL_SetRenderDrawColorFloat(renderer, 0, 0.55f, 0, 1);
-            SDL_RenderClear(renderer);
-        }
-
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-
-        SDL_RenderPresent(renderer);
+void VideoManager::FinalizeFrame(bool clear) {
+    // finalize ImGui draw data
+    ImGui::Render();
+    // set render scale based on ImGui IO
+    ImGuiIO& io = ImGui::GetIO();
+    SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    
+    if (clear) {
+        // clear screen to a nice shade of green
+        SDL_SetRenderDrawColor(renderer, 0, 188, 0, 1);
+        SDL_RenderClear(renderer);
     }
+
+    // submit ImGui draw data to renderer and render to screen
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+    SDL_RenderPresent(renderer);
 }

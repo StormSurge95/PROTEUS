@@ -53,16 +53,12 @@ namespace NS_Proteus {
 
             /// @brief Handles the resizing of our application window
             void OnResize(size_t width, size_t height);
-            void OnMouseScroll(s32 dir);
 
             /// @brief Toggles whether or not to display the Overlay Menu
             inline void ToggleOverlay() { overlayActive = !overlayActive; }
 
             /// @brief Toggles whether or not to display the Debug Menu
             inline void ToggleDebug() { debugActive = !debugActive; }
-
-            void PageLeft();
-            void PageRight();
 
             SDL_Window* GetWindow() const { return window; }
             const bool OverlayActive() const { return overlayActive; }
@@ -108,7 +104,7 @@ namespace NS_Proteus {
             void RenderOverlay();
 
             void PrepViewport(ImGuiViewport* vp);
-            void PrepUI(ImGuiViewport* vp, ConsoleID console = ConsoleID::NONE);
+            void PrepUI(ImGuiViewport* vp, MenuType type);
             void DeprepUI();
 
             const ImGuiWindowFlags ImMenuFlags =
@@ -117,12 +113,16 @@ namespace NS_Proteus {
                 ImGuiWindowFlags_NoSavedSettings |      // prevent .ini modification
                 ImGuiWindowFlags_NoBringToFrontOnFocus; // prevent automatically bringing window to front on focus
 
+            const ImGuiWindowFlags ImOverlayFlags =
+                ImGuiWindowFlags_NoDecoration |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoSavedSettings;
+
             const ImGuiWindowFlags ImDebugFlags =
                 ImGuiWindowFlags_MenuBar                // Has a menu-bar
                 | ImGuiWindowFlags_AlwaysAutoResize     // make sure content always fits in window
                 | ImGuiWindowFlags_NoNav;               // make sure that gamepad inputs only effect gameplay
 
-            void StartGUI(MenuType type, const char* name);
-            void EndGUI(MenuType type);
+            void FinalizeFrame(bool clear = true);
     };
 }

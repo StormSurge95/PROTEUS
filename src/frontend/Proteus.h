@@ -32,7 +32,6 @@ namespace NS_Proteus {
 
             void ProcessKeyInput(SDL_Keycode key);
             void ProcessButtonInput(u8 button);
-            void ProcessMouseWheelInput(s32 dir);
 
             inline void SetState(AppView view, ConsoleID console = ConsoleID::NONE) {
                 state.currentView = view;
@@ -49,6 +48,9 @@ namespace NS_Proteus {
 
             std::vector<ROM_DATA> GetGameList(ConsoleID console);
             const u32* GetFrameBuffer();
+            void StartConsole();
+            void ResetConsole();
+            void ShutDownConsole();
         private:
             bool debug = false;
             bool dbgPause = false;
@@ -86,7 +88,5 @@ namespace NS_Proteus {
 
             std::string MD5(const std::string& filepath);
 
-            void StartConsole();
-            void ShutDownConsole(bool shutDownApp = false);
     };
 }
