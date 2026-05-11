@@ -19,6 +19,22 @@ static string hex(u64 n, u8 d = 2) {
 }
 
 /**
+ * @brief Outputs a provided number `n` in binary notation
+ * @note ONLY USE 8-BIT VALUES
+ * @param n The number value to convert into a binary string
+ * @return string value containing the produced binary notation
+ */
+static string bin(u8 n) {
+    stringstream ss;
+    ss << "0b";
+    for (s8 i = 7; i >= 0; i--) {
+        if (((n >> i) & 0x01) > 0) ss << "1";
+        else ss << "0";
+    }
+    return ss.str();
+}
+
+/**
  * @brief Returns the higher of two numbers
  * @param n1 
  * @param n2 

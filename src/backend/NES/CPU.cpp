@@ -91,7 +91,7 @@ void CPU::clock() {
         } else {
             // otherwise, read next opcode and set next instruction as necessary
             prevInstAddrs.push_back(pc);
-            if (prevInstAddrs.size() > 12) prevInstAddrs.pop_front();
+            if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
             opcode = read(pc++);
             currInst = &lookup[opcode];
             if (currInst->address == &CPU::IMM_A ||

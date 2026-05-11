@@ -322,23 +322,3 @@ const u32* Proteus::GetFrameBuffer() {
     }
     return nullptr;
 }
-
-std::string Proteus::GetDebugInfoCPU() {
-    if (!ROMactive) return "No ROM active...\n";
-    return debugManager->GetDebugger()->GetStateCPU();
-}
-
-std::string Proteus::GetDebugInfoRAM() {
-    if (!ROMactive) return "No ROM active...\n";
-    return debugManager->GetDebugger()->GetStateRAM();
-}
-
-std::vector<u32> Proteus::GetDebugPaletteColors() {
-    if (!ROMactive) return {};
-    return debugManager->GetDebugger()->GetPaletteColors();
-}
-
-std::vector<u32> Proteus::GetDebugPatternTable(int index) {
-    if (!ROMactive) return {};
-    return debugManager->GetDebugger()->GetPatternTable(index);
-}

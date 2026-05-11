@@ -42,55 +42,106 @@ void Debugger::Clear() {
     nes = nullptr;
 }
 
-string Debugger::GetStateCPU() {
-    stringstream ss;
-    // print current status flags
-    ss << " N V - B D I Z C\n";
-    ss << " " << GetFlags(nes->cpu->status) << endl;
+string** Debugger::GetStateCPU(u8& numRegs) const {
+    numRegs = 6;
+    string** regs = new string*[numRegs];
+    for (u8 i = 0; i < 6; i++)
+        regs[i] = new string[2];
 
-    // print current register values
-    ss << " PC: " << hex(nes->cpu->pc.value(), 4) << endl;
-    ss << "  A: " << hex(nes->cpu->a, 2) << endl;
-    ss << "  X: " << hex(nes->cpu->x, 2) << endl;
-    ss << "  Y: " << hex(nes->cpu->y, 2) << endl;
-    ss << " SP: " << hex(nes->cpu->sp, 2) << endl;
+    regs[0][0] = "STATUS";
+    regs[0][1] = GetFlags(nes->cpu->status);
+    regs[1][0] = "PC";
+    regs[1][1] = hex(nes->cpu->pc.value(), 4);
+    regs[2][0] = "A";
+    regs[2][1] = hex(nes->cpu->a, 2);
+    regs[3][0] = "X"; 
+    regs[3][1] = hex(nes->cpu->x, 2);
+    regs[4][0] = "Y";
+    regs[4][1] = hex(nes->cpu->y, 2);
+    regs[5][0] = "SP";
+    regs[5][1] = hex(nes->cpu->sp, 2);
 
-    // collect and print disassembled instructions
-    ss << GetDisassembly();
-
-    return ss.str();
+    return regs;
 }
 
-string Debugger::GetStateRAM() {
-    stringstream ss;
+string** Debugger::GetStatePPU(u8& numRegs) const {
+    numRegs = 8;
+    string** regs = new string*[numRegs];
+    for (u8 i = 0; i < numRegs; i++)
+        regs[i] = new string[2];
 
-    for (u16 i = 0x0000; i <= 0x07FF; i++) {
-        ss << " ";
-        if (i == (i & 0x07F0)) ss << hex(i & 0xFF, 2) << ": ";
-        ss << hex(nes->bus->read(i, true));
-        if ((i & 0x0F) == 15 && i != 0x07FF) ss << "\n";
+    // TODO: add a mask for putting "-" into the string for bits that are unused by the ppu
+    regs[0][0] = "PPUCTRL ($2000)";
+    regs[0][1] = bin(nes->ppu->PPUCTRL);
+    regs[1][0] = "PPUMASK ($2001)";
+    regs[1][1] = bin(nes->ppu->PPUMASK);
+    regs[2][0] = "PPUSTATUS ($2002)";
+    regs[2][1] = bin(nes->ppu->PPUSTATUS);
+    regs[3][0] = "OAMADDR ($2003)";
+    regs[3][1] = bin(nes->ppu->OAMADDR);
+    regs[4][0] = "OAMDATA ($2004)";
+    regs[4][1] = bin(nes->ppu->OAMDATA);
+    regs[5][0] = "PPUSCROLL ($2005)";
+    regs[5][1] = bin(nes->ppu->PPUSCROLL);
+    regs[6][0] = "PPUADDR ($2006)";
+    regs[6][1] = bin(nes->ppu->PPUADDR);
+    regs[7][0] = "PPUDATA ($2007)";
+    regs[7][1] = bin(nes->ppu->PPUDATA);
+
+    return regs;
+}
+
+string* Debugger::GetStateRAM(u64& numLines) const {
+    // for NES; there will be 112 lines of RAM; each having 16 bytes
+    numLines = 112;
+
+    // create our array of lines
+    // use dynamic allocation so that we can return the pointer without it being destroyed
+    string* lines = new string[numLines];
+
+    // for each line...
+    for (u8 l = 0; l < numLines; l++) {
+        // calculate start address (0x0010, 0x0010, 0x0020, etc)
+        u16 start = (u16)l << 4;
+        // create streams to hold the data
+        stringstream bytes;
+        stringstream chars;
+        // add each byte to our data streams
+        for (u8 i = 0x00; i < 0x10; i++) {
+            u16 addr = start + i;
+            u8 byte = nes->bus->read(addr, true);
+            bytes << hex(byte, 2);
+            chars << (char)byte;
+            if (i < 0x0F) {
+                bytes << " ";
+                chars << " ";
+            }
+        }
+        // create stream so we can turn everything into a string to put into our `lines` array
+        stringstream ss;
+        // put the start address first
+        ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
+        // put the created string into our `lines` array
+        lines[l] = ss.str();
     }
 
-    return ss.str();
+    return lines;
 }
 
-void Debugger::ScanInstructions(u16 maxOffset = 0x3F, bool allowPage = false) {
-    instAddrs.clear();
-
+void Debugger::ScanInstructions(vector<u64>& list) const {
     for (const u16& e : nes->cpu->prevInstAddrs)
-        instAddrs.push_back(e);
+        list.push_back(e);
 
     u16 first = nes->cpu->pc.value();
     u16 start = first;
-    instAddrs.push_back(start);
 
-    while (instAddrs.size() < 25) {
+    while (list.size() < 25) {
         start += nes->cpu->lookup[nes->cpu->read(start, true)].bytes;
-        instAddrs.push_back(start);
+        list.push_back(start);
     }
 }
 
-string Debugger::DisassembleInstruction(u16 addr) {
+string Debugger::DisassembleInstruction(u16 addr) const {
     u16 line_addr = addr;
     u8 oc = nes->cpu->read(addr++, true);
     u8 val = 0x00;
@@ -235,16 +286,20 @@ string Debugger::DisassembleInstruction(u16 addr) {
     return ss.str();
 }
 
-string Debugger::GetDisassembly() {
-    ScanInstructions();
+string* Debugger::GetDisassembly() const {
+    vector<u64> addrs;
+    ScanInstructions(addrs);
 
-    stringstream ss; // stream to hold our disassembled data
+    string* lines = new string[(u8)addrs.size()];
 
-    for (const u16& addr : instAddrs) {
-        ss << " $" << hex(addr, 4) << ": " << DisassembleInstruction(addr) << endl;
+    for (u8 i = 0; i < addrs.size(); i++) {
+        u16 addr = (u16)addrs[i];
+        string str = "$" + hex(addr, 4) + ": " + DisassembleInstruction(addr);
+        lines[i].resize(str.length());
+        lines[i] = str;
     }
 
-    return ss.str();
+    return lines;
 }
 
 vector<u32> Debugger::GetPaletteColors() {
@@ -289,7 +344,7 @@ vector<u32> Debugger::GetPatternTable(int index) {
     return pixels;
 }
 
-string Debugger::GetFlags(int status) {
+string Debugger::GetFlags(int status) const {
     stringstream ss;
     ss << ((status & 0x80) > 0 ? "1 " : "0 ");
     ss << ((status & 0x40) > 0 ? "1 " : "0 ");

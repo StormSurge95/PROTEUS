@@ -8,9 +8,8 @@ namespace NES_NS {
         private:
             bool enabled = false;
             sptr<NES> nes = nullptr;
-            vector<u16> instAddrs;
 
-            string DisassembleInstruction(u16 addr);
+            string DisassembleInstruction(u16 addr) const;
 
             u32 debugPalette[4] = { 0xFF000000, 0xFF323232, 0xFF646464, 0xFFFFFFFF };
         public:
@@ -24,12 +23,13 @@ namespace NES_NS {
             bool IsEnabled() const override { return enabled; }
             void Clear();
 
-            string GetStateCPU() override;
-            string GetDisassembly() override;
-            string GetStateRAM() override;
-            string GetFlags(int) override;
+            string** GetStateCPU(u8& numRegs) const override;
+            string** GetStatePPU(u8& numRegs) const override;
+            string* GetDisassembly() const override;
+            string* GetStateRAM(u64& numLines) const override;
+            string GetFlags(int) const override;
 
-            void ScanInstructions(u16, bool) override;
+            void ScanInstructions(vector<u64>& list) const override;
 
             vector<u32> GetPaletteColors() override;
             vector<u32> GetPatternTable(int) override;

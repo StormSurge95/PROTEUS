@@ -65,6 +65,16 @@ namespace NS_Proteus {
 
         private:
             bool debugActive = false;
+            map<DebugView, bool> debugViews = {
+                { DebugView::CPU_REGS_DISASM, true },
+                { DebugView::CPU_MEMORY, false },
+                { DebugView::PPU_REGS, false },
+                { DebugView::PPU_PATTERNTABLES, false },
+                { DebugView::PPU_NAMETABLES, false },
+                { DebugView::APU_REGISTERS, false },
+                { DebugView::APU_CHANNELS, false }
+            };
+            DebugView currentDebugView = DebugView::CPU_REGS_DISASM;
             bool overlayActive = false;
             Proteus* proteus = nullptr;
 
@@ -100,12 +110,14 @@ namespace NS_Proteus {
             void RenderConsoleSelection();
             void RenderGameSelection(ConsoleID console);
             void RenderGameView(bool debug);
-            void RenderDebug();
+            void RenderDebug(float scale);
             void RenderOverlay();
 
             void PrepViewport(ImGuiViewport* vp);
             void PrepUI(ImGuiViewport* vp, MenuType type);
             void DeprepUI();
+
+            void SetDebugView(DebugView view);
 
             const ImGuiWindowFlags ImMenuFlags =
                 ImGuiWindowFlags_NoDecoration |         // no titlebar, resize, scrollbar, or collapse
@@ -120,8 +132,9 @@ namespace NS_Proteus {
 
             const ImGuiWindowFlags ImDebugFlags =
                 ImGuiWindowFlags_MenuBar                // Has a menu-bar
-                | ImGuiWindowFlags_AlwaysAutoResize     // make sure content always fits in window
-                | ImGuiWindowFlags_NoNav;               // make sure that gamepad inputs only effect gameplay
+                | ImGuiWindowFlags_NoNav                // make sure that gamepad inputs only effect gameplay
+                | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoResize;
 
             void FinalizeFrame(bool clear = true);
     };

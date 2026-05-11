@@ -64,7 +64,7 @@ void VideoManager::Init() {
     ImGui::CreateContext();
 
     // get io object
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
 
     // enabled keyboard & gamepad navigation
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -324,6 +324,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
 void VideoManager::RenderGameView(bool dbg) {
     float tgtAspect = (float)dispInfo.gameWidth / (float)dispInfo.gameHeight;
     float lglAspect = (float)dispInfo.dispWidth / (float)dispInfo.dispHeight;
+    float scale = 1.0f;
 
     SDL_FRect dest = {};
 
@@ -331,14 +332,16 @@ void VideoManager::RenderGameView(bool dbg) {
         // pillarbox
         dest.h = (float)dispInfo.dispHeight;
         dest.w = dest.h * tgtAspect;
-        dest.x = (dispInfo.dispWidth - dest.w) / 2.0f;
+        dest.x = dbg ? 0.0f : (dispInfo.dispWidth - dest.w) / 2.0f;
         dest.y = 0.0f;
+        scale = (float)dispInfo.dispHeight / (float)dispInfo.gameHeight;
     } else {
         // letterbox
         dest.w = (float)dispInfo.dispWidth;
         dest.h = dest.w / tgtAspect;
         dest.x = 0.0f;
         dest.y = (dispInfo.dispHeight - dest.h) / 2.0f;
+        scale = (float)dispInfo.dispWidth / (float)dispInfo.gameWidth;
     }
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -359,7 +362,7 @@ void VideoManager::RenderGameView(bool dbg) {
     SDL_RenderTexture(renderer, gameTexture, NULL, &dest);
 
     if (dbg) {
-        RenderDebug();
+        RenderDebug(scale);
     }
 }
 
@@ -387,17 +390,18 @@ void VideoManager::RenderOverlay() {
     // add buttons to window
     if (ImGui::Button("RESUME", btnSize)) {
         // this button simply turns the overlay back off
-        printf("RESUME CLICKED\n");
         ToggleOverlay();
     }
     if (view == AppView::GAME_VIEW) {
         if (ImGui::Button("RESTART", btnSize)) {
             // this button will reset whatever console is currently running
+            // turn overlay back off first to ensure that the console resets properly
             ToggleOverlay();
             proteus->ResetConsole();
         }
         if (ImGui::Button("CLOSE GAME", btnSize)) {
             // this button will close the current ROM and return us to the game list
+            // turn overlay back off first to ensure the console shuts down properly
             ToggleOverlay();
             proteus->ShutDownConsole();
         }
@@ -405,6 +409,9 @@ void VideoManager::RenderOverlay() {
             // this button will allow us to access the save states created for the
             // currently running ROM.
             // NOTE: THIS DOES NOT LEAD TO GAME SAVES; ONLY EMULATOR SAVE STATES
+            // TODO: Maybe from GAME_LIST we should access a list of game saves
+            //       similar to the gamecube and playstation consoles' abilities
+            //       to browse memory card data?
         }
     }
     if (ImGui::Button("OPTIONS", btnSize)) {
@@ -439,12 +446,138 @@ float VideoManager::GetFontSize(ImVec2 space, const float& base) const {
     return fontSize * r * 0.75f * dispInfo.scale;
 }
 
-void VideoManager::RenderDebug() {
+void VideoManager::RenderDebug(float scale) {
+    vp = ImGui::GetMainViewport();
+    float w = dispInfo.gameWidth * scale;
+    ImVec2 pos(vp->WorkPos.x + w, vp->WorkPos.y);
+    ImGui::SetNextWindowPos(pos);
+    ImVec2 size(vp->WorkSize.x - w, vp->WorkSize.y);
+    ImGui::SetNextWindowSize(size);
+
+    float fontSize = ImGui::GetStyle().FontSizeBase * 0.5f;
+    ImGui::PushFont(fonts.Debug, fontSize);
+
     ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
-
-    ImGui::Text("THIS IS THE DEBUG WINDOW");
-
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("CPU")) {
+            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS_DISASM))) {
+                SetDebugView(DebugView::CPU_REGS_DISASM);
+            }
+            if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
+                SetDebugView(DebugView::CPU_MEMORY);
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("PPU")) {
+            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::PPU_REGS))) {
+                SetDebugView(DebugView::PPU_REGS);
+            }
+            if (ImGui::MenuItem("PATTERN TABLES", nullptr, &debugViews.at(DebugView::PPU_PATTERNTABLES))) {
+                SetDebugView(DebugView::PPU_PATTERNTABLES);
+            }
+            if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
+                SetDebugView(DebugView::PPU_NAMETABLES);
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("APU")) {
+            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::APU_REGISTERS))) {
+                SetDebugView(DebugView::APU_REGISTERS);
+            }
+            if (ImGui::MenuItem("CHANNELS", nullptr, &debugViews.at(DebugView::APU_CHANNELS))) {
+                SetDebugView(DebugView::APU_CHANNELS);
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+    switch (currentDebugView) {
+        case DebugView::CPU_REGS_DISASM:
+            {
+                // add table to display cpu registers
+                if (ImGui::BeginTable("CPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
+                    u8 numRegs;
+                    string** cpuState = proteus->Debugger()->GetStateCPU(numRegs);
+                    ImGui::TableSetupColumn("REGISTER");
+                    ImGui::TableSetupColumn("VALUE");
+                    ImGui::TableHeadersRow();
+                    for (u8 row = 0; row < numRegs; row++) {
+                        ImGui::TableNextRow();
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", cpuState[row][0].c_str());
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", cpuState[row][1].c_str());
+                        // call delete because each row was created using new
+                        delete[] cpuState[row];
+                    }
+                    // call delete because main pointer was also created using new
+                    delete[] cpuState;
+                    ImGui::EndTable();
+                }
+                // add program disassembly
+                string* disasm = proteus->Debugger()->GetDisassembly();
+                for (u8 line = 0; line < 25; line++) {
+                    if (line == 12) ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", disasm[line].c_str());
+                    else ImGui::Text("%s", disasm[line].c_str());
+                }
+                delete[] disasm;
+            }
+            break;
+        case DebugView::CPU_MEMORY:
+            // TODO: Add RAM display
+            {
+                float tgtW = ImGui::GetContentRegionAvail().x;
+                float chrW = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, "A").x;
+                float curW = chrW * 89;
+                float scale = tgtW / curW;
+                ImGui::SetWindowFontScale(scale);
+                u64 numLines;
+                string* lines = proteus->Debugger()->GetStateRAM(numLines);
+                for (u8 l = 0; l < numLines; l++) {
+                    ImGui::Text("%s", lines[l].c_str());
+                }
+                delete[] lines;
+                ImGui::SetWindowFontScale(1.0f);
+            }
+            break;
+        case DebugView::PPU_REGS:
+            {
+                if (ImGui::BeginTable("PPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
+                    u8 numRegs;
+                    string** ppuState = proteus->Debugger()->GetStatePPU(numRegs);
+                    ImGui::TableSetupColumn("REGISTER");
+                    ImGui::TableSetupColumn("VALUE");
+                    ImGui::TableHeadersRow();
+                    for (u8 row = 0; row < numRegs; row++) {
+                        ImGui::TableNextRow();
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", ppuState[row][0].c_str());
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", ppuState[row][1].c_str());
+                        delete[] ppuState[row];
+                    }
+                    delete[] ppuState;
+                    ImGui::EndTable();
+                }
+            }
+            break;
+        case DebugView::PPU_PATTERNTABLES:
+            // TODO: Add display with SELECTABLE palette entries and render pattern tables using whatever palette entry is selected
+            
+            break;
+        case DebugView::PPU_NAMETABLES:
+            // TODO: Add current PPU nametables display
+            break;
+        case DebugView::APU_REGISTERS:
+            // TODO: Add APU register display
+            break;
+        case DebugView::APU_CHANNELS:
+            // TODO: Add APU channel display with toggles for (de)activating various channels and waveform graphs for display
+            break;
+    }
     ImGui::End();
+
+    ImGui::PopFont();
 }
 
 void VideoManager::FinalizeFrame(bool clear) {
@@ -463,4 +596,11 @@ void VideoManager::FinalizeFrame(bool clear) {
     // submit ImGui draw data to renderer and render to screen
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
     SDL_RenderPresent(renderer);
+}
+
+void VideoManager::SetDebugView(DebugView view) {
+    currentDebugView = view;
+    for (const pair<DebugView, bool>& p : debugViews) {
+        debugViews.at(p.first) = p.first == view;
+    }
 }

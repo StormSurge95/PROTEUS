@@ -41,10 +41,7 @@ namespace NS_Proteus {
             void LaunchGame(int index);
 
             DebugView GetDebugView() { return debugManager->currentView; }
-            std::string GetDebugInfoCPU();
-            std::string GetDebugInfoRAM();
-            std::vector<u32> GetDebugPaletteColors();
-            std::vector<u32> GetDebugPatternTable(int);
+            const IDebugger* Debugger() const { return debugManager->GetDebugger();  }
 
             std::vector<ROM_DATA> GetGameList(ConsoleID console);
             const u32* GetFrameBuffer();

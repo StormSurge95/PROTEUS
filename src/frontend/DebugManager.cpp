@@ -19,12 +19,12 @@ IDebugger* DebugManager::GetDebugger() const {
 }
 
 void DebugManager::CycleDebugViews(bool active) {
-    if (!active)
-        currentView = DebugView::NONE;
-    else if (currentView == DebugView::NONE)
-        currentView = DebugView::CPU;
-    else
-        currentView = static_cast<DebugView>(
-            (static_cast<int>(currentView) + 1) % static_cast<int>(DebugView::TOTAL_VIEWS)
-        );
+    //if (!active)
+    //    currentView = DebugView::NONE;
+    //else if (currentView == DebugView::NONE)
+    //    currentView = DebugView::CPU;
+    //else
+    //    currentView = static_cast<DebugView>(
+    //        (static_cast<int>(currentView) + 1) % static_cast<int>(DebugView::TOTAL_VIEWS)
+    //    );
 }
