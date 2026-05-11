@@ -10,28 +10,19 @@ u8 PPU::read(u16 addr, bool readonly) {
         switch (addr) {
             case 0x02: // PPUSTATUS
                 ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
-                updateCounters(0xE0);
                 if (!readonly) {
-                    if (scanline == 241) {
-                        if (cycle <= 1) {
-                            suppressVBL = true;
-                            suppressNMI = false;
-                        } else if (cycle == 2) {
-                            suppressVBL = false;
-                            suppressNMI = true;
-                        } else {
-                            suppressVBL = suppressNMI = false;
-                        }
-                    }
-                    inVBlank(false);
                     w = false;
-
+                    if (scanline == 241 && cycle == 1)
+                        suppressVBL = true;
+                    inVBlank(false);
+                    updateCounters(0xE0);
+                    cpu.lock()->clearNMI();
                     nmiOutput = inVBlank() && getNMIEnabled();
                 }
                 break;
             case 0x04:
                 ppuBus = readOAMByte(OAMADDR);
-                updateCounters(0xFF);
+                if (!readonly) updateCounters(0xFF);
                 break;
             case 0x07: // PPUDATA
                 {
@@ -42,14 +33,13 @@ u8 PPU::read(u16 addr, bool readonly) {
 
                     if (addr >= 0x3F00) {
                         ret = data;
-                        dataBuffer = ppuRead(addr - 0x1000);
+                        if (!readonly) dataBuffer = ppuRead(addr - 0x1000);
                     } else {
                         ret = dataBuffer;
-                        dataBuffer = data;
+                        if (!readonly) dataBuffer = data;
                     }
-
+                    if (readonly) return ret;
                     v = (v + getVRAMIncrement()) & 0x3FFF;
-
                     ppuBus = ret;
                     updateCounters(0xFF);
                 }
@@ -73,12 +63,14 @@ void PPU::write(u16 addr, u8 data) {
                     PPUCTRL = data;
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
 
-                    nmiOutput = inVBlank() && getNMIEnabled();
-
-                    if (!nmiOutputPrev && !prevEnabled && nmiOutput)
+                    if (inVBlank() && getNMIEnabled())
                         nmiRequested = true;
 
-                    nmiOutputPrev = nmiOutput;
+                    //nmiOutput = inVBlank() && getNMIEnabled();
+                    //if (!nmiOutputPrev && !prevEnabled && nmiOutput)
+                    //    nmiRequested = true;
+
+                    //nmiOutputPrev = nmiOutput;
                     return;
                 }
             case 0x01: // PPUMASK
@@ -134,6 +126,7 @@ void PPU::write(u16 addr, u8 data) {
 }
 
 u8 PPU::ppuRead(u16 addr, bool readonly) {
+    addr &= 0x3FFF;
     if (addr >= 0x0000 && addr <= 0x1FFF)
         return cart.lock()->mapper->ppuRead(addr, readonly);
     else if (addr >= 0x2000 && addr <= 0x3EFF) {
@@ -163,7 +156,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
                 if (addr <= 0x0BFF) return nametables[C];
                 return nametables[D];
         }
-    } else if (addr <= 0x3FFF) {
+    } else {
         addr &= 0x1F;
         if (addr == 0x10) addr = 0x00;
         else if (addr == 0x14) addr = 0x04;
@@ -176,8 +169,6 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
 
         return p;
     }
-
-    return 0x00;
 }
 
 void PPU::ppuWrite(u16 addr, u8 data) {
@@ -351,13 +342,16 @@ void PPU::onVisibleLine() {
 }
 
 void PPU::onStartVBlankLine() {
-    if (cycle == 1 && !suppressVBL) {
-        bool prev = inVBlank();
-        inVBlank(true);
-        if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
-            nmiRequested = true;
-        } else suppressNMI = false;
-    } else suppressVBL = false;
+    if (cycle == 1) {
+        if (!suppressVBL) {
+            bool prev = inVBlank();
+            inVBlank(true);
+            if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
+                nmiRequested = true;
+            } else suppressNMI = false;
+        }
+        suppressVBL = false;
+    }
 }
 
 void PPU::incrementCoarseX() {
