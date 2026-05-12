@@ -294,7 +294,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
             // push new font size based on window size
             ImGui::PushFont(nullptr, GetFontSize(btnSize, GameTextWidth));
             // render the gamelist buttons
-            for (u16 i = 0; i < 20; i++) {
+            for (u16 i = 0; i < games.size(); i++) {
                 string name = FormatDisplayName(games[i].gameName, true);
                 if (ImGui::ButtonCentered(name.c_str(), btnSize)) {
                     // if this button is clicked, proceed and attempt to launch the selected ROM

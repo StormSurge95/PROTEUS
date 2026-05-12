@@ -12,11 +12,19 @@ u8 PPU::read(u16 addr, bool readonly) {
                 ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
                 if (!readonly) {
                     w = false;
-                    if (scanline == 241 && cycle == 1)
-                        suppressVBL = true;
+                    if (scanline == 241) {
+                        if (cycle <= 1) {
+                            suppressVBL = true;
+                            suppressNMI = false;
+                        } else if (cycle == 2) {
+                            suppressVBL = false;
+                            suppressNMI = true;
+                        } else {
+                            suppressVBL = suppressNMI = false;
+                        }
+                    }
                     inVBlank(false);
                     updateCounters(0xE0);
-                    cpu.lock()->clearNMI();
                     nmiOutput = inVBlank() && getNMIEnabled();
                 }
                 break;
