@@ -128,19 +128,6 @@ string* Debugger::GetStateRAM(u64& numLines) const {
     return lines;
 }
 
-void Debugger::ScanInstructions(vector<u64>& list) const {
-    for (const u16& e : nes->cpu->prevInstAddrs)
-        list.push_back(e);
-
-    u16 first = nes->cpu->pc.value();
-    u16 start = first;
-
-    while (list.size() < 25) {
-        start += nes->cpu->lookup[nes->cpu->read(start, true)].bytes;
-        list.push_back(start);
-    }
-}
-
 string Debugger::DisassembleInstruction(u16 addr) const {
     u16 line_addr = addr;
     u8 oc = nes->cpu->read(addr++, true);
