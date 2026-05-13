@@ -6,6 +6,8 @@ namespace NES_NS {
     /// @class DMC_Channel DMC_Channel.h "./DMC_Channel.h"
     /// @brief Class representing the Delta Modulated Channel of the NES APU
     class DMC_Channel {
+            // Allow Debugger class to access all private members of the DMC_Channel class
+            friend class Debugger;
         private:
             /// @brief reference to the parent APU object
             APU* apu = nullptr;

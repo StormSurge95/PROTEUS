@@ -135,9 +135,11 @@ void PPU::write(u16 addr, u8 data) {
 
 u8 PPU::ppuRead(u16 addr, bool readonly) {
     addr &= 0x3FFF;
-    if (addr >= 0x0000 && addr <= 0x1FFF)
-        return cart.lock()->mapper->ppuRead(addr, readonly);
-    else if (addr >= 0x2000 && addr <= 0x3EFF) {
+    u8 ret = 0x00;
+    
+    if (addr >= 0x0000 && addr <= 0x1FFF) {
+        ret = cart.lock()->mapper->ppuRead(addr, readonly);
+    } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         addr &= 0x0FFF;
         u16 A = addr & 0x03FF;
         u16 B = A + 0x0400;
@@ -145,24 +147,29 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
         u16 D = C + 0x0400;
         switch (cart.lock()->getMirror()) {
             case MIRROR::VERTICAL:
-                if (addr <= 0x03FF) return nametables[A];
-                if (addr <= 0x07FF) return nametables[B];
-                if (addr <= 0x0BFF) return nametables[A];
-                return nametables[B];
+                if (addr <= 0x03FF) ret = nametables[A];
+                else if (addr <= 0x07FF) ret = nametables[B];
+                else if (addr <= 0x0BFF) ret = nametables[A];
+                else ret = nametables[B];
+                break;
             case MIRROR::ONE_SCREEN_LO:
-                return nametables[A];
+                ret = nametables[A];
+                break;
             case MIRROR::ONE_SCREEN_HI:
-                return nametables[B];
+                ret = nametables[B];
+                break;
             case MIRROR::HORIZONTAL:
-                if (addr <= 0x03FF) return nametables[A];
-                if (addr <= 0x07FF) return nametables[A];
-                if (addr <= 0x0BFF) return nametables[B];
-                return nametables[B];
+                if (addr <= 0x03FF) ret = nametables[A];
+                else if (addr <= 0x07FF) ret = nametables[A];
+                else if (addr <= 0x0BFF) ret = nametables[B];
+                else ret = nametables[B];
+                break;
             case MIRROR::FOUR_SCREEN:
-                if (addr <= 0x03FF) return nametables[A];
-                if (addr <= 0x07FF) return nametables[B];
-                if (addr <= 0x0BFF) return nametables[C];
-                return nametables[D];
+                if (addr <= 0x03FF) ret = nametables[A];
+                else if (addr <= 0x07FF) ret = nametables[B];
+                else if (addr <= 0x0BFF) ret = nametables[C];
+                else ret = nametables[D];
+                break;
         }
     } else {
         addr &= 0x1F;
@@ -175,8 +182,10 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
 
         if (getGreyscale()) p &= 0xF0;
 
-        return p;
+        ret = p;
     }
+
+    return ret;
 }
 
 void PPU::ppuWrite(u16 addr, u8 data) {

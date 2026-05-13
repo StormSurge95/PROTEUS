@@ -27,7 +27,7 @@ NES::NES() {
     bus->connectCONT(player2, 2);
 }
 
-bool NES::loadCart(const string& path) {
+bool NES::loadROM(const string& path) {
     cart = make_shared<Gamepak>(path);
 
     if (cart->isValid()) {

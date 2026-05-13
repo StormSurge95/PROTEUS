@@ -4,7 +4,8 @@
 
 namespace NES_NS {
     class BUS : IDevice<u8, u16> {
-        friend class Debugger;
+            // Allow Debugger class to access all private members of the BUS class
+            friend class Debugger;
         public:
             /// @brief Flag for OAMDMA
             bool oamActive = false;

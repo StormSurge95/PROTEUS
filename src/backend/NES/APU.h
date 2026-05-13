@@ -8,7 +8,8 @@
 
 namespace NES_NS {
     class APU : IDevice<u8, u16> {
-        friend class Debugger;
+            // Allow Debugger class to access all private members of the APU class
+            friend class Debugger;
         public:
             /**
              * @brief Reference to the BUS object so we can more easily perform DMCDMA

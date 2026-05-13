@@ -284,7 +284,7 @@ void Proteus::LaunchGame(int index) {
 
     videoManager->InitGameTexture(title, station->SCREEN_WIDTH(), station->SCREEN_HEIGHT());
 
-    if (station->loadCart(path)) {
+    if (station->loadROM(path)) {
         state.currentView = AppView::GAME_VIEW;
         ROMactive = true;
     } else {

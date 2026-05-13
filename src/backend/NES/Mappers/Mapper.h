@@ -5,6 +5,8 @@
 namespace NES_NS {
     /// @interface Mapper Mapper.h "./Mapper.h"
     class Mapper {
+            // Allow Debugger class to access all private members of the Mapper class
+            friend class Debugger;
         public:
             /// @brief default constructor
             Mapper() = default;

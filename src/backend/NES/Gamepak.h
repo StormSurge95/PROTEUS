@@ -12,7 +12,8 @@ namespace NES_NS {
      * Contains and maintains all data within the opened ROM file.
      */
     class Gamepak : IDevice<u8, u16> {
-        friend class Debugger;
+            // Allow Debugger class to access all private members of the Gamepak class
+            friend class Debugger;
         public:
             /// @brief reference to the mapper contained within this ROM
             sptr<Mapper> mapper = nullptr;

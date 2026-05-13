@@ -5,7 +5,8 @@
 
 namespace NES_NS {
     class CPU : public IDevice<u8, u16> {
-        friend class Debugger;
+            // Allow Debugger class to access all private members of the CPU class
+            friend class Debugger;
         private:
             /// @brief debug flag
             bool debugEnabled = false;
