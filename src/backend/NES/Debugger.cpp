@@ -273,8 +273,20 @@ string Debugger::DisassembleInstruction(u16 addr) const {
     return ss.str();
 }
 
+void Debugger::ScanInstructions(array<u64, 25>& list) const {
+    int index = 0;
+    for (const u16& e : nes->cpu->prevInstAddrs)
+        list[index++] = e;
+
+    u16 start = nes->cpu->pc.value();
+    while (index < 25) {
+        start += nes->cpu->lookup[nes->cpu->read(start, true)].bytes;
+        list[index++] = start;
+    }
+}
+
 string* Debugger::GetDisassembly() const {
-    vector<u64> addrs;
+    array<u64, 25> addrs;
     ScanInstructions(addrs);
 
     string* lines = new string[(u8)addrs.size()];
@@ -342,4 +354,34 @@ string Debugger::GetFlags(int status) const {
     ss << ((status & 0x02) > 0 ? "1 " : "0 ");
     ss << ((status & 0x01) > 0 ? "1 " : "0 ");
     return ss.str();
+}
+
+vector<u32> Debugger::GetNameTables(int id) {
+    return vector<u32>();
+}
+
+string** Debugger::GetStateAPU(u8& numRegs) const {
+    string* val = new string("hello");
+    string** ret = new string*(val);
+    return ret;
+}
+
+vector<u32> Debugger::GetPulse1() {
+    return vector<u32>();
+}
+
+vector<u32> Debugger::GetPulse2() {
+    return vector<u32>();
+}
+
+vector<u32> Debugger::GetTriangle() {
+    return vector<u32>();
+}
+
+vector<u32> Debugger::GetNoise() {
+    return vector<u32>();
+}
+
+vector<u32> Debugger::GetDMC() {
+    return vector<u32>();
 }

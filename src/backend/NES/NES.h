@@ -5,10 +5,15 @@
 #include "./Mappers/Mapper.h"
 
 namespace NES_NS {
+    /**
+     * @class NES NES.h "./NES.h"
+     * @implements IConsole
+     * @brief Master class for the emulation of the NES console.
+     */
     class NES : public IConsole {
+            /// 
             friend class Debugger;
         public:
-            sptr<CPU> cpu;
             u64 masterClock = 0x00;
 
             NES();
@@ -28,6 +33,7 @@ namespace NES_NS {
             void update(u8, bool*) override;
 
         private:
+            sptr<CPU> cpu;
             sptr<BUS> bus;
             sptr<Gamepak> cart;
             sptr<PPU> ppu;

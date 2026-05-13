@@ -24,7 +24,7 @@ class IDebugger {
         virtual string GetFlags(int) const = 0;
         virtual string* GetStateRAM(u64& numLines) const = 0;
         virtual string* GetDisassembly() const = 0;
-        virtual void ScanInstructions(vector<u64>& list) const = 0;
+        virtual void ScanInstructions(array<u64, 25>& list) const = 0;
 
         virtual string** GetStatePPU(u8& numRegs) const = 0;
         virtual vector<u32> GetPaletteColors() = 0;
