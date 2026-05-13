@@ -4,6 +4,7 @@
 
 namespace NES_NS {
     /**
+     * @class M004 M004.h "./Mappers/M004.h"
      * @brief MMC3 Mapper
      * @details
      * Nintendo MMC3 is a mapper ASIC used in Nintendo's TxROM Game Pak boards.

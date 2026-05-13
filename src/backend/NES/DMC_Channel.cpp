@@ -73,7 +73,3 @@ void DMC_Channel::fetchSample(bool first) {
         apu->bus.lock()->dmaDummy = true;
     }
 }
-
-u8 DMC_Channel::output() const {
-    return silent ? 0x00 : outputLevel;
-}

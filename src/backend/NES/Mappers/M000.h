@@ -3,6 +3,7 @@
 #include "./Mapper.h"
 namespace NES_NS {
     /**
+     * @class M000 M000.h "./Mappers/M000.h"
      * @brief NROM Mapper
      * @details
      * - CPU $6000-$7FFF: Unbanked PRG-RAM, mirrored as necessary to fill entire 8KiB window, write protectable with an external switch. (Family BASIC only)

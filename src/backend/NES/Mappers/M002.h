@@ -4,6 +4,7 @@
 
 namespace NES_NS {
     /**
+     * @class M002 M002.h "./Mappers/M002.h"
      * @brief UxROM Mapper
      * @details
      * iNES Mapper 002 is the implementation of the most common usage of UxROM compatible boards

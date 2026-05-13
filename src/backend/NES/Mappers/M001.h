@@ -4,6 +4,7 @@
 
 namespace NES_NS {
     /**
+     * @class M001 M001.h "./Mappers/M001.h"
      * @brief MMC1 Mapper
      * @details
      * Nintendo MMC1 is a mapper ASIC used in Nintendo's SxROM, NES-EVENT and 2ME circuit boards.

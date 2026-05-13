@@ -4,6 +4,7 @@
 
 namespace NES_NS {
     /**
+     * @class M003 M003.h "./Mappers/M003.h"
      * @brief CNROM Mapper
      * @details
      * CNROM is a discrete-logic circuit board providing up to four 8 KB banks of CHR-ROM.

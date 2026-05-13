@@ -3,9 +3,7 @@
 #include "../NES_PCH.h"
 
 namespace NES_NS {
-    /**
-     * @brief Mapper interface for NES roms
-     */
+    /// @interface Mapper Mapper.h "./Mapper.h"
     class Mapper {
         public:
             /// @brief default constructor
