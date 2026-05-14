@@ -131,26 +131,26 @@ namespace NES_NS {
              * @brief Acquires the sample data of the Pulse1 APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
-            vector<u32> GetPulse1() override;
+            vector<u32> GetPulse1();
             /**
              * @brief Acquires the sample data of the Pulse2 APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
-            vector<u32> GetPulse2() override;
+            vector<u32> GetPulse2();
             /**
              * @brief Acquires the sample data of the Triangle APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
-            vector<u32> GetTriangle() override;
+            vector<u32> GetTriangle();
             /**
              * @brief Acquires the sample data of the Noise APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
-            vector<u32> GetNoise() override;
+            vector<u32> GetNoise();
             /**
              * @brief Acquires the sample data of the DMC APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
-            vector<u32> GetDMC() override;
+            vector<u32> GetDMC();
     };
 }
