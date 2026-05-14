@@ -38,11 +38,6 @@ namespace NES_NS {
              */
             ~Debugger() { Clear(); }
 
-            /**
-             * @brief Sets/clears the enabled flag
-             * @param enable Whether to set or clear the flag
-             */
-            void Toggle(bool enable) override { enabled = enable; }
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;
             /// @brief Performs one single CPU cycle within the emulator

@@ -49,6 +49,12 @@
     <Filter Include="Resource Files\Fonts">
       <UniqueIdentifier>{cabc4275-4084-4b03-b70e-5fd9a3222154}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\backend\NES\APU Channels">
+      <UniqueIdentifier>{583b8ecc-a5db-4eb4-a874-9c12075ef57c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backend\NES\APU Channels">
+      <UniqueIdentifier>{95b5cc13-b73d-44ac-a410-9fb5b598f092}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\frontend\Proteus.h">
@@ -111,9 +117,6 @@
     <ClInclude Include="src\backend\NES\APU.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\BUS.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
     <ClInclude Include="src\backend\NES\Controller.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
@@ -121,9 +124,6 @@
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\NES\Debugger.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\DMC_Channel.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\NES\Gamepak.h">
@@ -141,16 +141,7 @@
     <ClInclude Include="src\backend\NES\Types.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\NoiseChannel.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
     <ClInclude Include="src\backend\NES\PPU.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\PulseChannel.h">
-      <Filter>Header Files\backend\NES</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\NES\TriangleChannel.h">
       <Filter>Header Files\backend\NES</Filter>
     </ClInclude>
     <ClInclude Include="src\frontend\Types.h">
@@ -195,6 +186,18 @@
     <ClInclude Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.h">
       <Filter>Header Files\frontend\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="src\backend\NES\DMC.h">
+      <Filter>Header Files\backend\NES\APU Channels</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Noise.h">
+      <Filter>Header Files\backend\NES\APU Channels</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Pulse.h">
+      <Filter>Header Files\backend\NES\APU Channels</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\NES\Triangle.h">
+      <Filter>Header Files\backend\NES\APU Channels</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">
@@ -218,9 +221,6 @@
     <ClCompile Include="src\backend\NES\APU.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend\NES\BUS.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
     <ClCompile Include="src\backend\NES\Controller.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
@@ -236,16 +236,10 @@
     <ClCompile Include="src\backend\NES\Debugger.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend\NES\DMC_Channel.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
     <ClCompile Include="src\backend\NES\Gamepak.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
     <ClCompile Include="src\backend\NES\NES.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\NoiseChannel.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
     <ClCompile Include="src\backend\NES\PPU.cpp">
@@ -255,12 +249,6 @@
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
     <ClCompile Include="src\backend\NES\PPU_Sprites.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\PulseChannel.cpp">
-      <Filter>Source Files\backend\NES</Filter>
-    </ClCompile>
-    <ClCompile Include="src\backend\NES\TriangleChannel.cpp">
       <Filter>Source Files\backend\NES</Filter>
     </ClCompile>
     <ClCompile Include="src\frontend\ImGui\imgui.cpp">
@@ -283,6 +271,18 @@
     </ClCompile>
     <ClCompile Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.cpp">
       <Filter>Source Files\frontend\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\DMC.cpp">
+      <Filter>Source Files\backend\NES\APU Channels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Noise.cpp">
+      <Filter>Source Files\backend\NES\APU Channels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Triangle.cpp">
+      <Filter>Source Files\backend\NES\APU Channels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\Pulse.cpp">
+      <Filter>Source Files\backend\NES\APU Channels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

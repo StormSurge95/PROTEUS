@@ -20,11 +20,6 @@ namespace NES_NS {
     class Controller;
 
     /**
-     * @brief The "messenger" of the NES console.
-     */
-    class BUS;
-
-    /**
      * @brief The "brain" of the NES console.
      */
     class CPU;
@@ -796,5 +791,11 @@ namespace NES_NS {
         VR_VT369,
         UMC_UM6578,
         FNS
+    };
+
+    enum class DMA_TYPE {
+        OAM_DMA,
+        DMC_LOAD,
+        DMC_RELOAD
     };
 }

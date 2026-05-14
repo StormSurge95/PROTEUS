@@ -1,5 +1,4 @@
 #include "./NES.h"
-#include "./BUS.h"
 #include "./Debugger.h"
 
 using namespace NES_NS;
@@ -9,7 +8,7 @@ Debugger::Debugger(sptr<NES> station) {
 }
 
 void Debugger::StepInstruction() {
-    if (nes == nullptr || nes->bus == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
+    if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
 
     u64 startTotalCycles = nes->cpu->totalCycles;
     bool sawClock = false;
@@ -31,7 +30,7 @@ void Debugger::StepCycle() {
     // StepCycle() should mean to step one MASTER cycle rather than cpu/ppu/apu
 
     // validate state
-    if (nes == nullptr || nes->bus == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
+    if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
     printf("%s\n", hex(nes->cpu->pc.value()).c_str());
     nes->clockMaster();
 }
@@ -109,7 +108,7 @@ string* Debugger::GetStateRAM(u64& numLines) const {
         // add each byte to our data streams
         for (u8 i = 0x00; i < 0x10; i++) {
             u16 addr = start + i;
-            u8 byte = nes->bus->read(addr, true);
+            u8 byte = nes->cpu->read(addr, true);
             bytes << hex(byte, 2);
             chars << (char)byte;
             if (i < 0x0F) {

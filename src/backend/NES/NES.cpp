@@ -5,7 +5,6 @@
 using namespace NES_NS;
 
 NES::NES() {
-    bus = make_shared<BUS>();
     cpu = make_shared<CPU>();
     ppu = make_shared<PPU>();
     apu = make_shared<APU>();
@@ -14,24 +13,21 @@ NES::NES() {
     player1->other = player2;
     player2->other = player1;
 
-    cpu->connectBUS(bus);
-    bus->connectCPU(cpu);
-
-    bus->connectPPU(ppu);
+    cpu->connectPPU(ppu);
     ppu->connectCPU(cpu);
 
-    bus->connectAPU(apu);
-    apu->connectBUS(bus);
+    cpu->connectAPU(apu);
+    apu->connectCPU(cpu);
 
-    bus->connectCONT(player1, 1);
-    bus->connectCONT(player2, 2);
+    cpu->connectCONT(player1, 1);
+    cpu->connectCONT(player2, 2);
 }
 
 bool NES::loadROM(const string& path) {
     cart = make_shared<Gamepak>(path);
 
     if (cart->isValid()) {
-        bus->connectCART(cart);
+        cpu->connectCART(cart);
         ppu->connectCART(cart);
 
         cpu->start();
@@ -55,8 +51,8 @@ void NES::clockCyclePPU() {
 }
 
 void NES::clockCycleCPU() {
-    if (bus->oamActive && cpu->cycles == 0)
-        bus->clockOAM(masterClock);
+    if (cpu->oamActive && cpu->cycles == 0)
+        cpu->clockOAM();
     else {
         cart->mapper->cpuclock(masterClock);
         cpu->clock();

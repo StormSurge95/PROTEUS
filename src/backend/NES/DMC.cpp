@@ -1,5 +1,5 @@
 #include "./NES_PCH.h"
-#include "./BUS.h"
+#include "./CPU.h"
 #include "./APU.h"
 #include "./DMC.h"
 
@@ -96,13 +96,13 @@ void DMC_Channel::newOutputCycle() {
         shifter = sampleBuffer;
         // update helper vars to trigger DMCDMA
         noSample = true;
-        apu->bus.lock()->dmcActive = true;
+        apu->cpu.lock()->dmcActive = true;
     }
 }
 
 void DMC_Channel::fetchSample(bool first) {
     if (first) {
-        sampleBuffer = apu->bus.lock()->read(currAddr);
+        sampleBuffer = apu->cpu.lock()->read(currAddr);
         if (currAddr == 0xFFFF) currAddr = 0x8000;
         else currAddr++;
     } else {
@@ -113,7 +113,7 @@ void DMC_Channel::fetchSample(bool first) {
                 bytesRemaining = sampleLength;
             } else if (irqEnabled) interrupt = true;
         }
-        apu->bus.lock()->dmcActive = false;
-        apu->bus.lock()->dmaDummy = true;
+        apu->cpu.lock()->dmcActive = false;
+        apu->cpu.lock()->dmaDummy = true;
     }
 }

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "./NES_PCH.h"
-#include "./PulseChannel.h"
-#include "./TriangleChannel.h"
-#include "./NoiseChannel.h"
-#include "./DMC_Channel.h"
+#include "./Pulse.h"
+#include "./Triangle.h"
+#include "./Noise.h"
+#include "./DMC.h"
 
 namespace NES_NS {
     class APU : IDevice<u8, u16> {
@@ -14,7 +14,7 @@ namespace NES_NS {
             /**
              * @brief Reference to the BUS object so we can more easily perform DMCDMA
              */
-            wptr<BUS> bus;
+            wptr<CPU> cpu;
 
             /**
              * @brief Flag for whether or not an IRQ has been requested by the APU.
@@ -37,7 +37,7 @@ namespace NES_NS {
              * @brief Connects the bus to the APU.
              * @param b 
              */
-            inline void connectBUS(sptr<BUS> b) { bus = b; }
+            inline void connectCPU(sptr<CPU> c) { cpu = c; }
 
             /**
              * @brief Read data from APU registers.
