@@ -1,7 +1,7 @@
 #include "./NES_PCH.h"
 #include "./BUS.h"
 #include "./APU.h"
-#include "./DMC_Channel.h"
+#include "./DMC.h"
 
 using namespace NES_NS;
 

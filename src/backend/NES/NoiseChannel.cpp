@@ -1,4 +1,4 @@
-#include "./NoiseChannel.h"
+#include "./Noise.h"
 
 using namespace NES_NS;
 
@@ -16,8 +16,8 @@ void NoiseChannel::write(u16 addr, u8 data) {
     switch (addr) {
         case 0x400C:
             lengthCounter.halt = ((data >> 5) & 0x01) > 0;
-            constantVolume = ((data >> 4) & 0x01);
-            envelopePeriod = data & 0x0F;
+            envelope.constVol = ((data >> 4) & 0x01);
+            envelope.period = data & 0x0F;
             break;
         case 0x400E:
             mode = ((data >> 7) & 0x01) > 0;
@@ -26,7 +26,7 @@ void NoiseChannel::write(u16 addr, u8 data) {
         case 0x400F:
             if (enabled) lengthCounter.counter = LENGTH_TABLE[data >> 3];
 
-            envelopeStart = true;
+            envelope.start = true;
             break;
     }
 }
@@ -45,20 +45,20 @@ void NoiseChannel::clockLength() {
 }
 
 void NoiseChannel::clockEnvelope() {
-    if (envelopeStart) {
-        envelopeStart = false;
-        decayLevel = 15;
-        envelopeDivider = envelopePeriod;
+    if (envelope.start) {
+        envelope.start = false;
+        envelope.decay = 15;
+        envelope.divider = envelope.period;
     } else {
-        if (envelopeDivider <= 0) {
-            envelopeDivider = envelopePeriod;
+        if (envelope.divider <= 0) {
+            envelope.divider = envelope.period;
 
-            if (decayLevel > 0)
-                decayLevel--;
+            if (envelope.decay > 0)
+                envelope.decay--;
             else if (lengthCounter.halt)
-                decayLevel = 15;
+                envelope.decay = 15;
         } else
-            envelopeDivider--;
+            envelope.divider--;
     }
 }
 

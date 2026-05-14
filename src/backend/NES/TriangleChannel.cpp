@@ -1,4 +1,4 @@
-#include "./TriangleChannel.h"
+#include "./Triangle.h"
 
 using namespace NES_NS;
 

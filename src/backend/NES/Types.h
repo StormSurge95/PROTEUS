@@ -601,12 +601,24 @@ namespace NES_NS {
      * @brief Helper structure for the various Volume Envelopes within NES APU channels.
      */
     struct VolumeEnvelope {
-        bool start = false;     /// @brief Start flag
         bool loop = false;      /// @brief Loop flag
+        bool start = false;     /// @brief Start flag
         bool constVol = false;  /// @brief Constant Volume flag
-        u8 divider;             /// @brief Value to reload counter to upon reaching zero.
-        u8 counter;             /// @brief Current envelope counter value.
-        u8 volume;              /// @brief The "max" volume of the envelope.
+        u8 divider = 0x00;      /// @brief Value to reload counter to upon reaching zero.
+        u8 period = 0x00;       /// @brief Current envelope counter value.
+        u8 decay = 0x0F;        /// @brief Current Decay Level value.
+    };
+
+    /**
+     * @brief Helper structure for the Sweep Units within the two NES APU Pulse channels.
+     */
+    struct SweepUnit {
+        bool enabled = false;   /// @brief Enabled flag
+        bool negate = false;    /// @brief Negate flag
+        bool reload = false;    /// @brief Reload flag
+        u8 divider = 0x00;      /// @brief Current sweep unit divider value.
+        u8 period = 0x00;       /// @brief Divider reload value
+        u8 shift = 0x00;        /// @brief Sweep Unit's shift amount
     };
 
     struct HighPassFilter {

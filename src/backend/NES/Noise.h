@@ -23,16 +23,8 @@ namespace NES_NS {
             // length counter struct variable
             LengthCounter lengthCounter;
 
-            // volume envelope start flag
-            bool envelopeStart = false;
-            // volume envelope constant volume flag
-            bool constantVolume = false;
-            // current volume envelope divider value
-            u8 envelopeDivider = 0x00;
-            // reload volume envelope divider value
-            u8 envelopePeriod = 0x00;
-            // current noise/volume decay level
-            u8 decayLevel = 0x0F;
+            // volume envelope struct variable
+            VolumeEnvelope envelope;
 
             // lookup table for timer/period values
             inline static const u16 PERIOD_TABLE[16] = {
@@ -43,7 +35,7 @@ namespace NES_NS {
             void feedback();
 
             // determine and provide the sample value of the channel
-            inline u8 volume() const { return constantVolume ? envelopePeriod : decayLevel; }
+            inline u8 volume() const { return envelope.constVol ? envelope.period : envelope.decay; }
         public:
             // default constructor
             NoiseChannel() = default;

@@ -1,5 +1,5 @@
 #include "./NES_PCH.h"
-#include "./PulseChannel.h"
+#include "./Pulse.h"
 
 using namespace NES_NS;
 
@@ -18,41 +18,41 @@ void PulseChannel::clockLength() {
 }
 
 void PulseChannel::clockEnvelope() {
-    if (envelopeStart) {
-        envelopeStart = false;
-        decayLevel = 15;
-        envelopeDivider = envelopePeriod;
+    if (envelope.start) {
+        envelope.start = false;
+        envelope.decay = 15;
+        envelope.divider = envelope.period;
     } else {
-        if (envelopeDivider <= 0) {
-            envelopeDivider = envelopePeriod;
+        if (envelope.divider <= 0) {
+            envelope.divider = envelope.period;
 
-            if (decayLevel > 0)
-                decayLevel--;
+            if (envelope.decay > 0)
+                envelope.decay--;
             else if (lengthCounter.halt)
-                decayLevel = 15;
+                envelope.decay = 15;
         } else
-            envelopeDivider--;
+            envelope.divider--;
     }
 }
 
 void PulseChannel::clockSweep() {
-    if (sweepReload) {
-        sweepDivider = sweepPeriod;
-        sweepReload = false;
-    } else if (sweepDivider == 0) {
-        sweepDivider = sweepPeriod;
+    if (sweep.reload) {
+        sweep.divider = sweep.period;
+        sweep.reload = false;
+    } else if (sweep.divider == 0) {
+        sweep.divider = sweep.period;
 
-        if (sweepEnabled && sweepShift > 0) {
-            int change = period >> sweepShift;
+        if (sweep.enabled && sweep.shift > 0) {
+            int change = period >> sweep.shift;
 
-            if (sweepNegate) {
+            if (sweep.negate) {
                 if (isPulse1) period -= (change - 1);
                 else period -= change;
             } else
                 period += change;
         }
     } else
-        sweepDivider--;
+        sweep.divider--;
 }
 
 void PulseChannel::write(u16 addr, u8 data) {
@@ -61,16 +61,16 @@ void PulseChannel::write(u16 addr, u8 data) {
         case 0x4004:
             dutyMode = (data >> 6) & 0x03;
             lengthCounter.halt = ((data >> 5) & 0x01) > 0;
-            constantVolume = ((data >> 4) & 0x01) > 0;
-            envelopePeriod = data & 0x0F;
+            envelope.constVol = ((data >> 4) & 0x01) > 0;
+            envelope.period = data & 0x0F;
             break;
         case 0x4001:
         case 0x4005:
-            sweepEnabled = ((data >> 7) & 0x01) > 0;
-            sweepPeriod = (data >> 4) & 0x07;
-            sweepNegate = ((data >> 3) & 0x01) > 0;
-            sweepShift = data & 0x07;
-            sweepReload = true;
+            sweep.enabled = ((data >> 7) & 0x01) > 0;
+            sweep.period = (data >> 4) & 0x07;
+            sweep.negate = ((data >> 3) & 0x01) > 0;
+            sweep.shift = data & 0x07;
+            sweep.reload = true;
             break;
         case 0x4002:
         case 0x4006:
@@ -82,7 +82,7 @@ void PulseChannel::write(u16 addr, u8 data) {
             if (enabled) lengthCounter.counter = LENGTH_TABLE[data >> 3];
 
             dutyStep = 0;
-            envelopeStart = true;
+            envelope.start = true;
             break;
     }
 }
