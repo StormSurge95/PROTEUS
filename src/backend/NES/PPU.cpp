@@ -548,3 +548,27 @@ void PPU::updateCounters(u8 bits) {
         if (((bits >> x) & 0x01) > 0) decayCounters[x] = 20;
     }
 }
+
+void PPU::bitDecay() {
+    for (int x = 0; x < 8; x++) {
+        if (decayCounters[x] == 0) {
+            u8 mask = 1 << x;
+            ppuBus &= ~mask;
+        }
+    }
+}
+
+u8 PPU::readSpriteAttr(SPRITE_ATTR which, u8 attr) {
+    switch (which) {
+        case PALETTE:
+            return (attr & 0x03);
+        case PRIORITY:
+            return ((attr >> 5) & 0x01);
+        case XFLIP:
+            return ((attr >> 6) & 0x01);
+        case YFLIP:
+            return ((attr >> 7) & 0x01);
+        default:
+            return 0x00;
+    }
+}
