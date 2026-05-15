@@ -62,6 +62,16 @@ namespace NES_NS {
             /// @brief default destructor
             ~DMC_Channel() = default;
 
+            u16 getSampleAddr() const { return sampleAddr; }
+            u16 getCurrAddr() {
+                u16 ret = currAddr;
+                if (currAddr == 0xFFFF)
+                    currAddr = 0x8000;
+                else currAddr++;
+                return ret;
+            }
+            void setSampleByte(u8 data) { sampleBuffer = data; }
+
             /**
              * @brief Data write operation for the DMC channel register(s)
              * @param addr Address to be written to.

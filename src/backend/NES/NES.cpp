@@ -51,16 +51,12 @@ void NES::clockCyclePPU() {
 }
 
 void NES::clockCycleCPU() {
-    if (cpu->oamActive && cpu->cycles == 0)
-        cpu->clockOAM();
-    else {
-        cart->mapper->cpuclock(masterClock);
-        cpu->clock();
-        apu->clock();
+    cart->mapper->cpuclock(masterClock);
+    cpu->clock();
+    apu->clock();
 
-        cpu->irqTrigger |= apu->irqRequested;
-        apu->irqRequested = false;
-    }
+    cpu->irqTrigger |= apu->irqRequested;
+    apu->irqRequested = false;
 }
 
 void NES::clockMaster() {

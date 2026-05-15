@@ -41,7 +41,7 @@ namespace NS_Proteus {
             void LaunchGame(int index);
 
             DebugView GetDebugView() { return debugManager->currentView; }
-            const IDebugger* Debugger() const { return debugManager->GetDebugger();  }
+            IDebugger* GetDebugger() const { return debugManager->GetDebugger().get();  }
 
             std::vector<ROM_DATA> GetGameList(ConsoleID console);
             const u32* GetFrameBuffer();

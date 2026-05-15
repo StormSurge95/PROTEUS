@@ -794,6 +794,7 @@ namespace NES_NS {
     };
 
     enum class DMA_TYPE {
+        NONE,
         OAM_DMA,
         DMC_LOAD,
         DMC_RELOAD

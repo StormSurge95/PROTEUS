@@ -31,7 +31,7 @@ void Debugger::StepCycle() {
 
     // validate state
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    printf("%s\n", hex(nes->cpu->pc.value()).c_str());
+    //printf("%s\n", hex(nes->cpu->pc.value()).c_str());
     nes->clockMaster();
 }
 
@@ -277,7 +277,11 @@ void Debugger::ScanInstructions(array<u64, 25>& list) const {
     for (const u16& e : nes->cpu->prevInstAddrs)
         list[index++] = e;
 
-    u16 start = nes->cpu->pc.value();
+    // at this point, `index` should be 12;
+    // so we can simply use `11` to get the last entry
+    // and not have to deal with VS giving us irrelevant
+    // or impossible warnings and errors
+    u16 start = (u16)list[11];
     while (index < 25) {
         start += nes->cpu->lookup[nes->cpu->read(start, true)].bytes;
         list[index++] = start;
@@ -383,4 +387,21 @@ vector<u32> Debugger::GetNoise() {
 
 vector<u32> Debugger::GetDMC() {
     return vector<u32>();
+}
+
+void Debugger::SetTracePath(string s) {
+    path p = "C:\\Users\\Redux\\Desktop";
+    p /= s;
+    tracePath = p;
+    string name = tracePath.filename().string();
+    name.pop_back(); name.pop_back(); name.pop_back(); name.pop_back();
+    std::chrono::zoned_time t{ std::chrono::current_zone(), std::chrono::floor<std::chrono::seconds>(system_clock::now()) };
+    name += format("_{:%F_%T}", t);
+    name += ".txt";
+    replace(name.begin(), name.end(), ':', '-');
+    tracePath.replace_filename(name);
+    traceFile.open(tracePath);
+    if (!traceFile.is_open()) {
+        printf("FAILED TO OPEN TRACE FILE AT PATH: %s\n", tracePath.string().c_str());
+    }
 }

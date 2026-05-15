@@ -97,10 +97,6 @@ void Proteus::SetMetadata() {
 void Proteus::ToggleDebug() {
     debug = !debug;
     if (station != nullptr) {
-        if (debug) {
-            debugManager->SetDebugger(ConsoleID::NES, station);
-            debugManager->CycleDebugViews();
-        } else debugManager->CycleDebugViews(false);
         videoManager->ToggleDebug();
     }
 }
@@ -165,9 +161,6 @@ void Proteus::ProcessKeyInput(SDL_Keycode key) {
             break;
         case SDLK_F8:
             ToggleDebug();
-            break;
-        case SDLK_TAB:
-            debugManager->CycleDebugViews();
             break;
     }
 }
@@ -296,10 +289,7 @@ void Proteus::StartConsole() {
     switch (state.selectedConsole) {
         case ConsoleID::NES:
             station = std::make_shared<NES_NS::NES>();
-            if (debug) {
-                debugManager->SetDebugger(ConsoleID::NES, station);
-                debugManager->CycleDebugViews();
-            }
+            debugManager->SetDebugger(ConsoleID::NES, station);
             return;
         default:
             exit(EXIT_FAILURE);

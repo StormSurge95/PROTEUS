@@ -85,6 +85,10 @@ namespace NES_NS {
              */
             void collectSamples(vector<float>& buffer);
 
+            u16 getDmcCurrentAddr() const { return dmc->getCurrAddr(); }
+            u16 getDmcSampleAddr() const { return dmc->getSampleAddr(); }
+            void setDmcSampleByte(u8 data) { dmc->setSampleByte(data); }
+
             /**
              * @brief Handles call to DMC channel sample fetch method.
              * @param first Whether or not this is the first call to `dmcFetch` for this round.

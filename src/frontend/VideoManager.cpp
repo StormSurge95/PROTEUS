@@ -459,33 +459,65 @@ void VideoManager::RenderDebug(float scale) {
 
     ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("CPU")) {
-            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS_DISASM))) {
-                SetDebugView(DebugView::CPU_REGS_DISASM);
+        if (ImGui::BeginMenu("OPTIONS")) {
+            if (ImGui::Checkbox("LOG TO FILE", &proteus->GetDebugger()->logToFile)) {
+                if (proteus->GetDebugger()->logToFile) {
+                    ImGui::OpenPopup("Filepath Select", ImPopupFlags);
+                }
             }
-            if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
-                SetDebugView(DebugView::CPU_MEMORY);
+            ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
+            ImGui::SetNextWindowFocus();
+            if (ImGui::BeginPopup("Filepath Select", ImPopupWindowFlags)) {
+                ImGui::TextWrapped("Enter the name of the log file to create:");
+                static char filepath[256] = "proteus_log.txt";
+                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::InputText("##Filepath", filepath, 256);
+                ImGui::PopItemWidth();
+                float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
+                if (ImGui::Button("Confirm", ImVec2(w, 0))) {
+                    proteus->GetDebugger()->SetTracePath(filepath);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(w, 0))) {
+                    proteus->GetDebugger()->logToFile = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("PPU")) {
-            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::PPU_REGS))) {
-                SetDebugView(DebugView::PPU_REGS);
+        if (ImGui::BeginMenu("VIEW")) {
+            if (ImGui::BeginMenu("CPU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS_DISASM))) {
+                    SetDebugView(DebugView::CPU_REGS_DISASM);
+                }
+                if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
+                    SetDebugView(DebugView::CPU_MEMORY);
+                }
+                ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("PATTERN TABLES", nullptr, &debugViews.at(DebugView::PPU_PATTERNTABLES))) {
-                SetDebugView(DebugView::PPU_PATTERNTABLES);
+            if (ImGui::BeginMenu("PPU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::PPU_REGS))) {
+                    SetDebugView(DebugView::PPU_REGS);
+                }
+                if (ImGui::MenuItem("PATTERN TABLES", nullptr, &debugViews.at(DebugView::PPU_PATTERNTABLES))) {
+                    SetDebugView(DebugView::PPU_PATTERNTABLES);
+                }
+                if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
+                    SetDebugView(DebugView::PPU_NAMETABLES);
+                }
+                ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
-                SetDebugView(DebugView::PPU_NAMETABLES);
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("APU")) {
-            if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::APU_REGISTERS))) {
-                SetDebugView(DebugView::APU_REGISTERS);
-            }
-            if (ImGui::MenuItem("CHANNELS", nullptr, &debugViews.at(DebugView::APU_CHANNELS))) {
-                SetDebugView(DebugView::APU_CHANNELS);
+            if (ImGui::BeginMenu("APU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::APU_REGISTERS))) {
+                    SetDebugView(DebugView::APU_REGISTERS);
+                }
+                if (ImGui::MenuItem("CHANNELS", nullptr, &debugViews.at(DebugView::APU_CHANNELS))) {
+                    SetDebugView(DebugView::APU_CHANNELS);
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -497,7 +529,7 @@ void VideoManager::RenderDebug(float scale) {
                 // add table to display cpu registers
                 if (ImGui::BeginTable("CPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
                     u8 numRegs;
-                    string** cpuState = proteus->Debugger()->GetStateCPU(numRegs);
+                    string** cpuState = proteus->GetDebugger()->GetStateCPU(numRegs);
                     ImGui::TableSetupColumn("REGISTER");
                     ImGui::TableSetupColumn("VALUE");
                     ImGui::TableHeadersRow();
@@ -515,10 +547,11 @@ void VideoManager::RenderDebug(float scale) {
                     ImGui::EndTable();
                 }
                 // add program disassembly
-                string* disasm = proteus->Debugger()->GetDisassembly();
+                string* disasm = proteus->GetDebugger()->GetDisassembly();
                 for (u8 line = 0; line < 25; line++) {
-                    if (line == 12) ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", disasm[line].c_str());
-                    else ImGui::Text("%s", disasm[line].c_str());
+                    if (line == 12) {
+                        ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", disasm[line].c_str());
+                    } else ImGui::Text("%s", disasm[line].c_str());
                 }
                 delete[] disasm;
             }
@@ -532,7 +565,7 @@ void VideoManager::RenderDebug(float scale) {
                 float scale = tgtW / curW;
                 ImGui::SetWindowFontScale(scale);
                 u64 numLines;
-                string* lines = proteus->Debugger()->GetStateRAM(numLines);
+                string* lines = proteus->GetDebugger()->GetStateRAM(numLines);
                 for (u8 l = 0; l < numLines; l++) {
                     ImGui::Text("%s", lines[l].c_str());
                 }
@@ -544,7 +577,7 @@ void VideoManager::RenderDebug(float scale) {
             {
                 if (ImGui::BeginTable("PPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
                     u8 numRegs;
-                    string** ppuState = proteus->Debugger()->GetStatePPU(numRegs);
+                    string** ppuState = proteus->GetDebugger()->GetStatePPU(numRegs);
                     ImGui::TableSetupColumn("REGISTER");
                     ImGui::TableSetupColumn("VALUE");
                     ImGui::TableHeadersRow();

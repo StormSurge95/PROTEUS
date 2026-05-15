@@ -38,7 +38,7 @@ u8 PPU::getSpritePixel(u8& pixel, u8& attr) {
         if (p != 0 && !found) {
             tempPixel = p;
             tempAttr = spr->attr;
-            tempIndex = i;
+            tempIndex = i & 0xFF;
             found = true;
         }
     }

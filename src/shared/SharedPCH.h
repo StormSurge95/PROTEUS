@@ -22,6 +22,7 @@ using std::array;
 using std::chrono::steady_clock;
 using std::chrono::high_resolution_clock;
 using std::chrono::duration;
+using std::chrono::system_clock;
 using std::milli;
 
 // cstdint
@@ -45,6 +46,7 @@ using std::filesystem::create_directory;
 
 // fstream & iomanip
 using std::ifstream;
+using std::ofstream;
 using std::ios;
 using std::endl;
 

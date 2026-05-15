@@ -83,12 +83,13 @@ u8 CPU::read(u16 addr, bool readonly) {
     }
     // TODO: Handle PRG-RAM open bus stuff
 
-    // getting here meand readonly is clear; so update cpuBus and return it.
+    // getting here means readonly is clear; so update cpuBus and return it.
     cpuBus = ret;
     return cpuBus;
 }
 
 void CPU::write(u16 addr, u8 data) {
+    delayDMA = true;
     // all writes fully update open bus
     cpuBus = data;
     if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -134,20 +135,22 @@ void CPU::connectCONT(sptr<Controller>& c, u8 player) {
     }
 }
 
+/**
+ * via https://nesdev.org/wiki/DMA#OAM_DMA:
+ * OAM DMA copies 256 bytes from a CPU page to PPU OAM via the OAMDATA ($2004) register.
+ * It is triggered by writing the page number (the high byte of the address) to OAMDMA ($4014).
+ * OAM DMA is scheduled to halt the CPU on the first cycle after the register write.
+ * In the common case, it performs a halt cycle, an optional alignment cycle, and 256 get/put pairs.
+ * The 256 get/put pairs copy forward from the start of the page. Because DMA can only read on get cycles,
+ * an alignment cycle performing no useful work may be required before being able to read. All together,
+ * OAM DMA on its own takes 513 or 514 cycles, depending on whether alignment is needed.
+ * OAM DMA will copy from the page most recently written to $4014. This means that read-modify-write
+ * instructions such as INC $4014, which are able to perform a second write before the CPU can be halted, will copy from the second page written, not the first.
+ * OAM DMA has a lower priority than DMC DMA. If a DMC DMA get occurs during OAM DMA, OAM DMA is briefly paused.
+ */
 void CPU::clockOAM() {
-    /**
-     * via https://nesdev.org/wiki/DMA#OAM_DMA:
-     * OAM DMA copies 256 bytes from a CPU page to PPU OAM via the OAMDATA ($2004) register.
-     * It is triggered by writing the page number (the high byte of the address) to OAMDMA ($4014).
-     * OAM DMA is scheduled to halt the CPU on the first cycle after the register write.
-     * In the common case, it performs a halt cycle, an optional alignment cycle, and 256 get/put pairs.
-     * The 256 get/put pairs copy forward from the start of the page. Because DMA can only read on get cycles,
-     * an alignment cycle performing no useful work may be required before being able to read. All together,
-     * OAM DMA on its own takes 513 or 514 cycles, depending on whether alignment is needed.
-     * OAM DMA will copy from the page most recently written to $4014. This means that read-modify-write
-     * instructions such as INC $4014, which are able to perform a second write before the CPU can be halted, will copy from the second page written, not the first.
-     * OAM DMA has a lower priority than DMC DMA. If a DMC DMA get occurs during OAM DMA, OAM DMA is briefly paused.
-     */
+    if (delayDMA) return;
+    halted = true;
     bool put = (totalCycles & 0x01) > 0; // determine first cycle; odd = put, !odd = get
     if (dmaDummy) { // initial halt cycle
         if (put) // no alignment needed
@@ -155,9 +158,11 @@ void CPU::clockOAM() {
         else // alignment cycle (dummy read) needed
             read(lastReadAddr);
     } else {
-        if (!put) // 'get' oam data from WRAM
+        if (!put) { // 'get' oam data from WRAM
+            //printf("%02X -> ", cpuBus);
             dmaData = read(((u16)dmaPage << 8) | dmaAddr);
-        else { // 'put' oam data into PPU memory
+            //printf("%02X\n", cpuBus);
+        } else { // 'put' oam data into PPU memory
             sptr<PPU> ppup = ppu.lock();
             u8 i = (ppup->getOAMADDR() + dmaAddr) & 0xFF;
             ppup->writeOAMByte(i, dmaData);
@@ -166,17 +171,19 @@ void CPU::clockOAM() {
             // instead, increment helper variable
             dmaAddr++;
             if (dmaAddr == 0x00) {
-                // helper variable is 8 bits so that overflow to 0 means
-                // we have performed the put operation 256 times precisely
+                // helper variable is 8 bits; overflow to 0 means we
+                // have performed the put operation 256 times precisely
                 oamActive = false;
                 dmaDummy = true;
+                halted = false;
             }
         }
     }
-    totalCycles++;
 }
 
 void CPU::clockDMC() {
+    if (delayDMA) return;
+    halted = true;
     /**
      * via https://nesdev.org/wiki/DMA#DMC_DMA:
      * DMC DMA copies a single byte to the DMC unit's sample buffer. This occurs automatically after the DMC
@@ -209,7 +216,16 @@ void CPU::clockDMC() {
         else
             read(lastReadAddr);
     } else {
+        if (put) {
+            u16 addr = apu.lock()->getDmcCurrentAddr();
+            dmaData = read(addr);
+        } else {
+            apu.lock()->setDmcSampleByte(dmaData);
+            halted = false;
+            dmcActive = false;
+        }
         apu.lock()->dmcFetch(!put);
+        halted = false;
     }
 }
 
@@ -235,42 +251,47 @@ void CPU::reset() {
 }
 
 void CPU::clock() {
-    //if (pollScheduled) pollInterrupts();
-    /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
-    cycles++;
-    if (cycles == 1) {
-        /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
-        if (pendingRST) {
-            // if a reset is pending, set next 'instruction' to be a reset
-            currInst = &RST_INST;
-            pendingRST = false;
-        } else if (pendingNMI) {
-            // if a NMI is pending, set next 'instruction' to be a NMI
-            currInst = &NMI_INST;
-            pendingNMI = false;
-        } else if (pendingIRQ) {
-            // if an IRQ is pending, set next 'instruction' to be an IRQ
-            currInst = &IRQ_INST;
-            pendingIRQ = false;
+    if (oamActive)
+        clockOAM();
+    
+    if (!halted) {
+        /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
+        cycles++;
+        delayDMA = false;
+        if (cycles == 1) {
+            /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
+            if (pendingRST) {
+                // if a reset is pending, set next 'instruction' to be a reset
+                currInst = &RST_INST;
+                pendingRST = false;
+            } else if (pendingNMI) {
+                // if a NMI is pending, set next 'instruction' to be a NMI
+                currInst = &NMI_INST;
+                pendingNMI = false;
+            } else if (pendingIRQ) {
+                // if an IRQ is pending, set next 'instruction' to be an IRQ
+                currInst = &IRQ_INST;
+                pendingIRQ = false;
+            } else {
+                // otherwise, read next opcode and set next instruction as necessary
+                prevInstAddrs.push_back(pc);
+                if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
+                opcode = read(pc++);
+                currInst = &lookup[opcode];
+                if (currInst->address == &CPU::IMM_A ||
+                    currInst->address == &CPU::ACC_A ||
+                    currInst->address == &CPU::IMP_A ||
+                    currInst->address == &CPU::REL_B)
+                    schedulePoll();
+            }
         } else {
-            // otherwise, read next opcode and set next instruction as necessary
-            prevInstAddrs.push_back(pc);
-            if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
-            opcode = read(pc++);
-            currInst = &lookup[opcode];
-            if (currInst->address == &CPU::IMM_A ||
-                currInst->address == &CPU::ACC_A ||
-                currInst->address == &CPU::IMP_A ||
-                currInst->address == &CPU::REL_B)
-                schedulePoll();
+            if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
+                (this->*currInst->address)();
+            else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
+                (this->*currInst->operate)();
         }
-    } else {
-        if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
-            (this->*currInst->address)();
-        else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
-            (this->*currInst->operate)();
+        // increment total cycles
     }
-    // increment total cycles
     totalCycles++;
 }
 

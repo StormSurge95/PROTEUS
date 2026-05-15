@@ -136,6 +136,14 @@ namespace NS_Proteus {
                 | ImGuiWindowFlags_NoMove
                 | ImGuiWindowFlags_NoResize;
 
+            const ImGuiPopupFlags ImPopupFlags = ImGuiPopupFlags_NoReopen;
+
+            const ImGuiWindowFlags ImPopupWindowFlags =
+                ImGuiWindowFlags_NoDecoration
+                | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoSavedSettings
+                | ImGuiWindowFlags_AlwaysAutoResize;
+
             void FinalizeFrame(bool clear = true);
     };
 }

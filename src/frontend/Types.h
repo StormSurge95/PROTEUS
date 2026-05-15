@@ -420,5 +420,10 @@ namespace NS_Proteus {
         u32 dispHeight = 1440;
         u32 gameWidth = 0;
         u32 gameHeight = 0;
+
+        float PopupX() const { return dispWidth * 0.5f; }
+        float PopupY() const { return dispHeight * 0.5f; }
+        float PopupW() const { return dispWidth * 0.2f; }
+        float PopupH() const { return dispHeight * 0.2f; }
     };
 }

@@ -7,6 +7,31 @@ namespace NES_NS {
             // Allow Debugger class to access all private members of the CPU class
             friend class Debugger;
         private:
+            array<u8, 2048> ram;
+            /// @brief The ppu of the console.
+            wptr<PPU> ppu;
+            /// @brief The apu of the console.
+            wptr<APU> apu;
+            /// @brief The current cartridge that is connected.
+            wptr<Gamepak> cart;
+            /// @brief Player 1 controller
+            wptr<Controller> player1;
+            /// @brief Player 2 controller
+            wptr<Controller> player2;
+
+            /// @brief Current open-bus value to be updated/returned on read/write calls.
+            u8 cpuBus = 0x00;
+
+            /// @brief Helper variable for OAMDMA; refers to the page of WRAM to read OAM data from.
+            u8 dmaPage = 0x00;
+            /// @brief Helper variable for OAMDMA; refers to the OAM address to write the WRAM data to.
+            u8 dmaAddr = 0x00;
+            /// @brief Helper variable for OAMDMA; refers to the OAM data to be written after it is read from WRAM.
+            u8 dmaData = 0x00;
+
+            /// @brief Helper variable meant to be used for when the CPU is stalled via DMA dummy-read cycles.
+            u16 lastReadAddr = 0x0000;
+
             /// @brief debug flag
             bool debugEnabled = false;
             /// @brief irq flag
@@ -204,6 +229,9 @@ namespace NES_NS {
             /// @brief cycle tracker for instruction operation
             u8 cycles = 0;
 
+            /// @brief Delay flat for the DMA operations
+            bool delayDMA = false;
+            bool halted = false;
             /// @brief Flag for OAMDMA
             bool oamActive = false;
             /// @brief Flag for DMCDMA
@@ -267,31 +295,5 @@ namespace NES_NS {
             void reset();
             /// @brief 'clock' function
             void clock();/// @brief WRAM of the console/cartridge.
-
-        private:
-            array<u8, 2048> ram;
-            /// @brief The ppu of the console.
-            wptr<PPU> ppu;
-            /// @brief The apu of the console.
-            wptr<APU> apu;
-            /// @brief The current cartridge that is connected.
-            wptr<Gamepak> cart;
-            /// @brief Player 1 controller
-            wptr<Controller> player1;
-            /// @brief Player 2 controller
-            wptr<Controller> player2;
-
-            /// @brief Current open-bus value to be updated/returned on read/write calls.
-            u8 cpuBus = 0x00;
-
-            /// @brief Helper variable for OAMDMA; refers to the page of WRAM to read OAM data from.
-            u8 dmaPage = 0x00;
-            /// @brief Helper variable for OAMDMA; refers to the OAM address to write the WRAM data to.
-            u8 dmaAddr = 0x00;
-            /// @brief Helper variable for OAMDMA; refers to the OAM data to be written after it is read from WRAM.
-            u8 dmaData = 0x00;
-
-            /// @brief Helper variable meant to be used for when the CPU is stalled via DMA dummy-read cycles.
-            u16 lastReadAddr = 0x0000;
     };
 }

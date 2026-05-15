@@ -147,5 +147,7 @@ namespace NES_NS {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
+
+            void SetTracePath(string s) override;
     };
 }
