@@ -37,7 +37,7 @@ namespace NES_NS {
             u8 bitsRemaining = 0x00;
 
             /// @brief reload value of channel timer
-            u16 period = 0x0000;
+            u16 period = 1;
             /// @brief current value of channel timer
             u16 timer = 0x0000;
 
@@ -61,6 +61,16 @@ namespace NES_NS {
             DMC_Channel(APU* p) : apu(p) {}
             /// @brief default destructor
             ~DMC_Channel() = default;
+
+            u16 getSampleAddr() const { return sampleAddr; }
+            u16 getCurrAddr() {
+                u16 ret = currAddr;
+                if (currAddr == 0xFFFF)
+                    currAddr = 0x8000;
+                else currAddr++;
+                return ret;
+            }
+            void setSampleByte(u8 data) { sampleBuffer = data; }
 
             /**
              * @brief Data write operation for the DMC channel register(s)

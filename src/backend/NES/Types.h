@@ -20,11 +20,6 @@ namespace NES_NS {
     class Controller;
 
     /**
-     * @brief The "messenger" of the NES console.
-     */
-    class BUS;
-
-    /**
      * @brief The "brain" of the NES console.
      */
     class CPU;
@@ -604,8 +599,8 @@ namespace NES_NS {
         bool loop = false;      /// @brief Loop flag
         bool start = false;     /// @brief Start flag
         bool constVol = false;  /// @brief Constant Volume flag
-        u8 divider = 0x00;      /// @brief Value to reload counter to upon reaching zero.
-        u8 period = 0x00;       /// @brief Current envelope counter value.
+        u8 divider = 0x00;      /// @brief Current envelope counter value.
+        u8 period = 0x00;       /// @brief Value to reload counter to upon reaching zero.
         u8 decay = 0x0F;        /// @brief Current Decay Level value.
     };
 
@@ -796,5 +791,12 @@ namespace NES_NS {
         VR_VT369,
         UMC_UM6578,
         FNS
+    };
+
+    enum class DMA_TYPE {
+        NONE,
+        OAM_DMA,
+        DMC_LOAD,
+        DMC_RELOAD
     };
 }

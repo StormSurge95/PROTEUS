@@ -21,21 +21,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\backend\NES\APU.cpp" />
-    <ClCompile Include="src\backend\NES\BUS.cpp" />
     <ClCompile Include="src\backend\NES\Controller.cpp" />
     <ClCompile Include="src\backend\NES\CPU.cpp" />
     <ClCompile Include="src\backend\NES\CPU_AddressModes.cpp" />
     <ClCompile Include="src\backend\NES\CPU_Instructions.cpp" />
     <ClCompile Include="src\backend\NES\Debugger.cpp" />
-    <ClCompile Include="src\backend\NES\DMC_Channel.cpp" />
+    <ClCompile Include="src\backend\NES\DMC.cpp" />
     <ClCompile Include="src\backend\NES\Gamepak.cpp" />
     <ClCompile Include="src\backend\NES\NES.cpp" />
-    <ClCompile Include="src\backend\NES\NoiseChannel.cpp" />
+    <ClCompile Include="src\backend\NES\Noise.cpp" />
     <ClCompile Include="src\backend\NES\PPU.cpp" />
     <ClCompile Include="src\backend\NES\PPU_BG.cpp" />
     <ClCompile Include="src\backend\NES\PPU_Sprites.cpp" />
-    <ClCompile Include="src\backend\NES\PulseChannel.cpp" />
-    <ClCompile Include="src\backend\NES\TriangleChannel.cpp" />
+    <ClCompile Include="src\backend\NES\Pulse.cpp" />
+    <ClCompile Include="src\backend\NES\Triangle.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />
     <ClCompile Include="src\frontend\DebugManager.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui.cpp" />
@@ -59,11 +58,10 @@
     <ClInclude Include="resources\SonyFont.h" />
     <ClInclude Include="src\backend\BackendPCH.h" />
     <ClInclude Include="src\backend\NES\APU.h" />
-    <ClInclude Include="src\backend\NES\BUS.h" />
     <ClInclude Include="src\backend\NES\Controller.h" />
     <ClInclude Include="src\backend\NES\CPU.h" />
     <ClInclude Include="src\backend\NES\Debugger.h" />
-    <ClInclude Include="src\backend\NES\DMC_Channel.h" />
+    <ClInclude Include="src\backend\NES\DMC.h" />
     <ClInclude Include="src\backend\NES\Gamepak.h" />
     <ClInclude Include="src\backend\NES\Mappers\M000.h" />
     <ClInclude Include="src\backend\NES\Mappers\M001.h" />
@@ -75,10 +73,10 @@
     <ClInclude Include="src\backend\NES\Constants.h" />
     <ClInclude Include="src\backend\NES\NES_PCH.h" />
     <ClInclude Include="src\backend\NES\Types.h" />
-    <ClInclude Include="src\backend\NES\NoiseChannel.h" />
+    <ClInclude Include="src\backend\NES\Noise.h" />
     <ClInclude Include="src\backend\NES\PPU.h" />
-    <ClInclude Include="src\backend\NES\PulseChannel.h" />
-    <ClInclude Include="src\backend\NES\TriangleChannel.h" />
+    <ClInclude Include="src\backend\NES\Pulse.h" />
+    <ClInclude Include="src\backend\NES\Triangle.h" />
     <ClInclude Include="src\backend\SHARED\IConsole.h" />
     <ClInclude Include="src\backend\SHARED\IDebugger.h" />
     <ClInclude Include="src\backend\SHARED\IDevice.h" />
@@ -111,6 +109,9 @@
       <SubType>
       </SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TODO.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

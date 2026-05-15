@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <deque>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -22,6 +23,7 @@ using std::array;
 using std::chrono::steady_clock;
 using std::chrono::high_resolution_clock;
 using std::chrono::duration;
+using std::chrono::system_clock;
 using std::milli;
 
 // cstdint
@@ -45,6 +47,7 @@ using std::filesystem::create_directory;
 
 // fstream & iomanip
 using std::ifstream;
+using std::ofstream;
 using std::ios;
 using std::endl;
 
@@ -66,6 +69,7 @@ using wptr = std::weak_ptr<T>;
 using std::stringstream;
 using std::string;
 using std::to_string;
+using std::format;
 
 // thread
 using std::this_thread::sleep_for;

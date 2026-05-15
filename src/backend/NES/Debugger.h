@@ -38,11 +38,6 @@ namespace NES_NS {
              */
             ~Debugger() { Clear(); }
 
-            /**
-             * @brief Sets/clears the enabled flag
-             * @param enable Whether to set or clear the flag
-             */
-            void Toggle(bool enable) override { enabled = enable; }
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;
             /// @brief Performs one single CPU cycle within the emulator
@@ -60,7 +55,7 @@ namespace NES_NS {
              * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
              * Example return value: `[["PC","0x0123"],["A","0x45"],["X","0x67],["Y","0x89"],["STATUS","0xAB"],["SP","0xCD"]]`
              */
-            string** GetStateCPU(u8& numRegs) const override;
+            vector<array<string, 3>> GetStateCPU() const override;
             /**
              * @brief Helper function to aquire and format the status flags of the CPU as a string.
              * @param reg Register value that contains all of the flags to be formatted.
@@ -72,7 +67,7 @@ namespace NES_NS {
              * @param [out] numLines Reference to a `u64` variable to contain the number of bytes of RAM to be processed
              * @return A dynamically allocated pointer to the array of strings representing RAM contents.
              */
-            string* GetStateRAM(u64& numLines) const override;
+            vector<string> GetStateRAM() const override;
             /**
              * @brief Copies the CPU instruction history and then scans through the following memory to fill the supplied vector with addresses.
              * @param [out] list Reference to the vector to fill with instruction opcode addresses
@@ -89,7 +84,7 @@ namespace NES_NS {
              * @todo This might be improved by simply having a history of instructions within the debugger;
              * that way we don't have to disassemble 25 instructions EVERY frame during application playback.
              */
-            string* GetDisassembly() const override;
+            vector<string> GetDisassembly() const override;
 
             /// @section PPU
             /// @brief PPU-related debugging methods; currently in progress and subject to change
@@ -99,7 +94,7 @@ namespace NES_NS {
              * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
              * Example return value: `[["PPUCTRL (0x2000)","0x01"],["PPUMASK (0x2001)","0x23"]]`
              */
-            string** GetStatePPU(u8& numRegs) const override;
+            vector<array<string, 4>> GetStatePPU() const override;
             /**
              * @brief Acquires the various palette colors used by the ROM
              * @return A vector of the palette colors for easy processing/rendering
@@ -126,7 +121,7 @@ namespace NES_NS {
              * @return A dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
              * Example return value: `[["PULSE1CTRL (0x4000)", "0x01"]<...>["NOISECTRL (0x400C)","0x3F"]<...>["FRAMECOUNTERCTRL (0x4017)","0xC0"]]`
              */
-            string** GetStateAPU(u8& numRegs) const override;
+            vector<array<string, 4>> GetStateAPU() const override;
             /**
              * @brief Acquires the sample data of the Pulse1 APU channel
              * @return A vector of `u32` entries relating to the various samples produced by the channel
@@ -152,5 +147,8 @@ namespace NES_NS {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
+
+            void SetTracePath(string s) override;
+            void LogTrace() override;
     };
 }

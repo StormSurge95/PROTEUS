@@ -47,7 +47,6 @@ namespace NES_NS {
 
         private:
             sptr<CPU> cpu;              // shared pointer reference to the cpu
-            sptr<BUS> bus;              // shared pointer reference to the bus
             sptr<Gamepak> cart;         // shared pointer reference to the cartridge/gamepak/rom
             sptr<PPU> ppu;              // shared pointer reference to the ppu
             sptr<APU> apu;              // shared pointer reference to the apu

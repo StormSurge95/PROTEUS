@@ -19,9 +19,9 @@ namespace NES_NS {
             LengthCounter lengthCounter;
 
             // current linear length counter value
-            u16 linearCounter = 0x0000;
+            u8 linearCounter = 0x00;
             // linear length counter reload value
-            u16 linearPeriod = 0x0000;
+            u8 linearPeriod = 0x00;
             // linear length counter reload flag
             bool linearReload = false;
 

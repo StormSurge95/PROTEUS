@@ -452,7 +452,7 @@ void PPU::renderPixel() {
         finalAttr = bgAttr;
     } else {
         // handle sprite 0 hit
-        if (sprIndex == 0 && cycle < 255)
+        if (sprIndex == 0 && cycle <= 255)// && scanline <= 239)
             spriteZeroHit(true);
 
         if (spriteAboveBackground(sprAttr)) {

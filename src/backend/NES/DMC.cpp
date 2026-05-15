@@ -1,5 +1,5 @@
 #include "./NES_PCH.h"
-#include "./BUS.h"
+#include "./CPU.h"
 #include "./APU.h"
 #include "./DMC.h"
 
@@ -22,7 +22,8 @@ void DMC_Channel::write(u16 addr, u8 data) {
             // set loop flag
             loop = ((data >> 6) & 0x01) > 0;
             // set new pariod
-            period = DMC_RATES[data & 0x0F];
+            // TODO: determine period based on region
+            period = GetRateDMC(REGION::NTSC, data & 0x0F);
             return;
         case 0x4011:
             /*
@@ -96,13 +97,13 @@ void DMC_Channel::newOutputCycle() {
         shifter = sampleBuffer;
         // update helper vars to trigger DMCDMA
         noSample = true;
-        apu->bus.lock()->dmcActive = true;
+        apu->cpu.lock()->dmcActive = true;
     }
 }
 
 void DMC_Channel::fetchSample(bool first) {
     if (first) {
-        sampleBuffer = apu->bus.lock()->read(currAddr);
+        sampleBuffer = apu->cpu.lock()->read(currAddr);
         if (currAddr == 0xFFFF) currAddr = 0x8000;
         else currAddr++;
     } else {
@@ -113,7 +114,7 @@ void DMC_Channel::fetchSample(bool first) {
                 bytesRemaining = sampleLength;
             } else if (irqEnabled) interrupt = true;
         }
-        apu->bus.lock()->dmcActive = false;
-        apu->bus.lock()->dmaDummy = true;
+        apu->cpu.lock()->dmcActive = false;
+        apu->cpu.lock()->dmaDummy = true;
     }
 }

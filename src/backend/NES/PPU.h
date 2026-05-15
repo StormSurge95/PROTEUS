@@ -211,7 +211,8 @@ namespace NES_NS {
                 SPRITE_PATTERN_ADDR,
                 BACKGROUND_PATTERN_ADDR,
                 SPRITE_SIZE,
-                NMI_ENABLED = 7
+                MAIN_SECOND,
+                NMI_ENABLED
             };
             // Helper function to return the requested bit-flag value from the PPUCTRL register
             u8 getControlData(CONTROL which) const;
@@ -242,7 +243,7 @@ namespace NES_NS {
                 +-------->emphasize blue in rendered pixels
             */
             enum MASK {
-                GREYSCALE,
+                GRAYSCALE,
                 ENABLE_BACKGROUND_LEFT,
                 ENABLE_SPRITES_LEFT,
                 ENABLE_BACKGROUND,
@@ -254,7 +255,7 @@ namespace NES_NS {
             // Helper function to return the requested bit-flag value from the PPUMASK register
             u8 getMaskData(MASK which) const { return ((PPUMASK >> which) & 0x01); }
             // Gets whether or not rendering should be monochromatic.
-            inline bool getGreyscale() const { return !!(getMaskData(GREYSCALE)); }
+            inline bool getGreyscale() const { return !!(getMaskData(GRAYSCALE)); }
             // Gets whether or not the first column of background tiles should be rendered.
             inline bool renderBackgroundLeft() const { return !!(getMaskData(ENABLE_BACKGROUND_LEFT)); }
             // Gets whether or not any sprites should be rendered within the first column of tiles.

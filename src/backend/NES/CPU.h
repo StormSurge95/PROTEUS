@@ -1,13 +1,40 @@
 #pragma once
 
 #include "./NES_PCH.h"
-#include "./BUS.h"
 
 namespace NES_NS {
     class CPU : public IDevice<u8, u16> {
             // Allow Debugger class to access all private members of the CPU class
             friend class Debugger;
         private:
+            /// @brief 'magic' of instable opcode(s)
+            bool magic = false;
+            /// @brief CPU ram container
+            array<u8, 2048> ram;
+            /// @brief The ppu of the console.
+            wptr<PPU> ppu;
+            /// @brief The apu of the console.
+            wptr<APU> apu;
+            /// @brief The current cartridge that is connected.
+            wptr<Gamepak> cart;
+            /// @brief Player 1 controller
+            wptr<Controller> player1;
+            /// @brief Player 2 controller
+            wptr<Controller> player2;
+
+            /// @brief Current open-bus value to be updated/returned on read/write calls.
+            u8 cpuBus = 0x00;
+
+            /// @brief Helper variable for OAMDMA; refers to the page of WRAM to read OAM data from.
+            u8 dmaPage = 0x00;
+            /// @brief Helper variable for OAMDMA; refers to the OAM address to write the WRAM data to.
+            u8 dmaAddr = 0x00;
+            /// @brief Helper variable for OAMDMA; refers to the OAM data to be written after it is read from WRAM.
+            u8 dmaData = 0x00;
+
+            /// @brief Helper variable meant to be used for when the CPU is stalled via DMA dummy-read cycles.
+            u16 lastReadAddr = 0x0000;
+
             /// @brief debug flag
             bool debugEnabled = false;
             /// @brief irq flag
@@ -18,8 +45,6 @@ namespace NES_NS {
             bool pendingRST = false;
             /// @brief interrupt delay flag
             bool delayInterrupt = false;
-            /// @brief data bus of console
-            sptr<BUS> bus = nullptr;
 
             deque<u16> prevInstAddrs = {};
 
@@ -130,6 +155,9 @@ namespace NES_NS {
             /// @brief instruction lookup table
             vector<INST> lookup;
 
+            /// @brief helper function to halt cpu and handle side effects
+            void halt();
+
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions
             void ACC_A();
@@ -207,36 +235,71 @@ namespace NES_NS {
             /// @brief cycle tracker for instruction operation
             u8 cycles = 0;
 
+            /// @brief Delay flat for the DMA operations
+            bool delayDMA = false;
+            bool halted = false;
+            /// @brief Flag for OAMDMA
+            bool oamActive = false;
+            /// @brief Flag for DMCDMA
+            bool dmcActive = false;
+            /// @brief Helper flag for running DMA with accurate cycle counts
+            bool dmaDummy = true;
+
             /// @brief Explicit Constructor
             CPU();
             /// @brief Default Destructor
             ~CPU() = default;
 
             /**
-             * @brief Connects CPU to BUS on console.
-             * @param b The bus to connect.
-             */
-            inline void connectBUS(sptr<BUS> b) { bus = b; }
-
-            /**
-             * @brief Data read request; here we simply pass the call through to the bus.
-             * @param addr The address to be read.
+             * @brief Data read request.
+             * @param addr Address to be read.
              * @param readonly Flag to block side-effects.
-             * @return The value read; or open bus if unmapped address.
+             * @return The data read; or openbus if unmapped address
              */
             u8 read(u16 addr, bool readonly = false) override;
             /**
-             * @brief Data write request; here we simply pass the call through to the bus.
-             * @param addr The address to be written to.
-             * @param data The data to be written.
+             * @brief Data write request.
+             * @param addr Address to be written to.
+             * @param data Data to be written.
+             * @note If `addr` is an unmapped address, this function does nothing.
              */
             void write(u16 addr, u8 data) override;
+
+            /**
+             * @brief Connects the ppu to the bus.
+             * @param p The ppu of the console.
+             */
+            void connectPPU(sptr<PPU>& p) { ppu = p; }
+            /**
+             * @brief Connects the apu to the bus.
+             * @param a The apu of the console.
+             */
+            void connectAPU(sptr<APU>& a) { apu = a; }
+            /**
+             * @brief Connects a Gamepak cartridge to the bus.
+             * @param c The cartridge to connect.
+             */
+            void connectCART(sptr<Gamepak>& c) { cart = c; }
+            /**
+             * @brief Connects a controller to the bus.
+             * @param c The controller to connect.
+             * @param p The player this controller refers to.
+             */
+            void connectCONT(sptr<Controller>& c, u8 p);
+            /**
+             * @brief Clock function for OAMDMA.
+             */
+            void clockOAM();
+            /**
+             * @brief Clock function for DMCDMA.
+             */
+            void clockDMC();
 
             /// @brief 'power on' function
             void start();
             /// @brief 'reset' function
             void reset();
             /// @brief 'clock' function
-            void clock();
+            void clock();/// @brief WRAM of the console/cartridge.
     };
 }

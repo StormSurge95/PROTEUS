@@ -21,7 +21,10 @@ void NoiseChannel::write(u16 addr, u8 data) {
             break;
         case 0x400E:
             mode = ((data >> 7) & 0x01) > 0;
-            period = PERIOD_TABLE[data & 0x0F];
+            printf("Noise Period: %d -> ", period);
+            // TODO: get period value based on region
+            period = GetRateNoise(REGION::NTSC, data & 0x0F);
+            printf("%d\n", period);
             break;
         case 0x400F:
             if (enabled) lengthCounter.counter = LENGTH_TABLE[data >> 3];

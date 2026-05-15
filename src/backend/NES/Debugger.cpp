@@ -1,6 +1,6 @@
 #include "./NES.h"
-#include "./BUS.h"
 #include "./Debugger.h"
+#include "./APU.h"
 
 using namespace NES_NS;
 
@@ -9,7 +9,7 @@ Debugger::Debugger(sptr<NES> station) {
 }
 
 void Debugger::StepInstruction() {
-    if (nes == nullptr || nes->bus == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
+    if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
 
     u64 startTotalCycles = nes->cpu->totalCycles;
     bool sawClock = false;
@@ -31,8 +31,8 @@ void Debugger::StepCycle() {
     // StepCycle() should mean to step one MASTER cycle rather than cpu/ppu/apu
 
     // validate state
-    if (nes == nullptr || nes->bus == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    printf("%s\n", hex(nes->cpu->pc.value()).c_str());
+    if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
+    //printf("%s\n", hex(nes->cpu->pc.value()).c_str());
     nes->clockMaster();
 }
 
@@ -42,65 +42,108 @@ void Debugger::Clear() {
     nes = nullptr;
 }
 
-string** Debugger::GetStateCPU(u8& numRegs) const {
-    numRegs = 6;
-    string** regs = new string*[numRegs];
-    for (u8 i = 0; i < 6; i++)
-        regs[i] = new string[2];
+vector<array<string, 3>> Debugger::GetStateCPU() const {
+    vector<array<string, 3>> lines;
 
-    regs[0][0] = "STATUS";
-    regs[0][1] = GetFlags(nes->cpu->status);
-    regs[1][0] = "PC";
-    regs[1][1] = hex(nes->cpu->pc.value(), 4);
-    regs[2][0] = "A";
-    regs[2][1] = hex(nes->cpu->a, 2);
-    regs[3][0] = "X"; 
-    regs[3][1] = hex(nes->cpu->x, 2);
-    regs[4][0] = "Y";
-    regs[4][1] = hex(nes->cpu->y, 2);
-    regs[5][0] = "SP";
-    regs[5][1] = hex(nes->cpu->sp, 2);
+    u16 temp = nes->cpu->pc.value();
+    lines.push_back({ "PC (Program Counter)", to_string(temp), hex(temp, 4) });
+    temp = nes->cpu->opcode;
+    lines.push_back({ "Current Instruction", nes->cpu->lookup[temp].name, hex(temp, 2) });
+    temp = nes->cpu->cycles;
+    lines.push_back({ "Instruction Cycle", to_string(temp), hex(temp, 2) });
+    temp = nes->cpu->a;
+    lines.push_back({ "A (accumulator)", to_string(temp), hex(temp, 2) });
+    temp = nes->cpu->x;
+    lines.push_back({ "X Register", to_string(temp), hex(temp, 2) });
+    temp = nes->cpu->y;
+    lines.push_back({ "Y Register", to_string(temp), hex(temp, 2) });
+    temp = nes->cpu->sp;
+    lines.push_back({ "Stack Pointer", hex(0x0100 + temp, 4), hex(temp, 2) });
+    lines.push_back({ "", "STATUS", "" });
+    temp = nes->cpu->getFlag(FLAGS::C);
+    lines.push_back({ "Carry", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::Z);
+    lines.push_back({ "Zero", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::I);
+    lines.push_back({ "Inhibit Interrupts", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::D);
+    lines.push_back({ "Decimal", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::B);
+    lines.push_back({ "Break", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::V);
+    lines.push_back({ "Overflow", temp ? "Set" : "Clear", "" });
+    temp = nes->cpu->getFlag(FLAGS::N);
+    lines.push_back({ "Negative", temp ? "Set" : "Clear", "" });
 
-    return regs;
+    return lines;
 }
 
-string** Debugger::GetStatePPU(u8& numRegs) const {
-    numRegs = 8;
-    string** regs = new string*[numRegs];
-    for (u8 i = 0; i < numRegs; i++)
-        regs[i] = new string[2];
+vector<array<string, 4>> Debugger::GetStatePPU() const {
+    vector<array<string, 4>> lines;
 
-    // TODO: add a mask for putting "-" into the string for bits that are unused by the ppu
-    regs[0][0] = "PPUCTRL ($2000)";
-    regs[0][1] = bin(nes->ppu->PPUCTRL);
-    regs[1][0] = "PPUMASK ($2001)";
-    regs[1][1] = bin(nes->ppu->PPUMASK);
-    regs[2][0] = "PPUSTATUS ($2002)";
-    regs[2][1] = bin(nes->ppu->PPUSTATUS);
-    regs[3][0] = "OAMADDR ($2003)";
-    regs[3][1] = bin(nes->ppu->OAMADDR);
-    regs[4][0] = "OAMDATA ($2004)";
-    regs[4][1] = bin(nes->ppu->OAMDATA);
-    regs[5][0] = "PPUSCROLL ($2005)";
-    regs[5][1] = bin(nes->ppu->PPUSCROLL);
-    regs[6][0] = "PPUADDR ($2006)";
-    regs[6][1] = bin(nes->ppu->PPUADDR);
-    regs[7][0] = "PPUDATA ($2007)";
-    regs[7][1] = bin(nes->ppu->PPUDATA);
+    u16 temp = 0x00;
+    
+    lines.push_back({ "", "CONTROL", "", "" });
+    temp = nes->ppu->getControlData(PPU::CONTROL::NAMETABLE_BASE);
+    lines.push_back({ "$2000.0-$2000-1", "Nametable Base Address", hex(nes->ppu->getNametableBase(), 4), hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::VRAM_INCREMENT);
+    lines.push_back({ "$2000.2", "Increment Mode", temp == 0 ? "1 byte" : "32 bytes", hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::SPRITE_PATTERN_ADDR);
+    lines.push_back({ "$2000.3", "Sprite Table Address", hex(nes->ppu->getSpritePatternTableAddr8x8(), 4), hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::BACKGROUND_PATTERN_ADDR);
+    lines.push_back({ "$2000.4", "BG Table Address", hex(nes->ppu->getBackgroundPatternTableAddr(), 4), hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::SPRITE_SIZE);
+    lines.push_back({ "$2000.5", "Sprite Size", temp == 0 ? "8x8" : "8x16", hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::MAIN_SECOND);
+    lines.push_back({ "$2000.6", "Main/secondary PPU select", temp == 0 ? "Main" : "Secondary", hex(temp, 2) });
+    temp = nes->ppu->getControlData(PPU::CONTROL::NMI_ENABLED);
+    lines.push_back({ "$2000.7", "NMI enabld", temp ? "True" : "False", "" });
+    lines.push_back({ "", "MASK", "", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::GRAYSCALE);
+    lines.push_back({ "$2001.0", "Grayscale", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::ENABLE_BACKGROUND_LEFT);
+    lines.push_back({ "$2001.1", "BG - Show leftmost 8 pixels", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::ENABLE_SPRITES_LEFT);
+    lines.push_back({ "$2001.2", "Sprites - Show leftmost 8 pixels", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::ENABLE_BACKGROUND);
+    lines.push_back({ "$2001.3", "Background enabled", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::ENABLE_SPRITES);
+    lines.push_back({ "$2001.4", "Sprites enabled", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::EMPHASIZE_RED);
+    lines.push_back({ "$2001.5", "Emphasize Red", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::EMPHASIZE_GREEN);
+    lines.push_back({ "$2001.6", "Emphasize Green", temp ? "True" : "False", "" });
+    temp = nes->ppu->getMaskData(PPU::MASK::EMPHASIZE_BLUE);
+    lines.push_back({ "$2001.7", "Emphasize Blue", temp ? "True" : "False", "" });
+    lines.push_back({ "", "STATUS", "", "" });
+    lines.push_back({ "$2002.5", "Sprite Overflow", nes->ppu->spritesOverflowed() ? "True" : "False", "" });
+    lines.push_back({ "$2002.6", "Sprite 0 Hit", nes->ppu->spriteZeroHit() ? "True" : "False", "" });
+    lines.push_back({ "$2002.7", "Vertical Blank", nes->ppu->inVBlank() ? "True" : "False", "" });
+    lines.push_back({ "", "OTHER", "", "" });
+    temp = nes->ppu->OAMADDR;
+    lines.push_back({ "$2003", "OAM Address", to_string(temp), hex(temp, 2) });
+    temp = nes->ppu->OAMDATA;
+    lines.push_back({ "$2004", "OAM Data", to_string(temp), hex(temp, 2) });
+    temp = nes->ppu->PPUSCROLL;
+    lines.push_back({ "$2005", "PPU Scroll", to_string(temp), hex(temp, 2) });
+    temp = nes->ppu->v;
+    lines.push_back({ "$2006", "VRAM Address", to_string(temp), hex(temp, 4) });
+    temp = nes->ppu->PPUDATA;
+    lines.push_back({ "$2007", "VRAM Data", to_string(temp), hex(temp, 2) });
+    temp = nes->ppu->scanline;
+    lines.push_back({ "--", "Scanline (V)", to_string(temp), hex(temp, 4) });
+    temp = nes->ppu->cycle;
+    lines.push_back({ "--", "Cycle (H)", to_string(temp), hex(temp, 4) });
 
-    return regs;
+    return lines;
 }
 
-string* Debugger::GetStateRAM(u64& numLines) const {
+vector<string> Debugger::GetStateRAM() const {
     // for NES; there will be 112 lines of RAM; each having 16 bytes
-    numLines = 112;
-
-    // create our array of lines
-    // use dynamic allocation so that we can return the pointer without it being destroyed
-    string* lines = new string[numLines];
+    vector<string> lines(112);
 
     // for each line...
-    for (u8 l = 0; l < numLines; l++) {
+    for (u8 l = 0; l < 112; l++) {
         // calculate start address (0x0010, 0x0010, 0x0020, etc)
         u16 start = (u16)l << 4;
         // create streams to hold the data
@@ -109,7 +152,7 @@ string* Debugger::GetStateRAM(u64& numLines) const {
         // add each byte to our data streams
         for (u8 i = 0x00; i < 0x10; i++) {
             u16 addr = start + i;
-            u8 byte = nes->bus->read(addr, true);
+            u8 byte = nes->cpu->read(addr, true);
             bytes << hex(byte, 2);
             chars << (char)byte;
             if (i < 0x0F) {
@@ -122,7 +165,7 @@ string* Debugger::GetStateRAM(u64& numLines) const {
         // put the start address first
         ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
         // put the created string into our `lines` array
-        lines[l] = ss.str();
+        lines.push_back(ss.str());
     }
 
     return lines;
@@ -278,24 +321,27 @@ void Debugger::ScanInstructions(array<u64, 25>& list) const {
     for (const u16& e : nes->cpu->prevInstAddrs)
         list[index++] = e;
 
-    u16 start = nes->cpu->pc.value();
+    // at this point, `index` should be 12;
+    // so we can simply use `11` to get the last entry
+    // and not have to deal with VS giving us irrelevant
+    // or impossible warnings and errors
+    u16 start = (u16)list[11];
     while (index < 25) {
         start += nes->cpu->lookup[nes->cpu->read(start, true)].bytes;
         list[index++] = start;
     }
 }
 
-string* Debugger::GetDisassembly() const {
+vector<string> Debugger::GetDisassembly() const {
     array<u64, 25> addrs;
     ScanInstructions(addrs);
 
-    string* lines = new string[(u8)addrs.size()];
+    vector<string> lines = {};
 
     for (u8 i = 0; i < addrs.size(); i++) {
         u16 addr = (u16)addrs[i];
         string str = "$" + hex(addr, 4) + ": " + DisassembleInstruction(addr);
-        lines[i].resize(str.length());
-        lines[i] = str;
+        lines.push_back(str);
     }
 
     return lines;
@@ -360,10 +406,186 @@ vector<u32> Debugger::GetNameTables(int id) {
     return vector<u32>();
 }
 
-string** Debugger::GetStateAPU(u8& numRegs) const {
-    string* val = new string("hello");
-    string** ret = new string*(val);
-    return ret;
+vector<array<string, 4>> Debugger::GetStateAPU() const {
+    vector<array<string, 4>> lines;
+
+    // PULSE 1
+    lines.push_back({ "", "Square 1", "", "" });
+    u32 temp = nes->apu->pulse1->envelope.decay;
+    lines.push_back({ "$4000.0-3", "Envelope Volume", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->envelope.constVol;
+    lines.push_back({ "$4000.4", "Envelope - Constant Volume", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse1->lengthCounter.halt;
+    lines.push_back({ "$4000.5", "Length Counter - Halted", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse1->dutyMode;
+    lines.push_back({ "$4000.6-7", "Duty", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->sweep.shift;
+    lines.push_back({ "$4001.0-2", "Sweep - Shift", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->sweep.negate;
+    lines.push_back({ "$4001.3", "Sweep - Negate", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse1->sweep.period;
+    lines.push_back({ "$4001.4-6", "Sweep - Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->sweep.enabled;
+    lines.push_back({ "$4001.7", "Sweep - Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse1->period;
+    lines.push_back({ "$4002/$4003.0-2", "Period", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->pulse1->lengthCounter.reloadVal;
+    lines.push_back({ "$4003.3-7", "Length Counter - Reload Value", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->enabled;
+    lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse1->timer;
+    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
+    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    temp = nes->apu->pulse1->dutyStep;
+    lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->lengthCounter.counter;
+    lines.push_back({ "--", "Length Counter - Counter", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->envelope.period;
+    lines.push_back({ "--", "Envelope - Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->envelope.divider;
+    lines.push_back({ "--", "Envelope - Divider", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse1->output();
+    lines.push_back({ "--", "Output", to_string(temp), hex(temp, 2) });
+
+    // PULSE 2
+    lines.push_back({ "", "Square 2", "", "" });
+    temp = nes->apu->pulse2->envelope.decay;
+    lines.push_back({ "$4004.0-3", "Envelope Volume", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->envelope.constVol;
+    lines.push_back({ "$4004.4", "Envelope - Constant Volume", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse2->lengthCounter.halt;
+    lines.push_back({ "$4004.5", "Length Counter - Halted", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse2->dutyMode;
+    lines.push_back({ "$4004.6-7", "Duty", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->sweep.shift;
+    lines.push_back({ "$4005.0-2", "Sweep - Shift", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->sweep.negate;
+    lines.push_back({ "$4005.3", "Sweep - Negate", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse2->sweep.period;
+    lines.push_back({ "$4005.4-6", "Sweep - Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->sweep.enabled;
+    lines.push_back({ "$4005.7", "Sweep - Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse2->period;
+    lines.push_back({ "$4006/$4007.0-2", "Period", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->pulse2->lengthCounter.reloadVal;
+    lines.push_back({ "$4007.3-7", "Length Counter - Reload Value", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->enabled;
+    lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->pulse2->timer;
+    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
+    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    temp = nes->apu->pulse2->dutyStep;
+    lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->lengthCounter.counter;
+    lines.push_back({ "--", "Length Counter - Counter", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->envelope.period;
+    lines.push_back({ "--", "Envelope - Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->envelope.divider;
+    lines.push_back({ "--", "Envelope - Divider", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->pulse2->output();
+    lines.push_back({ "--", "Output", to_string(temp), hex(temp, 2) });
+
+    // TRIANGLE
+    lines.push_back({ "", "Triangle", "", "" });
+    temp = nes->apu->triangle->linearPeriod;
+    lines.push_back({ "$4008.0-6", "Linear Counter - Reload Value", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->triangle->lengthCounter.halt;
+    lines.push_back({ "$4008.7", "Length Counter - Halted", temp ? "True" : "False", "" });
+    temp = nes->apu->triangle->period;
+    lines.push_back({ "$400A/$400B.0-2", "Period", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->triangle->lengthCounter.reloadVal;
+    lines.push_back({ "$400B.3-7", "Length Counter - Reload Value", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->triangle->enabled;
+    lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->triangle->timer;
+    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    temp = CLOCK_RATE_NTSC / (32 * (temp + 1));
+    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    temp = nes->apu->triangle->step;
+    lines.push_back({ "--", "Sequence Position", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->triangle->lengthCounter.counter;
+    lines.push_back({ "--", "Length Counter - Counter", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->triangle->linearCounter;
+    lines.push_back({ "--", "Linear Counter - Counter", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->triangle->linearReload;
+    lines.push_back({ "--", "Linear Counter - Reload Flag", temp ? "True" : "False", "" });
+    temp = nes->apu->triangle->output();
+    lines.push_back({ "--", "Output", to_string(temp), hex(temp, 2) });
+
+    // NOISE
+    lines.push_back({ "", "Noise", "", "" });
+    temp = nes->apu->noise->envelope.decay;
+    lines.push_back({ "$400C.0-3", "Envelope Volume", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->envelope.constVol;
+    lines.push_back({ "$400C.4", "Envelope - Constant Volume", temp ? "True" : "False", "" });
+    temp = nes->apu->noise->lengthCounter.halt;
+    lines.push_back({ "$400C.5", "Length Counter - Halted", temp ? "True" : "False", "" });
+    temp = nes->apu->noise->period;
+    lines.push_back({ "$400E.0-3", "Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->mode;
+    lines.push_back({ "$400E.7", "Mode Flag", temp ? "True" : "False", "" });
+    temp = nes->apu->noise->lengthCounter.reloadVal;
+    lines.push_back({ "$400F.3-7", "Length Counter - Reload Value", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->enabled;
+    lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->noise->timer;
+    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    temp = CLOCK_RATE_NTSC / nes->apu->noise->period;
+    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    temp = nes->apu->noise->shiftRegister;
+    lines.push_back({ "--", "Shift Register", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->noise->envelope.period;
+    lines.push_back({ "--", "Envelope - Period", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->envelope.divider;
+    lines.push_back({ "--", "Envelope - Divider", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->lengthCounter.counter;
+    lines.push_back({ "--", "Length Counter - Counter", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->noise->output();
+    lines.push_back({ "--", "Output", to_string(temp), hex(temp, 2) });
+
+    // DMC
+    lines.push_back({ "", "DMC", "", "" });
+    temp = nes->apu->dmc->period;
+    lines.push_back({ "$4010.0-3", "Period", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->dmc->loop;
+    lines.push_back({ "$4010.6", "Loop Flag", temp ? "True" : "False", "" });
+    temp = nes->apu->dmc->irqEnabled;
+    lines.push_back({ "$4010.7", "IRQ Enabled", temp ? "True" : "False", "" });
+    temp = nes->apu->dmc->outputLevel;
+    lines.push_back({ "$4011", "Output Level", to_string(temp), hex(temp, 2) });
+    temp = nes->apu->dmc->sampleAddr;
+    lines.push_back({ "$4012", "Sample Address", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->dmc->sampleLength;
+    lines.push_back({ "$4013", "Sample Length", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->dmc->currAddr;
+    lines.push_back({ "--", "Next Sample Address", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->dmc->bytesRemaining;
+    lines.push_back({ "--", "Sample Bytes Remaining", to_string(temp), hex(temp, 4) });
+    temp = nes->apu->dmc->timer;
+    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    temp = CLOCK_RATE_NTSC / nes->apu->dmc->period;
+    lines.push_back({ "--", "Frequency", format("{} Hz", temp), ""});
+
+    // FRAME COUNTER
+    lines.push_back({ "", "Frame Counter", "", "" });
+    temp = nes->apu->inhibitIRQ;
+    lines.push_back({ "$4017.6", "IRQ Enabled", temp ? "False" : "True", "" });
+    temp = nes->apu->use5step;
+    lines.push_back({ "$4017.7", "5-step Mode", temp ? "True" : "False", "" });
+    temp = nes->apu->cycle;
+    if (temp <= 7457)
+        temp = 0;
+    else if (temp <= 14913)
+        temp = 1;
+    else if (temp <= 22371)
+        temp = 2;
+    else
+        temp = 3;
+    lines.push_back({ "--", "Sequence Position", to_string(temp), hex(temp, 2) });
+
+    return lines;
 }
 
 vector<u32> Debugger::GetPulse1() {
@@ -384,4 +606,30 @@ vector<u32> Debugger::GetNoise() {
 
 vector<u32> Debugger::GetDMC() {
     return vector<u32>();
+}
+
+void Debugger::SetTracePath(string s) {
+    path p = "C:\\Users\\Redux\\Desktop";
+    p /= s;
+    tracePath = p;
+    //string name = tracePath.filename().string();
+    //name.pop_back(); name.pop_back(); name.pop_back(); name.pop_back();
+    //std::chrono::zoned_time t{ std::chrono::current_zone(), std::chrono::floor<std::chrono::seconds>(system_clock::now()) };
+    //name += format("_{:%F_%T}", t);
+    //name += ".txt";
+    //replace(name.begin(), name.end(), ':', '-');
+    //tracePath.replace_filename(name);
+    traceFile.open(tracePath);
+    if (!traceFile.is_open()) {
+        printf("FAILED TO OPEN TRACE FILE AT PATH: %s\n", tracePath.string().c_str());
+    }
+}
+
+void Debugger::LogTrace() {
+    if (!traceFile.is_open())
+        printf("What the fuck?\n");
+    if (nes->cpu->cycles == 0) {
+        u16 addr = nes->cpu->pc.value();
+        traceFile << "$" << hex(addr, 4) << ": " << DisassembleInstruction(addr) << endl;
+    }
 }

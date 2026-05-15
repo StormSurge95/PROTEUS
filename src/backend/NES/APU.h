@@ -1,10 +1,10 @@
 #pragma once
 
 #include "./NES_PCH.h"
-#include "./PulseChannel.h"
-#include "./TriangleChannel.h"
-#include "./NoiseChannel.h"
-#include "./DMC_Channel.h"
+#include "./Pulse.h"
+#include "./Triangle.h"
+#include "./Noise.h"
+#include "./DMC.h"
 
 namespace NES_NS {
     class APU : IDevice<u8, u16> {
@@ -14,7 +14,7 @@ namespace NES_NS {
             /**
              * @brief Reference to the BUS object so we can more easily perform DMCDMA
              */
-            wptr<BUS> bus;
+            wptr<CPU> cpu;
 
             /**
              * @brief Flag for whether or not an IRQ has been requested by the APU.
@@ -37,7 +37,7 @@ namespace NES_NS {
              * @brief Connects the bus to the APU.
              * @param b 
              */
-            inline void connectBUS(sptr<BUS> b) { bus = b; }
+            inline void connectCPU(sptr<CPU> c) { cpu = c; }
 
             /**
              * @brief Read data from APU registers.
@@ -84,6 +84,15 @@ namespace NES_NS {
              * then clears the internal sample buffer.
              */
             void collectSamples(vector<float>& buffer);
+
+            /// @brief get the current sample address from DMC
+            u16 getDmcCurrentAddr() const { return dmc->getCurrAddr(); }
+            /// @brief get the base sample address from DMC
+            u16 getDmcSampleAddr() const { return dmc->getSampleAddr(); }
+            /** @brief set the new sample byte within DMC
+             *  @param data the value to push to DMC sample buffer
+             */
+            void setDmcSampleByte(u8 data) { dmc->setSampleByte(data); }
 
             /**
              * @brief Handles call to DMC channel sample fetch method.

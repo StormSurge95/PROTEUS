@@ -8,7 +8,7 @@ u8 PPU::getSpritePixel(u8& pixel, u8& attr) {
     u8 tempAttr = 0x00;
     u8 tempIndex = 0xFF;
 
-    for (u8 i = 0; i < activeSprites.size(); i++) {
+    for (u16 i = 0; i < activeSprites.size(); i++) {
         ActiveSprite* spr = &activeSprites[i];
         if (spr->xCounter > 0) {
             spr->xCounter--;
@@ -38,7 +38,7 @@ u8 PPU::getSpritePixel(u8& pixel, u8& attr) {
         if (p != 0 && !found) {
             tempPixel = p;
             tempAttr = spr->attr;
-            tempIndex = i;
+            tempIndex = i & 0xFF;
             found = true;
         }
     }
