@@ -67,7 +67,7 @@ u8 CPU::read(u16 addr, bool readonly) {
     } else if (addr == 0x4015) {
         // read APU status
         ret = (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
-        if (readonly) return ret;
+        return ret;
     } else if (addr == 0x4016) {
         // read Player 1 Controller
         ret = (cpuBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
@@ -135,6 +135,21 @@ void CPU::connectCONT(sptr<Controller>& c, u8 player) {
     }
 }
 
+void CPU::halt() {
+    halted = true;
+    switch (opcode) {
+        case 0x93:
+            if (cycles == 5) magic = true;
+            break;
+        case 0x9C: case 0x9F: case 0x9B:
+        case 0x9E: case 0xBB:
+            if (cycles == 4) magic = true;
+            break;
+        default:
+            magic = false;
+    }
+}
+
 /**
  * via https://nesdev.org/wiki/DMA#OAM_DMA:
  * OAM DMA copies 256 bytes from a CPU page to PPU OAM via the OAMDATA ($2004) register.
@@ -150,7 +165,7 @@ void CPU::connectCONT(sptr<Controller>& c, u8 player) {
  */
 void CPU::clockOAM() {
     if (delayDMA) return;
-    halted = true;
+    halt();
     bool put = (totalCycles & 0x01) > 0; // determine first cycle; odd = put, !odd = get
     if (dmaDummy) { // initial halt cycle
         if (put) // no alignment needed
@@ -183,7 +198,7 @@ void CPU::clockOAM() {
 
 void CPU::clockDMC() {
     if (delayDMA) return;
-    halted = true;
+    halt();
     /**
      * via https://nesdev.org/wiki/DMA#DMC_DMA:
      * DMC DMA copies a single byte to the DMC unit's sample buffer. This occurs automatically after the DMC

@@ -3,9 +3,9 @@
 
 #include "../../resources/inter_font.h"
 #include "../../resources/debug_font.h"
-#include "../../resources/NintendoFont.h"
-#include "../../resources/SonyFont.h"
-#include "../../resources/MicrosoftFont.h"
+//#include "../../resources/NintendoFont.h"
+//#include "../../resources/SonyFont.h"
+//#include "../../resources/MicrosoftFont.h"
 
 using namespace NS_Proteus;
 
@@ -366,18 +366,6 @@ void VideoManager::RenderGameView(bool dbg) {
     }
 }
 
-/* TODO: FIGURE OUT THESE BUGS
- *      BUG 1) When starting the application, console selection menu opens as expected.
- *              When opening the overlay menu from within the console selection, none of
- *              the buttons respond; but the overlay itself still disappears as expected
- *              when it is toggled via button input. No matter what, this bug persists.
- *      BUG 2) When starting the application and proceeding to the game selection menu,
- *              two separate and opposite outcomes are possible:
- *              - When Bug #1 is performed, the overlay menu acts as expected from
- *                within the game selection menu.
- *              - When Bug #1 is NOT performed, the same bug now happens here as well,
- *                and then persists throughout the lifetime of the application.
- */
 void VideoManager::RenderOverlay() {
     // prepare viewport for overlay menu
     vp = ImGui::GetMainViewport();
@@ -460,10 +448,9 @@ void VideoManager::RenderDebug(float scale) {
     ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("OPTIONS")) {
-            if (ImGui::Checkbox("LOG TO FILE", &proteus->GetDebugger()->logToFile)) {
-                if (proteus->GetDebugger()->logToFile) {
-                    ImGui::OpenPopup("Filepath Select", ImPopupFlags);
-                }
+            static bool temp = false;;
+            if (ImGui::Checkbox("LOG TO FILE", &temp)) {
+                ImGui::OpenPopup("Filepath Select", ImPopupFlags);
             }
             ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
             ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
@@ -477,10 +464,12 @@ void VideoManager::RenderDebug(float scale) {
                 float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
                 if (ImGui::Button("Confirm", ImVec2(w, 0))) {
                     proteus->GetDebugger()->SetTracePath(filepath);
+                    proteus->GetDebugger()->logToFile = temp;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
                 if (ImGui::Button("Cancel", ImVec2(w, 0))) {
+                    temp = false;
                     proteus->GetDebugger()->logToFile = false;
                     ImGui::CloseCurrentPopup();
                 }
@@ -490,8 +479,11 @@ void VideoManager::RenderDebug(float scale) {
         }
         if (ImGui::BeginMenu("VIEW")) {
             if (ImGui::BeginMenu("CPU")) {
-                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS_DISASM))) {
-                    SetDebugView(DebugView::CPU_REGS_DISASM);
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS))) {
+                    SetDebugView(DebugView::CPU_REGS);
+                }
+                if (ImGui::MenuItem("DISASSEMBLY", nullptr, &debugViews.at(DebugView::CPU_DISASM))) {
+                    SetDebugView(DebugView::CPU_DISASM);
                 }
                 if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
                     SetDebugView(DebugView::CPU_MEMORY);
@@ -524,85 +516,28 @@ void VideoManager::RenderDebug(float scale) {
         ImGui::EndMenuBar();
     }
     switch (currentDebugView) {
-        case DebugView::CPU_REGS_DISASM:
-            {
-                // add table to display cpu registers
-                if (ImGui::BeginTable("CPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
-                    u8 numRegs;
-                    string** cpuState = proteus->GetDebugger()->GetStateCPU(numRegs);
-                    ImGui::TableSetupColumn("REGISTER");
-                    ImGui::TableSetupColumn("VALUE");
-                    ImGui::TableHeadersRow();
-                    for (u8 row = 0; row < numRegs; row++) {
-                        ImGui::TableNextRow();
-                        ImGui::TableNextColumn();
-                        ImGui::Text("%s", cpuState[row][0].c_str());
-                        ImGui::TableNextColumn();
-                        ImGui::Text("%s", cpuState[row][1].c_str());
-                        // call delete because each row was created using new
-                        delete[] cpuState[row];
-                    }
-                    // call delete because main pointer was also created using new
-                    delete[] cpuState;
-                    ImGui::EndTable();
-                }
-                // add program disassembly
-                string* disasm = proteus->GetDebugger()->GetDisassembly();
-                for (u8 line = 0; line < 25; line++) {
-                    if (line == 12) {
-                        ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", disasm[line].c_str());
-                    } else ImGui::Text("%s", disasm[line].c_str());
-                }
-                delete[] disasm;
-            }
+        case DebugView::CPU_REGS:
+            // add table to display cpu registers
+            RenderDebugCPU();
+            break;
+        case DebugView::CPU_DISASM:
+            RenderDebugDIS();
             break;
         case DebugView::CPU_MEMORY:
             // TODO: Add RAM display
-            {
-                float tgtW = ImGui::GetContentRegionAvail().x;
-                float chrW = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, "A").x;
-                float curW = chrW * 89;
-                float scale = tgtW / curW;
-                ImGui::SetWindowFontScale(scale);
-                u64 numLines;
-                string* lines = proteus->GetDebugger()->GetStateRAM(numLines);
-                for (u8 l = 0; l < numLines; l++) {
-                    ImGui::Text("%s", lines[l].c_str());
-                }
-                delete[] lines;
-                ImGui::SetWindowFontScale(1.0f);
-            }
+            RenderDebugRAM();
             break;
         case DebugView::PPU_REGS:
-            {
-                if (ImGui::BeginTable("PPU REGISTERS", 2, ImGuiTableFlags_Borders)) {
-                    u8 numRegs;
-                    string** ppuState = proteus->GetDebugger()->GetStatePPU(numRegs);
-                    ImGui::TableSetupColumn("REGISTER");
-                    ImGui::TableSetupColumn("VALUE");
-                    ImGui::TableHeadersRow();
-                    for (u8 row = 0; row < numRegs; row++) {
-                        ImGui::TableNextRow();
-                        ImGui::TableNextColumn();
-                        ImGui::Text("%s", ppuState[row][0].c_str());
-                        ImGui::TableNextColumn();
-                        ImGui::Text("%s", ppuState[row][1].c_str());
-                        delete[] ppuState[row];
-                    }
-                    delete[] ppuState;
-                    ImGui::EndTable();
-                }
-            }
+            RenderDebugPPU();
             break;
         case DebugView::PPU_PATTERNTABLES:
             // TODO: Add display with SELECTABLE palette entries and render pattern tables using whatever palette entry is selected
-            
             break;
         case DebugView::PPU_NAMETABLES:
             // TODO: Add current PPU nametables display
             break;
         case DebugView::APU_REGISTERS:
-            // TODO: Add APU register display
+            RenderDebugAPU();
             break;
         case DebugView::APU_CHANNELS:
             // TODO: Add APU channel display with toggles for (de)activating various channels and waveform graphs for display
@@ -611,6 +546,101 @@ void VideoManager::RenderDebug(float scale) {
     ImGui::End();
 
     ImGui::PopFont();
+}
+
+void VideoManager::RenderDebugCPU() {
+    if (ImGui::BeginTable("CPU STATE", 3, ImGuiTableFlags_Borders)) {
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableSetupColumn("Value (Hex)");
+        ImGui::TableHeadersRow();
+        vector<array<string, 3>> cpuState = proteus->GetDebugger()->GetStateCPU();
+        for (int i = 0; i < cpuState.size(); i++) {
+            ImGui::TableNextRow();
+            if (memcmp(cpuState[i][0].data(), "", 2) == 0)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", cpuState[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", cpuState[i][1].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", cpuState[i][2].c_str());
+        }
+        ImGui::EndTable();
+    }
+}
+
+void VideoManager::RenderDebugDIS() {
+    vector<string> dis = proteus->GetDebugger()->GetDisassembly();
+    for (u8 line = 0; line < dis.size(); line++) {
+        if (line == dis.size() / 2)
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", dis[line].c_str());
+        else
+            ImGui::Text("%s", dis[line].c_str());
+    }
+}
+
+void VideoManager::RenderDebugRAM() {
+    float tgtW = ImGui::GetContentRegionAvail().x;
+    float chrW = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, "A").x;
+    float curW = chrW * 89;
+    float scale = tgtW / curW;
+    ImGui::SetWindowFontScale(scale);
+    vector<string> lines = proteus->GetDebugger()->GetStateRAM();
+    for (const string& line : lines) {
+        ImGui::Text("%s", line.c_str());
+    }
+    ImGui::SetWindowFontScale(1.0f);
+}
+
+void VideoManager::RenderDebugPPU() {
+    if (ImGui::BeginTable("PPU STATE", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableSetupColumn("Address");
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableSetupColumn("Value (Hex)");
+        ImGui::TableHeadersRow();
+        vector<array<string, 4>> ppuState = proteus->GetDebugger()->GetStatePPU();
+        for (int i = 0; i < ppuState.size(); i++) {
+            ImGui::TableNextRow();
+            if (memcmp(ppuState[i][0].data(), "", 2) == 0)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", ppuState[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", ppuState[i][1].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", ppuState[i][2].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", ppuState[i][3].c_str());
+        }
+        ImGui::EndTable();
+    }
+}
+
+void VideoManager::RenderDebugAPU() {
+    if (ImGui::BeginTable("APU STATE", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableSetupColumn("Address");
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableSetupColumn("Value (Hex)");
+        ImGui::TableHeadersRow();
+        vector<array<string, 4>> apuState = proteus->GetDebugger()->GetStateAPU();
+        for (int i = 0; i < apuState.size(); i++) {
+            ImGui::TableNextRow();
+            if (memcmp(apuState[i][0].data(), "", 2) == 0)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", apuState[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", apuState[i][1].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", apuState[i][2].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", apuState[i][3].c_str());
+        }
+        ImGui::EndTable();
+    }
 }
 
 void VideoManager::FinalizeFrame(bool clear) {

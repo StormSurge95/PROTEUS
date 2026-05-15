@@ -15,7 +15,7 @@ namespace NES_NS {
             // current value of the timer
             u16 timer = 0x0000;
             // reload value of the timer
-            u16 period = 0x0000;
+            u16 period = GetRateNoise(REGION::NTSC, 0);
 
             // linear feedback shift register
             u16 shiftRegister = 0x01;
@@ -25,11 +25,6 @@ namespace NES_NS {
 
             // volume envelope struct variable
             VolumeEnvelope envelope;
-
-            // lookup table for timer/period values
-            inline static const u16 PERIOD_TABLE[16] = {
-                4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
-            };
 
             // calculate and process feedback for the LFSR
             void feedback();

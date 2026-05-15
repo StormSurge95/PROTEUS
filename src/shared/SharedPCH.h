@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <deque>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -68,6 +69,7 @@ using wptr = std::weak_ptr<T>;
 using std::stringstream;
 using std::string;
 using std::to_string;
+using std::format;
 
 // thread
 using std::this_thread::sleep_for;

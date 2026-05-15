@@ -99,7 +99,8 @@ namespace NS_Proteus {
 
     enum class DebugView {
         NONE = -1,
-        CPU_REGS_DISASM,
+        CPU_REGS,
+        CPU_DISASM,
         CPU_MEMORY,
         PPU_REGS,
         PPU_PATTERNTABLES,

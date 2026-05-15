@@ -37,7 +37,7 @@ namespace NES_NS {
             u8 bitsRemaining = 0x00;
 
             /// @brief reload value of channel timer
-            u16 period = 0x0000;
+            u16 period = 1;
             /// @brief current value of channel timer
             u16 timer = 0x0000;
 

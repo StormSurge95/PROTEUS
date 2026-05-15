@@ -66,7 +66,8 @@ namespace NS_Proteus {
         private:
             bool debugActive = false;
             map<DebugView, bool> debugViews = {
-                { DebugView::CPU_REGS_DISASM, true },
+                { DebugView::CPU_REGS, true },
+                { DebugView::CPU_DISASM, false },
                 { DebugView::CPU_MEMORY, false },
                 { DebugView::PPU_REGS, false },
                 { DebugView::PPU_PATTERNTABLES, false },
@@ -74,7 +75,7 @@ namespace NS_Proteus {
                 { DebugView::APU_REGISTERS, false },
                 { DebugView::APU_CHANNELS, false }
             };
-            DebugView currentDebugView = DebugView::CPU_REGS_DISASM;
+            DebugView currentDebugView = DebugView::CPU_REGS;
             bool overlayActive = false;
             Proteus* proteus = nullptr;
 
@@ -111,6 +112,11 @@ namespace NS_Proteus {
             void RenderGameSelection(ConsoleID console);
             void RenderGameView(bool debug);
             void RenderDebug(float scale);
+            void RenderDebugCPU();
+            void RenderDebugDIS();
+            void RenderDebugRAM();
+            void RenderDebugPPU();
+            void RenderDebugAPU();
             void RenderOverlay();
 
             void PrepViewport(ImGuiViewport* vp);

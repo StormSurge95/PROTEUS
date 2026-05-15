@@ -599,8 +599,8 @@ namespace NES_NS {
         bool loop = false;      /// @brief Loop flag
         bool start = false;     /// @brief Start flag
         bool constVol = false;  /// @brief Constant Volume flag
-        u8 divider = 0x00;      /// @brief Value to reload counter to upon reaching zero.
-        u8 period = 0x00;       /// @brief Current envelope counter value.
+        u8 divider = 0x00;      /// @brief Current envelope counter value.
+        u8 period = 0x00;       /// @brief Value to reload counter to upon reaching zero.
         u8 decay = 0x0F;        /// @brief Current Decay Level value.
     };
 

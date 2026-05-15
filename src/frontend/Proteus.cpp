@@ -64,7 +64,8 @@ void Proteus::Run() {
         videoManager->Render(state);
         if (state.currentView == AppView::GAME_VIEW && !videoManager->OverlayActive()) {
             inputManager->TranslateInputs(station, state.selectedConsole);
-            if (!debug || !dbgPause) station->clock();
+            if (debugManager->GetDebugger()->logToFile) debugManager->GetDebugger()->LogTrace();
+            if (!dbgPause) station->clock();
         }
         audioManager->Update(station);
     }

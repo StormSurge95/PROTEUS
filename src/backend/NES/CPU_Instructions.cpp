@@ -465,8 +465,10 @@ void CPU::SHA() {
     // {adr}:=A&X&H
     u8 h = absAddr.hi;
     if (!paged) h++;
+    if (magic) h = 0xFF;
     fetched = a & x & h;
     if (paged) absAddr.hi = fetched;
+    magic = false;
 }
 void CPU::SHS() {
     // S:=A&X

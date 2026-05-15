@@ -7,6 +7,9 @@ namespace NES_NS {
             // Allow Debugger class to access all private members of the CPU class
             friend class Debugger;
         private:
+            /// @brief 'magic' of instable opcode(s)
+            bool magic = false;
+            /// @brief CPU ram container
             array<u8, 2048> ram;
             /// @brief The ppu of the console.
             wptr<PPU> ppu;
@@ -151,6 +154,9 @@ namespace NES_NS {
 
             /// @brief instruction lookup table
             vector<INST> lookup;
+
+            /// @brief helper function to halt cpu and handle side effects
+            void halt();
 
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions

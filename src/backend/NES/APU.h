@@ -85,8 +85,13 @@ namespace NES_NS {
              */
             void collectSamples(vector<float>& buffer);
 
+            /// @brief get the current sample address from DMC
             u16 getDmcCurrentAddr() const { return dmc->getCurrAddr(); }
+            /// @brief get the base sample address from DMC
             u16 getDmcSampleAddr() const { return dmc->getSampleAddr(); }
+            /** @brief set the new sample byte within DMC
+             *  @param data the value to push to DMC sample buffer
+             */
             void setDmcSampleByte(u8 data) { dmc->setSampleByte(data); }
 
             /**

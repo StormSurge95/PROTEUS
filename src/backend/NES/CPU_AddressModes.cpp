@@ -143,6 +143,7 @@ void CPU::ABX_W() {
             page(x);
             break;
         case 4:
+            // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
             schedulePoll();
@@ -217,6 +218,7 @@ void CPU::ABY_W() {
             page(y);
             break;
         case 4:
+            // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
             schedulePoll();
@@ -532,6 +534,7 @@ void CPU::IZY_W() {
             page(y);
             break;
         case 5:
+            // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
             schedulePoll();
