@@ -7,10 +7,10 @@
 #include "../shared/SharedPCH.h"
 #include "../shared/Utilities.h"
 #include "./Types.h"
-#include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
-#include <imgui_internal.h>
+#include "./ImGui/imgui.h"
+#include "./ImGui/imgui_impl_sdl3.h"
+#include "./ImGui/imgui_impl_sdlrenderer3.h"
+#include "./ImGui/imgui_internal.h"
 
 namespace NS_Proteus {
     static SDL_GPUTextureCreateInfo* CreateTextureInfo(u32 w, u32 h) {
