@@ -2,7 +2,7 @@
 
 #include "./BackendPCH.h"
 /**
- * @interface IConsole IConsole.h "backend/SHARED/IConsole.h"
+ * @interface IConsole IConsole.h "backend/shared/IConsole.h"
  * @brief "Manager" interface class implemented by each of the various consoles.
  * @details
  * Includes various functions required for interaction with the frontend.
