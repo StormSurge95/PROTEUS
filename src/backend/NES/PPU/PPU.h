@@ -1,9 +1,9 @@
 #pragma once
 
-#include "./NES_PCH.h"
+#include "../shared/NES_PCH.h"
 
-#include "./Gamepak.h"
-#include "./CPU.h"
+#include "../PAK/Gamepak.h"
+#include "../CPU/CPU.h"
 
 namespace NES_NS {
     class PPU : public IDevice<u8, u16> {

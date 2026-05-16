@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../NES_PCH.h"
+#include "../../shared/NES_PCH.h"
 
 namespace NES_NS {
     /// @interface Mapper Mapper.h "./Mapper.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../BackendPCH.h"
+#include "./BackendPCH.h"
 
 /**
  * @interface IDebugger IDebugger.h "backend/SHARED/IDebugger.h"

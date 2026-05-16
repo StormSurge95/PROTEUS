@@ -1,6 +1,6 @@
 #include "./NES.h"
 #include "./Controller.h"
-#include "./APU.h"
+#include "./APU/APU.h"
 
 using namespace NES_NS;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../SHARED/IDebugger.h"
-#include "./NES.h"
+#include "../../shared/IDebugger.h"
+#include "../NES.h"
 
 namespace NES_NS {
     /**

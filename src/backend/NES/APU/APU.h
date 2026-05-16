@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./NES_PCH.h"
+#include "../shared/NES_PCH.h"
 #include "./Pulse.h"
 #include "./Triangle.h"
 #include "./Noise.h"

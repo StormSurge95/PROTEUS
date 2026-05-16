@@ -1,7 +1,7 @@
 #include "./DebugManager.h"
 
 #include "../backend/NES/NES.h"
-#include "../backend/NES/Debugger.h"
+#include "../backend/NES/shared/Debugger.h"
 
 using namespace NS_Proteus;
 
