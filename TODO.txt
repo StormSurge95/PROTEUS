@@ -1,73 +1,62 @@
 TODO LIST
 
-- Fix Unofficial Instruction *magic*
-	E7: "If the RDY line goes low 2 cycles before the write cycle, the target address of the instruction was not correct."
-		- SHA (0x93, 0x9F)
-		- SHX (0x9E)
-		- SHY (0x9C)
-		- SHS (0x9B)
+ISSUES VIA ACCURACYCOIN.NES:
 
-- Fix CPU interrupts
-	- Interrupt Flag Latency
-		E1:
-	- NMI Overlap BRK
-		E2:
-	- NMI Overlap IRQ
-		E1:
-
-- Fix APU Registers and DMA tests
-	- DMA + Open Bus
-		E2: The DMC DMA was either on the wrong cycle, or it did not update the data bus.
-	- DMA + $2002 Read
-		E2: The DMC DMA was either on the wrong cycle, or it did not update the data bus.
-	- DMA + $2007 Read
-		E2: The DMC DMA was either on the wrong cycle, or it did not update the data bus.
-	- DMA + $2007 Write
-		E1: DMA + $2007 Read did not pass
-	- DMA + $4015 Read
-		E1: The APU Frame Timer Interrupt Flag was never set.
-	- DMA + $4016 Read
-		E1: The DMC DMA was either on the wrong cycle, or the halt/alignment cycles did not read from $4016, which otherwise should have clocked the controller port.
-	- DMC DMA Bus Conflicts
-		E1: The DMA did not occur on the correct CPU cycle.
-	- DMA DMA + OAM DMA
-		E1: The DMC DMA timing in your emulator is off.
-	- Explicit DMA Abort
-		E1: The DMC DMA timing in your emulator is off.
-	- Implicit DMA Abort
-		E1: The DMC DMA timing in your emulator is off.
-
-- Fix APU Tests
-	- Frame Counter IRQ
-		E1: The IRQ flag should be set when the APU Frame counter is in the 4-step mode, and the IRQ flag is enabled.
-	- Frame Counter 4-step
-		E5: The third clock of the length counters was early
-	- Delta Modulation Channel
-		E1: Reading address $4015 should set bit 4 when the DMC is playing and clear bit 4 when the sample ends.
-	- APU Register Activation
-		E1: A series of prerequisite tests failed. CPU and PPU open bus, PPU Read Buffer, DMA + Open Bus, and DMA + $2007 Read.
-	- Controller Strobing
-		E4: Controllers should not be strobed when the CPU transitions from a "put" cycle to a "get" cycle.
-- Fix PPU Behavior
-	- Rendering Flag Behavior
-		E2: Background shift registers should be initialized and clocked when only rendering sprites.
-	- $2007 Read w/ Rendering
-		E1: Sprite Zero Hits should be working
-- Fix PPU VBlank Timing
-	- NMI Control
-		E3: The NMI should occur when enabled during VBlank, if the VBlank flag is disabled.
-	- NMI Timing
-		E1: The NMI did not occur on the correct PPU cycle.
-	- NMI Suppression
-		E1: The NMI did not occur ont he correct PPU cycle, or the NMI was not suppressed by a precisely timed read of address $2002.
-	- NMI at VBlank End
-		E1: The NMI could occur too late or was disabled too early.
-	- NMI Disabled at VBlank
-		E1: The NMI could occur too late or was disabled too early.
-- Fix Sprite Evaluation
-	- Sprite Overflow Behavior
-		E1: Evaluating 9 sprites in a single scanline should set Sprite Overflow Flag.
-	- Sprite 0 Hit Behavior
-		E1: A Sprite zero hit did not occur.
-	- $2002 Flag Timing
-		E1: The flags were not cleared on the correct ppu cycle.
+- UNOFFICIAL INSTRUCTIONS: SH*
+	- $93 SHA INDIRECT, Y--------FAIL 7
+	- $9F SHA ABSOLUTE, Y--------FAIL 7
+	- $9B SHS ABSOLUTE, Y--------FAIL 7
+	- $9C SHY ABSOLUTE, X--------FAIL 7
+	- $9E SHX ABSOLUTE, Y--------FAIL 7
+- CPU INTERRUPTS
+	- INTERRUPT FLAG LATENCY-----FAIL 1
+	- NMI OVERLAP BRK------------FAIL 2
+	- NMI OVERLAP IRQ------------FAIL 1
+- APU REGISTERS AND DMA TESTS
+	- DMA + OPEN BUS-------------FAIL 2
+	- DMA + $2002 READ-----------FAIL 2
+	- DMA + $2007 READ-----------FAIL 2
+	- DMA + $2007 WRITE----------FAIL 1
+	- DMA + $4015 READ-----------FAIL 1
+	- DMA + $4016 READ-----------FAIL 1
+	- DMC DMA BUS CONFLICTS------FAIL 1
+	- DMA DMA + OAM DMA----------FAIL 1
+	- EXPLICIT DMA ABORT---------FAIL 1
+	- IMPLICIT DMA ABORT---------FAIL 1
+- APU TESTS
+	- FRAME COUNTER IRQ----------FAIL 1
+	- FRAME COUNTER 4-STEP-------FAIL 5
+	- DELTA MODULATION CHANNEL---FAIL 1
+	- APU REGISTER ACTIVATION----FAIL 1
+	- CONTROLLER STROBING--------FAIL 4
+- PPU BEHAVIOR
+	- RENDERING FLAG BEHAVIOR----FAIL 2
+	- $2007 READ W/ RENDERING----FAIL 1
+- PPU VBLANK TIMING
+	- NMI CONTROL----------------FAIL 3
+	- NMI TIMING-----------------FAIL 1
+	- NMI SUPPRESSION------------FAIL 1
+	- NMI AT VBLANK END----------FAIL 1
+	- NMI DISABLED AT VBLANK-----FAIL 1
+- SPRITE EVAULATION
+	- SPRITE OVERFLOW BEHAVIOR---FAIL 1
+	- SPRITE 0 HIT BEHAVIOR------FAIL 1
+	- $2002 FLAG TIMING----------FAIL 1
+	- SUDDENLY RESIZE SPRITE-----FAIL 1
+	- ARBITRARY SPRITE ZERO------FAIL 1
+	- MISALIGNED OAM BEHAVIOR----FAIL 1
+	- ADDRESS $2004 BEHAVIOR-----FAIL 1
+	- OAM CORRUPTION-------------FAIL 2
+	- INC $4014------------------FAIL 1
+- PPU MISC.
+	- STALE BG SHIFT REGISTERS---FAIL 4
+	- STALE SPRITE SHIFT REGS----FAIL 3
+	- BG SERIAL IN---------------FAIL 2
+	- SPRITES ON SCANLINE 0------FAIL 2
+	- $2004 STRESS TEST----------FAIL 2
+	- $2007 STRESS TEST----------FAIL 2
+- CPU BEHAVIOR 2
+	- INSTRUCTION TIMING---------FAIL 1
+	- IMPLIED DUMMY READS--------FAIL 2
+	- JSR EDGE CASES-------------FAIL 4
+	- INTERNAL DATA BUS----------FAIL 1

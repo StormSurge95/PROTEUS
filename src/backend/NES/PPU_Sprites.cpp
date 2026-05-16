@@ -38,7 +38,7 @@ u8 PPU::getSpritePixel(u8& pixel, u8& attr) {
         if (p != 0 && !found) {
             tempPixel = p;
             tempAttr = spr->attr;
-            tempIndex = i & 0xFF;
+            tempIndex = i;
             found = true;
         }
     }
@@ -80,13 +80,12 @@ void PPU::spriteEval() {
         spriteIndex = 0;
         byteIndex = 0;
         spritesOnScanline = 0;
-        nextSprites.clear();
         spritesOverflowed(false);
     }
 
     if (spriteIndex >= 64 || spritesOverflowed()) return;
 
-    bool oddCycle = cycle % 2 == 1;
+    bool oddCycle = cycle & 0x01;
 
     // if odd cycle, read byte from primary OAM
     if (oddCycle) {
@@ -99,12 +98,14 @@ void PPU::spriteEval() {
         u8 top = oamLatch + 1;
 
         if (tgt >= top && tgt < (top + h)) {
+            if (spriteIndex == 0) sprite0HitOnNextScanline = true;
             // sprite is in range; if we have room, copy data to sOAM
             if (spritesOnScanline < 8) {
                 secondaryOAM[spritesOnScanline][0] = primaryOAM[spriteIndex][0];
                 secondaryOAM[spritesOnScanline][1] = primaryOAM[spriteIndex][1];
                 secondaryOAM[spritesOnScanline][2] = primaryOAM[spriteIndex][2];
                 secondaryOAM[spritesOnScanline][3] = primaryOAM[spriteIndex][3];
+                secondaryOAM[spritesOnScanline][4] = spriteIndex;
                 spritesOnScanline++;
             } else {
                 spritesOverflowed(true);
@@ -164,8 +165,13 @@ void PPU::spriteFetch() {
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:
-            nextSprites.push_back(ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition));
+            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition);
             break;
 
+    }
+
+    if (cycle == 320) {
+        sprite0HitOnThisScanline = sprite0HitOnNextScanline;
+        sprite0HitOnNextScanline = false;
     }
 }

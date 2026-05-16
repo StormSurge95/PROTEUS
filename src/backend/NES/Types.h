@@ -584,6 +584,20 @@ namespace NES_NS {
     };
 
     /**
+     * @brief Helper structure for processing sprite data within the NES PPU.
+     */
+    struct ActiveSprite {
+        u8 patternLo = 0x00;
+        u8 patternHi = 0x00;
+        u8 attr = 0x00;
+        u8 xCounter = 0x00;
+
+        ActiveSprite() = default;
+        ActiveSprite(u8 pl, u8 ph, u8 a, u8 x) :
+            patternLo(pl), patternHi(ph), attr(a), xCounter(x) {}
+    };
+
+    /**
      * @brief Helper structure for the various Length Counters within NES APU channels.
      */
     struct LengthCounter {
@@ -798,5 +812,65 @@ namespace NES_NS {
         OAM_DMA,
         DMC_LOAD,
         DMC_RELOAD
+    };
+
+    /*
+        PPU Control Register flags
+        7..bit..0
+        I-sB SVNN
+        |||| ||++->Nametable Base (0: 0x2000; 1: 0x2400; 2: 0x2800; 3: 0x2C00)
+        |||| |+--->VRAM Increment (1: 32; 0: 1)
+        |||| +---->Sprite Pattern Base (1: 0x1000; 0x0000) [ONLY FOR 8X8 MODE]
+        |||+------>Background Pattern Base (1: 0x1000; 0: 0x0000)
+        ||+------->Sprite size (1: 8x16; 0: 8x8)
+        |+-------->Master/Slave (unused)
+        +--------->NMI
+    */
+    enum class CONTROL {
+        NAMETABLE_BASE,
+        VRAM_INCREMENT = 2,
+        SPRITE_PATTERN_ADDR,
+        BACKGROUND_PATTERN_ADDR,
+        SPRITE_SIZE,
+        MAIN_SECOND,
+        NMI_ENABLED
+    };
+
+    /*
+        PPU Mask Register flags
+        7..bit..0
+        bgrS BlLG
+        |||| |||+->enable greyscale/monochrome mode
+        |||| ||+-->enable background in first 8 pixels of screen
+        |||| |+--->enable sprites in first 8 pixels of screen
+        |||| +---->enable background rendering
+        |||+----->enable sprite rendering
+        ||+------>emphasize red in rendered pixels
+        |+------->emphasize green in rendered pixels
+        +-------->emphasize blue in rendered pixels
+    */
+    enum class MASK {
+        GRAYSCALE,
+        ENABLE_BACKGROUND_LEFT,
+        ENABLE_SPRITES_LEFT,
+        ENABLE_BACKGROUND,
+        ENABLE_SPRITES,
+        EMPHASIZE_RED,
+        EMPHASIZE_GREEN,
+        EMPHASIZE_BLUE
+    };
+
+    /*
+        PPU Status Register flags
+        7..bit..0
+        VZO- ----
+        ||+------->Sprite-Overflow flag
+        |+-------->Sprite-Zero-Hit flag
+        +--------->VBlank flag
+    */
+    enum class STATUS {
+        SPRITE_OVERFLOW = 0x05,
+        SPRITE_ZERO_HIT,
+        VBLANK
     };
 }
