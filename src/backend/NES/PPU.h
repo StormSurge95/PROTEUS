@@ -193,106 +193,49 @@ namespace NES_NS {
             // Performs Start-of-VBlank Scanline operations
             void onStartVBlankLine();
 
-            /*
-                PPU Control Register flags
-                7..bit..0
-                I-sB SVNN
-                |||| ||++->Nametable Base (0: 0x2000; 1: 0x2400; 2: 0x2800; 3: 0x2C00)
-                |||| |+--->VRAM Increment (1: 32; 0: 1)
-                |||| +---->Sprite Pattern Base (1: 0x1000; 0x0000) [ONLY FOR 8X8 MODE]
-                |||+------>Background Pattern Base (1: 0x1000; 0: 0x0000)
-                ||+------->Sprite size (1: 8x16; 0: 8x8)
-                |+-------->Master/Slave (unused)
-                +--------->NMI
-            */
-            enum CONTROL {
-                NAMETABLE_BASE,
-                VRAM_INCREMENT = 2,
-                SPRITE_PATTERN_ADDR,
-                BACKGROUND_PATTERN_ADDR,
-                SPRITE_SIZE,
-                MAIN_SECOND,
-                NMI_ENABLED
-            };
             // Helper function to return the requested bit-flag value from the PPUCTRL register
             u8 getControlData(CONTROL which) const;
             // Gets the nametable base address based on PPUCTRL values
-            inline u16 getNametableBase() const { return 0x2000 + (getControlData(NAMETABLE_BASE) * 0x400); }
+            inline u16 getNametableBase() const { return 0x2000 + (getControlData(CONTROL::NAMETABLE_BASE) * 0x400); }
             // Gets the current VRAM increment amount based on PPUCTRL values
-            inline u8 getVRAMIncrement() const { return (getControlData(VRAM_INCREMENT) ? 32 : 1); }
+            inline u8 getVRAMIncrement() const { return (getControlData(CONTROL::VRAM_INCREMENT) ? 32 : 1); }
             // Gets the Sprite Pattern Table base address based on PPUCTRL values; NOTE: THIS IS ONLY VALID FOR 8x8 SPRITES
-            inline u16 getSpritePatternTableAddr8x8() const { return (getControlData(SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+            inline u16 getSpritePatternTableAddr8x8() const { return (getControlData(CONTROL::SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
             // Gets the Background Pattern Table base address based on PPUCTRL values
-            inline u16 getBackgroundPatternTableAddr() const { return (getControlData(BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+            inline u16 getBackgroundPatternTableAddr() const { return (getControlData(CONTROL::BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
             // Gets the current Sprite mode (8x8 or 8x16) we are in based on PPUCTRL values
-            inline u8 getSpriteHeight() const { return (getControlData(SPRITE_SIZE) ? 16 : 8); }
+            inline u8 getSpriteHeight() const { return (getControlData(CONTROL::SPRITE_SIZE) ? 16 : 8); }
             // Gets whether or not NMI is currently enabled based on PPUCTRL values
-            inline bool getNMIEnabled() const { return !!(getControlData(NMI_ENABLED)); }
+            inline bool getNMIEnabled() const { return !!(getControlData(CONTROL::NMI_ENABLED)); }
 
-            /*
-                PPU Mask Register flags
-                7..bit..0
-                bgrS BlLG
-                |||| |||+->enable greyscale/monochrome mode
-                |||| ||+-->enable background in first 8 pixels of screen
-                |||| |+--->enable sprites in first 8 pixels of screen
-                |||| +---->enable background rendering
-                |||+----->enable sprite rendering
-                ||+------>emphasize red in rendered pixels
-                |+------->emphasize green in rendered pixels
-                +-------->emphasize blue in rendered pixels
-            */
-            enum MASK {
-                GRAYSCALE,
-                ENABLE_BACKGROUND_LEFT,
-                ENABLE_SPRITES_LEFT,
-                ENABLE_BACKGROUND,
-                ENABLE_SPRITES,
-                EMPHASIZE_RED,
-                EMPHASIZE_GREEN,
-                EMPHASIZE_BLUE
-            };
             // Helper function to return the requested bit-flag value from the PPUMASK register
-            u8 getMaskData(MASK which) const { return ((PPUMASK >> which) & 0x01); }
+            u8 getMaskData(MASK which) const { return ((PPUMASK >> (u8)which) & 0x01); }
             // Gets whether or not rendering should be monochromatic.
-            inline bool getGreyscale() const { return !!(getMaskData(GRAYSCALE)); }
+            inline bool getGrayscale() const { return !!(getMaskData(MASK::GRAYSCALE)); }
             // Gets whether or not the first column of background tiles should be rendered.
-            inline bool renderBackgroundLeft() const { return !!(getMaskData(ENABLE_BACKGROUND_LEFT)); }
+            inline bool renderBackgroundLeft() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND_LEFT)); }
             // Gets whether or not any sprites should be rendered within the first column of tiles.
-            inline bool renderSpritesLeft() const { return !!(getMaskData(ENABLE_SPRITES_LEFT)); }
+            inline bool renderSpritesLeft() const { return !!(getMaskData(MASK::ENABLE_SPRITES_LEFT)); }
             // Gets whether or not background should be rendered for this frame
-            inline bool renderBackground() const { return !!(getMaskData(ENABLE_BACKGROUND)); }
+            inline bool renderBackground() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND)); }
             // Gets whether or not sprites should be rendered for this frame
-            inline bool renderSprites() const { return !!(getMaskData(ENABLE_SPRITES)); }
+            inline bool renderSprites() const { return !!(getMaskData(MASK::ENABLE_SPRITES)); }
             // helper function to apply R/G/B color emphasis based on their individual bit-flag values
             u32 applyEmphasis(u32 color) const;
 
-            /*
-                PPU Status Register flags
-                7..bit..0
-                VZO- ----
-                ||+------->Sprite-Overflow flag
-                |+-------->Sprite-Zero-Hit flag
-                +--------->VBlank flag
-            */
-            enum STATUS {
-                SPRITE_OVERFLOW = 0x05,
-                SPRITE_ZERO_HIT,
-                VBLANK
-            };
             // Helper function to GET the requested bit-flag value from teh PPU Status register
-            bool getStatusData(STATUS which) const { return ((PPUSTATUS >> which) & 0x01); }
+            bool getStatusData(STATUS which) const { return ((PPUSTATUS >> (u8)which) & 0x01); }
             // Helper function to SET the requested bit-flag value from the PPU Status register
             void setStatusData(STATUS which, bool v);
             // Gets/Sets whether sprite overflow has occurred on the current scanline.
-            inline bool spritesOverflowed() const { return getStatusData(SPRITE_OVERFLOW); } // GETTER
-            inline void spritesOverflowed(bool v) { setStatusData(SPRITE_OVERFLOW, v); } // SETTER
+            inline bool spritesOverflowed() const { return getStatusData(STATUS::SPRITE_OVERFLOW); } // GETTER
+            inline void spritesOverflowed(bool v) { setStatusData(STATUS::SPRITE_OVERFLOW, v); } // SETTER
             // Gets/Sets whether sprite zero hit has occurred on the current scanline.
-            inline bool spriteZeroHit() const { return getStatusData(SPRITE_ZERO_HIT); } // GETTER
-            inline void spriteZeroHit(bool v) { setStatusData(SPRITE_ZERO_HIT, v); } // SETTER
+            inline bool spriteZeroHit() const { return getStatusData(STATUS::SPRITE_ZERO_HIT); } // GETTER
+            inline void spriteZeroHit(bool v) { setStatusData(STATUS::SPRITE_ZERO_HIT, v); } // SETTER
             // Gets/Sets whether or not we are currently in VBlank status.
-            inline bool inVBlank() const { return getStatusData(VBLANK); } // GETTER
-            inline void inVBlank(bool v) { setStatusData(VBLANK, v); } // SETTER
+            inline bool inVBlank() const { return getStatusData(STATUS::VBLANK); } // GETTER
+            inline void inVBlank(bool v) { setStatusData(STATUS::VBLANK, v); } // SETTER
 
             // REGISTERS
             u8 PPUCTRL = 0x00;     // $2000 write
@@ -350,7 +293,7 @@ namespace NES_NS {
             // container for Primary OAM data; i.e. the pixel data for each of the 64 possible sprites within the game
             std::array<std::array<u8, 4>, 64> primaryOAM{ 0 };
             // container for Secondary OAM data; i.e. the pixel data for each of the 8 possible sprites on the next scanline
-            std::array<std::array<u8, 4>, 8> secondaryOAM{ 0 };
+            std::array<std::array<u8, 5>, 8> secondaryOAM{ 0 };
 
             /*
                 Sprite Attribute byte flags
@@ -435,6 +378,9 @@ namespace NES_NS {
             u8 oamLatch = 0x00;
             // current sprites evaluated to be present on the current scanline
             u8 spritesOnScanline = 0x00;
+            // flags to properly emulate sprite 0 hit
+            bool sprite0HitOnNextScanline = false;
+            bool sprite0HitOnThisScanline = false;
             // index into oam of the SPRITE being processed
             u8 oamIndex = 0x00;
             // index into the SPRITE being processed; i.e. y-pos/tile-index/attr/x-pos
@@ -453,21 +399,8 @@ namespace NES_NS {
             // sprite's HIGH pattern byte (duh)
             u8 sprPatternHi = 0x00;
 
-            struct ActiveSprite {
-                u8 patternLo = 0x00;
-                u8 patternHi = 0x00;
-                u8 attr = 0x00;
-                u8 xCounter = 0x00;
-
-                ActiveSprite() = default;
-                ActiveSprite(u8 pl, u8 ph, u8 a, u8 x) :
-                    patternLo(pl), patternHi(ph), attr(a), xCounter(x) {}
-            };
-
             // container for the sprites to be placed on the CURRENT scanline
-            vector<ActiveSprite> activeSprites;
-            // container for the sprites to be placed on the NEXT scanline
-            vector<ActiveSprite> nextSprites;
+            array<ActiveSprite, 8> activeSprites;
 
             /*
                 Evaluates one sprite each cycle during cycles 65-256

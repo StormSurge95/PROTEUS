@@ -51,25 +51,30 @@ void PPU::fetchBGPatternByteHi() {
 }
 
 void PPU::backgroundPipeline() {
-    switch (cycle % 8) {
-        case 1:
-            loadBackgroundShifters();
-            fetchBGNametableByte();
-            break;
-        case 3:
-            fetchBGAttributeByte();
-            break;
-        case 5:
-            fetchBGPatternByteLo();
-            break;
-        case 7:
-            fetchBGPatternByteHi();
-            break;
-        case 0:
-            incrementCoarseX();
-            break;
-        default:
-            break;
+    if ((cycle > 1 && cycle <= 257) || (cycle > 321 && cycle <= 337))
+        shiftBackgroundShifters();
+
+    if (cycle <= 256 || cycle <= 336) {
+        switch (cycle & 0x07) {
+            case 1:
+                loadBackgroundShifters();
+                fetchBGNametableByte();
+                break;
+            case 3:
+                fetchBGAttributeByte();
+                break;
+            case 5:
+                fetchBGPatternByteLo();
+                break;
+            case 7:
+                fetchBGPatternByteHi();
+                break;
+            case 0:
+                incrementCoarseX();
+                break;
+            default:
+                break;
+        }
     }
 }
 

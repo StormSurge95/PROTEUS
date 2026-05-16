@@ -60,11 +60,8 @@ void NES::clockCycleCPU() {
 }
 
 void NES::clockMaster() {
-    clockCyclePPU();
-
-    if (masterClock % 3 == 0)
-        clockCycleCPU();
-
+    if ((masterClock & 3) == 0) clockCyclePPU();
+    if ((masterClock % 12) == 2) clockCycleCPU();
     masterClock++;
 }
 
