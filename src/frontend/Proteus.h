@@ -25,6 +25,7 @@ namespace NS_Proteus {
             void Deinit();
 
             void Run();
+            //void RunSST();
 
             bool InDebug() const { return debug; }
 

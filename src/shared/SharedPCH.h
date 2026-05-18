@@ -8,6 +8,7 @@
 #include <format>
 #include <fstream>
 #include <iomanip>
+#include "./json.h"
 #include <map>
 #include <memory>
 #include <SDL3/SDL.h>
@@ -50,6 +51,9 @@ using std::ifstream;
 using std::ofstream;
 using std::ios;
 using std::endl;
+
+// json
+using nlohmann::json;
 
 // map
 using std::map;

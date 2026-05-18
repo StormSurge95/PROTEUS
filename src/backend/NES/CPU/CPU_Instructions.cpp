@@ -372,10 +372,14 @@ void CPU::PLP() {
             sp++;
             break;
         case 4:
-            status = (read(0x0100 + sp) & ~static_cast<u8>(FLAGS::B));
-            //delayNMI = true;
-            //delayIRQ = true;
-            cycles = 0;
+            {
+                bool b = getFlag(FLAGS::B);
+                bool u = getFlag(FLAGS::U);
+                status = (read(0x0100 + sp));
+                setFlag(FLAGS::B, b);
+                setFlag(FLAGS::U, u);
+                cycles = 0;
+            }
             break;
     }
 }

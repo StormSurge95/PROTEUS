@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./BackendPCH.h"
+
 /**
  * @interface IConsole IConsole.h "backend/shared/IConsole.h"
  * @brief "Manager" interface class implemented by each of the various consoles.
@@ -27,4 +28,7 @@ class IConsole {
         const virtual int SCREEN_HEIGHT() const = 0;
         /// @brief required for frontend to pass necessary inputs to the console
         virtual void update(u8, bool*) = 0;
+        //virtual void initSST(SSTstate) = 0;
+        //virtual void runSST() = 0;
+        //virtual bool checkSST(SSTstate, string&) = 0;
 };

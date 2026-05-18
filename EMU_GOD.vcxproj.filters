@@ -191,6 +191,12 @@
     <ClInclude Include="resources\FontUI_Italic.h">
       <Filter>Resource Files\Fonts</Filter>
     </ClInclude>
+    <ClInclude Include="src\shared\json.h">
+      <Filter>Source Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared\Types.h">
+      <Filter>Source Files\shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">

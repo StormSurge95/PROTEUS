@@ -10,13 +10,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 int main(int i, int args[]) {
 #endif
     Proteus* proteus = new Proteus();
-
     proteus->Init();
     proteus->Run();
-
     delete proteus;
-
-    exit(EXIT_SUCCESS);
 
     return 0;
 }

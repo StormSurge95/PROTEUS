@@ -46,6 +46,77 @@ CPU::CPU() {
     ram.fill(0x00);
 }
 
+//void CPU::init(SSTstate state) {
+//    pc = state.pc;
+//    a = state.a;
+//    x = state.x;
+//    y = state.y;
+//    sp = state.s;
+//    status = state.p;
+//    for (auto& e : state.ram) {
+//        ram[e[0]] = (e[1] & 0xFF);
+//    }
+//}
+//bool CPU::check(SSTstate state, string& result) {
+//    bool pass = true;
+//    result = "PASS\n";
+//    stringstream ss;
+//    ss << "                 EXPECTED | ACTUAL\n";
+//    if (pc != state.pc) {
+//        pass = false;
+//    }
+//    ss << "         PC:       " << hex(state.pc, 4) << " | " << hex(pc.value(), 4) << endl;
+//    if (a != state.a) {
+//        pass = false;
+//    }
+//    ss << "          A:         " << hex(state.a) << " | " << hex(a) << endl;
+//    if (x != state.x) {
+//        pass = false;
+//    }
+//    ss << "          X:         " << hex(state.x) << " | " << hex(x) << endl;
+//    if (y != state.y) {
+//        pass = false;
+//    }
+//    ss << "          Y:         " << hex(state.y) << " | " << hex(y) << endl;
+//    if (sp != state.s) {
+//        pass = false;
+//    }
+//    ss << "         SP:         " << hex(state.s) << " | " << hex(sp) << endl;
+//    if (status != state.p) {
+//        pass = false;
+//    }
+//    ss << "          P:     ";
+//    ss << ((state.p & 0x80) > 0 ? "N" : "n");
+//    ss << ((state.p & 0x40) > 0 ? "V" : "v");
+//    ss << ((state.p & 0x20) > 0 ? "U" : "u");
+//    ss << ((state.p & 0x10) > 0 ? "B" : "b");
+//    ss << ((state.p & 0x08) > 0 ? "D" : "d");
+//    ss << ((state.p & 0x04) > 0 ? "I" : "i");
+//    ss << ((state.p & 0x02) > 0 ? "Z" : "z");
+//    ss << ((state.p & 0x01) > 0 ? "C" : "c");
+//    ss << " | ";
+//    ss << ((status & 0x80) > 0 ? "N" : "n");
+//    ss << ((status & 0x40) > 0 ? "V" : "v");
+//    ss << ((status & 0x20) > 0 ? "U" : "u");
+//    ss << ((status & 0x10) > 0 ? "B" : "b");
+//    ss << ((status & 0x08) > 0 ? "D" : "d");
+//    ss << ((status & 0x04) > 0 ? "I" : "i");
+//    ss << ((status & 0x02) > 0 ? "Z" : "z");
+//    ss << ((status & 0x01) > 0 ? "C" : "c") << endl;
+//    for (auto& e : state.ram) {
+//        u16 addr = e[0];
+//        u8 ex = (u8)e[1];
+//        u8 ac = ram[addr];
+//        if (ac != ex) {
+//            result = format("INSTRUCTION {} FAIL! RAM[0x{}] was wrong; expected: {}, actual: {}\n", lookup[opcode].name, hex(addr, 4), hex(ex), hex(ac));
+//            pass = false;
+//        }
+//        ss << "RAM[" << hex(addr, 4) << "]:         " << hex(ex) << " | " << hex(ac) << endl;
+//    }
+//    if (!pass) result = ss.str();
+//    return pass;
+//}
+
 u8 CPU::read(u16 addr, bool readonly) {
     // update last read address for use during dummy dma reads.
     lastReadAddr = addr;
@@ -82,7 +153,6 @@ u8 CPU::read(u16 addr, bool readonly) {
         if (readonly) return ret;
     }
     // TODO: Handle PRG-RAM open bus stuff
-
     // getting here means readonly is clear; so update cpuBus and return it.
     cpuBus = ret;
     return cpuBus;
@@ -174,9 +244,7 @@ void CPU::clockOAM() {
             read(lastReadAddr);
     } else {
         if (!put) { // 'get' oam data from WRAM
-            //printf("%02X -> ", cpuBus);
             dmaData = read(((u16)dmaPage << 8) | dmaAddr);
-            //printf("%02X\n", cpuBus);
         } else { // 'put' oam data into PPU memory
             sptr<PPU> ppup = ppu.lock();
             u8 i = (ppup->getOAMADDR() + dmaAddr) & 0xFF;
@@ -189,7 +257,6 @@ void CPU::clockOAM() {
                 // helper variable is 8 bits; overflow to 0 means we
                 // have performed the put operation 256 times precisely
                 oamActive = false;
-                dmaDummy = true;
                 halted = false;
             }
         }
@@ -268,40 +335,43 @@ void CPU::clock() {
     if (oamActive)
         clockOAM();
     
-    if (!halted) {
-        /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
-        cycles++;
-        delayDMA = false;
-        if (cycles == 1) {
-            /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
-            if (interruptSource != INTERRUPT::NONE) {
-                // interrupts force BRK into opcode slot
-                opcode = 0x00;
-            } else {
-                // otherwise, read next opcode and set next instruction as necessary
-                prevInstAddrs.push_back(pc);
-                if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
-                opcode = read(pc++);
-                if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
-            }
-            // set current instruction based on opcode value
-            currInst = &lookup[opcode];
-            // schedule interrupt poll if necessary
-            // TODO: This is done wrong; figure out how to fix it
-            if (currInst->address == &CPU::IMM_A ||
-                currInst->address == &CPU::ACC_A ||
-                currInst->address == &CPU::IMP_A ||
-                currInst->address == &CPU::REL_B)
-                schedulePoll();
-        } else {
-            if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
-                (this->*currInst->address)();
-            else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
-                (this->*currInst->operate)();
-        }
-        // increment total cycles
-    }
+    clockInstruction();
+    // increment total cycles
     totalCycles++;
+}
+
+void CPU::clockInstruction() {
+    if (halted) return;
+    /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
+    cycles++;
+    delayDMA = false;
+    if (cycles == 1) {
+        /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
+        if (interruptSource != INTERRUPT::NONE) {
+            // interrupts force BRK into opcode slot
+            opcode = 0x00;
+        } else {
+            // otherwise, read next opcode and set next instruction as necessary
+            prevInstAddrs.push_back(pc);
+            if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
+            opcode = read(pc++);
+            if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
+        }
+        // set current instruction based on opcode value
+        currInst = &lookup[opcode];
+        // schedule interrupt poll if necessary
+        // TODO: This is done wrong; figure out how to fix it
+        if (currInst->address == &CPU::IMM_A ||
+            currInst->address == &CPU::ACC_A ||
+            currInst->address == &CPU::IMP_A ||
+            currInst->address == &CPU::REL_B)
+            schedulePoll();
+    } else {
+        if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
+            (this->*currInst->address)();
+        else // otherwise, simply perform the operation function, as it will handle the cycle logic itself
+            (this->*currInst->operate)();
+    }
 }
 
 void CPU::pollInterrupts() {

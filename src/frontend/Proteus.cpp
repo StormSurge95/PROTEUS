@@ -1,19 +1,14 @@
 #include "./Proteus.h"
-
 #include "FrontendPCH.h"
-
 #include "../../resources/NES_DB.h"
 #include "../backend/NES/NES.h"
-
 #include "./AudioManager.h"
 #include "./InputManager.h"
 #include "./VideoManager.h"
 #include "./DebugManager.h"
 
-#include <fstream>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#include <SDL3/SDL.h>
 
 using namespace NS_Proteus;
 
@@ -60,7 +55,6 @@ void Proteus::Run() {
             continue;
         }
 
-        //ProcessInputs();
         videoManager->Render(state);
         if (state.currentView == AppView::GAME_VIEW && !videoManager->OverlayActive()) {
             inputManager->TranslateInputs(station, state.selectedConsole);
@@ -70,6 +64,33 @@ void Proteus::Run() {
         audioManager->Update(station);
     }
 }
+
+//void Proteus::RunSST() {
+//    station = make_shared<NES_NS::NES>();
+//    for (u16 i = 0; i <= 0xFF; i++) {
+//        printf("Instruction 0x%02x...", i);
+//        // get sst data from json file
+//        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
+//        json data = json::parse(f);
+//        f.close();
+//        // convert json object data into a format more usable by our program
+//        vector<SSTtest> SST;
+//        for (int i = 0; i < data.size(); i++)
+//            SST.push_back(SSTtest(data[i]));
+//        // run our tests
+//        for (const SSTtest& test : SST) {
+//            station->initSST(test.initState);
+//            station->runSST();
+//            string result;
+//            bool pass = station->checkSST(test.finalState, result);
+//            if (!pass) {
+//                printf("FAIL\n%s\n", result.c_str());
+//                exit(EXIT_FAILURE);
+//            }
+//        }
+//        printf("PASS\n");
+//    }
+//}
 
 void Proteus::SetMetadata() {
     SDL_SetAppMetadata(
