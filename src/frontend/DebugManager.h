@@ -13,6 +13,12 @@ namespace NS_Proteus {
             DebugView currentView = DebugView::NONE;
 
             DebugManager() = default;
+            ~DebugManager() = default;
+
+            DebugManager(const DebugManager&) = delete;
+            DebugManager& operator=(const DebugManager&) = delete;
+            DebugManager(DebugManager&&) = delete;
+            DebugManager& operator=(DebugManager&&) = delete;
 
             void SetDebugger(ConsoleID, sptr<IConsole>);
             sptr<IDebugger>& GetDebugger() { return activeDebugger; }

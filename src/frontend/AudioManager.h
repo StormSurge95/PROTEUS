@@ -9,6 +9,11 @@ namespace NS_Proteus {
             AudioManager(Proteus* proteus, bool debug = false);
             ~AudioManager();
 
+            AudioManager(const AudioManager&) = delete;
+            AudioManager& operator=(const AudioManager&) = delete;
+            AudioManager(AudioManager&&) = delete;
+            AudioManager& operator=(AudioManager&&) = delete;
+
             void Init();
             void Deinit();
 
