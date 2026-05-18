@@ -89,10 +89,10 @@ namespace NS_Proteus {
 
             struct Fonts {
                 ImFont* UI = nullptr;
+                ImFont* UI_Bold = nullptr;
+                ImFont* UI_Italic = nullptr;
+                ImFont* UI_BoldItalic = nullptr;
                 ImFont* Debug = nullptr;
-                //ImFont* Nintendo = nullptr;
-                //ImFont* Sony = nullptr;
-                //ImFont* Microsoft = nullptr;
             } fonts = {};
             float fontSize = 64.0f;
             float ConsoleTextWidth = 275.0f;

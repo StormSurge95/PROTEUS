@@ -259,10 +259,9 @@ void CPU::reset() {
     indAddr = 0x0000;
     offset = 0x00;
     paged = false;
-    pendingNMI = false;
-    pendingIRQ = false;
-    pendingRST = true;
     cycles = 0;
+    opcode = 0x00;
+    interruptSource = INTERRUPT::RST;
 }
 
 void CPU::clock() {
@@ -275,30 +274,25 @@ void CPU::clock() {
         delayDMA = false;
         if (cycles == 1) {
             /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
-            if (pendingRST) {
-                // if a reset is pending, set next 'instruction' to be a reset
-                currInst = &RST_INST;
-                pendingRST = false;
-            } else if (pendingNMI) {
-                // if a NMI is pending, set next 'instruction' to be a NMI
-                currInst = &NMI_INST;
-                pendingNMI = false;
-            } else if (pendingIRQ) {
-                // if an IRQ is pending, set next 'instruction' to be an IRQ
-                currInst = &IRQ_INST;
-                pendingIRQ = false;
+            if (interruptSource != INTERRUPT::NONE) {
+                // interrupts force BRK into opcode slot
+                opcode = 0x00;
             } else {
                 // otherwise, read next opcode and set next instruction as necessary
                 prevInstAddrs.push_back(pc);
                 if (prevInstAddrs.size() > 13) prevInstAddrs.pop_front();
                 opcode = read(pc++);
-                currInst = &lookup[opcode];
-                if (currInst->address == &CPU::IMM_A ||
-                    currInst->address == &CPU::ACC_A ||
-                    currInst->address == &CPU::IMP_A ||
-                    currInst->address == &CPU::REL_B)
-                    schedulePoll();
+                if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
             }
+            // set current instruction based on opcode value
+            currInst = &lookup[opcode];
+            // schedule interrupt poll if necessary
+            // TODO: This is done wrong; figure out how to fix it
+            if (currInst->address == &CPU::IMM_A ||
+                currInst->address == &CPU::ACC_A ||
+                currInst->address == &CPU::IMP_A ||
+                currInst->address == &CPU::REL_B)
+                schedulePoll();
         } else {
             if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
                 (this->*currInst->address)();
@@ -313,111 +307,14 @@ void CPU::clock() {
 void CPU::pollInterrupts() {
     if (nmiTrigger) {
         // acknowledge NMI
-        pendingNMI = true;
-        nmiTrigger = false;
+        interruptSource = INTERRUPT::NMI;
     }
     if (irqTrigger && getFlag(FLAGS::I) == 0) {
         if (!delayInterrupt) {
-            // acknolege IRQ
-            pendingIRQ = true;
-            irqTrigger = false;
+            // acknowlege IRQ
+            interruptSource = INTERRUPT::IRQ;
         }
     }
     delayInterrupt = false;
     pollScheduled = false;
-}
-
-void CPU::IRQ() {
-    switch (cycles) {
-        case 2: // read pc and discard
-            read(pc.value());
-            //if (nmiTrigger) { currInst = &NMI_INST; }
-            break;
-        case 3: // write pc.hi to stack
-            write(0x0100 + sp, pc.hi);
-            sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; }
-            break;
-        case 4: // write pc.lo to stack
-            write(0x0100 + sp, pc.lo);
-            sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; }
-            break;
-        case 5: // write status to stack with B flag NOT set
-            setFlag(FLAGS::U, true);
-            setFlag(FLAGS::B, false);
-            write(0x0100 + sp, status);
-            sp--;
-            setFlag(FLAGS::B, false);
-            break;
-        case 6:
-            // set I flag and read pc.lo from IRQ vector
-            setFlag(FLAGS::I, true);
-            pc.lo = read(0xFFFE);
-            break;
-        case 7:
-            // read pc.hi from IRQ vector and reset cycles
-            pc.hi = read(0xFFFF);
-            cycles = 0;
-            break;
-    }
-}
-void CPU::NMI() {
-    switch (cycles) {
-        case 2: // read pc and discard
-            read(pc.value());
-            break;
-        case 3: // write pc.hi to stack
-            write(0x0100 + sp, pc.hi);
-            sp--;
-            break;
-        case 4: // write pc.lo to stack
-            write(0x0100 + sp, pc.lo);
-            sp--;
-            break;
-        case 5: // write status to stack with B flag NOT set
-            setFlag(FLAGS::U, true);
-            setFlag(FLAGS::B, false);
-            write(0x0100 + sp, status);
-            sp--;
-            setFlag(FLAGS::B, false);
-            break;
-        case 6: // set I flag and read pc.lo from NMI vector
-            setFlag(FLAGS::I, true);
-            pc.lo = read(0xFFFA);
-            break;
-        case 7: // read pc.hi from NMI vector and reset cycles
-            pc.hi = read(0xFFFB);
-            cycles = 0;
-            break;
-    }
-}
-void CPU::RST() {
-    switch (cycles) {
-        case 2: // read pc and discard
-            read(pc);
-            break;
-        case 3: // decrement SP
-            sp--;
-            // writes ignored during reset
-            break;
-        case 4: // decrement SP
-            sp--;
-            // writes ignored during reset
-            break;
-        case 5: // decrement SP and set I/U flags
-            sp--;
-            // writes ignored during reset
-            setFlag(FLAGS::I, true);
-            setFlag(FLAGS::U, true);
-            break;
-        case 6: // read pc.lo from reset vector
-            pc.lo = read(0xFFFC);
-            break;
-        case 7: // read pc.hi from reset vector and reset cycles
-            pc.hi = read(0xFFFD);
-            //pc = 0xC000; // manually set pc for running nestest without functional PPU
-            cycles = 0;
-            break;
-    }
 }

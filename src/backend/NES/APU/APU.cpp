@@ -174,7 +174,7 @@ void APU::generateSample() {
         u8 p2 = pulse2->output();
         u8 t = triangle->output();
         u8 n = noise->output();
-        u8 d = 0x00;// dmc->output();
+        u8 d = dmc->output();
 
         sampleBuffer.push_back(mixSamples(p1, p2, t, n, d));
     }
@@ -195,8 +195,11 @@ float APU::mixSamples(u8 p1, u8 p2, u8 t, u8 n, u8 d) {
     float tndOut = (0.00851f * t) + (0.00494f * n) + (0.00335f * d);
     float sample = pulseOut + tndOut;
 
+    // apply first-order high-pass filter at 90Hz
     HPF1.process(sample);
+    // apply first-order high-pass filter at 440Hz
     HPF2.process(sample);
+    // apply first-order low-pass filter at 14kHz
     LPF.process(sample);
 
     return sample;

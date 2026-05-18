@@ -53,21 +53,6 @@
     <ClInclude Include="resources\NES_DB.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="resources\SonyFont.h">
-      <Filter>Resource Files\Fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\NintendoFont.h">
-      <Filter>Resource Files\Fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\debug_font.h">
-      <Filter>Resource Files\Fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\inter_font.h">
-      <Filter>Resource Files\Fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="resources\MicrosoftFont.h">
-      <Filter>Resource Files\Fonts</Filter>
-    </ClInclude>
     <ClInclude Include="src\backend\shared\IConsole.h">
       <Filter>Source Files\backend\shared</Filter>
     </ClInclude>
@@ -145,6 +130,66 @@
     </ClInclude>
     <ClInclude Include="src\backend\NES\PAK\Mappers\Mapper.h">
       <Filter>Source Files\backend\NES\PAK\Mappers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\AudioManager.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\DebugManager.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\FrontendPCH.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\InputManager.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\Proteus.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\Types.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\VideoManager.h">
+      <Filter>Source Files\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imconfig.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_impl_sdl3.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imgui_internal.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_rectpack.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_textedit.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ImGui\imstb_truetype.h">
+      <Filter>Source Files\frontend\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\FontDebug.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\FontUI.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\FontUI_Bold.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\FontUI_BoldItalic.h">
+      <Filter>Resource Files\Fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\FontUI_Italic.h">
+      <Filter>Resource Files\Fonts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

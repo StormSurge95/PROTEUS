@@ -55,8 +55,8 @@ void NES::clockCycleCPU() {
     cpu->clock();
     apu->clock();
 
-    cpu->irqTrigger |= apu->irqRequested;
-    apu->irqRequested = false;
+    //cpu->irqTrigger |= apu->irqRequested;
+    //apu->irqRequested = false;
 }
 
 void NES::clockMaster() {

@@ -62,14 +62,24 @@ namespace NES_NS {
             /// @brief default destructor
             ~DMC_Channel() = default;
 
+            /// @brief get the base address for DMC audio samples
             u16 getSampleAddr() const { return sampleAddr; }
-            u16 getCurrAddr() {
+            /**
+             * @brief get the current address for the next DMC audio sample
+             * @param readonly whether or not to increment the address
+             * @note THIS FUNCTION WILL MODIFY THE CURRENT ADDRESS UNLESS `readonly` IS SET.
+             * ENSURE THAT THE ARGUMENT IS `true` IF THIS FUNCTION IS USED OUTSIDE OF EMULATION
+             * @returns the current address for the next DMC audio sample
+             */
+            u16 getCurrAddr(bool readonly = false) {
                 u16 ret = currAddr;
+                // the sample address wraps around to 0x8000 because all samples come from cartridge memory.
                 if (currAddr == 0xFFFF)
                     currAddr = 0x8000;
                 else currAddr++;
                 return ret;
             }
+            /// @brief set the provided argument to be the new value of the sample buffer
             void setSampleByte(u8 data) { sampleBuffer = data; }
 
             /**

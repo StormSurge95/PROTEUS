@@ -1,11 +1,11 @@
 #include "./Proteus.h"
 #include "./VideoManager.h"
 
-#include "../../resources/inter_font.h"
-#include "../../resources/debug_font.h"
-//#include "../../resources/NintendoFont.h"
-//#include "../../resources/SonyFont.h"
-//#include "../../resources/MicrosoftFont.h"
+#include "../../resources/FontUI.h"
+#include "../../resources/FontUI_Bold.h"
+#include "../../resources/FontUI_Italic.h"
+#include "../../resources/FontUI_BoldItalic.h"
+#include "../../resources/FontDebug.h"
 
 using namespace NS_Proteus;
 
@@ -84,8 +84,11 @@ void VideoManager::Init() {
 
     // create the various fonts for use in the application
     style.FontSizeBase = fontSize;
-    fonts.UI = io.Fonts->AddFontFromMemoryCompressedTTF(InterFont_data, InterFont_size);
-    fonts.Debug = io.Fonts->AddFontFromMemoryCompressedTTF(DebugFont_data, DebugFont_size);
+    fonts.UI = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_data, FontUI_size);
+    fonts.UI_Bold = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_Bold_data, FontUI_Bold_size);
+    fonts.UI_Italic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_Italic_data, FontUI_Italic_size);
+    fonts.UI_BoldItalic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_BoldItalic_data, FontUI_BoldItalic_size);
+    fonts.Debug = io.Fonts->AddFontFromMemoryCompressedTTF(FontDebug_data, FontDebug_size);
     //fonts.Nintendo = io.Fonts->AddFontFromMemoryCompressedTTF(NintendoFont_data, NintendoFont_size);
     //fonts.Sony = io.Fonts->AddFontFromMemoryCompressedTTF(SonyFont_data, SonyFont_size);
     //fonts.Microsoft = io.Fonts->AddFontFromMemoryCompressedTTF(MicrosoftFont_data, MicrosoftFont_size);
@@ -146,30 +149,6 @@ void VideoManager::InitGameTexture(string title, size_t width, size_t height) {
         exit(EXIT_FAILURE);
     }
 }
-
-//ImFont* VideoManager::GetConsoleFont(ConsoleID console) {
-//    // TODO: Get better font for NES
-//    switch (console) {
-//        default:
-//        case ConsoleID::NONE:
-//            return fonts.UI;
-//        case ConsoleID::NES:
-//        case ConsoleID::GBA:
-//        case ConsoleID::GBC:
-//        case ConsoleID::NGC:
-//        case ConsoleID::N64:
-//        case ConsoleID::NDS:
-//        case ConsoleID::SNS:
-//            return fonts.Nintendo;
-//        case ConsoleID::PS1:
-//        case ConsoleID::PS2:
-//        case ConsoleID::PS3:
-//            return fonts.Sony;
-//        case ConsoleID::XBX:
-//        case ConsoleID::XB3:
-//            return fonts.Microsoft;
-//    }
-//}
 
 void VideoManager::PrepViewport(ImGuiViewport* vp) {
     // set next window to cover entire main viewport
@@ -393,13 +372,14 @@ void VideoManager::RenderOverlay() {
             ToggleOverlay();
             proteus->ShutDownConsole();
         }
-        if (ImGui::Button("SAVE STATES", btnSize)) { /// TODO
+        if (ImGui::Button("SAVE STATES", btnSize)) {
+            // TODO: have button access list of saved states for currently running title
+            //       Maybe from GAME_LIST we should access a list of game saves
+            //       similar to the gamecube and playstation consoles' abilities
+            //       to browse memory card data?
             // this button will allow us to access the save states created for the
             // currently running ROM.
             // NOTE: THIS DOES NOT LEAD TO GAME SAVES; ONLY EMULATOR SAVE STATES
-            // TODO: Maybe from GAME_LIST we should access a list of game saves
-            //       similar to the gamecube and playstation consoles' abilities
-            //       to browse memory card data?
         }
     }
     if (ImGui::Button("OPTIONS", btnSize)) {
@@ -517,17 +497,19 @@ void VideoManager::RenderDebug(float scale) {
     }
     switch (currentDebugView) {
         case DebugView::CPU_REGS:
-            // add table to display cpu registers
+            // render current state of CPU registers
             RenderDebugCPU();
             break;
         case DebugView::CPU_DISASM:
+            // render disassembled machine code
             RenderDebugDIS();
             break;
         case DebugView::CPU_MEMORY:
-            // TODO: Add RAM display
+            // render current state of RAM
             RenderDebugRAM();
             break;
         case DebugView::PPU_REGS:
+            // render current state of PPU registers
             RenderDebugPPU();
             break;
         case DebugView::PPU_PATTERNTABLES:
@@ -537,6 +519,7 @@ void VideoManager::RenderDebug(float scale) {
             // TODO: Add current PPU nametables display
             break;
         case DebugView::APU_REGISTERS:
+            // render current state of APU registers
             RenderDebugAPU();
             break;
         case DebugView::APU_CHANNELS:

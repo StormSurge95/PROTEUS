@@ -1,5 +1,5 @@
-#include "./NES_PCH.h"
-#include "./CPU.h"
+#include "../shared/NES_PCH.h"
+#include "../CPU/CPU.h"
 #include "./APU.h"
 #include "./DMC.h"
 

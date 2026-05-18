@@ -237,32 +237,51 @@ void CPU::RTS() { // return from subroutine
 void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
     switch (cycles) {
         case 2: // read pc and discard
-            read(pc++);
-            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
+            read(pc);
+            if (interruptSource == INTERRUPT::BRK) pc++; // only increment pc on software interrupts
             break;
         case 3: // save pc.hi to stack
-            write(0x0100 + sp, pc.hi);
+            if (interruptSource == INTERRUPT::RST)
+                read(0x0100 + sp); // Reset disables writes; so we read instead
+            else
+                write(0x0100 + sp, pc.hi);
             sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 4: // save pc.lo to stack
-            write(0x0100 + sp, pc.lo);
+            if (interruptSource == INTERRUPT::RST)
+                read(0x0100 + sp);
+            else
+                write(0x0100 + sp, pc.lo);
             sp--;
-            //if (nmiTrigger) { currInst = &NMI_INST; } //else if (irqTrigger) { currInst = &IRQ_INST; }
             break;
         case 5: // save status to stack with B flag SET
-            setFlag(FLAGS::B, true);
-            setFlag(FLAGS::U, true);
-            write(0x0100 + sp, status);
+            if (interruptSource != INTERRUPT::RST) {
+                setFlag(FLAGS::U, true);
+                setFlag(FLAGS::B, interruptSource == INTERRUPT::BRK);
+                write(0x0100 + sp, status);
+                setFlag(FLAGS::B, false);
+            } else {
+                read(0x0100 + sp);
+            }
             sp--;
-            setFlag(FLAGS::B, false);
             break;
         case 6: // set I flag and read pc.lo from BRK vector
             setFlag(FLAGS::I, true);
-            pc.lo = read(0xFFFE);
+            pc.lo = read(interruptVector[interruptSource]);
             break;
         case 7: // read pc.hi from BRK vector and reset cycles
-            pc.hi = read(0xFFFF);
+            pc.hi = read(interruptVector[interruptSource] + 1);
+            switch (interruptSource) {
+                case INTERRUPT::RST:
+                    // TODO: have some kind of reset trigger or something maybe?
+                case INTERRUPT::NMI:
+                    nmiTrigger = false;
+                    break;
+                case INTERRUPT::IRQ:
+                    irqTrigger = false;
+                    break;
+            }
+            interruptSource = INTERRUPT::NONE;
             cycles = 0;
             break;
     }
