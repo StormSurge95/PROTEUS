@@ -170,8 +170,8 @@ void CPU::write(u16 addr, u8 data) {
         ppu.lock()->write(addr, data);
     } else if (addr == 0x4014) {
         // write to PPU OAM; triggering OAMDMA
-        dmaPage = data;
-        dmaAddr = 0x00;
+        oamPage = data;
+        oamAddr = 0x00;
         oamActive = true;
         dmaDummy = true;
     } else if (addr == 0x4016) {
@@ -244,16 +244,16 @@ void CPU::clockOAM() {
             read(lastReadAddr);
     } else {
         if (!put) { // 'get' oam data from WRAM
-            dmaData = read(((u16)dmaPage << 8) | dmaAddr);
+            oamData = read(((u16)oamPage << 8) | oamAddr);
         } else { // 'put' oam data into PPU memory
             sptr<PPU> ppup = ppu.lock();
-            u8 i = (ppup->getOAMADDR() + dmaAddr) & 0xFF;
-            ppup->writeOAMByte(i, dmaData);
+            u8 i = (ppup->getOAMADDR() + oamAddr) & 0xFF;
+            ppup->writeOAMByte(i, oamData);
 
             // DMA should not update OAMADDR within the ppu
             // instead, increment helper variable
-            dmaAddr++;
-            if (dmaAddr == 0x00) {
+            oamAddr++;
+            if (oamAddr == 0x00) {
                 // helper variable is 8 bits; overflow to 0 means we
                 // have performed the put operation 256 times precisely
                 oamActive = false;
@@ -300,9 +300,9 @@ void CPU::clockDMC() {
     } else {
         if (put) {
             u16 addr = apu.lock()->getDmcCurrentAddr();
-            dmaData = read(addr);
+            dmcData = read(addr);
         } else {
-            apu.lock()->setDmcSampleByte(dmaData);
+            apu.lock()->setDmcSampleByte(dmcData);
             halted = false;
             dmcActive = false;
         }

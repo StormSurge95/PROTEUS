@@ -20,63 +20,53 @@ u8 PPU::read(u16 addr, bool readonly) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // mask address due to mirroring
         addr &= 0x0007;
-        u8 ret = 0x00;
         switch (addr) {
             case 0x02: // read from PPUSTATUS register
-                // update ppu bus; only 3 bits come from ppu status; others stay as they are
-                ret = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
-                if (readonly) return ret;
-                // reading STATUS clears write latch
-                w = false;
-                // reading STATUS clears the vblank flag
-                inVBlank(false);
-                /* via https://www.nesdev.org/wiki/PPU_frame_timing#VBL_Flag_Timing
-                 * Reading $2002 within a few PPU clcoks of when VBL is set results in special-case behavior.
-                 * A) Reading ONE PPU CLOCK BEFORE reads it as clear and never sets the flag or generates NMI for that frame.
-                 * B) Reading ON THE SAME PPU CLOCK OR ONE LATER reads it as set, clears it, and suppresses NMI for that frame.
-                 * C) Reading TWO OR MORE PPU CLOCKS BEFORE/AFTER behaves normally
-                 */
-                if (scanline == 241) {
-                    if (cycle == 0) suppressVBL = true; // set inner flag to prevent VBL from being set at all; which in turn prevents NMI
-                    else if (cycle <= 2) suppressNMI = true; // set inner flag to prevent NMI despite VBL being set
-                    // TODO: we need to figure out how to make sure that the suppression actually happens
-                    //      currently, the NMI request is immediately passed to the CPU upon setting VBlank;
-                    //      but this is inaccurate and needs to be fixed...somehow
-                }
-                // update our counters to ensure bit decay is happening
+                ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
                 updateCounters(0xE0);
-                ppuBus = ret; // update bus
+                if (!readonly) {
+                    if (scanline == 241) {
+                        if (cycle <= 1) {
+                            suppressVBL = true;
+                            suppressNMI = false;
+                        } else if (cycle == 2) {
+                            suppressVBL = false;
+                            suppressNMI = true;
+                        } else {
+                            suppressVBL = suppressNMI = false;
+                        }
+                    }
+                    inVBlank(false);
+                    w = false;
+                    nmiOutput = inVBlank() && getNMIEnabled();
+                }
                 break;
             case 0x04: // read from OAMDATA
                 // set our return value to the byte within OAM1
-                ret = readOAMByte(OAMADDR); // reads do not increment OAMADDR
-                if (readonly) return ret; // fast return for readonly
+                ppuBus = readOAMByte(OAMADDR); // reads do not increment OAMADDR
                 // update counters for bit decay
                 updateCounters(0xFF);
                 break;
             case 0x07: // read from PPUDATA
-                if ((v & 0x3FFF) >= 0x3F00) {
-                    // if we are reading palette data, then we simply return
-                    // the produced value and update the buffer using
-                    // memory outside of palette RAM
-                    ret = ppuRead(v & 0x3FFF);
-                    // TODO: is `addr - 0x1000` accurate to hardware here?
-                    if (!readonly) dataBuffer = ppuRead((v & 0x3FFF) - 0x1000);
-                } else {
-                    // if we are reading normal VRAM, then we use a value
-                    // from the buffer (read on a prev op), and then update
-                    // the buffer to the value read during this operation.
-                    ret = dataBuffer;
-                    if (!readonly) dataBuffer = ppuRead(v & 0x3FFF);
+                {
+                    u8 ret = 0x00;
+
+                    u16 addr = v & 0x3FFF;
+                    u8 data = ppuRead(addr);
+
+                    if (addr >= 0x3F00) {
+                        ret = data;
+                        dataBuffer = ppuRead(addr - 0x1000);
+                    } else {
+                        ret = dataBuffer;
+                        dataBuffer = data;
+                    }
+
+                    v = (v + getVRAMIncrement()) & 0x3FFF;
+
+                    ppuBus = ret;
+                    updateCounters(0xFF);
                 }
-                // fast return for readonly
-                if (readonly) return ret;
-                // reading from PPUDATA increments VRAM address
-                v = (v + getVRAMIncrement()) & 0x3FFF;
-                // update bus
-                ppuBus = ret;
-                // update counters for bit decay
-                updateCounters(0xFF);
                 break;
         }
     }
@@ -105,10 +95,13 @@ void PPU::write(u16 addr, u8 data) {
                     // update t register bits 11 & 12 using bits 0 & 1 of new data
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
 
-                    // inVBlank() = vblank_flag
-                    // getNMIEnabled() = NMI_output
-                    if (inVBlank() && getNMIEnabled())
-                        nmiRequested = true; // update NMI (hardware pulls it low, we pull it high here for simplicity)
+                    nmiOutput = getNMIEnabled() && inVBlank();
+
+                    if (!nmiOutputPrev && nmiOutput)
+                        nmiRequested = true;
+
+                    nmiOutputPrev = nmiOutput;
+
                     return;
                 }
             case 0x01: // write to PPUMASK
@@ -566,16 +559,13 @@ void PPU::onVisibleLine() {
 }
 
 void PPU::onStartVBlankLine() {
-    if (cycle == 1) {
-        if (!suppressVBL) {
-            bool prev = inVBlank();
-            inVBlank(true);
-            if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
-                nmiRequested = true;
-            } else suppressNMI = false;
-        }
-        suppressVBL = false;
-    }
+    if (cycle == 1 && !suppressVBL) {
+        bool prev = inVBlank();
+        inVBlank(true);
+        if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
+            nmiRequested = true;
+        } else suppressNMI = false;
+    } else suppressVBL = false;
 }
 
 void PPU::incrementCoarseX() {

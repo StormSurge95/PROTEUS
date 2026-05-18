@@ -51,7 +51,7 @@ void NES::clockCyclePPU() {
 }
 
 void NES::clockCycleCPU() {
-    cart->mapper->cpuclock(masterClock);
+    cart->mapper->cpuclock(cpu->totalCycles);
     cpu->clock();
     apu->clock();
 
