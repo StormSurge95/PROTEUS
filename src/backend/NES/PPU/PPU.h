@@ -85,8 +85,6 @@ namespace NES_NS {
         private:
             // current nmi output value
             bool nmiOutput = false;
-            // previous nmi output value
-            bool nmiOutputPrev = false;
             // odd frame flag
             bool oddFrame = false;
             // suppress vbl flag
@@ -103,6 +101,8 @@ namespace NES_NS {
                 the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
             */
             void ppuWrite(u16, u8);
+
+            void recompNMI();
 
             // Fakes the bit decay of the analogue NES system PPU
             void bitDecay();

@@ -2,7 +2,7 @@
 
 #include "./FrontendPCH.h"
 #include "./DebugManager.h"
-#include "../backend/SHARED/IConsole.h"
+#include "../backend/shared/IConsole.h"
 
 namespace NS_Proteus {
     /**
@@ -25,7 +25,7 @@ namespace NS_Proteus {
             void Deinit();
 
             void Run();
-            //void RunSST();
+            void RunSST();
 
             bool InDebug() const { return debug; }
 

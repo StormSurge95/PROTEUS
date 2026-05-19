@@ -113,7 +113,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="NOTES.log" />
     <Text Include="TODO.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -122,6 +121,7 @@
     <ProjectGuid>{aaf26bd8-1d8e-45e9-853f-b88a5559750f}</ProjectGuid>
     <RootNamespace>EMUGOD</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>PROTEUS</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

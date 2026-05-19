@@ -1,5 +1,7 @@
 #pragma once
 
+//#define TEST_SST
+
 #include <array>
 #include <chrono>
 #include <cstdint>

@@ -99,14 +99,14 @@ void NES::collectAudio(vector<float>& samples) {
     apu->collectSamples(samples);
 }
 
-//void NES::initSST(SSTstate state) {
-//    cpu->init(state);
-//}
-//void NES::runSST() {
-//    do {
-//        cpu->clock();
-//    } while (cpu->cycles != 0);
-//}
-//bool NES::checkSST(SSTstate state, string& result) {
-//    return cpu->check(state, result);
-//}
+void NES::initSST(SSTstate state) {
+    cpu->init(state);
+}
+void NES::runSST() {
+    do {
+        cpu->clock();
+    } while (cpu->cycles != 0);
+}
+bool NES::checkSST(SSTstate state, string& result) {
+    return cpu->check(state, result);
+}

@@ -46,78 +46,81 @@ CPU::CPU() {
     ram.fill(0x00);
 }
 
-//void CPU::init(SSTstate state) {
-//    pc = state.pc;
-//    a = state.a;
-//    x = state.x;
-//    y = state.y;
-//    sp = state.s;
-//    status = state.p;
-//    for (auto& e : state.ram) {
-//        ram[e[0]] = (e[1] & 0xFF);
-//    }
-//}
-//bool CPU::check(SSTstate state, string& result) {
-//    bool pass = true;
-//    result = "PASS\n";
-//    stringstream ss;
-//    ss << "                 EXPECTED | ACTUAL\n";
-//    if (pc != state.pc) {
-//        pass = false;
-//    }
-//    ss << "         PC:       " << hex(state.pc, 4) << " | " << hex(pc.value(), 4) << endl;
-//    if (a != state.a) {
-//        pass = false;
-//    }
-//    ss << "          A:         " << hex(state.a) << " | " << hex(a) << endl;
-//    if (x != state.x) {
-//        pass = false;
-//    }
-//    ss << "          X:         " << hex(state.x) << " | " << hex(x) << endl;
-//    if (y != state.y) {
-//        pass = false;
-//    }
-//    ss << "          Y:         " << hex(state.y) << " | " << hex(y) << endl;
-//    if (sp != state.s) {
-//        pass = false;
-//    }
-//    ss << "         SP:         " << hex(state.s) << " | " << hex(sp) << endl;
-//    if (status != state.p) {
-//        pass = false;
-//    }
-//    ss << "          P:     ";
-//    ss << ((state.p & 0x80) > 0 ? "N" : "n");
-//    ss << ((state.p & 0x40) > 0 ? "V" : "v");
-//    ss << ((state.p & 0x20) > 0 ? "U" : "u");
-//    ss << ((state.p & 0x10) > 0 ? "B" : "b");
-//    ss << ((state.p & 0x08) > 0 ? "D" : "d");
-//    ss << ((state.p & 0x04) > 0 ? "I" : "i");
-//    ss << ((state.p & 0x02) > 0 ? "Z" : "z");
-//    ss << ((state.p & 0x01) > 0 ? "C" : "c");
-//    ss << " | ";
-//    ss << ((status & 0x80) > 0 ? "N" : "n");
-//    ss << ((status & 0x40) > 0 ? "V" : "v");
-//    ss << ((status & 0x20) > 0 ? "U" : "u");
-//    ss << ((status & 0x10) > 0 ? "B" : "b");
-//    ss << ((status & 0x08) > 0 ? "D" : "d");
-//    ss << ((status & 0x04) > 0 ? "I" : "i");
-//    ss << ((status & 0x02) > 0 ? "Z" : "z");
-//    ss << ((status & 0x01) > 0 ? "C" : "c") << endl;
-//    for (auto& e : state.ram) {
-//        u16 addr = e[0];
-//        u8 ex = (u8)e[1];
-//        u8 ac = ram[addr];
-//        if (ac != ex) {
-//            result = format("INSTRUCTION {} FAIL! RAM[0x{}] was wrong; expected: {}, actual: {}\n", lookup[opcode].name, hex(addr, 4), hex(ex), hex(ac));
-//            pass = false;
-//        }
-//        ss << "RAM[" << hex(addr, 4) << "]:         " << hex(ex) << " | " << hex(ac) << endl;
-//    }
-//    if (!pass) result = ss.str();
-//    return pass;
-//}
+void CPU::init(SSTstate state) {
+    pc = state.pc;
+    a = state.a;
+    x = state.x;
+    y = state.y;
+    sp = state.s;
+    status = state.p;
+    for (auto& e : state.ram) {
+        ram[e[0]] = (e[1] & 0xFF);
+    }
+}
+bool CPU::check(SSTstate state, string& result) {
+    bool pass = true;
+    result = "PASS\n";
+    stringstream ss;
+    ss << "                 EXPECTED | ACTUAL\n";
+    if (pc != state.pc) {
+        pass = false;
+    }
+    ss << "         PC:       " << hex(state.pc, 4) << " | " << hex(pc.value(), 4) << endl;
+    if (a != state.a) {
+        pass = false;
+    }
+    ss << "          A:         " << hex(state.a) << " | " << hex(a) << endl;
+    if (x != state.x) {
+        pass = false;
+    }
+    ss << "          X:         " << hex(state.x) << " | " << hex(x) << endl;
+    if (y != state.y) {
+        pass = false;
+    }
+    ss << "          Y:         " << hex(state.y) << " | " << hex(y) << endl;
+    if (sp != state.s) {
+        pass = false;
+    }
+    ss << "         SP:         " << hex(state.s) << " | " << hex(sp) << endl;
+    if (status != state.p) {
+        pass = false;
+    }
+    ss << "          P:     ";
+    ss << ((state.p & 0x80) > 0 ? "N" : "n");
+    ss << ((state.p & 0x40) > 0 ? "V" : "v");
+    ss << ((state.p & 0x20) > 0 ? "U" : "u");
+    ss << ((state.p & 0x10) > 0 ? "B" : "b");
+    ss << ((state.p & 0x08) > 0 ? "D" : "d");
+    ss << ((state.p & 0x04) > 0 ? "I" : "i");
+    ss << ((state.p & 0x02) > 0 ? "Z" : "z");
+    ss << ((state.p & 0x01) > 0 ? "C" : "c");
+    ss << " | ";
+    ss << ((status & 0x80) > 0 ? "N" : "n");
+    ss << ((status & 0x40) > 0 ? "V" : "v");
+    ss << ((status & 0x20) > 0 ? "U" : "u");
+    ss << ((status & 0x10) > 0 ? "B" : "b");
+    ss << ((status & 0x08) > 0 ? "D" : "d");
+    ss << ((status & 0x04) > 0 ? "I" : "i");
+    ss << ((status & 0x02) > 0 ? "Z" : "z");
+    ss << ((status & 0x01) > 0 ? "C" : "c") << endl;
+    for (auto& e : state.ram) {
+        u16 addr = e[0];
+        u8 ex = (u8)e[1];
+        u8 ac = ram[addr];
+        if (ac != ex) {
+            result = format("INSTRUCTION {} FAIL! RAM[0x{}] was wrong; expected: {}, actual: {}\n", lookup[opcode].name, hex(addr, 4), hex(ex), hex(ac));
+            pass = false;
+        }
+        ss << "RAM[" << hex(addr, 4) << "]:         " << hex(ex) << " | " << hex(ac) << endl;
+    }
+    if (!pass) result = ss.str();
+    return pass;
+}
 
 u8 CPU::read(u16 addr, bool readonly) {
+    #ifdef TEST_SST
+    return ram[addr];
+    #else
     // update last read address for use during dummy dma reads.
     lastReadAddr = addr;
     // create helper variable to prevent updating open bus when readonly is set
@@ -156,9 +159,13 @@ u8 CPU::read(u16 addr, bool readonly) {
     // getting here means readonly is clear; so update cpuBus and return it.
     cpuBus = ret;
     return cpuBus;
+    #endif
 }
 
 void CPU::write(u16 addr, u8 data) {
+    #ifdef TEST_SST
+    ram[addr] = data;
+    #else
     delayDMA = true;
     // all writes fully update open bus
     cpuBus = data;
@@ -189,6 +196,7 @@ void CPU::write(u16 addr, u8 data) {
         // write to Cartridge memory (including SRAM, if present)
         cart.lock()->write(addr, data);
     }
+    #endif
 }
 
 void CPU::connectCONT(sptr<Controller>& c, u8 player) {

@@ -65,32 +65,32 @@ void Proteus::Run() {
     }
 }
 
-//void Proteus::RunSST() {
-//    station = make_shared<NES_NS::NES>();
-//    for (u16 i = 0; i <= 0xFF; i++) {
-//        printf("Instruction 0x%02x...", i);
-//        // get sst data from json file
-//        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
-//        json data = json::parse(f);
-//        f.close();
-//        // convert json object data into a format more usable by our program
-//        vector<SSTtest> SST;
-//        for (int i = 0; i < data.size(); i++)
-//            SST.push_back(SSTtest(data[i]));
-//        // run our tests
-//        for (const SSTtest& test : SST) {
-//            station->initSST(test.initState);
-//            station->runSST();
-//            string result;
-//            bool pass = station->checkSST(test.finalState, result);
-//            if (!pass) {
-//                printf("FAIL\n%s\n", result.c_str());
-//                exit(EXIT_FAILURE);
-//            }
-//        }
-//        printf("PASS\n");
-//    }
-//}
+void Proteus::RunSST() {
+    station = make_shared<NES_NS::NES>();
+    for (u16 i = 0; i <= 0xFF; i++) {
+        printf("Instruction 0x%02x...", i);
+        // get sst data from json file
+        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
+        json data = json::parse(f);
+        f.close();
+        // convert json object data into a format more usable by our program
+        vector<SSTtest> SST;
+        for (int i = 0; i < data.size(); i++)
+            SST.push_back(SSTtest(data[i]));
+        // run our tests
+        for (const SSTtest& test : SST) {
+            station->initSST(test.initState);
+            station->runSST();
+            string result;
+            bool pass = station->checkSST(test.finalState, result);
+            if (!pass) {
+                printf("FAIL\n%s\n", result.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        printf("PASS\n");
+    }
+}
 
 void Proteus::SetMetadata() {
     SDL_SetAppMetadata(

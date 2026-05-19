@@ -3,7 +3,7 @@
 #include "./BackendPCH.h"
 
 /**
- * @interface IDevice IDevice.h "backend/SHARED/IDevice.h"
+ * @interface IDevice IDevice.h
  * @brief Interface class for the various devices that are capable of receiving AND submitting read/write requests.
  * @note Unlike `IDeviceIO`, this interface allows for the possibility of writing to multiple addresses on a single device.
  * @tparam DataSize The data type used to represent the size of the data being read/written
@@ -21,7 +21,7 @@ class IDevice {
 };
 
 /**
- * @interface IDeviceIO IDevice.h "backend/SHARED/IDevice.h"
+ * @interface IDeviceIO IDevice.h
  * @brief Interface class for the various devices that are capable only of RECEIVING read/write requests.
  * @note Unlike `IDevice`, this interface is meant for devices that only respond to signals at a singular address.
  * @tparam DataSize The data type used to represent the size of the data being written/read

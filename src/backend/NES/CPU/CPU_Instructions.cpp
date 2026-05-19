@@ -564,7 +564,11 @@ void CPU::ANE() {
 }
 void CPU::LXA() {
     // 0xAB - IMM
+    #ifdef TEST_SST
+    a = x = (a | 0xEE) & fetched;
+    #else
     a = x = (a | 0xFF) & fetched;
+    #endif
     setZN(a);
     cycles = 0;
 }

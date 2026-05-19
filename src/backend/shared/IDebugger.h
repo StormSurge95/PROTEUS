@@ -3,7 +3,7 @@
 #include "./BackendPCH.h"
 
 /**
- * @interface IDebugger IDebugger.h "backend/SHARED/IDebugger.h"
+ * @interface IDebugger IDebugger.h
  * @brief "Manager" interface class implemented by each of the various console debuggers.
  * @details
  * Includes various functions required for interaction with the frontend.

@@ -17,53 +17,49 @@ using namespace NES_NS;
  * The PPU pulls NMI low IF AND ONLY IF both vblank_flag and NMI_output are true.
  */
 u8 PPU::read(u16 addr, bool readonly) {
+    u8 ret = ppuBus;
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // mask address due to mirroring
         addr &= 0x0007;
         switch (addr) {
             case 0x02: // read from PPUSTATUS register
-                ppuBus = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
-                updateCounters(0xE0);
+                ret = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
                 if (!readonly) {
+                    updateCounters(0xE0);
                     if (scanline == 241) {
                         if (cycle <= 1) {
                             suppressVBL = true;
-                            suppressNMI = false;
                         } else if (cycle == 2) {
-                            suppressVBL = false;
                             suppressNMI = true;
-                        } else {
-                            suppressVBL = suppressNMI = false;
                         }
                     }
                     inVBlank(false);
                     w = false;
-                    nmiOutput = inVBlank() && getNMIEnabled();
+                    recompNMI();
                 }
                 break;
             case 0x04: // read from OAMDATA
                 // set our return value to the byte within OAM1
-                ppuBus = readOAMByte(OAMADDR); // reads do not increment OAMADDR
+                ret = readOAMByte(OAMADDR); // reads do not increment OAMADDR
+                if (readonly) return ret;
                 // update counters for bit decay
                 updateCounters(0xFF);
                 break;
             case 0x07: // read from PPUDATA
                 {
-                    u8 ret = 0x00;
-
                     u16 addr = v & 0x3FFF;
-                    u8 data = ppuRead(addr);
+                    u8 data = ppuRead(addr, readonly);
 
                     if (addr >= 0x3F00) {
                         ret = data;
+                        if (readonly) return ret;
                         dataBuffer = ppuRead(addr - 0x1000);
                     } else {
                         ret = dataBuffer;
+                        if (readonly) return ret;
                         dataBuffer = data;
                     }
-
                     v = (v + getVRAMIncrement()) & 0x3FFF;
-
                     ppuBus = ret;
                     updateCounters(0xFF);
                 }
@@ -73,6 +69,7 @@ u8 PPU::read(u16 addr, bool readonly) {
     // by this point, ppubus should have been updated using the requested value;
     // so we can simply return ppubus at this point (also this prevents the
     // "not all control paths return a value" issue within VS)
+    ppuBus = ret;
     return ppuBus;
 }
 
@@ -88,20 +85,14 @@ void PPU::write(u16 addr, u8 data) {
         switch (addr) {
             case 0x00: // write to PPUCTRL
                 {
-                    // get prev state of nmi enable flag
-                    bool prevEnabled = getNMIEnabled();
+                    bool prevNMI = inVBlank() && getNMIEnabled();
                     // update register
                     PPUCTRL = data;
+                    bool currNMI = inVBlank() && getNMIEnabled();
                     // update t register bits 11 & 12 using bits 0 & 1 of new data
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
-
-                    nmiOutput = getNMIEnabled() && inVBlank();
-
-                    if (!nmiOutputPrev && nmiOutput)
+                    if (!prevNMI && currNMI)
                         nmiRequested = true;
-
-                    nmiOutputPrev = nmiOutput;
-
                     return;
                 }
             case 0x01: // write to PPUMASK
@@ -263,11 +254,13 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
         ret = p;
     }
 
+    if (!readonly) ppuBus = ret;
     // return our obtained value
     return ret;
 }
 
 void PPU::ppuWrite(u16 addr, u8 data) {
+    ppuBus = data;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
     if (addr >= 0x0000 && addr <= 0x1FFF)
         // if address is within CHR memory, write to gamepak/mapper
@@ -358,10 +351,6 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 }
 
 void PPU::clock() {
-    //if (cycle == 0) {
-    //    activeSprites = nextSprites;
-    //}
-    
     // via https://www.nesdev.org/wiki/PPU_rendering#Line-by-line_timing
     if (scanline == 261) { // Pre-render scanline (-1 or 261)
         onPreRenderLine();
@@ -414,9 +403,10 @@ void PPU::onPreRenderLine() {
 
     if (cycle == 1) {
         // if we're on cycle 1, we clear our status flags.
-        inVBlank(false);
         spriteZeroHit(false);
         spritesOverflowed(false);
+        inVBlank(false);
+        recompNMI();
     }
 
     if (renderingEnabled()) {
@@ -703,7 +693,6 @@ void PPU::reset() {
     suppressNMI = false;
     nmiRequested = false;
     nmiOutput = false;
-    nmiOutputPrev = false;
     for (auto& a : primaryOAM) {
         a.fill(0xFF);
     }
@@ -766,4 +755,11 @@ u8 PPU::readSpriteAttr(SPRITE_ATTR which, u8 attr) {
         default:
             return 0x00;
     }
+}
+
+void PPU::recompNMI() {
+    bool prevNMI = nmiOutput;
+    nmiOutput = inVBlank() && getNMIEnabled();
+    if (!prevNMI && nmiOutput)
+        nmiRequested = true;
 }

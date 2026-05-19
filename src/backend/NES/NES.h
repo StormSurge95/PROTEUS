@@ -22,9 +22,9 @@ namespace NES_NS {
             // default destructor
             ~NES() = default;
 
-            //void initSST(SSTstate s) override;
-            //void runSST() override;
-            //bool checkSST(SSTstate s, string& o) override;
+            void initSST(SSTstate s) override;
+            void runSST() override;
+            bool checkSST(SSTstate s, string& o) override;
 
             // console reset function
             // fun fact: up until starting the development of this project, I thought that the

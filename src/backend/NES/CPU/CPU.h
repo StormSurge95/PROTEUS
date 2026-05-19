@@ -22,8 +22,11 @@ namespace NES_NS {
             friend class Debugger;
         private:
             bool magic = false; /// @brief 'magic' of instable opcode(s)
+            #ifdef TEST_SST
+            array<u8, 0xFFFF> ram; /// @brief CPU ram container for SSTs
+            #else
             array<u8, 2048> ram; /// @brief CPU ram container for general use
-            //array<u8, 0xFFFF> ram; /// @brief CPU ram container for SSTs
+            #endif
             wptr<PPU> ppu; /// @brief The ppu of the console.
             wptr<APU> apu; /// @brief The apu of the console.
             wptr<Gamepak> cart; /// @brief The current cartridge that is connected.
@@ -240,8 +243,8 @@ namespace NES_NS {
             /// @brief Default Destructor
             ~CPU() = default;
 
-            //void init(SSTstate state);
-            //bool check(SSTstate state, string& result);
+            void init(SSTstate state);
+            bool check(SSTstate state, string& result);
 
             bool RDY() const { return oamData != 0x00 || true || true; }
 
