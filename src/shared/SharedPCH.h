@@ -2,6 +2,7 @@
 
 //#define TEST_SST
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -18,6 +19,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+// algorithm
+using std::begin;
+using std::end;
+using std::find;
 
 // array
 using std::array;

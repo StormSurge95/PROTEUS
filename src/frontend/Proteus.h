@@ -31,9 +31,6 @@ namespace NS_Proteus {
 
             const AppState GetState() const { return state; }
 
-            void ProcessKeyInput(SDL_Keycode key);
-            void ProcessButtonInput(u8 button);
-
             inline void SetState(AppView view, ConsoleID console = ConsoleID::NONE) {
                 state.currentView = view;
                 if (view == AppView::GAME_LIST) state.selectedConsole = console;
@@ -70,6 +67,12 @@ namespace NS_Proteus {
             void SetMetadata();
 
             void ProcessEvents(FrameContext& ctx);
+            bool ProcessQuitEvent(FrameContext& ctx);
+            bool ProcessWindowEvent(FrameContext& ctx);
+            bool ProcessKeyboardEvent(FrameContext& ctx);
+            bool ProcessGamepadEvent(FrameContext& ctx);
+            bool ProcessMouseEvent(FrameContext& ctx);
+            bool ProcessButtonInput(u8 button);
 
             FrameContext BeginFrame();
             void EndFrame(FrameContext& ctx);

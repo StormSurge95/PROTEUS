@@ -32,6 +32,7 @@ namespace NS_Proteus {
             SessionResult Pause();
             SessionResult Reset();
             SessionResult Shutdown();
+            SessionResult PlayPause();
 
             bool IsActive() const;
             const ConsoleID CurrentConsoleID() const { return currentConsole; }

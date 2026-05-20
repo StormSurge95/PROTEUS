@@ -140,6 +140,13 @@ SessionResult ConsoleSession::Shutdown() {
     return Success(ConsoleSessionState::SHUTDOWN, "Session Shutdown Successful");
 }
 
+SessionResult ConsoleSession::PlayPause() {
+    if (currentState == ConsoleSessionState::PAUSED)
+        return Start();
+    else
+        return Pause();
+}
+
 bool ConsoleSession::IsActive() const {
     switch (currentState) {
         case ConsoleSessionState::ERROR:

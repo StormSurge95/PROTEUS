@@ -75,6 +75,7 @@ namespace NS_Proteus {
     struct FrameContext {
         FrameState state;
         TickStats stats;
+        SDL_Event event;
 
         bool suppressInput = false;
         bool quitRequested = false;
@@ -502,4 +503,7 @@ namespace NS_Proteus {
         ConsoleSessionErrorCode code;
         string message;
     };
+
+    static SDL_EventType WINDOW_EVENTS[] = { SDL_EVENT_WINDOW_CLOSE_REQUESTED, SDL_EVENT_WINDOW_RESIZED };
+    static SDL_EventType GAMEPAD_EVENTS[] = { SDL_EVENT_GAMEPAD_ADDED, SDL_EVENT_GAMEPAD_REMOVED, SDL_EVENT_GAMEPAD_BUTTON_DOWN };
 }
