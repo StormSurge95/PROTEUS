@@ -133,7 +133,7 @@
     <ClInclude Include="src\frontend\AudioManager.h">
       <Filter>src\frontend</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\DebugManager.h">
+    <ClInclude Include="src\frontend\DebuggerFactory.h">
       <Filter>src\frontend</Filter>
     </ClInclude>
     <ClInclude Include="src\frontend\FrontendPCH.h">
@@ -199,6 +199,18 @@
     <ClInclude Include="src\frontend\RomLibrary.h">
       <Filter>src\frontend</Filter>
     </ClInclude>
+    <ClInclude Include="src\frontend\ConsoleSession.h">
+      <Filter>src\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\Consoles.h">
+      <Filter>src\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\ConsoleFactory.h">
+      <Filter>src\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\Debuggers.h">
+      <Filter>src\backend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">
@@ -211,9 +223,6 @@
       <Filter>src\frontend</Filter>
     </ClCompile>
     <ClCompile Include="src\frontend\AudioManager.cpp">
-      <Filter>src\frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="src\frontend\DebugManager.cpp">
       <Filter>src\frontend</Filter>
     </ClCompile>
     <ClCompile Include="src\frontend\ImGui\imgui.cpp">
@@ -286,6 +295,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\frontend\RomLibrary.cpp">
+      <Filter>src\frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\ConsoleSession.cpp">
       <Filter>src\frontend</Filter>
     </ClCompile>
   </ItemGroup>

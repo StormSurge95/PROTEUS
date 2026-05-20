@@ -36,7 +36,7 @@
     <ClCompile Include="src\backend\NES\PPU\PPU_Sprites.cpp" />
     <ClCompile Include="src\backend\NES\shared\Debugger.cpp" />
     <ClCompile Include="src\frontend\AudioManager.cpp" />
-    <ClCompile Include="src\frontend\DebugManager.cpp" />
+    <ClCompile Include="src\frontend\ConsoleSession.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_demo.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_draw.cpp" />
@@ -57,6 +57,8 @@
     <ClInclude Include="resources\FontUI_BoldItalic.h" />
     <ClInclude Include="resources\FontUI_Italic.h" />
     <ClInclude Include="resources\NES_DB.h" />
+    <ClInclude Include="src\backend\Consoles.h" />
+    <ClInclude Include="src\backend\Debuggers.h" />
     <ClInclude Include="src\backend\NES\APU\APU.h" />
     <ClInclude Include="src\backend\NES\APU\DMC.h" />
     <ClInclude Include="src\backend\NES\APU\Noise.h" />
@@ -82,7 +84,9 @@
     <ClInclude Include="src\backend\shared\IDebugger.h" />
     <ClInclude Include="src\backend\shared\IDevice.h" />
     <ClInclude Include="src\frontend\AudioManager.h" />
-    <ClInclude Include="src\frontend\DebugManager.h" />
+    <ClInclude Include="src\frontend\ConsoleFactory.h" />
+    <ClInclude Include="src\frontend\ConsoleSession.h" />
+    <ClInclude Include="src\frontend\DebuggerFactory.h" />
     <ClInclude Include="src\frontend\FrontendPCH.h" />
     <ClInclude Include="src\frontend\ImGui\imconfig.h" />
     <ClInclude Include="src\frontend\ImGui\imgui.h" />

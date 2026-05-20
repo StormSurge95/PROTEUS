@@ -21,7 +21,7 @@ namespace NS_Proteus {
 
             Inputs* ReadInputs(int gp = 0, bool ui = false);
             Inputs* ReadKeyboard(bool ui);
-            void TranslateInputs(std::shared_ptr<IConsole>& station, ConsoleID console);
+            void TranslateInputs(const sptr<IConsole>& station, ConsoleID console);
 
             void Connect(SDL_JoystickID id);
             void Disconnect(SDL_JoystickID id);

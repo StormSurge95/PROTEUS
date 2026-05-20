@@ -237,7 +237,7 @@ Inputs* InputManager::ReadKeyboard(bool ui) {
     return kbState.get();
 }
 
-void InputManager::TranslateInputs(std::shared_ptr<IConsole>& station, ConsoleID console) {
+void InputManager::TranslateInputs(const sptr<IConsole>& station, ConsoleID console) {
     for (int i = 0; i < numPlayers; i++) {
         Inputs* inputs = ReadInputs(i);
         if (inputs == nullptr) throw std::exception();

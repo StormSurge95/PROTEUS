@@ -1,7 +1,7 @@
 #pragma once
 
 #include "./FrontendPCH.h"
-#include "./DebugManager.h"
+#include "./ConsoleSession.h"
 #include "../backend/shared/IConsole.h"
 
 namespace NS_Proteus {
@@ -29,8 +29,6 @@ namespace NS_Proteus {
             void Run();
             void RunSST();
 
-            bool InDebug() const { return debug; }
-
             const AppState GetState() const { return state; }
 
             void ProcessKeyInput(SDL_Keycode key);
@@ -42,41 +40,32 @@ namespace NS_Proteus {
             }
 
             void LaunchGame(int index);
+            void ResetConsole();
+            void ShutDownConsole();
+            void Resume();
 
-            DebugView GetDebugView() { return debugManager->currentView; }
-            IDebugger* GetDebugger() const { return debugManager->GetDebugger().get();  }
+            //DebugView GetDebugView() { return debugManager->currentView; }
+            IDebugger* GetDebugger() const { return session->GetDebugger().get();  }
 
             std::vector<ROM_DATA> GetGameList(ConsoleID console);
             const u32* GetFrameBuffer();
-            void StartConsole();
-            void ResetConsole();
-            void ShutDownConsole();
         private:
-            bool debug = false;
-            bool dbgPause = false;
-            bool ROMactive = false;
-            std::shared_ptr<IConsole> station = nullptr;
-
             static std::shared_ptr<Proteus> instance;
             std::shared_ptr<AudioManager> audioManager;
             std::shared_ptr<VideoManager> videoManager;
             std::shared_ptr<InputManager> inputManager;
-            std::shared_ptr<DebugManager> debugManager;
 
             uptr<RomLibrary> lib;
+            uptr<ConsoleSession> session;
 
             AppState state;
-
-            SDL_Window* window = nullptr;
-            SDL_Renderer* renderer = nullptr;
-
-            int dispWidth = 0;
-            int dispHeight = 0;
 
             bool quit = false;
             SDL_Event event = {};
 
             void ToggleDebug();
+
+            void ToggleOverlay();
 
             void SetMetadata();
 

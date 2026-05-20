@@ -17,7 +17,7 @@ namespace NS_Proteus {
             void Init();
             void Deinit();
 
-            void Update(std::shared_ptr<IConsole>& station);
+            void Update(const sptr<IConsole>& station);
         private:
             Proteus* proteus;
             bool debug;

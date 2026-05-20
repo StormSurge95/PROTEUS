@@ -205,7 +205,7 @@ void VideoManager::Render(const AppState& state) {
             RenderGameSelection(state.selectedConsole);
             break;
         case AppView::GAME_VIEW:
-            RenderGameView(proteus->InDebug());
+            RenderGameView(debugActive);
             break;
     }
     if (overlayActive) RenderOverlay();
@@ -358,6 +358,7 @@ void VideoManager::RenderOverlay() {
     if (ImGui::Button("RESUME", btnSize)) {
         // this button simply turns the overlay back off
         ToggleOverlay();
+        proteus->Resume();
     }
     if (view == AppView::GAME_VIEW) {
         if (ImGui::Button("RESTART", btnSize)) {

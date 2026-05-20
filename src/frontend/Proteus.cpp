@@ -1,15 +1,10 @@
 #include "./Proteus.h"
 #include "FrontendPCH.h"
-#include "../../resources/NES_DB.h"
 #include "../backend/NES/NES.h"
 #include "./AudioManager.h"
 #include "./InputManager.h"
 #include "./VideoManager.h"
-#include "./DebugManager.h"
 #include "./RomLibrary.h"
-
-#include <openssl/evp.h>
-#include <openssl/md5.h>
 
 using namespace NS_Proteus;
 
@@ -17,9 +12,9 @@ Proteus::Proteus() {
     videoManager = std::make_shared<VideoManager>(this);
     inputManager = std::make_shared<InputManager>(this);
     audioManager = std::make_shared<AudioManager>(this);
-    debugManager = std::make_shared<DebugManager>();
 
     lib = make_unique<RomLibrary>();
+    session = make_unique<ConsoleSession>();
 }
 
 Proteus::~Proteus() {
@@ -58,41 +53,41 @@ void Proteus::Run() {
         }
 
         videoManager->Render(state);
-        if (state.currentView == AppView::GAME_VIEW && !videoManager->OverlayActive()) {
-            inputManager->TranslateInputs(station, state.selectedConsole);
-            if (debugManager->GetDebugger()->logToFile) debugManager->GetDebugger()->LogTrace();
-            if (!dbgPause) station->clock();
+        if (state.currentView == AppView::GAME_VIEW && session->GetState() == SessionState::RUNNING && !videoManager->OverlayActive()) {
+            inputManager->TranslateInputs(session->GetConsole(), state.selectedConsole);
+            // TODO: runtime trace(s)
+            session->GetConsole()->clock();
         }
-        audioManager->Update(station);
+        audioManager->Update(session->GetConsole());
     }
 }
 
-void Proteus::RunSST() {
-    station = make_shared<NES_NS::NES>();
-    for (u16 i = 0; i <= 0xFF; i++) {
-        printf("Instruction 0x%02x...", i);
-        // get sst data from json file
-        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
-        json data = json::parse(f);
-        f.close();
-        // convert json object data into a format more usable by our program
-        vector<SSTtest> SST;
-        for (int i = 0; i < data.size(); i++)
-            SST.push_back(SSTtest(data[i]));
-        // run our tests
-        for (const SSTtest& test : SST) {
-            station->initSST(test.initState);
-            station->runSST();
-            string result;
-            bool pass = station->checkSST(test.finalState, result);
-            if (!pass) {
-                printf("FAIL\n%s\n", result.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        printf("PASS\n");
-    }
-}
+//void Proteus::RunSST() {
+//    station = make_shared<NES_NS::NES>();
+//    for (u16 i = 0; i <= 0xFF; i++) {
+//        printf("Instruction 0x%02x...", i);
+//        // get sst data from json file
+//        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
+//        json data = json::parse(f);
+//        f.close();
+//        // convert json object data into a format more usable by our program
+//        vector<SSTtest> SST;
+//        for (int i = 0; i < data.size(); i++)
+//            SST.push_back(SSTtest(data[i]));
+//        // run our tests
+//        for (const SSTtest& test : SST) {
+//            station->initSST(test.initState);
+//            station->runSST();
+//            string result;
+//            bool pass = station->checkSST(test.finalState, result);
+//            if (!pass) {
+//                printf("FAIL\n%s\n", result.c_str());
+//                exit(EXIT_FAILURE);
+//            }
+//        }
+//        printf("PASS\n");
+//    }
+//}
 
 void Proteus::SetMetadata() {
     SDL_SetAppMetadata(
@@ -119,10 +114,10 @@ void Proteus::SetMetadata() {
 }
 
 void Proteus::ToggleDebug() {
-    debug = !debug;
-    if (station != nullptr) {
-        videoManager->ToggleDebug();
-    }
+    //debug = !debug;
+    //if (station != nullptr) {
+    //    videoManager->ToggleDebug();
+    //}
 }
 
 void Proteus::ProcessEvents() {
@@ -173,14 +168,17 @@ void Proteus::ProcessKeyInput(SDL_Keycode key) {
             // TODO: backstep/rewind
             break;
         case SDLK_F6:
-            dbgPause = !dbgPause;
+            if (session->GetState() == SessionState::PAUSED)
+                session->Start();
+            else if (session->GetState() == SessionState::RUNNING)
+                session->Pause();
             break;
         case SDLK_F7:
-            if (dbgPause) {
+            if (session->GetState() == SessionState::PAUSED) {
                 if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
-                    debugManager->GetDebugger()->StepCycle();
+                    session->GetDebugger()->StepCycle();
                 else
-                    debugManager->GetDebugger()->StepInstruction();
+                    session->GetDebugger()->StepInstruction();
             }
             break;
         case SDLK_F8:
@@ -192,15 +190,23 @@ void Proteus::ProcessKeyInput(SDL_Keycode key) {
 void Proteus::ProcessButtonInput(u8 button) {
     switch (button) {
         case SDL_GAMEPAD_BUTTON_GUIDE:
-            if (state.currentView == AppView::GAME_VIEW)
-                videoManager->ToggleOverlay();
+            ToggleOverlay();
             break;
         case SDL_GAMEPAD_BUTTON_EAST:
             if (state.currentView == AppView::GAME_LIST && !videoManager->OverlayActive())
                 SetState(AppView::CONSOLE_SELECT);
-            else if (videoManager->OverlayActive()) videoManager->ToggleOverlay();
+            else if (videoManager->OverlayActive()) ToggleOverlay();
             break;
     }
+}
+
+void Proteus::ToggleOverlay() {
+    if (session->GetState() == SessionState::RUNNING)
+        session->Pause();
+    else if (session->GetState() == SessionState::PAUSED)
+        session->Start();
+
+    videoManager->ToggleOverlay();
 }
 
 std::vector<ROM_DATA> Proteus::GetGameList(ConsoleID console) {
@@ -208,49 +214,54 @@ std::vector<ROM_DATA> Proteus::GetGameList(ConsoleID console) {
 }
 
 void Proteus::LaunchGame(int index) {
-    StartConsole();
+    // start our console session
+    SessionResult r = session->CreateSession(state.selectedConsole);
 
+    if (!r.success) return; // TODO: handle failure
+
+    // acquire game data from library
     ROM_DATA game = lib->GetGameList(state.selectedConsole)[index];
-
-    state.selectedGame = game.gameName;
     std::string path = game.path;
 
+    // load rom into console
+    r = session->LoadROM(game.path, game.gameName);
+
+    if (!r.success) return; // TODO: handle failure
+
+    r = session->Start();
+
+    if (!r.success) return; // TODO: handle failure
+
+    // update app state
+    state.selectedGame = game.gameName;
+
+    // use data to initialize game texture and update display
     std::string title = "PROTEUS: " + game.gameName;
-
-    videoManager->InitGameTexture(title, station->SCREEN_WIDTH(), station->SCREEN_HEIGHT());
-
-    if (station->loadROM(path)) {
-        state.currentView = AppView::GAME_VIEW;
-        ROMactive = true;
-    } else {
-        ROMactive = false;
-    }
-}
-
-void Proteus::StartConsole() {
-    switch (state.selectedConsole) {
-        case ConsoleID::NES:
-            station = std::make_shared<NES_NS::NES>();
-            debugManager->SetDebugger(ConsoleID::NES, station);
-            return;
-        default:
-            exit(EXIT_FAILURE);
-    }
-}
-
-void Proteus::ResetConsole() {
-    station->reset();
-}
-
-void Proteus::ShutDownConsole() {
-    station.reset();
-    ROMactive = false;
-    SetState(AppView::GAME_LIST, state.selectedConsole);
+    videoManager->InitGameTexture(title, session->GetConsole()->SCREEN_WIDTH(), session->GetConsole()->SCREEN_HEIGHT());
+    state.currentView = AppView::GAME_VIEW;
 }
 
 const u32* Proteus::GetFrameBuffer() {
-    if (station.get() != nullptr) {
-        return station->getFrameBuffer();
+    if (session->GetConsole().get() != nullptr) {
+        return session->GetConsole()->getFrameBuffer();
     }
     return nullptr;
+}
+
+void Proteus::ResetConsole() {
+    SessionResult r = session->Reset();
+    if (r.success) session->Start();
+    // TODO: handle failure
+}
+
+void Proteus::ShutDownConsole() {
+    SessionResult r = session->Shutdown();
+    if (r.success) state.currentView = AppView::GAME_LIST;
+    // TODO: handle failure
+    // TODO: implement some way of shutting down the entire app
+}
+
+void Proteus::Resume() {
+    if (session->GetState() == SessionState::PAUSED)
+        session->Start();
 }

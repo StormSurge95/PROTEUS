@@ -437,4 +437,33 @@ namespace NS_Proteus {
         float PopupW() const { return dispWidth * 0.2f; }
         float PopupH() const { return dispHeight * 0.2f; }
     };
+
+    enum class SessionState {
+        EMPTY,
+        CREATED,
+        ROM_LOADED,
+        RUNNING,
+        PAUSED,
+        ERROR,
+        SHUTDOWN
+    };
+
+    enum class SessionErrorCode {
+        NONE,
+        INVALID_ARGUMENT,
+        UNSUPPORTED_CONSOLE,
+        CONSOLE_CREATE_FAILED,
+        DEBUGGER_CREATE_FAILED,
+        INVALID_TRANSITION,
+        NO_ACTIVE_CONSOLE,
+        ROM_LOAD_FAILED,
+        INTERNAL_ERROR
+    };
+
+    struct SessionResult {
+        bool success;
+        SessionState postState;
+        SessionErrorCode code;
+        string message;
+    };
 }
