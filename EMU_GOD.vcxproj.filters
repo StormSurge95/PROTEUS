@@ -196,6 +196,9 @@
     <ClInclude Include="src\shared\Types.h">
       <Filter>src\shared</Filter>
     </ClInclude>
+    <ClInclude Include="src\frontend\RomLibrary.h">
+      <Filter>src\frontend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\Proteus.cpp">
@@ -281,6 +284,9 @@
     </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\RomLibrary.cpp">
+      <Filter>src\frontend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

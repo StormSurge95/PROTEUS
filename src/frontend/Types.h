@@ -60,6 +60,15 @@ namespace NS_Proteus {
         { ConsoleID::WII, "WII" }
     };
 
+    static ConsoleID GetIDFromName(string name) {
+        for (const pair<ConsoleID, string>& p : ConsoleNamesShort) {
+            if (strcmp(name.c_str(), p.second.c_str()) == 0)
+                return p.first;
+        }
+
+        return ConsoleID::NONE;
+    }
+
     const map<ConsoleID, string> ConsoleNamesLong = {
         { ConsoleID::NES, "NINTENDO ENTERNTAINMENT SYSTEM" },
         { ConsoleID::SNS, "SUPER NINTENDO ENTERTAINMENT SYSTEM" },
@@ -95,6 +104,7 @@ namespace NS_Proteus {
     struct ROM_DATA {
         string gameName;
         string path;
+        string hash;
     };
 
     enum class DebugView {

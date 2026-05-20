@@ -47,6 +47,7 @@ using std::filesystem::path;
 using std::filesystem::directory_iterator;
 using std::filesystem::exists;
 using std::filesystem::create_directory;
+using std::filesystem::is_regular_file;
 
 // fstream & iomanip
 using std::ifstream;

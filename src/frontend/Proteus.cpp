@@ -6,6 +6,7 @@
 #include "./InputManager.h"
 #include "./VideoManager.h"
 #include "./DebugManager.h"
+#include "./RomLibrary.h"
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -17,18 +18,19 @@ Proteus::Proteus() {
     inputManager = std::make_shared<InputManager>(this);
     audioManager = std::make_shared<AudioManager>(this);
     debugManager = std::make_shared<DebugManager>();
+
+    lib = make_unique<RomLibrary>();
 }
 
 Proteus::~Proteus() {
     videoManager.reset();
     audioManager.reset();
     inputManager.reset();
+    lib.reset();
 }
 
 void Proteus::Init() {
     SetMetadata();
-
-    IdentifyROMs();
 
     videoManager->Init();
 
@@ -201,96 +203,14 @@ void Proteus::ProcessButtonInput(u8 button) {
     }
 }
 
-std::string Proteus::MD5(const std::string& filepath) {
-    unsigned char result[MD5_DIGEST_LENGTH];
-    std::ifstream file(filepath, std::ios::binary);
-
-    if (!file.is_open()) {
-        SDL_Log("Failed to open %s file for hashing!", filepath.c_str());
-        exit(EXIT_FAILURE);
-    }
-
-    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
-
-    char buffer[4096];
-    file.seekg(16, file.beg);
-    while (file.read(buffer, sizeof(buffer))) {
-        EVP_DigestUpdate(ctx, buffer, (size_t)file.gcount());
-    }
-    EVP_DigestUpdate(ctx, buffer, (size_t)file.gcount());
-
-    unsigned int len = 0;
-    EVP_DigestFinal_ex(ctx, result, &len);
-
-    EVP_MD_CTX_free(ctx);
-
-    std::stringstream ss;
-    for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)result[i];
-
-    return ss.str();
-}
-
-void Proteus::IdentifyROMs() {
-    const path base = "C:/ROMS/";
-    if (!exists(base)) create_directory(base);
-
-    for (const pair<ConsoleID, string>& p : ConsoleNamesShort) {
-        string console = p.second;
-        if (console != "NES") continue;
-        path path = base.string() + console + "/";
-        if (!exists(path)) {
-            create_directory(path);
-            continue;
-        }
-        vector<ROM_DATA> games = {};
-        for (const auto& entry : directory_iterator(path)) {
-            // get text data
-            string file = entry.path().string();
-            string filename = file.substr(file.find_last_of('/') + 1);
-            
-            // get hash
-            string hash = MD5(file);
-
-            string gameName = Lookup(console, hash);
-            if (gameName == "Unknown") gameName = filename.substr(0, filename.length() - 4);
-            games.push_back({ .gameName = gameName, .path = file });
-        }
-        gameList[p.first] = games;
-    }
-}
-
-std::string Proteus::Lookup(const std::string& console, const std::string& hash) {
-    int size = -1;
-
-    int left = 0;
-    int right = std::size(NES_ROM_DB) - 1;
-
-    while (left <= right) {
-        int mid = (left + right) / 2;
-        int cmp = std::strcmp(hash.c_str(), NES_ROM_DB[mid].md5);
-
-        if (cmp == 0)
-            return NES_ROM_DB[mid].name;
-        
-        if (cmp < 0)
-            right = mid - 1;
-        else
-            left = mid + 1;
-    }
-
-    return "Unknown";
-}
-
 std::vector<ROM_DATA> Proteus::GetGameList(ConsoleID console) {
-    return gameList[console];
+    return lib->GetGameList(console);
 }
 
 void Proteus::LaunchGame(int index) {
     StartConsole();
 
-    ROM_DATA game = gameList[state.selectedConsole][index];
+    ROM_DATA game = lib->GetGameList(state.selectedConsole)[index];
 
     state.selectedGame = game.gameName;
     std::string path = game.path;

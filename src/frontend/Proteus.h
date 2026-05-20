@@ -5,6 +5,8 @@
 #include "../backend/shared/IConsole.h"
 
 namespace NS_Proteus {
+    class RomLibrary;
+
     /**
      * Singleton class for maintaining the entire application.
      * This class will be responsible for owning and controlling
@@ -61,7 +63,7 @@ namespace NS_Proteus {
             std::shared_ptr<InputManager> inputManager;
             std::shared_ptr<DebugManager> debugManager;
 
-            map<ConsoleID, vector<ROM_DATA>> gameList;
+            uptr<RomLibrary> lib;
 
             AppState state;
 
@@ -79,12 +81,5 @@ namespace NS_Proteus {
             void SetMetadata();
 
             void ProcessEvents();
-
-            void IdentifyROMs();
-
-            std::string Lookup(const std::string& console, const std::string& hash);
-
-            std::string MD5(const std::string& filepath);
-
     };
 }

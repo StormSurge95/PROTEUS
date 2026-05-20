@@ -46,6 +46,7 @@
     <ClCompile Include="src\frontend\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="src\frontend\InputManager.cpp" />
     <ClCompile Include="src\frontend\Proteus.cpp" />
+    <ClCompile Include="src\frontend\RomLibrary.cpp" />
     <ClCompile Include="src\frontend\VideoManager.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -93,6 +94,7 @@
     <ClInclude Include="src\frontend\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\frontend\InputManager.h" />
     <ClInclude Include="src\frontend\Proteus.h" />
+    <ClInclude Include="src\frontend\RomLibrary.h" />
     <ClInclude Include="src\frontend\Types.h" />
     <ClInclude Include="src\frontend\VideoManager.h" />
     <ClInclude Include="src\shared\json.h" />
