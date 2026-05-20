@@ -14,7 +14,7 @@ Proteus::Proteus() {
     audioManager = std::make_shared<AudioManager>(this);
 
     lib = make_unique<RomLibrary>();
-    session = make_unique<ConsoleSession>();
+    session = make_shared<ConsoleSession>();
 }
 
 Proteus::~Proteus() {
@@ -45,21 +45,64 @@ void Proteus::Deinit() {
 
 void Proteus::Run() {
     while (!quit) {
-        ProcessEvents();
+        FrameContext ctx = BeginFrame();
+        ProcessEvents(ctx);
+        ComputeFrameState(ctx);
 
-        if (SDL_GetWindowFlags(videoManager->GetWindow()) & SDL_WINDOW_MINIMIZED) {
+        if (ctx.state.throttleFrame) {
             SDL_Delay(10);
+            EndFrame(ctx);
             continue;
         }
 
-        videoManager->Render(state);
-        if (state.currentView == AppView::GAME_VIEW && session->GetState() == SessionState::RUNNING && !videoManager->OverlayActive()) {
-            inputManager->TranslateInputs(session->GetConsole(), state.selectedConsole);
+        if (ctx.state.runRender) videoManager->Render(state);
+
+        if (ctx.state.runGameplay) {
+            if (!ctx.state.suppressInput)
+                inputManager->TranslateInputs(session->GetConsole(), state.selectedConsole);
             // TODO: runtime trace(s)
             session->GetConsole()->clock();
         }
-        audioManager->Update(session->GetConsole());
+        
+        if (ctx.state.runAudio) audioManager->Update(session->GetConsole());
+
+        EndFrame(ctx);
     }
+}
+
+FrameContext Proteus::BeginFrame() {
+    return {
+        .state = {},
+        .stats = {
+            .frameStart = high_resolution_clock::now()
+        },
+        .suppressInput = false,
+        .quitRequested = false
+    };
+}
+
+void Proteus::EndFrame(FrameContext& ctx) {
+    ctx.stats.frameEnd = high_resolution_clock::now();
+    ctx.stats.frameDuration = ctx.stats.frameEnd - ctx.stats.frameStart;
+
+    stats.frameCount++;
+    stats.frameTimes.push(ctx.stats.frameDuration.count());
+    stats.fps = stats.frameTimes.avg();
+}
+
+void Proteus::ComputeFrameState(FrameContext& ctx) {
+    ctx.state.windowMinimized = SDL_GetWindowFlags(videoManager->GetWindow()) & SDL_WINDOW_MINIMIZED;
+    ctx.state.inGameView = state.currentView == AppView::GAME_VIEW;
+    ctx.state.overlayActive = videoManager->OverlayActive();
+    ctx.state.sessionRunning = session->GetState() == ConsoleSessionState::RUNNING;
+    ctx.state.sessionPaused = session->GetState() == ConsoleSessionState::PAUSED;
+    ImGuiIO& io = ImGui::GetIO();
+    ctx.state.suppressInput = io.WantCaptureKeyboard || io.WantCaptureMouse;
+
+    ctx.state.runGameplay = ctx.state.inGameView && ctx.state.sessionRunning && !ctx.state.windowMinimized;
+    ctx.state.runRender = !ctx.state.windowMinimized;
+    ctx.state.runAudio = !ctx.state.windowMinimized;
+    ctx.state.throttleFrame = ctx.state.windowMinimized;
 }
 
 //void Proteus::RunSST() {
@@ -120,7 +163,7 @@ void Proteus::ToggleDebug() {
     //}
 }
 
-void Proteus::ProcessEvents() {
+void Proteus::ProcessEvents(FrameContext& ctx) {
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL3_ProcessEvent(&event);
         switch (event.type) {
@@ -148,8 +191,6 @@ void Proteus::ProcessEvents() {
                 ProcessButtonInput(event.gbutton.button);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                //if (static_cast<MouseButton>(event.button.button) == MouseButton::LEFT)
-                //    videoManager->OnSelect();
                 if (static_cast<MouseButton>(event.button.button) == MouseButton::RIGHT) {
                     if (state.currentView == AppView::GAME_LIST && !videoManager->OverlayActive())
                         SetState(AppView::CONSOLE_SELECT);
@@ -159,6 +200,7 @@ void Proteus::ProcessEvents() {
                     videoManager->ToggleOverlay();
                 break;
         }
+        ctx.stats.eventsPolled++;
     }
 }
 
@@ -168,13 +210,13 @@ void Proteus::ProcessKeyInput(SDL_Keycode key) {
             // TODO: backstep/rewind
             break;
         case SDLK_F6:
-            if (session->GetState() == SessionState::PAUSED)
+            if (session->GetState() == ConsoleSessionState::PAUSED)
                 session->Start();
-            else if (session->GetState() == SessionState::RUNNING)
+            else if (session->GetState() == ConsoleSessionState::RUNNING)
                 session->Pause();
             break;
         case SDLK_F7:
-            if (session->GetState() == SessionState::PAUSED) {
+            if (session->GetState() == ConsoleSessionState::PAUSED) {
                 if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
                     session->GetDebugger()->StepCycle();
                 else
@@ -201,9 +243,11 @@ void Proteus::ProcessButtonInput(u8 button) {
 }
 
 void Proteus::ToggleOverlay() {
-    if (session->GetState() == SessionState::RUNNING)
+    // TODO: make closing of overlay consume input used to close it rather than allow it to effect game being played
+
+    if (session->GetState() == ConsoleSessionState::RUNNING)
         session->Pause();
-    else if (session->GetState() == SessionState::PAUSED)
+    else if (session->GetState() == ConsoleSessionState::PAUSED)
         session->Start();
 
     videoManager->ToggleOverlay();
@@ -262,6 +306,6 @@ void Proteus::ShutDownConsole() {
 }
 
 void Proteus::Resume() {
-    if (session->GetState() == SessionState::PAUSED)
+    if (session->GetState() == ConsoleSessionState::PAUSED)
         session->Start();
 }

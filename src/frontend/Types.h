@@ -37,11 +37,47 @@ namespace NS_Proteus {
         //NS2
     };
 
+    struct FrameState {
+        bool windowMinimized = false;
+        bool inGameView = false;
+        bool overlayActive = false;
+        bool sessionRunning = false;
+        bool sessionPaused = false;
+        bool suppressInput = false;
+
+        bool runGameplay = false;
+        bool runRender = false;
+        bool runAudio = false;
+        bool throttleFrame = false;
+    };
+
     struct AppState {
         AppView currentView = AppView::CONSOLE_SELECT;
         ConsoleID selectedConsole = ConsoleID::NONE;
         string selectedGame = "";
         bool isLoading = false;
+    };
+
+    struct RuntimeStats {
+        u64 frameCount;
+        double fps;
+        RingBuffer<double, 1000> frameTimes;
+    };
+
+    struct TickStats {
+        high_resolution_clock::time_point frameStart;
+        high_resolution_clock::time_point frameEnd;
+        std::chrono::duration<double, milli> frameDuration;
+
+        u32 eventsPolled;
+    };
+
+    struct FrameContext {
+        FrameState state;
+        TickStats stats;
+
+        bool suppressInput = false;
+        bool quitRequested = false;
     };
 
     const map<ConsoleID, string> ConsoleNamesShort = {
@@ -438,7 +474,7 @@ namespace NS_Proteus {
         float PopupH() const { return dispHeight * 0.2f; }
     };
 
-    enum class SessionState {
+    enum class ConsoleSessionState {
         EMPTY,
         CREATED,
         ROM_LOADED,
@@ -448,7 +484,7 @@ namespace NS_Proteus {
         SHUTDOWN
     };
 
-    enum class SessionErrorCode {
+    enum class ConsoleSessionErrorCode {
         NONE,
         INVALID_ARGUMENT,
         UNSUPPORTED_CONSOLE,
@@ -462,8 +498,8 @@ namespace NS_Proteus {
 
     struct SessionResult {
         bool success;
-        SessionState postState;
-        SessionErrorCode code;
+        ConsoleSessionState postState;
+        ConsoleSessionErrorCode code;
         string message;
     };
 }

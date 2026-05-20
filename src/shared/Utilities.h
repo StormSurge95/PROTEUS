@@ -90,4 +90,26 @@ static string FormatDisplayName(const string& fullname, bool wrap = false) {
     return name;
 }
 
+template<typename T, size_t capacity>
+class RingBuffer {
+    private:
+        deque<T> data;
+        T total;
+        size_t lastEntryPos = 0;
+        size_t count = 0;
+    public:
+        RingBuffer() : data(capacity) {}
+
+        void push(const T& val) {
+            if (data.size() >= capacity) {
+                total -= data.front();
+                data.pop_front();
+            }
+            total += val;
+            data.push_back(val);
+        }
+
+        double avg() { return (double)total / count; }
+};
+
 #pragma warning(pop)

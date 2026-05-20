@@ -8,7 +8,7 @@ namespace NS_Proteus {
     class ConsoleSession {
         private:
             ConsoleID currentConsole = ConsoleID::NONE;
-            SessionState currentState = SessionState::EMPTY;
+            ConsoleSessionState currentState = ConsoleSessionState::EMPTY;
             sptr<IConsole> station = nullptr;
             sptr<IDebugger> debugger = nullptr;
             string lastError;
@@ -20,8 +20,8 @@ namespace NS_Proteus {
             string loadedRomName = "";
             path loadedRomPath;
 
-            SessionResult Failure(SessionErrorCode code, SessionState state, string message);
-            SessionResult Success(SessionState state, string message);
+            SessionResult Failure(ConsoleSessionErrorCode code, ConsoleSessionState state, string message);
+            SessionResult Success(ConsoleSessionState state, string message);
         public:
             ConsoleSession() = default;
             ~ConsoleSession() = default;
@@ -35,7 +35,7 @@ namespace NS_Proteus {
 
             bool IsActive() const;
             const ConsoleID CurrentConsoleID() const { return currentConsole; }
-            const SessionState GetState() const { return currentState; }
+            const ConsoleSessionState GetState() const { return currentState; }
             const sptr<IConsole>& GetConsole() const { return station; }
             const sptr<IDebugger>& GetDebugger() const { return debugger; }
             const string GetError() const { return lastError; }

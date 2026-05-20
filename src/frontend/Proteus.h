@@ -27,7 +27,7 @@ namespace NS_Proteus {
             void Deinit();
 
             void Run();
-            void RunSST();
+            //void RunSST();
 
             const AppState GetState() const { return state; }
 
@@ -54,11 +54,11 @@ namespace NS_Proteus {
             std::shared_ptr<AudioManager> audioManager;
             std::shared_ptr<VideoManager> videoManager;
             std::shared_ptr<InputManager> inputManager;
-
+            sptr<ConsoleSession> session;
             uptr<RomLibrary> lib;
-            uptr<ConsoleSession> session;
 
             AppState state;
+            RuntimeStats stats;
 
             bool quit = false;
             SDL_Event event = {};
@@ -69,6 +69,10 @@ namespace NS_Proteus {
 
             void SetMetadata();
 
-            void ProcessEvents();
+            void ProcessEvents(FrameContext& ctx);
+
+            FrameContext BeginFrame();
+            void EndFrame(FrameContext& ctx);
+            void ComputeFrameState(FrameContext& ctx);
     };
 }
