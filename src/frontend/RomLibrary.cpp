@@ -174,7 +174,6 @@ void RomLibrary::Load() {
             Refresh(id);
         }
     }
-    printf("Hashes done: %d\n", numHashes);
 }
 
 void RomLibrary::Refresh(ConsoleID console) {
@@ -190,6 +189,11 @@ void RomLibrary::Refresh(ConsoleID console) {
 
     vector<ROM_DATA>& currentList = library[console];
     unordered_map<string, size_t> idx;
+
+    for (size_t i = 0; i < currentList.size(); i++) {
+        string key = NormPathToKey(currentList[i].path);
+        idx[key] = i;
+    }
 
     vector<ROM_DATA> newList;
     set<path> seenKeys;
@@ -221,7 +225,6 @@ ROM_DATA RomLibrary::NewData(const ConsoleID id, const directory_entry& entry) {
 
     // get hash
     string hash = GetHash(fPath);
-    numHashes++;
 
     // get game name
     string gName = Lookup(id, hash);
@@ -251,6 +254,9 @@ bool RomLibrary::Unchanged(const ROM_DATA& oldData, const directory_entry& newDa
         return false;
 
     if (oldData.fileSize != newData.file_size())
+        return false;
+
+    if (oldData.lastWrite != newData.last_write_time().time_since_epoch().count())
         return false;
 
     return true;

@@ -8,8 +8,6 @@ namespace NS_Proteus {
             path baseRomPath = absolute("C:/ROMS").lexically_normal().make_preferred();
             path libraryPath = absolute("C:/ROMS/RomLibrary.json").lexically_normal().make_preferred();
 
-            u32 numHashes = 0;
-
             map<ConsoleID, vector<ROM_DATA>> library;
 
             string GetHash(const string& filepath);
