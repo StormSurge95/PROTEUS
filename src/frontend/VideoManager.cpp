@@ -1,5 +1,5 @@
-#include "./Proteus.h"
-#include "./VideoManager.h"
+#include "./Proteus.hpp"
+#include "./VideoManager.hpp"
 
 #include "../../resources/FontUI.h"
 #include "../../resources/FontUI_Bold.h"

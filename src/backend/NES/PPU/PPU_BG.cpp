@@ -1,4 +1,4 @@
-#include "./PPU.h"
+#include "./PPU.hpp"
 
 using namespace NES_NS;
 

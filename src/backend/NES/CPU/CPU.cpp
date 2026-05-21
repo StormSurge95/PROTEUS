@@ -1,8 +1,8 @@
-#include "./CPU.h"
-#include "../PPU/PPU.h"
-#include "../APU/APU.h"
-#include "../PAK/Gamepak.h"
-#include "../Controller.h"
+#include "./CPU.hpp"
+#include "../PPU/PPU.hpp"
+#include "../APU/APU.hpp"
+#include "../PAK/Gamepak.hpp"
+#include "../Controller.hpp"
 
 using namespace NES_NS;
 

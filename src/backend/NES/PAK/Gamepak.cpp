@@ -1,9 +1,9 @@
-#include "./Mappers/M000.h"
-#include "./Mappers/M001.h"
-#include "./Mappers/M002.h"
-#include "./Mappers/M003.h"
-#include "./Mappers/M004.h"
-#include "./Gamepak.h"
+#include "./Mappers/M000.hpp"
+#include "./Mappers/M001.hpp"
+#include "./Mappers/M002.hpp"
+#include "./Mappers/M003.hpp"
+#include "./Mappers/M004.hpp"
+#include "./Gamepak.hpp"
 
 /*
     TODO: MODIFY TO SUPPORT NES 2.0 HEADER FORMAT

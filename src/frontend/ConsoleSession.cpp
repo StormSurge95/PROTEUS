@@ -1,7 +1,7 @@
-#include "./ConsoleSession.h"
-#include "../backend/Consoles.h"
-#include "./DebuggerFactory.h"
-#include "./ConsoleFactory.h"
+#include "./ConsoleSession.hpp"
+#include "../backend/Consoles.hpp"
+#include "./DebuggerFactory.hpp"
+#include "./ConsoleFactory.hpp"
 
 using namespace NS_Proteus;
 

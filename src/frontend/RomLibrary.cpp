@@ -1,4 +1,4 @@
-#include "RomLibrary.h"
+#include "RomLibrary.hpp"
 #include "../../resources/NES_DB.h"
 
 #include <openssl/evp.h>

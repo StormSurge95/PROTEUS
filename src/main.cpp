@@ -1,5 +1,5 @@
-#include "./frontend/Proteus.h"
-#include "./backend/NES/NES.h"
+#include "./frontend/Proteus.hpp"
+#include "./backend/NES/NES.hpp"
 
 using namespace NS_Proteus;
 

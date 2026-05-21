@@ -1,4 +1,4 @@
-#include "./Triangle.h"
+#include "./Triangle.hpp"
 
 using namespace NES_NS;
 

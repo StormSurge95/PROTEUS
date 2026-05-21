@@ -1,11 +1,11 @@
-#include "./Proteus.h"
-#include "FrontendPCH.h"
-#include "../backend/NES/NES.h"
-#include "./AudioManager.h"
-#include "./InputManager.h"
-#include "./VideoManager.h"
-#include "./RomLibrary.h"
-#include "./Logger.h"
+#include "./Proteus.hpp"
+#include "FrontendPCH.hpp"
+#include "../backend/NES/NES.hpp"
+#include "./AudioManager.hpp"
+#include "./InputManager.hpp"
+#include "./VideoManager.hpp"
+#include "./RomLibrary.hpp"
+#include "./Logger.hpp"
 
 using namespace NS_Proteus;
 

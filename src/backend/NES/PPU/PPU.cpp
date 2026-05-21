@@ -1,5 +1,5 @@
-#include "../PAK/Mappers/Mapper.h"
-#include "./PPU.h"
+#include "../PAK/Mappers/Mapper.hpp"
+#include "./PPU.hpp"
 
 using namespace NES_NS;
 

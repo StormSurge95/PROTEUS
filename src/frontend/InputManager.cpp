@@ -1,5 +1,5 @@
-#include "../frontend/Proteus.h"
-#include "InputManager.h"
+#include "../frontend/Proteus.hpp"
+#include "InputManager.hpp"
 
 using namespace NS_Proteus;
 

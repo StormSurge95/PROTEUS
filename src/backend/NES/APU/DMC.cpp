@@ -1,7 +1,7 @@
-#include "../shared/NES_PCH.h"
-#include "../CPU/CPU.h"
-#include "./APU.h"
-#include "./DMC.h"
+#include "../shared/NES_PCH.hpp"
+#include "../CPU/CPU.hpp"
+#include "./APU.hpp"
+#include "./DMC.hpp"
 
 using namespace NES_NS;
 
