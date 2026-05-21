@@ -29,7 +29,9 @@ void RomLibrary::Save() {
             // populate our entry json object with the data from our ROM_ENTRY object
             e["gameName"] = r.gameName;
             e["path"] = r.path;
-            e["hash"] = r.path;
+            e["hash"] = r.hash;
+            e["fileSize"] = r.fileSize;
+            e["lastWrite"] = r.lastWrite;
 
             // add the entry json object to our vector json object
             v.push_back(e);
@@ -122,10 +124,9 @@ string RomLibrary::Lookup(ConsoleID console, const string& hash) {
 
 void RomLibrary::Create() {
     // base path for location of ALL rom files
-    const path base = "C:/ROMS/";
-    if (!exists(base)) {
+    if (!exists(baseRomPath)) {
         // if the base doesn't exist, create it and return
-        create_directory(base);
+        create_directory(baseRomPath);
         return;
     }
 
@@ -138,66 +139,119 @@ void RomLibrary::Load() {
     // if we don't already have a saved reference, create a new library
     // this allows us to only do the search/hash/create loop on first run
     if (!exists(libraryPath))
-        return Create();
+        Create();
+    else {
+        // open our file for input
+        ifstream f(libraryPath);
 
-    // open our file for input
-    ifstream f(libraryPath);
+        // use provided `libraryPath` value to open our json file
+        // and parse it into something processable.
+        // this `j` object will become our `library` map
+        json j = json::parse(f);
 
-    // use provided `libraryPath` value to open our json file
-    // and parse it into something processable.
-    // this `j` object will become our `library` map
-    json j = json::parse(f);
+        // for each ConsoleID/vector pair `data` within `j`...
+        for (json::iterator it = j.begin(); it != j.end(); it++) {
+            if (it.value().is_null()) continue;
+            // id had to be converted to a string for json format;
+            // convert it back for use within our map
+            ConsoleID id = GetIDFromName(it.key());
 
-    // for each ConsoleID/vector pair `data` within `j`...
-    for (json::iterator it = j.begin(); it != j.end(); it++) {
-        if (it.value().is_null()) continue;
-        // id had to be converted to a string for json format;
-        // convert it back for use within our map
-        ConsoleID id = GetIDFromName(it.key());
+            // create a vector to hold the parse data from the file
+            vector<ROM_DATA> v = {};
 
-        // create a vector to hold the parse data from the file
-        vector<ROM_DATA> v = {};
+            // `e` will be the json format of each ROM_DATA entry
+            for (const json& e : it.value()) {
+                string gName = e["gameName"];
+                string fPath = e["path"];
+                string hash = e["hash"];
+                size_t size = e["fileSize"];
+                u64 time = e["lastWrite"];
+                v.push_back({ gName, fPath, hash, size, time });
+            }
 
-        // `e` will be the json format of each ROM_DATA entry
-        for (const json& e : it.value())
-            v.push_back({ .gameName = e["gameName"], .path = e["path"], .hash = e["hash"] });
-        
-        // now that we've filled the vector, simply add it to the library map
-        library[id] = v;
+            // now that we've filled the vector, simply add it to the library map
+            library[id] = v;
+            Refresh(id);
+        }
     }
+    printf("Hashes done: %d\n", numHashes);
 }
 
 void RomLibrary::Refresh(ConsoleID console) {
-    // TODO: Figure out a way to shorten processing time if the game being looked for is already in our list and valid
-
     path cPath = baseRomPath;
-    // determine path to roms for THAT console
+    // determine path to roms for THIS console
     string cName = ConsoleNamesShort.at(console);
     cPath /= cName;
     if (!exists(cPath)) {
-        // if path doesn't exist, create it and continue
+        // if path doesn't already exist, create it and return
         create_directory(cPath);
         return;
     }
-    // init our game vector
-    vector<ROM_DATA> games = {};
-    for (const auto& entry : directory_iterator(cPath)) { // for each file within the directory...
-        // get text data
-        string filepath = entry.path().string();
-        string filename = entry.path().filename().string();
 
-        // confirm that `filepath` leads to a file and not a directory
-        if (!is_regular_file(filepath)) continue;
+    vector<ROM_DATA>& currentList = library[console];
+    unordered_map<string, size_t> idx;
 
-        // get hash
-        string hash = GetHash(filepath);
+    vector<ROM_DATA> newList;
+    set<path> seenKeys;
 
-        // get game name
-        string gameName = Lookup(console, hash);
-        // if we couldn't find gamename, default to using file name
-        if (gameName == "Unknown") gameName = filename.substr(0, filename.find_last_of('.'));
-        // add to our game list
-        games.push_back({ .gameName = gameName, .path = filepath, .hash = hash });
+    for (const directory_entry& entry : directory_iterator(cPath)) {
+        // make sure this entry is an actual file and not something else
+        if (!is_regular_file(entry)) continue;
+
+        string key = NormPathToKey(entry);
+        seenKeys.insert(key);
+
+        if (idx.contains(key)) {
+            ROM_DATA old = currentList[idx[key]];
+            if (Unchanged(old, entry))
+                newList.push_back(old);
+            else
+                newList.push_back(NewData(console, entry));
+        } else
+            newList.push_back(NewData(console, entry));
     }
-    library[console] = games;
+
+    library[console] = newList;
+}
+
+ROM_DATA RomLibrary::NewData(const ConsoleID id, const directory_entry& entry) {
+    // get string data
+    string fPath = entry.path().string();
+    string fName = entry.path().filename().string();
+
+    // get hash
+    string hash = GetHash(fPath);
+    numHashes++;
+
+    // get game name
+    string gName = Lookup(id, hash);
+
+    // if game name couldn't be found, default to using file name
+    if (gName == "Unknown") gName = fName.substr(0, fName.find_last_of('.'));
+
+    size_t size = entry.file_size();
+    u64 last = entry.last_write_time().time_since_epoch().count();
+
+    return { gName, fPath, hash, size, last };
+}
+
+string RomLibrary::NormPathToKey(path raw) {
+    path p = path(raw);
+    string s = absolute(p).lexically_normal().generic_string();
+    transform(s.begin(), s.end(), s.begin(), 
+        [](u8 c) { return tolower(c); });
+    return s;
+}
+
+bool RomLibrary::Unchanged(const ROM_DATA& oldData, const directory_entry& newData) {
+    if (oldData.hash.empty())
+        return false;
+
+    if (NormPathToKey(oldData.path) != NormPathToKey(newData.path().string()))
+        return false;
+
+    if (oldData.fileSize != newData.file_size())
+        return false;
+
+    return true;
 }

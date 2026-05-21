@@ -79,6 +79,7 @@ namespace NS_Proteus {
 
         bool suppressInput = false;
         bool quitRequested = false;
+        bool overlayToggledOff = false;
     };
 
     const map<ConsoleID, string> ConsoleNamesShort = {
@@ -142,6 +143,8 @@ namespace NS_Proteus {
         string gameName;
         string path;
         string hash;
+        size_t fileSize;
+        u64 lastWrite;
     };
 
     enum class DebugView {

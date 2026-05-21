@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <chrono>
 #include <cstdint>
 #include <deque>
@@ -15,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <SDL3/SDL.h>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -33,6 +35,7 @@ using std::chrono::steady_clock;
 using std::chrono::high_resolution_clock;
 using std::chrono::duration;
 using std::chrono::system_clock;
+using file_time = std::chrono::file_time<std::chrono::file_clock::duration>;
 using std::milli;
 
 // cstdint
@@ -51,9 +54,11 @@ using std::deque;
 // filesystem
 using std::filesystem::path;
 using std::filesystem::directory_iterator;
+using std::filesystem::directory_entry;
 using std::filesystem::exists;
 using std::filesystem::create_directory;
 using std::filesystem::is_regular_file;
+using std::filesystem::absolute;
 
 // fstream & iomanip
 using std::ifstream;
@@ -65,6 +70,7 @@ using std::endl;
 using nlohmann::json;
 
 // map
+using std::unordered_map;
 using std::map;
 using std::pair;
 
@@ -78,11 +84,16 @@ using std::make_shared;
 template <class T>
 using wptr = std::weak_ptr<T>;
 
+// set
+using std::set;
+
 // sstream & string
 using std::stringstream;
 using std::string;
 using std::to_string;
 using std::format;
+using std::transform;
+using std::tolower;
 
 // thread
 using std::this_thread::sleep_for;

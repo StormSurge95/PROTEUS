@@ -5,15 +5,23 @@
 namespace NS_Proteus {
     class RomLibrary {
         private:
-            path baseRomPath = "C:\\ROMS";
-            path libraryPath = "C:\\ROMS\\RomLibrary.json";
+            path baseRomPath = absolute("C:/ROMS").lexically_normal().make_preferred();
+            path libraryPath = absolute("C:/ROMS/RomLibrary.json").lexically_normal().make_preferred();
+
+            u32 numHashes = 0;
+
             map<ConsoleID, vector<ROM_DATA>> library;
 
             string GetHash(const string& filepath);
             string Lookup(ConsoleID console, const string& hash);
+
             void Save();
             void Load();
             void Create();
+
+            string NormPathToKey(path rawPath);
+            ROM_DATA NewData(const ConsoleID id, const directory_entry& entry);
+            bool Unchanged(const ROM_DATA& oldData, const directory_entry& newData);
         public:
             inline RomLibrary() { Load(); }
             inline RomLibrary(path libPath) { libraryPath = libPath; Load(); }
