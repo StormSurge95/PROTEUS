@@ -88,6 +88,7 @@
     <ClInclude Include="src\frontend\ConsoleSession.h" />
     <ClInclude Include="src\frontend\DebuggerFactory.h" />
     <ClInclude Include="src\frontend\FrontendPCH.h" />
+    <ClInclude Include="src\frontend\IManagerContexts.h" />
     <ClInclude Include="src\frontend\ImGui\imconfig.h" />
     <ClInclude Include="src\frontend\ImGui\imgui.h" />
     <ClInclude Include="src\frontend\ImGui\imgui_impl_sdl3.h" />
@@ -97,6 +98,7 @@
     <ClInclude Include="src\frontend\ImGui\imstb_textedit.h" />
     <ClInclude Include="src\frontend\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\frontend\InputManager.h" />
+    <ClInclude Include="src\frontend\Logger.h" />
     <ClInclude Include="src\frontend\Proteus.h" />
     <ClInclude Include="src\frontend\RomLibrary.h" />
     <ClInclude Include="src\frontend\Types.h" />

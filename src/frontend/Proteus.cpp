@@ -5,6 +5,7 @@
 #include "./InputManager.h"
 #include "./VideoManager.h"
 #include "./RomLibrary.h"
+#include "./Logger.h"
 
 using namespace NS_Proteus;
 
@@ -15,6 +16,7 @@ Proteus::Proteus() {
 
     lib = make_unique<RomLibrary>();
     session = make_shared<ConsoleSession>();
+    logger = make_shared<Logger>();
 }
 
 Proteus::~Proteus() {
@@ -46,26 +48,18 @@ void Proteus::Deinit() {
 void Proteus::Run() {
     while (!quit) {
         FrameContext ctx = BeginFrame();
-        ProcessEvents(ctx);
-        ComputeFrameState(ctx);
+        PhaseInput(ctx);
+        PhaseComputeFrameState(ctx);
 
         if (ctx.state.throttleFrame) {
-            SDL_Delay(10);
+            PhaseThrottleFrame(ctx);
             EndFrame(ctx);
             continue;
         }
 
-        if (ctx.state.runRender) videoManager->Render(state);
-
-        if (ctx.state.runGameplay) {
-            if (!ctx.state.suppressInput)
-                inputManager->TranslateInputs(session->GetConsole(), state.selectedConsole);
-            // TODO: runtime trace(s)
-            session->GetConsole()->clock();
-        }
-        
-        if (ctx.state.runAudio) audioManager->Update(session->GetConsole());
-
+        PhaseEmuDebug(ctx);
+        PhaseRender(ctx);
+        PhaseAudio(ctx);
         EndFrame(ctx);
     }
 }
@@ -91,7 +85,13 @@ void Proteus::EndFrame(FrameContext& ctx) {
     stats.fps = stats.frameTimes.avg();
 }
 
-void Proteus::ComputeFrameState(FrameContext& ctx) {
+void Proteus::PhaseInput(FrameContext& ctx) {
+    logger->EmitPhaseHook(ctx, AppPhaseName::INPUT, AppPhaseStatus::BEGIN);
+    ProcessEvents(ctx);
+    logger->EmitPhaseHook(ctx, AppPhaseName::INPUT, AppPhaseStatus::END);
+}
+
+void Proteus::PhaseComputeFrameState(FrameContext& ctx) {
     ctx.state.windowMinimized = SDL_GetWindowFlags(videoManager->GetWindow()) & SDL_WINDOW_MINIMIZED;
     ctx.state.inGameView = state.currentView == AppView::GAME_VIEW;
     ctx.state.overlayActive = videoManager->OverlayActive();
@@ -104,6 +104,42 @@ void Proteus::ComputeFrameState(FrameContext& ctx) {
     ctx.state.runRender = !ctx.state.windowMinimized;
     ctx.state.runAudio = !ctx.state.windowMinimized;
     ctx.state.throttleFrame = ctx.state.windowMinimized;
+}
+
+void Proteus::PhaseThrottleFrame(FrameContext& ctx) {
+    logger->EmitPhaseHook(ctx, AppPhaseName::THROTTLE, AppPhaseStatus::BEGIN);
+    SDL_Delay(10);
+    logger->EmitPhaseHook(ctx, AppPhaseName::THROTTLE, AppPhaseStatus::END);
+}
+
+void Proteus::PhaseEmuDebug(FrameContext& ctx) {
+    if (ctx.state.runGameplay) {
+        logger->EmitPhaseHook(ctx, AppPhaseName::EMUDEB, AppPhaseStatus::BEGIN);
+        if (!ctx.state.suppressInput)
+            inputManager->TranslateInputs(session->GetConsole(), state.selectedConsole);
+        // TODO: runtime trace(s)
+        session->GetConsole()->clock();
+        logger->EmitPhaseHook(ctx, AppPhaseName::EMUDEB, AppPhaseStatus::END);
+    } else
+        logger->EmitPhaseHook(ctx, AppPhaseName::EMUDEB, AppPhaseStatus::SKIPPED, "EmuDebug phase disabled this frame");
+}
+
+void Proteus::PhaseRender(FrameContext& ctx) {
+    if (ctx.state.runRender) {
+        logger->EmitPhaseHook(ctx, AppPhaseName::RENDER, AppPhaseStatus::BEGIN);
+        videoManager->Render(state);
+        logger->EmitPhaseHook(ctx, AppPhaseName::RENDER, AppPhaseStatus::END);
+    } else
+        logger->EmitPhaseHook(ctx, AppPhaseName::RENDER, AppPhaseStatus::SKIPPED, "Render phase disabled this frame");
+}
+
+void Proteus::PhaseAudio(FrameContext& ctx) {
+    if (ctx.state.runAudio) {
+        logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::BEGIN);
+        audioManager->Update(session->GetConsole());
+        logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::END);
+    } else
+        logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::SKIPPED, "Audio phase disabled this frame");
 }
 
 //void Proteus::RunSST() {
@@ -271,11 +307,11 @@ void Proteus::ToggleOverlay() {
     videoManager->ToggleOverlay();
 }
 
-std::vector<ROM_DATA> Proteus::GetGameList(ConsoleID console) {
+const std::vector<ROM_DATA>& Proteus::GetGameList(ConsoleID console) const {
     return lib->GetGameList(console);
 }
 
-void Proteus::LaunchGame(int index) {
+void Proteus::LaunchGame(u32 index) {
     // start our console session
     SessionResult r = session->CreateSession(state.selectedConsole);
 
@@ -303,7 +339,7 @@ void Proteus::LaunchGame(int index) {
     state.currentView = AppView::GAME_VIEW;
 }
 
-const u32* Proteus::GetFrameBuffer() {
+const u32* Proteus::GetFrameBuffer() const {
     if (session->GetConsole().get() != nullptr) {
         return session->GetConsole()->getFrameBuffer();
     }
@@ -316,7 +352,7 @@ void Proteus::ResetConsole() {
     // TODO: handle failure
 }
 
-void Proteus::ShutDownConsole() {
+void Proteus::ShutdownConsole() {
     SessionResult r = session->Shutdown();
     if (r.success) state.currentView = AppView::GAME_LIST;
     // TODO: handle failure

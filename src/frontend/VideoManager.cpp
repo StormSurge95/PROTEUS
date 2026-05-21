@@ -9,8 +9,8 @@
 
 using namespace NS_Proteus;
 
-VideoManager::VideoManager(Proteus* p) {
-    proteus = p;
+VideoManager::VideoManager(IVideoContext* c) {
+    ctx = c;
 }
 
 void VideoManager::Init() {
@@ -210,7 +210,7 @@ void VideoManager::Render(const AppState& state) {
     }
     if (overlayActive) RenderOverlay();
 
-    FinalizeFrame(proteus->GetState().currentView != AppView::GAME_VIEW);
+    FinalizeFrame(ctx->GetAppState().currentView != AppView::GAME_VIEW);
 }
 
 void VideoManager::RenderConsoleSelection() {
@@ -232,7 +232,7 @@ void VideoManager::RenderConsoleSelection() {
         ConsoleID console = ConsoleID(i);
         if (ImGui::ButtonCentered(ConsoleNamesShort.at(console).c_str(), btnSize)) {
             // if this button is clicked, proceed to the game selection menu
-            proteus->SetState(AppView::GAME_LIST, console);
+            ctx->OnConsoleSelected(console);
         }
         // only 4 buttons per row
         if (i % 4 != 3) ImGui::SameLine();
@@ -264,7 +264,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
         ImGui::TextWrappedCentered(msg);
     } else {
         // get list of games
-        vector<ROM_DATA> games = proteus->GetGameList(console);
+        vector<ROM_DATA> games = ctx->GetGameList(console);
         if (games.size() != 0) { // only attempt to render gamelist buttons if there are actually games in the list
             // disable following ImGui items if the overlay is active
             ImGui::BeginDisabled(overlayActive);
@@ -277,7 +277,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
                 string name = FormatDisplayName(games[i].gameName, true);
                 if (ImGui::ButtonCentered(name.c_str(), btnSize)) {
                     // if this button is clicked, proceed and attempt to launch the selected ROM
-                    proteus->LaunchGame(i);
+                    ctx->LaunchGame(i);
                 }
                 // only 5 buttons per row
                 if (i % 5 != 4) ImGui::SameLine();
@@ -326,7 +326,7 @@ void VideoManager::RenderGameView(bool dbg) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    const u32* buffer = proteus->GetFrameBuffer();
+    const u32* buffer = ctx->GetFrameBuffer();
     void* pixels;
     int pitch;
     SDL_LockTexture(gameTexture, NULL, &pixels, &pitch);
@@ -350,7 +350,7 @@ void VideoManager::RenderOverlay() {
     vp = ImGui::GetMainViewport();
     PrepUI(vp, MenuType::OVERLAY);
     ImGui::Begin("OVERLAY", &overlayActive, ImOverlayFlags);
-    AppView view = proteus->GetState().currentView;
+    AppView view = ctx->GetAppView();
     // calculate button size
     float numBtns = view == AppView::GAME_VIEW ? 8.0f : 5.0f;
     ImVec2 btnSize(vp->WorkSize.x, vp->WorkSize.y / numBtns);
@@ -358,20 +358,20 @@ void VideoManager::RenderOverlay() {
     if (ImGui::Button("RESUME", btnSize)) {
         // this button simply turns the overlay back off
         ToggleOverlay();
-        proteus->Resume();
+        ctx->Resume();
     }
     if (view == AppView::GAME_VIEW) {
         if (ImGui::Button("RESTART", btnSize)) {
             // this button will reset whatever console is currently running
             // turn overlay back off first to ensure that the console resets properly
             ToggleOverlay();
-            proteus->ResetConsole();
+            ctx->ResetConsole();
         }
         if (ImGui::Button("CLOSE GAME", btnSize)) {
             // this button will close the current ROM and return us to the game list
             // turn overlay back off first to ensure the console shuts down properly
             ToggleOverlay();
-            proteus->ShutDownConsole();
+            ctx->ShutdownConsole();
         }
         if (ImGui::Button("SAVE STATES", btnSize)) {
             // TODO: have button access list of saved states for currently running title
@@ -444,14 +444,14 @@ void VideoManager::RenderDebug(float scale) {
                 ImGui::PopItemWidth();
                 float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
                 if (ImGui::Button("Confirm", ImVec2(w, 0))) {
-                    proteus->GetDebugger()->SetTracePath(filepath);
-                    proteus->GetDebugger()->logToFile = temp;
+                    ctx->GetDebugger()->SetTracePath(filepath);
+                    ctx->GetDebugger()->logToFile = temp;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
                 if (ImGui::Button("Cancel", ImVec2(w, 0))) {
                     temp = false;
-                    proteus->GetDebugger()->logToFile = false;
+                    ctx->GetDebugger()->logToFile = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
@@ -538,7 +538,7 @@ void VideoManager::RenderDebugCPU() {
         ImGui::TableSetupColumn("Value");
         ImGui::TableSetupColumn("Value (Hex)");
         ImGui::TableHeadersRow();
-        vector<array<string, 3>> cpuState = proteus->GetDebugger()->GetStateCPU();
+        vector<array<string, 3>> cpuState = ctx->GetDebugger()->GetStateCPU();
         for (int i = 0; i < cpuState.size(); i++) {
             ImGui::TableNextRow();
             if (memcmp(cpuState[i][0].data(), "", 2) == 0)
@@ -555,7 +555,7 @@ void VideoManager::RenderDebugCPU() {
 }
 
 void VideoManager::RenderDebugDIS() {
-    vector<string> dis = proteus->GetDebugger()->GetDisassembly();
+    vector<string> dis = ctx->GetDebugger()->GetDisassembly();
     for (u8 line = 0; line < dis.size(); line++) {
         if (line == dis.size() / 2)
             ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", dis[line].c_str());
@@ -570,7 +570,7 @@ void VideoManager::RenderDebugRAM() {
     float curW = chrW * 89;
     float scale = tgtW / curW;
     ImGui::SetWindowFontScale(scale);
-    vector<string> lines = proteus->GetDebugger()->GetStateRAM();
+    vector<string> lines = ctx->GetDebugger()->GetStateRAM();
     for (const string& line : lines) {
         ImGui::Text("%s", line.c_str());
     }
@@ -584,7 +584,7 @@ void VideoManager::RenderDebugPPU() {
         ImGui::TableSetupColumn("Value");
         ImGui::TableSetupColumn("Value (Hex)");
         ImGui::TableHeadersRow();
-        vector<array<string, 4>> ppuState = proteus->GetDebugger()->GetStatePPU();
+        vector<array<string, 4>> ppuState = ctx->GetDebugger()->GetStatePPU();
         for (int i = 0; i < ppuState.size(); i++) {
             ImGui::TableNextRow();
             if (memcmp(ppuState[i][0].data(), "", 2) == 0)
@@ -609,7 +609,7 @@ void VideoManager::RenderDebugAPU() {
         ImGui::TableSetupColumn("Value");
         ImGui::TableSetupColumn("Value (Hex)");
         ImGui::TableHeadersRow();
-        vector<array<string, 4>> apuState = proteus->GetDebugger()->GetStateAPU();
+        vector<array<string, 4>> apuState = ctx->GetDebugger()->GetStateAPU();
         for (int i = 0; i < apuState.size(); i++) {
             ImGui::TableNextRow();
             if (memcmp(apuState[i][0].data(), "", 2) == 0)

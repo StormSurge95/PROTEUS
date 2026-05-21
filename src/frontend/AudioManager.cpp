@@ -2,8 +2,8 @@
 
 using namespace NS_Proteus;
 
-AudioManager::AudioManager(Proteus* p, bool d) {
-    proteus = p;
+AudioManager::AudioManager(const IAudioContext* c, bool d) {
+    ctx = c;
     debug = d;
 }
 

@@ -6,7 +6,6 @@ namespace NS_Proteus {
     class AudioManager;
     class InputManager;
     class VideoManager;
-    class DebugManager;
 
     enum class AppView {
         CONSOLE_SELECT,
@@ -509,4 +508,39 @@ namespace NS_Proteus {
 
     static SDL_EventType WINDOW_EVENTS[] = { SDL_EVENT_WINDOW_CLOSE_REQUESTED, SDL_EVENT_WINDOW_RESIZED };
     static SDL_EventType GAMEPAD_EVENTS[] = { SDL_EVENT_GAMEPAD_ADDED, SDL_EVENT_GAMEPAD_REMOVED, SDL_EVENT_GAMEPAD_BUTTON_DOWN };
+
+    enum class AppPhaseName { INPUT, EMUDEB, RENDER, AUDIO, THROTTLE };
+    enum class AppPhaseStatus { BEGIN, END, SKIPPED };
+
+    struct PhaseLogContext {
+        AppPhaseName phase;
+        AppPhaseStatus status;
+        u64 frameNumber;
+        ConsoleSessionState sessionState;
+        bool overlayActive;
+        bool minimized;
+        u64 elapsed; // used by AppPhaseStatus::END
+        string reason; // used by AppPhaseStatus::SKIPPED
+    };
+
+    enum class LogLevel {
+        TRACE, DEBUG, INFO, WARN, ERROR
+    };
+
+    enum class LogCategory {
+        APP_LOOP, APP_INPUT,
+        SESSION,
+        ROM_LIBRARY,
+        NES_CPU, NES_PPU, NES_APU,
+        DEBUG_TRACE
+    };
+
+    struct LogRecord {
+        u64 timestamp;
+        LogLevel level;
+        LogCategory category;
+        string message;
+        map<string, string> fields;
+        // threadID?
+    };
 }

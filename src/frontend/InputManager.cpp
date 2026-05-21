@@ -108,8 +108,8 @@ Gamepad::AxisDirection Gamepad::GetDirection(short value) {
     return INACTIVE;
 }
 
-InputManager::InputManager(Proteus* p, bool d) {
-    proteus = p;
+InputManager::InputManager(const IInputContext* c, bool d) {
+    ctx = c;
     debug = d;
     kbState = std::make_unique<Inputs>();
 }

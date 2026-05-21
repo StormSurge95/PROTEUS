@@ -6,7 +6,7 @@
 namespace NS_Proteus {
     class AudioManager {
         public:
-            AudioManager(Proteus* proteus, bool debug = false);
+            AudioManager(const IAudioContext* ctx, bool debug = false);
             ~AudioManager();
 
             AudioManager(const AudioManager&) = delete;
@@ -19,7 +19,7 @@ namespace NS_Proteus {
 
             void Update(const sptr<IConsole>& station);
         private:
-            Proteus* proteus;
+            const IAudioContext* ctx;
             bool debug;
 
             SDL_AudioSpec spec = {};

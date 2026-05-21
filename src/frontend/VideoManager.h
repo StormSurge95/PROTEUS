@@ -13,7 +13,7 @@ namespace NS_Proteus {
              * @param debug Whether or not debug is enabled
              * @todo Is `debug` even necessary anymore?
              */
-            VideoManager(Proteus* proteus);
+            VideoManager(IVideoContext* c);
             /**
              * @brief Explicit Destructor (simply calls `Deinit()`)
              */
@@ -77,7 +77,7 @@ namespace NS_Proteus {
             };
             DebugView currentDebugView = DebugView::CPU_REGS;
             bool overlayActive = false;
-            Proteus* proteus = nullptr;
+            IVideoContext* ctx = nullptr;
 
             DisplayInfo dispInfo;
 

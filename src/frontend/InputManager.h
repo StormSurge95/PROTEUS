@@ -8,7 +8,7 @@ namespace NS_Proteus {
         public:
             bool useKB = true;
 
-            InputManager(Proteus* proteus, bool debug = false);
+            InputManager(const IInputContext* ctx, bool debug = false);
             ~InputManager() { Deinit(); }
 
             InputManager(const InputManager&) = delete;
@@ -27,7 +27,7 @@ namespace NS_Proteus {
             void Disconnect(SDL_JoystickID id);
 
         private:
-            Proteus* proteus;
+            const IInputContext* ctx;
             bool debug;
 
             const int MAX_PLAYERS = 4;
