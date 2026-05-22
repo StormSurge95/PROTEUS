@@ -69,17 +69,26 @@ namespace NES_NS {
             vector<u8> CHR() { return chrMemory; }
 
         private:
+            ConsoleRegion region = ConsoleRegion::NTSC;
+            ConsoleType cType = ConsoleType::NES_FAMICOM;
+
+            VsPPU vsPPU = VsPPU::PPU2C0X;
+            VsHardware vsHardware = VsHardware::VS_UNISYSTEM;
+
+            ExpansionDevice expDev = ExpansionDevice::UNSPECIFIED;
+
             /// @brief validity flag for ROM data
             bool valid = false;
-            /// @brief flag to represent if this rom has the 512B trainer section
+            /// @brief flag to show whether this rom has the 512B trainer section
             bool hasTrainer = false;
+            /// @brief flag to show whether this rom has battery-backed ram
+            bool hasBattery = false;
 
             /// @brief ID of the mapper for this ROM
-            u8 mapperID = 0;
-            /// @brief Total number of PRG-ROM pages
-            u8 prgBanks = 0;
-            /// @brief Total number of CHR-ROM pages
-            u8 chrBanks = 0;
+            u16 mapperID = 0;
+            u8 subMapperID = 0;
+            /// @brief PRG/CHR memory info structure
+            PakInfo memory = {};
             /// @brief Hardware (i.e. Cartridge; not Mapper) mirroring arrangement for this ROM
             MIRROR mirror = MIRROR::HORIZONTAL;
 
@@ -87,6 +96,8 @@ namespace NES_NS {
             vector<u8> prgMemory = {};
             /// @brief Vector containing all CHR-MEM memory data
             vector<u8> chrMemory = {};
+
+            u8 miscRoms = 0;
 
             /**
              * @brief Helper function to process and validate the iNES header.
@@ -97,6 +108,10 @@ namespace NES_NS {
              * @return True if header is valid; false otherwise.
              */
             bool readHeader(const Header& h);
+
+            bool readHeaderINES(const Header& h);
+            bool readHeaderNES2(const Header& h);
+            bool readHeaderANES(const Header& h);
 
             /**
              * @brief Initializes and attaches the mapper specified by the ROM header file.

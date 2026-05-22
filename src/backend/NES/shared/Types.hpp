@@ -670,17 +670,29 @@ namespace NES_NS {
     /**
      * @brief The console region the ROM was developed for.
      */
-    enum class REGION {
+    enum class ConsoleRegion {
         NTSC,
         PAL,
         MULTI,
         DENDY
     };
 
+    struct MemInfo {
+        u16 romBanks = 0;
+        u32 romSize = 0;
+        u32 vramSize = 0;
+        u32 nvramSize = 0;
+    };
+
+    struct PakInfo {
+        MemInfo prg = {};
+        MemInfo chr = {};
+    };
+
     /**
      * @brief  Enumeration of the various Vs. System Hardware types.
      */
-    enum class VS_HARDWARE_TYPE {
+    enum class VsHardware {
         VS_UNISYSTEM,
         VSU_RBI_BASEBALL_PROTECTION,
         VSU_TKO_BOXING_PROTECTION,
@@ -693,8 +705,8 @@ namespace NES_NS {
     /**
      * @brief Enumeration of the various Vs. System PPU types.
      */
-    enum class VS_PPU_TYPE {
-        PPU2C02_2C03,
+    enum class VsPPU {
+        PPU2C0X,
         PPU2C04A = 2,
         PPU2C04B,
         PPU2C04C,
@@ -708,7 +720,7 @@ namespace NES_NS {
     /**
      * @brief Enumeration of the various possible values of "Default Expansion Device"
      */
-    enum class EXPANSION_DEVICE {
+    enum class ExpansionDevice {
         UNSPECIFIED,
         STANDARD_CONTROLLERS,
         FOUR_SCORE,
@@ -794,7 +806,10 @@ namespace NES_NS {
     /**
      * @brief Enumeration of the various possible "Extended Console" types.
      */
-    enum class EXTENDED_CONSOLE_TYPE {
+    enum class ConsoleType {
+        NES_FAMICOM,
+        VS_SYSTEM,
+        PLAYCHOICE_10,
         FAMICLONE_DECIMAL = 3,
         NES_EPSM,
         VR_VT01,

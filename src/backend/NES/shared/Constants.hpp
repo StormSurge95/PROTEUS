@@ -51,12 +51,12 @@ namespace NES_NS {
         4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708,  944, 1890, 3778
     };
 
-    static u16 GetRateNoise(REGION system, u8 index) {
+    static u16 GetRateNoise(ConsoleRegion system, u8 index) {
         switch (system) {
             default:
-            case REGION::NTSC:
+            case ConsoleRegion::NTSC:
                 return NOISE_RATES_NTSC[index];
-            case REGION::PAL:
+            case ConsoleRegion::PAL:
                 return NOISE_RATES_PAL[index];
         }
     }
@@ -75,12 +75,12 @@ namespace NES_NS {
          98,  78,  66,  50
     };
 
-    static u16 GetRateDMC(REGION system, u8 index) {
+    static u16 GetRateDMC(ConsoleRegion system, u8 index) {
         switch (system) {
             default:
-            case REGION::NTSC:
+            case ConsoleRegion::NTSC:
                 return DMC_RATES_NTSC[index];
-            case REGION::PAL:
+            case ConsoleRegion::PAL:
                 return DMC_RATES_PAL[index];
         }
     }
@@ -90,12 +90,12 @@ namespace NES_NS {
      * @param system The region to get the clock rate for.
      * @return The region-specific clock rate
      */
-    static u32 GetClockRate(REGION system) {
+    static u32 GetClockRate(ConsoleRegion system) {
         switch (system) {
             default:
-            case REGION::NTSC: return CLOCK_RATE_NTSC;
-            case REGION::PAL: return CLOCK_RATE_PAL;
-            case REGION::DENDY: return CLOCK_RATE_DENDY;
+            case ConsoleRegion::NTSC: return CLOCK_RATE_NTSC;
+            case ConsoleRegion::PAL: return CLOCK_RATE_PAL;
+            case ConsoleRegion::DENDY: return CLOCK_RATE_DENDY;
         }
     }
 
@@ -104,7 +104,7 @@ namespace NES_NS {
      * @param system The region to get the audio sample rate for.
      * @return The region-specific audio sample rate.
      */
-    static double GetAudioRate(REGION system) {
+    static double GetAudioRate(ConsoleRegion system) {
         return GetClockRate(system) / 44100.0;
     }
 }

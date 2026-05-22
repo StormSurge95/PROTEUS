@@ -15,7 +15,7 @@ namespace NES_NS {
             /// @brief current value of the timer
             u16 timer = 0x0000;
             /// @brief reload value of the timer
-            u16 period = GetRateNoise(REGION::NTSC, 0);
+            u16 period = GetRateNoise(ConsoleRegion::NTSC, 0);
 
             /// @brief linear feedback shift register
             u16 shiftRegister = 0x01;
