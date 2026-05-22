@@ -32,7 +32,7 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M003(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem) :
+            M003(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
                 Mapper(pBnk, pMem, cBnk, cMem) {
             };
 

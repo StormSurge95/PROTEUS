@@ -117,6 +117,6 @@ namespace NES_NS {
              * @brief Initializes and attaches the mapper specified by the ROM header file.
              * @param mapperID ID number for the mapper implemented by this ROM.
              */
-            void initMapper(u8 mapperID);
+            void initMapper(u16 mapperID);
     };
 }

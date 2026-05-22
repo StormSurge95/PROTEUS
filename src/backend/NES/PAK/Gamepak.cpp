@@ -5,6 +5,12 @@
 #include "./Mappers/M004.hpp"
 #include "./Gamepak.hpp"
 
+/* TODO:
+ * Figure out how to implement the functionalities
+ * of the various forms of RAM that may or may not
+ * be available in any given rom.
+ */
+
 using namespace NES_NS;
 Gamepak::Gamepak(const string& path) {
     // open rom file
@@ -181,7 +187,7 @@ void Gamepak::ppuWrite(u16 addr, u8 data) const {
     return mapper->ppuWrite(addr, data);
 }
 
-void Gamepak::initMapper(u8 id) {
+void Gamepak::initMapper(u16 id) {
     switch (id) {
         case 0: mapper = make_shared<M000>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
         case 1: mapper = make_shared<M001>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;

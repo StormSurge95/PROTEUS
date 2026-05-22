@@ -18,7 +18,7 @@ namespace NES_NS {
              * @param cMem Reference to CHR-MEM memory
              * @param hasRam Whether or not the ROM in question has PRG-RAM
              */
-            Mapper(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem, bool hasRam = false) :
+            Mapper(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem, bool hasRam = false) :
                 PRGBanks(pBnk), PRGMemory(&pMem), CHRBanks(cBnk), CHRMemory(&cMem), hasPRG_RAM(hasRam) {
                 hasCHR_RAM = CHRBanks == 0;
             }
@@ -78,12 +78,12 @@ namespace NES_NS {
             virtual MIRROR getMirrorMode() const { return MIRROR::HARDWARE; }
         protected:
             /// @brief total number of PRG-ROM banks
-            u8 PRGBanks = 0;
+            u16 PRGBanks = 0;
             /**
              * @brief total number of CHR-ROM banks
              * @note If 0, then we automatically set `hasCHR_RAM` to true
              */
-            u8 CHRBanks = 0;
+            u16 CHRBanks = 0;
             /// @brief whether or not this rom has PRG-RAM
             bool hasPRG_RAM = false;
             /// @brief whether or not this rom has CHR-RAM

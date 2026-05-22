@@ -45,7 +45,7 @@ namespace NES_NS {
      */
     class M004 : public Mapper {
         public:
-            M004(u8 pBnk, vector<u8>& pMem, u8 cBnk, vector<u8>& cMem) :
+            M004(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
                 Mapper(pBnk, pMem, cBnk, cMem) {}
 
             /**
