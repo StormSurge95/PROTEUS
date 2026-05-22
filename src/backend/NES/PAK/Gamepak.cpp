@@ -20,21 +20,11 @@ Gamepak::Gamepak(const string& path) {
     Header header = {};
     file.read(reinterpret_cast<char*>(&header), sizeof(Header));
 
-    // verify that ROM is a NES ROM
-    if (header.name[0] != 'N' || header.name[1] != 'E' ||
-        header.name[2] != 'S' || header.name[3] != 0x1A) return;
-
-    // get number of PRG/CHR banks
-    prgBanks = header.byte4;
-    chrBanks = header.byte5;
-
-    // get mapper id
-    mapperID = (header.byte7 & 0xF0) | (header.byte6 >> 4);
+    readHeader(header);
+    
     initMapper(mapperID);
 
-    mirror = ((header.byte6 & 0x08) ? MIRROR::FOUR_SCREEN : ((header.byte6 & 0x01) ? MIRROR::VERTICAL : MIRROR::HORIZONTAL));
-
-    if (header.byte6 & 0x04) file.seekg(512, ios::cur);
+    if (hasTrainer) file.seekg(512, ios::cur);
 
     // read prg memory
     prgMemory.resize((size_t)prgBanks * 16384);
@@ -49,6 +39,21 @@ Gamepak::Gamepak(const string& path) {
     }
 
     valid = true;
+}
+
+bool Gamepak::readHeader(const Header& h) {
+    if (memcmp(h.name, "NES\x1A", 4) != 0) return false;
+
+    prgBanks = h.byte4;
+    chrBanks = h.byte5;
+
+    mapperID = (h.byte7 & 0xF0) | (h.byte6 >> 4);
+
+    mirror = ((h.byte6 & 0x08) ? MIRROR::FOUR_SCREEN : ((h.byte6 & 0x01) ? MIRROR::VERTICAL : MIRROR::HORIZONTAL));
+
+    hasTrainer = (h.byte6 & 0x04);
+
+    return true;
 }
 
 MIRROR Gamepak::getMirror() const {

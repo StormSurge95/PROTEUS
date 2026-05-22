@@ -71,6 +71,8 @@ namespace NES_NS {
         private:
             /// @brief validity flag for ROM data
             bool valid = false;
+            /// @brief flag to represent if this rom has the 512B trainer section
+            bool hasTrainer = false;
 
             /// @brief ID of the mapper for this ROM
             u8 mapperID = 0;
@@ -85,6 +87,16 @@ namespace NES_NS {
             vector<u8> prgMemory = {};
             /// @brief Vector containing all CHR-MEM memory data
             vector<u8> chrMemory = {};
+
+            /**
+             * @brief Helper function to process and validate the iNES header.
+             * @details
+             * If the provided header is valid, this function will also read the
+             * various parts of the header and apply their values for later use.
+             * @param h The header to be processed
+             * @return True if header is valid; false otherwise.
+             */
+            bool readHeader(const Header& h);
 
             /**
              * @brief Initializes and attaches the mapper specified by the ROM header file.
