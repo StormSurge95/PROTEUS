@@ -44,6 +44,7 @@
     <ClCompile Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_tables.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="src\frontend\input\Gamepad.cpp" />
     <ClCompile Include="src\frontend\input\InputManager.cpp" />
     <ClCompile Include="src\frontend\logging\Logger.cpp" />
     <ClCompile Include="src\frontend\rom_library\RomLibrary.cpp" />

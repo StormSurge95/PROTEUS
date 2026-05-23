@@ -3,6 +3,11 @@
 #include "../shared/NES_PCH.hpp"
 
 namespace NES_NS {
+    class PPU;
+    class APU;
+    class Gamepak;
+    class Controller;
+
     /**
      * @brief The "brains" of the NES console.
      *

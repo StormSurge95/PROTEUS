@@ -3,6 +3,8 @@
 #include "../shared/NES_PCH.hpp"
 
 namespace NES_NS {
+    class Mapper;
+
     /**
      * @class Gamepak Gamepak.h "./Gamepak.h"
      * @implements IDevice<u8,u16>

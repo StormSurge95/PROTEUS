@@ -4,66 +4,7 @@
  * @brief Namespace containing the various classes/enums/structs/etc related to the NES
  */
 namespace NES_NS {
-    /**
-     * @brief The "master" class of the NES console.
-     */
-    class NES;
-
-    /**
-     * @brief The game cartridge (ROM) to be played.
-     */
-    class Gamepak;
-
-    /**
-     * @brief The input method to be emulated.
-     */
-    class Controller;
-
-    /**
-     * @brief The "brain" of the NES console.
-     */
     class CPU;
-
-    /**
-     * @brief The "painter" of the NES console.
-     */
-    class PPU;
-
-    /**
-     * @brief The "orchestrator" of the NES console's sound.
-     * @note Relies heavily on the various channel classes.
-     */
-    class APU;
-
-    /**
-     * @brief The Square Wave channel of the NES console.
-     */
-    class PulseChannel;
-
-    /**
-     * @brief The Triangle Wave channel of the NES console.
-     */
-    class TriangleChannel;
-
-    /**
-     * @brief The Digital Noise channel of the NES console. 
-     */
-    class NoiseChannel;
-
-    /**
-     * @brief The Delta Modulation channel of the NES console.
-     */
-    class DMC_Channel;
-
-    /**
-     * @brief A helper class for implementing Debug Mode within the NES emulator. 
-     */
-    class Debugger;
-
-    /**
-     * @brief Base NES Mapper class.
-     */
-    class Mapper;
 
     /**
      * @brief Enumeration of the various Mirroring arrangements within NES ROMs

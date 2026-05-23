@@ -6,6 +6,7 @@
 using namespace NS_Proteus;
 
 SessionResult ConsoleSession::Failure(ConsoleSessionErrorCode code, ConsoleSessionState state, string message) {
+    lastErrorCode = code;
     lastError = message;
     currentState = state;
     return { false, currentState, code, message };
@@ -22,32 +23,54 @@ SessionResult ConsoleSession::Success(ConsoleSessionState state, string message)
  * @return `SessionResult` object with the result of the session creation 
  */
 SessionResult ConsoleSession::CreateSession(ConsoleID console) {
-    // handle invalid argument
-    if (console == ConsoleID::NONE)
-        return Failure(ConsoleSessionErrorCode::INVALID_ARGUMENT, currentState, "No Console Selected");
+    logger->EmitSessionCreateEvent(LogEventName::SESSION_CREATE_REQUESTED,
+        { .console = console, .session = currentState }
+    );
+    
+    SessionResult result;
 
-    // handle starting state; can only create a session if an active one does not already exist
-    if (currentState != ConsoleSessionState::EMPTY && currentState != ConsoleSessionState::SHUTDOWN)
-        return Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, "Session Already Active");
-
-    // handle unsupported consoles
-    if (!ConsoleEmuStarted.at(console))
-        return Failure(ConsoleSessionErrorCode::UNSUPPORTED_CONSOLE, currentState, "Console Selection Currently Unsupported");
-
-    // create console and handle any failures
-    station = ConsoleFactory::Create(console);
-    if (!station)
-        return Failure(ConsoleSessionErrorCode::CONSOLE_CREATE_FAILED, ConsoleSessionState::ERROR, "Console Creation Failed");
-
-    // create debugger and handle any failures
-    debugger = DebuggerFactory::Create(console, station);
-    if (!debugger) {
-        station.reset();
-        return Failure(ConsoleSessionErrorCode::DEBUGGER_CREATE_FAILED, ConsoleSessionState::ERROR, "Debugger Creation Failed");
+    if (console == ConsoleID::NONE) {
+        // handle invalid argument
+        result = Failure(ConsoleSessionErrorCode::INVALID_ARGUMENT, currentState, "No Console Selected");
+    } else if (currentState != ConsoleSessionState::EMPTY && currentState != ConsoleSessionState::SHUTDOWN) {
+        // handle starting state; can only create a session if an active one does not already exist
+        result = Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, "Session Already Active");
+    } else if (!ConsoleEmuStarted.at(console)) {
+        // handle unsupported consoles
+        result = Failure(ConsoleSessionErrorCode::UNSUPPORTED_CONSOLE, currentState, "Console Selection Currently Unsupported");
+    } else {
+        // try to create console
+        station = ConsoleFactory::Create(console);
+        if (!station) {
+            // handle console creation failure
+            result = Failure(ConsoleSessionErrorCode::CONSOLE_CREATE_FAILED, ConsoleSessionState::ERROR, "Console Creation Failed");
+        } else {
+            // try to create debugger
+            debugger = DebuggerFactory::Create(console, station);
+            if (!debugger) {
+                // handle debugger creation failure
+                station.reset();
+                result = Failure(ConsoleSessionErrorCode::DEBUGGER_CREATE_FAILED, ConsoleSessionState::ERROR, "Debugger Creation Failed");
+            } else {
+                // all steps successful; apply `currentConsole`
+                currentConsole = console;
+                // session creation successful
+                result = Success(ConsoleSessionState::CREATED, "Session Created");
+            }
+        }
     }
 
-    // session creation successful
-    return Success(ConsoleSessionState::CREATED, "Session Created");
+    if (result.success) {
+        logger->EmitSessionCreateEvent(LogEventName::SESSION_CREATE_SUCCEEDED,
+            { .console = console, .session = currentState }
+        );
+    } else {
+        logger->EmitSessionCreateEvent(LogEventName::SESSION_CREATE_FAILED,
+            { .console = console, .session = currentState, .code = lastErrorCode, .reason = lastError }
+        );
+    }
+
+    return result;
 }
 
 /**
@@ -56,24 +79,42 @@ SessionResult ConsoleSession::CreateSession(ConsoleID console) {
  * @param romName [optional] The display name (game title) of the ROM to be loaded.
  * @return `SessionResult` object with the result of the attempted ROM load.
  */
-SessionResult ConsoleSession::LoadROM(path romPath, string romName = "") {
-    if (romPath == path())
-        return Failure(ConsoleSessionErrorCode::INVALID_ARGUMENT, currentState, "ROM Path is Empty");
+SessionResult ConsoleSession::LoadROM(path p, string n) {
+    logger->EmitRomLoadEvent(LogEventName::ROM_LOAD_REQUESTED,
+        { .console = currentConsole, .romName = n, .romPath = p, .session = currentState }
+    );
+    loadRomStart = high_resolution_clock::now();
 
-    if (!station)
-        return Failure(ConsoleSessionErrorCode::NO_ACTIVE_CONSOLE, ConsoleSessionState::ERROR, "No Active Console Session");
+    SessionResult result;
 
-    if (currentState != ConsoleSessionState::CREATED)
-        return Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, "Invalid SessionState for LoadROM()");
+    if (p == path()) {
+        result = Failure(ConsoleSessionErrorCode::INVALID_ARGUMENT, currentState, "ROM Path is Empty");
+    } else if (!station) {
+        result = Failure(ConsoleSessionErrorCode::NO_ACTIVE_CONSOLE, ConsoleSessionState::ERROR, "No Active Console Session");
+    } else if (currentState != ConsoleSessionState::CREATED) {
+        result = Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, "Invalid SessionState for LoadROM()");
+    } else {
+        bool success = station->loadROM(p.string());
 
-    bool success = station->loadROM(romPath.string());
+        if (!success) {
+            result = Failure(ConsoleSessionErrorCode::ROM_LOAD_FAILED, currentState, "Console Failed to Load ROM");
+        } else {
+            result = Success(ConsoleSessionState::ROM_LOADED, "ROM Loaded Successfully");
+        }
+    }
 
-    if (!success)
-        return Failure(ConsoleSessionErrorCode::ROM_LOAD_FAILED, currentState, "Console Failed to Load ROM");
+    if (result.success) {
+        high_resolution_clock::duration d(high_resolution_clock::now() - loadRomStart);
+        logger->EmitRomLoadEvent(LogEventName::ROM_LOAD_SUCCEEDED,
+            { .console = currentConsole, .romName = n, .romPath = p, .session = currentState, .time = d });
+        loadedRomPath = p;
+        loadedRomName = n;
+    } else {
+        logger->EmitRomLoadEvent(LogEventName::ROM_LOAD_FAILED,
+            { .console = currentConsole, .romName = n, .romPath = p, .code = lastErrorCode, .reason = lastError, .session = currentState });
+    }
 
-    loadedRomPath = romPath;
-    loadedRomName = romName;
-    return Success(ConsoleSessionState::ROM_LOADED, "ROM Loaded Successfully");
+    return result;
 }
 
 /**

@@ -348,6 +348,9 @@
     <ClCompile Include="src\frontend\session\ConsoleSession.cpp">
       <Filter>src\frontend\session</Filter>
     </ClCompile>
+    <ClCompile Include="src\frontend\input\Gamepad.cpp">
+      <Filter>src\frontend\input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

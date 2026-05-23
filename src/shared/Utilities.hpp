@@ -144,7 +144,7 @@ template<typename T, size_t capacity>
 class RingBuffer {
     private:
         deque<T> data;
-        T total;
+        T total = 0;
         size_t lastEntryPos = 0;
         size_t count = 0;
     public:

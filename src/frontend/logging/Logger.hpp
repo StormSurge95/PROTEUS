@@ -17,8 +17,8 @@ namespace NS_Proteus {
 
             high_resolution_clock::time_point lastPhaseStart;
 
-            static map<LogLevel, bool> LevelEnabled;
-            static map<LogCategory, bool> CategoryEnabled;
+            inline static u16 LevelsEnabled = LogLevel::ALL_LVLS;
+            inline static u16 CategoriesEnabled = LogCategory::SESSION | LogCategory::LOGGING;
         public:
             ~Logger();
 
@@ -29,9 +29,14 @@ namespace NS_Proteus {
             void Info(LogCategory category, string message, map<string, string> fields = {});
             void Warn(LogCategory category, string message, map<string, string> fields = {});
             void Error(LogCategory category, string message, map<string, string> fields = {});
-            inline bool IsEnabled(LogLevel level, LogCategory category) { return LevelEnabled[level] && CategoryEnabled[category]; }
+            bool IsEnabled(LogLevel level, LogCategory category);
 
             void EmitPhaseHook(FrameContext& ctx, AppPhaseName phase, AppPhaseStatus status, string reason = "");
+            void EmitSessionCreateEvent(LogEventName event, SessionCreateEvent data);
+            void EmitRomLoadEvent(LogEventName event, RomLoadEvent data);
+            void EmitInputEvent(LogEventName event, InputEvent data);
+            void EmitCpuStepEvent(CpuStepEvent data);
+            void EmitPpuStateEvent(PpuStateEvent data);
 
             void SetLogPath(path filepath);
             inline void EnableFileLogging() { logToFile = true; }

@@ -2,6 +2,7 @@
 
 #include "../FrontendPCH.hpp"
 #include "./SessionTypes.hpp"
+#include "../logging/Logger.hpp"
 #include "../../backend/shared/IConsole.hpp"
 #include "../../backend/shared/IDebugger.hpp"
 
@@ -15,9 +16,11 @@ namespace NS_Proteus {
             sptr<IConsole> station = nullptr;
             sptr<IDebugger> debugger = nullptr;
             Logger* logger = nullptr;
+            ConsoleSessionErrorCode lastErrorCode = ConsoleSessionErrorCode::NONE;
             string lastError;
 
             high_resolution_clock::time_point runtimeStartedAt;
+            high_resolution_clock::time_point loadRomStart;
 
             u64 resumeCount = 0;
 
@@ -31,7 +34,7 @@ namespace NS_Proteus {
             ~ConsoleSession() = default;
 
             SessionResult CreateSession(ConsoleID console);
-            SessionResult LoadROM(path romPath, string romName);
+            SessionResult LoadROM(path romPath, string romName = "");
             SessionResult Start();
             SessionResult Pause();
             SessionResult Reset();

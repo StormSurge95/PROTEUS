@@ -3,6 +3,8 @@
 #include "../shared/NES_PCH.hpp"
 
 namespace NES_NS {
+    class APU;
+
     /// @class DMC_Channel DMC_Channel.h "./DMC_Channel.h"
     /// @brief Class representing the Delta Modulated Channel of the NES APU
     class DMC_Channel {
