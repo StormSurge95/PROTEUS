@@ -1,13 +1,18 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "./ConsoleSession.hpp"
+#include "../FrontendPCH.hpp"
+#include "../rom_library/RomLibraryTypes.hpp"
+#include "../session/ConsoleSession.hpp"
+#include "./AppTypes.hpp"
 
 namespace NS_Proteus {
+    class Logger;
+
     class IManagerContext {
         public:
             virtual ConsoleSessionState GetSessionState() const = 0;
             virtual AppView GetAppView() const = 0;
+            virtual Logger* GetLogger() const = 0;
     };
 
     class IVideoContext : public IManagerContext {
@@ -23,13 +28,13 @@ namespace NS_Proteus {
             virtual const u32* GetFrameBuffer() const = 0;
     };
 
-    class IInputContext : IManagerContext {
+    class IInputContext : public IManagerContext {
         public:
             virtual ConsoleID GetSelectedConsole() const = 0;
             virtual void ToggleOverlay() = 0;
     };
 
-    class IAudioContext : IManagerContext {
+    class IAudioContext : public IManagerContext {
         public:
             virtual bool IsAudioMuted() const = 0;
     };

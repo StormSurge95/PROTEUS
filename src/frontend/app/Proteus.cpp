@@ -1,11 +1,12 @@
 #include "./Proteus.hpp"
-#include "FrontendPCH.hpp"
-#include "../backend/NES/NES.hpp"
-#include "./AudioManager.hpp"
-#include "./InputManager.hpp"
-#include "./VideoManager.hpp"
-#include "./RomLibrary.hpp"
-#include "./Logger.hpp"
+#include "../FrontendPCH.hpp"
+#include "../../backend/NES/NES.hpp"
+#include "../audio/AudioManager.hpp"
+#include "../input/InputTypes.hpp"
+#include "../input/InputManager.hpp"
+#include "../video/VideoManager.hpp"
+#include "../rom_library/RomLibrary.hpp"
+#include "../logging/Logger.hpp"
 
 using namespace NS_Proteus;
 
@@ -15,8 +16,8 @@ Proteus::Proteus() {
     audioManager = std::make_shared<AudioManager>(this);
 
     lib = make_unique<RomLibrary>();
-    session = make_shared<ConsoleSession>();
     logger = make_shared<Logger>();
+    session = make_shared<ConsoleSession>(logger.get());
 }
 
 Proteus::~Proteus() {
@@ -66,9 +67,12 @@ void Proteus::Run() {
 
 FrameContext Proteus::BeginFrame() {
     return {
+        .sessionState = GetSessionState(),
+        .currentConsole = session->CurrentConsoleID(),
         .state = {},
         .stats = {
-            .frameStart = high_resolution_clock::now()
+            .frameStart = high_resolution_clock::now(),
+            .frameCount = stats.frameCount
         },
         .suppressInput = false,
         .quitRequested = false
@@ -142,32 +146,32 @@ void Proteus::PhaseAudio(FrameContext& ctx) {
         logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::SKIPPED, "Audio phase disabled this frame");
 }
 
-//void Proteus::RunSST() {
-//    station = make_shared<NES_NS::NES>();
-//    for (u16 i = 0; i <= 0xFF; i++) {
-//        printf("Instruction 0x%02x...", i);
-//        // get sst data from json file
-//        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
-//        json data = json::parse(f);
-//        f.close();
-//        // convert json object data into a format more usable by our program
-//        vector<SSTtest> SST;
-//        for (int i = 0; i < data.size(); i++)
-//            SST.push_back(SSTtest(data[i]));
-//        // run our tests
-//        for (const SSTtest& test : SST) {
-//            station->initSST(test.initState);
-//            station->runSST();
-//            string result;
-//            bool pass = station->checkSST(test.finalState, result);
-//            if (!pass) {
-//                printf("FAIL\n%s\n", result.c_str());
-//                exit(EXIT_FAILURE);
-//            }
-//        }
-//        printf("PASS\n");
-//    }
-//}
+void Proteus::RunSST() {
+    session->CreateSession(ConsoleID::NES);
+    for (u16 i = 0; i <= 0xFF; i++) {
+        printf("Instruction 0x%02x...", i);
+        // get sst data from json file
+        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
+        json data = json::parse(f);
+        f.close();
+        // convert json object data into a format more usable by our program
+        vector<SSTtest> SST;
+        for (int i = 0; i < data.size(); i++)
+            SST.push_back(SSTtest(data[i]));
+        // run our tests
+        for (const SSTtest& test : SST) {
+            session->GetConsole()->initSST(test.initState);
+            session->GetConsole()->runSST();
+            string result;
+            bool pass = session->GetConsole()->checkSST(test.finalState, result);
+            if (!pass) {
+                printf("FAIL\n%s\n", result.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        printf("PASS\n");
+    }
+}
 
 void Proteus::SetMetadata() {
     SDL_SetAppMetadata(

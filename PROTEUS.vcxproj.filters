@@ -47,6 +47,27 @@
     <Filter Include="src\shared">
       <UniqueIdentifier>{858f852b-6249-4eb9-999e-c9caf89c648d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\frontend\app">
+      <UniqueIdentifier>{5dc97aa7-1d59-4144-b9f3-8bd547b1a8c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\input">
+      <UniqueIdentifier>{09e93fec-f373-4e07-8fbf-69528fd20652}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\audio">
+      <UniqueIdentifier>{7525fdbd-f92f-46a9-9a09-2473dfe0d030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\video">
+      <UniqueIdentifier>{79bbbb93-e8de-4a5d-9dc4-f89f49fcf2ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\logging">
+      <UniqueIdentifier>{c4647246-0001-4db0-9392-2bd223f87286}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\rom_library">
+      <UniqueIdentifier>{0997ad0b-3628-4986-81f5-1b0786b04d1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\frontend\session">
+      <UniqueIdentifier>{e53b056d-8ec5-439b-9cd7-13585039c356}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\NES_DB.h">
@@ -130,25 +151,10 @@
     <ClInclude Include="src\backend\NES\PAK\Mappers\Mapper.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\AudioManager.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\DebuggerFactory.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\FrontendPCH.hpp">
       <Filter>src\frontend</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\InputManager.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\Proteus.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\Types.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\VideoManager.hpp">
       <Filter>src\frontend</Filter>
     </ClInclude>
     <ClInclude Include="src\frontend\ImGui\imconfig.h">
@@ -196,41 +202,62 @@
     <ClInclude Include="src\shared\Types.hpp">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\RomLibrary.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\ConsoleSession.hpp">
-      <Filter>src\frontend</Filter>
-    </ClInclude>
     <ClInclude Include="src\backend\Consoles.hpp">
       <Filter>src\backend</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\ConsoleFactory.hpp">
-      <Filter>src\frontend</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\Debuggers.hpp">
       <Filter>src\backend</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\Logger.hpp">
-      <Filter>src\frontend</Filter>
+    <ClInclude Include="src\frontend\app\Proteus.hpp">
+      <Filter>src\frontend\app</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\IManagerContexts.hpp">
-      <Filter>src\frontend</Filter>
+    <ClInclude Include="src\frontend\audio\AudioManager.hpp">
+      <Filter>src\frontend\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\input\InputManager.hpp">
+      <Filter>src\frontend\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\logging\Logger.hpp">
+      <Filter>src\frontend\logging</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\logging\LoggingTypes.hpp">
+      <Filter>src\frontend\logging</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\rom_library\RomLibrary.hpp">
+      <Filter>src\frontend\rom_library</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\video\VideoManager.hpp">
+      <Filter>src\frontend\video</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\input\InputTypes.hpp">
+      <Filter>src\frontend\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\video\VideoTypes.hpp">
+      <Filter>src\frontend\video</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\rom_library\RomLibraryTypes.hpp">
+      <Filter>src\frontend\rom_library</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\session\ConsoleFactory.hpp">
+      <Filter>src\frontend\session</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\session\ConsoleSession.hpp">
+      <Filter>src\frontend\session</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\session\DebuggerFactory.hpp">
+      <Filter>src\frontend\session</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\app\IManagerContexts.hpp">
+      <Filter>src\frontend\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\app\AppTypes.hpp">
+      <Filter>src\frontend\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\session\SessionTypes.hpp">
+      <Filter>src\frontend\session</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\frontend\Proteus.cpp">
-      <Filter>src\frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="src\frontend\InputManager.cpp">
-      <Filter>src\frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="src\frontend\VideoManager.cpp">
-      <Filter>src\frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="src\frontend\AudioManager.cpp">
-      <Filter>src\frontend</Filter>
-    </ClCompile>
     <ClCompile Include="src\frontend\ImGui\imgui.cpp">
       <Filter>src\frontend\ImGui</Filter>
     </ClCompile>
@@ -300,11 +327,26 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\frontend\RomLibrary.cpp">
-      <Filter>src\frontend</Filter>
+    <ClCompile Include="src\frontend\app\Proteus.cpp">
+      <Filter>src\frontend\app</Filter>
     </ClCompile>
-    <ClCompile Include="src\frontend\ConsoleSession.cpp">
-      <Filter>src\frontend</Filter>
+    <ClCompile Include="src\frontend\audio\AudioManager.cpp">
+      <Filter>src\frontend\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\input\InputManager.cpp">
+      <Filter>src\frontend\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\logging\Logger.cpp">
+      <Filter>src\frontend\logging</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\rom_library\RomLibrary.cpp">
+      <Filter>src\frontend\rom_library</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\video\VideoManager.cpp">
+      <Filter>src\frontend\video</Filter>
+    </ClCompile>
+    <ClCompile Include="src\frontend\session\ConsoleSession.cpp">
+      <Filter>src\frontend\session</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

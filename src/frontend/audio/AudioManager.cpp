@@ -2,11 +2,6 @@
 
 using namespace NS_Proteus;
 
-AudioManager::AudioManager(const IAudioContext* c, bool d) {
-    ctx = c;
-    debug = d;
-}
-
 AudioManager::~AudioManager() {
     Deinit();
 }

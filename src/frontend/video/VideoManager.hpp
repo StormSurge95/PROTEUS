@@ -1,10 +1,13 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "./Types.hpp"
-#include "./Proteus.hpp"
+#include "../FrontendPCH.hpp"
+#include "./VideoTypes.hpp"
+#include "../app/IManagerContexts.hpp"
+#include "../logging/Logger.hpp"
 
 namespace NS_Proteus {
+    class Logger;
+
     class VideoManager {
         public:
             /**
@@ -13,7 +16,7 @@ namespace NS_Proteus {
              * @param debug Whether or not debug is enabled
              * @todo Is `debug` even necessary anymore?
              */
-            VideoManager(IVideoContext* c);
+            VideoManager(IVideoContext* c) : ctx(c) {}
             /**
              * @brief Explicit Destructor (simply calls `Deinit()`)
              */
@@ -78,6 +81,7 @@ namespace NS_Proteus {
             DebugView currentDebugView = DebugView::CPU_REGS;
             bool overlayActive = false;
             IVideoContext* ctx = nullptr;
+            Logger* logger = nullptr;
 
             DisplayInfo dispInfo;
 
@@ -98,7 +102,6 @@ namespace NS_Proteus {
             float ConsoleTextWidth = 275.0f;
             float GameTextWidth = 400.0f;
             float GetFontSize(ImVec2 space, const float& base) const;
-            //ImFont* GetConsoleFont(ConsoleID console);
 
             PageCounts pages = {};
             u16 currentMAXpage = 0;

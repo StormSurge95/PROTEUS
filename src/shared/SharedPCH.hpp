@@ -36,7 +36,15 @@ using std::chrono::high_resolution_clock;
 using std::chrono::duration;
 using std::chrono::system_clock;
 using file_time = std::chrono::file_time<std::chrono::file_clock::duration>;
+using std::chrono::local_time;
+using std::chrono::time_point;
+using std::chrono::nanoseconds;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::minutes;
+using std::chrono::hours;
 using std::milli;
+using std::chrono::duration_cast;
 
 // cstdint
 using u8 = uint8_t;
@@ -83,6 +91,8 @@ using sptr = std::shared_ptr<T>;
 using std::make_shared;
 template <class T>
 using wptr = std::weak_ptr<T>;
+using std::dynamic_pointer_cast;
+using std::static_pointer_cast;
 
 // set
 using std::set;

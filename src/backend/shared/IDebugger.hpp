@@ -12,9 +12,6 @@ class IDebugger {
     public:
         /// @brief enabled flag for the debugger
         bool enabled = false;
-        bool logToFile = false;
-        path tracePath;
-        ofstream traceFile;
 
         /// @brief default virtual constructor
         virtual ~IDebugger() = default;
@@ -46,7 +43,4 @@ class IDebugger {
         virtual vector<u32> GetNameTables(int) = 0;
         /// @brief required to retrieve the current state of the console APU
         virtual vector<array<string, 4>> GetStateAPU() const = 0;
-        
-        virtual void SetTracePath(string s) = 0;
-        virtual void LogTrace() = 0;
 };

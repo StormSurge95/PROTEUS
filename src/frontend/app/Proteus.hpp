@@ -1,8 +1,8 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "./ConsoleSession.hpp"
-#include "../backend/shared/IConsole.hpp"
+#include "../FrontendPCH.hpp"
+#include "../session/ConsoleSession.hpp"
+#include "../../backend/shared/IConsole.hpp"
 #include "./IManagerContexts.hpp"
 
 namespace NS_Proteus {
@@ -29,7 +29,7 @@ namespace NS_Proteus {
             void Deinit();
 
             void Run();
-            //void RunSST();
+            void RunSST();
 
             // overrides for IManagerContext
             ConsoleSessionState GetSessionState() const override { return session->GetState(); }
@@ -57,6 +57,8 @@ namespace NS_Proteus {
                 state.currentView = view;
                 if (view == AppView::GAME_LIST) state.selectedConsole = console;
             }
+
+            Logger* GetLogger() const { return logger.get(); }
 
         private:
             static std::shared_ptr<Proteus> instance;

@@ -1,6 +1,6 @@
-#include "../NES.h"
-#include "./Debugger.h"
-#include "../APU/APU.h"
+#include "../NES.hpp"
+#include "./Debugger.hpp"
+#include "../APU/APU.hpp"
 
 using namespace NES_NS;
 
@@ -588,48 +588,27 @@ vector<array<string, 4>> Debugger::GetStateAPU() const {
     return lines;
 }
 
+// TODO debug Pulse1 channel
 vector<u32> Debugger::GetPulse1() {
     return vector<u32>();
 }
 
+// TODO debug Pulse2 channel
 vector<u32> Debugger::GetPulse2() {
     return vector<u32>();
 }
 
+// TODO debug Triangle channel
 vector<u32> Debugger::GetTriangle() {
     return vector<u32>();
 }
 
+// TODO debug Noise channel
 vector<u32> Debugger::GetNoise() {
     return vector<u32>();
 }
 
+// TODO debug DMC channel
 vector<u32> Debugger::GetDMC() {
     return vector<u32>();
-}
-
-void Debugger::SetTracePath(string s) {
-    path p = "C:\\Users\\Redux\\Desktop";
-    p /= s;
-    tracePath = p;
-    //string name = tracePath.filename().string();
-    //name.pop_back(); name.pop_back(); name.pop_back(); name.pop_back();
-    //std::chrono::zoned_time t{ std::chrono::current_zone(), std::chrono::floor<std::chrono::seconds>(system_clock::now()) };
-    //name += format("_{:%F_%T}", t);
-    //name += ".txt";
-    //replace(name.begin(), name.end(), ':', '-');
-    //tracePath.replace_filename(name);
-    traceFile.open(tracePath);
-    if (!traceFile.is_open()) {
-        printf("FAILED TO OPEN TRACE FILE AT PATH: %s\n", tracePath.string().c_str());
-    }
-}
-
-void Debugger::LogTrace() {
-    if (!traceFile.is_open())
-        printf("What the fuck?\n");
-    if (nes->cpu->cycles == 0) {
-        u16 addr = nes->cpu->pc.value();
-        traceFile << "$" << hex(addr, 4) << ": " << DisassembleInstruction(addr) << endl;
-    }
 }

@@ -1,16 +1,20 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "../backend/shared/IConsole.hpp"
-#include "../backend/shared/IDebugger.hpp"
+#include "../FrontendPCH.hpp"
+#include "./SessionTypes.hpp"
+#include "../../backend/shared/IConsole.hpp"
+#include "../../backend/shared/IDebugger.hpp"
 
 namespace NS_Proteus {
+    class Logger;
+
     class ConsoleSession {
         private:
             ConsoleID currentConsole = ConsoleID::NONE;
             ConsoleSessionState currentState = ConsoleSessionState::EMPTY;
             sptr<IConsole> station = nullptr;
             sptr<IDebugger> debugger = nullptr;
+            Logger* logger = nullptr;
             string lastError;
 
             high_resolution_clock::time_point runtimeStartedAt;
@@ -23,7 +27,7 @@ namespace NS_Proteus {
             SessionResult Failure(ConsoleSessionErrorCode code, ConsoleSessionState state, string message);
             SessionResult Success(ConsoleSessionState state, string message);
         public:
-            ConsoleSession() = default;
+            ConsoleSession(Logger* l) : logger(l) {}
             ~ConsoleSession() = default;
 
             SessionResult CreateSession(ConsoleID console);

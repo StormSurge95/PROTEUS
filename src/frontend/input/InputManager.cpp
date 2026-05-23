@@ -1,5 +1,5 @@
-#include "../frontend/Proteus.hpp"
-#include "InputManager.hpp"
+#include "./InputTypes.hpp"
+#include "./InputManager.hpp"
 
 using namespace NS_Proteus;
 
@@ -64,20 +64,20 @@ void Gamepad::processButton(int btn, bool ui) {
 }
 
 void Gamepad::processAxis(int index, bool ui) {
-    int axis = index - 15;
-    short dir = SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)axis);
-    if (ui) dir = GetDirection(dir);
+    s32 axis = index - 15;
+    s16 dir = SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)axis);
+    if (ui) dir = (s16)GetDirection(dir);
     u64 now = SDL_GetTicks();
 
     if (ui) {
-        if (dir != INACTIVE) {
-            if (lastInputs.getAxis(axis) != INACTIVE) {
+        if (dir != (s16)AxisDirection::INACTIVE) {
+            if (lastInputs.getAxis(axis) != (s16)AxisDirection::INACTIVE) {
                 if (repeats[index]) {
                     if (now - lastChecks[index] >= REPEAT_RATE) {
                         state->setAxis(axis, dir);
                         lastChecks[index] = now;
                     } else
-                        state->setAxis(axis, INACTIVE);
+                        state->setAxis(axis, (s16)AxisDirection::INACTIVE);
                 }
             } else {
                 if (now - lastChecks[index] >= REPEAT_DELAY) {
@@ -85,14 +85,14 @@ void Gamepad::processAxis(int index, bool ui) {
                     state->setAxis(axis, dir);
                     lastChecks[index] = now;
                 } else
-                    state->setAxis(axis, INACTIVE);
+                    state->setAxis(axis, (s16)AxisDirection::INACTIVE);
             }
             lastInputs.setAxis(axis, dir);
         } else {
             lastChecks[index] = 0;
             repeats[index] = false;
-            lastInputs.setAxis(axis, INACTIVE);
-            state->setAxis(axis, INACTIVE);
+            lastInputs.setAxis(axis, (s16)AxisDirection::INACTIVE);
+            state->setAxis(axis, (s16)AxisDirection::INACTIVE);
         }
     } else {
         lastChecks[index] = now;
@@ -102,16 +102,10 @@ void Gamepad::processAxis(int index, bool ui) {
     }
 }
 
-Gamepad::AxisDirection Gamepad::GetDirection(short value) {
-    if (value > AXIS_DEADZONE) return POSITIVE;
-    if (SDL_abs(value) > AXIS_DEADZONE) return NEGATIVE;
-    return INACTIVE;
-}
-
-InputManager::InputManager(const IInputContext* c, bool d) {
-    ctx = c;
-    debug = d;
-    kbState = std::make_unique<Inputs>();
+AxisDirection Gamepad::GetDirection(short value) {
+    if (value > AXIS_DEADZONE) return AxisDirection::POSITIVE;
+    if (SDL_abs(value) > AXIS_DEADZONE) return AxisDirection::NEGATIVE;
+    return AxisDirection::INACTIVE;
 }
 
 void InputManager::Init() {

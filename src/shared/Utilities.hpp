@@ -90,6 +90,56 @@ static string FormatDisplayName(const string& fullname, bool wrap = false) {
     return name;
 }
 
+static string GetTimestamp() {
+    local_time t = std::chrono::current_zone()->to_local(system_clock::now());
+
+    std::chrono::year_month_day ymd{ std::chrono::floor<std::chrono::days>(t) };
+    int year = static_cast<int>(ymd.year());
+    int month = static_cast<unsigned>(ymd.month());
+    int day = static_cast<unsigned>(ymd.day());
+
+    system_clock::duration r = t - std::chrono::floor<std::chrono::days>(t);
+    std::chrono::hh_mm_ss<system_clock::duration> hms{ duration_cast<milliseconds>(r) };
+    int hour = hms.hours().count();
+    int minute = hms.minutes().count();
+    int second = hms.seconds().count();
+
+    stringstream ss;
+    if (month < 10) ss << '0';
+    ss << month << '/';
+    if (day < 10) ss << '0';
+    ss << day << '/' << year << '@';
+    if (hour < 10) ss << '0';
+    ss << hour << ':';
+    if (minute < 10) ss << '0';
+    ss << minute << ':';
+    if (second < 10) ss << '0';
+    ss << second;
+    return ss.str();
+}
+
+static string GetDuration(nanoseconds d) {
+    stringstream ss;
+    milliseconds ms = duration_cast<milliseconds, double, std::nano>(d);
+    if (ms.count() > 1000) {
+        hours h = duration_cast<hours>(d);
+        d -= h;
+        minutes m = duration_cast<minutes>(d);
+        d -= m;
+        seconds s = duration_cast<seconds>(d);
+
+        if (h.count() < 10) ss << '0';
+        ss << h.count() << ':';
+        if (m.count() < 10) ss << '0';
+        ss << m.count() << ':';
+        if (s.count() < 10) ss << '0';
+        ss << s.count();
+    } else {
+        ss << ms.count() << "ms";
+    }
+    return ss.str();
+}
+
 template<typename T, size_t capacity>
 class RingBuffer {
     private:

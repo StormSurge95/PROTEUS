@@ -1,14 +1,17 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "./Proteus.hpp"
+#include "../FrontendPCH.hpp"
+#include "../app/IManagerContexts.hpp"
+#include "../logging/Logger.hpp"
 
 namespace NS_Proteus {
+    class Logger;
+
     class InputManager {
         public:
             bool useKB = true;
 
-            InputManager(const IInputContext* ctx, bool debug = false);
+            InputManager(const IInputContext* c) : ctx(c), kbState(make_unique<Inputs>()) {}
             ~InputManager() { Deinit(); }
 
             InputManager(const InputManager&) = delete;
@@ -28,7 +31,7 @@ namespace NS_Proteus {
 
         private:
             const IInputContext* ctx;
-            bool debug;
+            Logger* logger = nullptr;
 
             const int MAX_PLAYERS = 4;
             int numPlayers = 0;

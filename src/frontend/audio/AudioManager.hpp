@@ -1,12 +1,15 @@
 #pragma once
 
-#include "./FrontendPCH.hpp"
-#include "./Proteus.hpp"
+#include "../FrontendPCH.hpp"
+#include "../app/IManagerContexts.hpp"
+#include "../logging/Logger.hpp"
 
 namespace NS_Proteus {
+    class Logger;
+
     class AudioManager {
         public:
-            AudioManager(const IAudioContext* ctx, bool debug = false);
+            AudioManager(const IAudioContext* c) : ctx(c) {}
             ~AudioManager();
 
             AudioManager(const AudioManager&) = delete;
@@ -20,7 +23,6 @@ namespace NS_Proteus {
             void Update(const sptr<IConsole>& station);
         private:
             const IAudioContext* ctx;
-            bool debug;
 
             SDL_AudioSpec spec = {};
             SDL_AudioDeviceID dev = 0;

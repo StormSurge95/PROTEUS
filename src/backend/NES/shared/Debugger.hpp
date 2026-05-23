@@ -26,8 +26,6 @@ namespace NES_NS {
             /// @brief Palette of debug colors for rendering the ROM pattern table(s)
             u32 debugPalette[4] = { 0xFF000000, 0xFF323232, 0xFF646464, 0xFFFFFFFF };
         public:
-            /// @brief default constructor
-            Debugger() = default;
             /**
              * @brief explicit constructor
              * @param n reference to the NES station this debugger is attached to
@@ -147,8 +145,5 @@ namespace NES_NS {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
-
-            void SetTracePath(string s) override;
-            void LogTrace() override;
     };
 }

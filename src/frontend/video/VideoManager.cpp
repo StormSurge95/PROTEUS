@@ -1,17 +1,12 @@
-#include "./Proteus.hpp"
 #include "./VideoManager.hpp"
 
-#include "../../resources/FontUI.h"
-#include "../../resources/FontUI_Bold.h"
-#include "../../resources/FontUI_Italic.h"
-#include "../../resources/FontUI_BoldItalic.h"
-#include "../../resources/FontDebug.h"
+#include "../../../resources/FontUI.h"
+#include "../../../resources/FontUI_Bold.h"
+#include "../../../resources/FontUI_Italic.h"
+#include "../../../resources/FontUI_BoldItalic.h"
+#include "../../../resources/FontDebug.h"
 
 using namespace NS_Proteus;
-
-VideoManager::VideoManager(IVideoContext* c) {
-    ctx = c;
-}
 
 void VideoManager::Init() {
     // ensure SDL was init
@@ -444,14 +439,13 @@ void VideoManager::RenderDebug(float scale) {
                 ImGui::PopItemWidth();
                 float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
                 if (ImGui::Button("Confirm", ImVec2(w, 0))) {
-                    ctx->GetDebugger()->SetTracePath(filepath);
-                    ctx->GetDebugger()->logToFile = temp;
+                    ctx->GetLogger()->SetLogPath(filepath);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
                 if (ImGui::Button("Cancel", ImVec2(w, 0))) {
                     temp = false;
-                    ctx->GetDebugger()->logToFile = false;
+                    ctx->GetLogger()->DisableFileLogging();
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
