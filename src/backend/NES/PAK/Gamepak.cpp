@@ -26,21 +26,40 @@ Gamepak::Gamepak(const string& path) {
     valid = readHeader(header);
 
     if (valid) {
-        initMapper(mapperID);
-
         if (hasTrainer) file.seekg(512, ios::cur);
 
-        // read prg memory
-        prgMemory.resize((size_t)memory.prg.romSize);
+        // read prg-rom memory
+        prgMemory.resize(memory.prg.romSize);
         file.read(reinterpret_cast<char*>(prgMemory.data()), prgMemory.size());
 
-        if (memory.chr.romBanks == 0) {
-            // initialize chr memory as RAM
-            chrMemory.assign(8192, 0);
-        } else {
-            chrMemory.resize((size_t)memory.chr.romSize);
+        // initialize prg-vram
+        if (memory.prg.vramSize > 0)
+            prgRamVolatile.resize(memory.prg.vramSize, 0x00);
+
+        // initialize prg-nvram
+        if (memory.prg.nvramSize > 0)
+            prgRamNonVolatile.resize(memory.prg.nvramSize, 0x00);
+
+        // read chr-rom memory (if present)
+        if (memory.chr.romSize > 0) {
+            chrMemory.resize(memory.chr.romSize);
             file.read(reinterpret_cast<char*>(chrMemory.data()), chrMemory.size());
         }
+
+        // initialize chr-vram
+        if (memory.chr.vramSize > 0)
+            chrRamVolatile.resize(memory.chr.vramSize, 0x00);
+
+        // initialize chr-nvram
+        if (memory.chr.nvramSize > 0)
+            chrRamNonVolatile.resize(memory.chr.nvramSize, 0x00);
+
+        // iNES fallback: CHR-ROM size of 0 implies 8KB CHR-RAM unless NES 2.0 declared RAM sizes.
+        if (memory.chr.romSize == 0 && chrRamVolatile.empty() && chrRamNonVolatile.empty())
+            chrRamVolatile.resize(8192, 0x00);
+
+        // initialize mapper only after all memory vectors have been allocated/read.
+        initMapper(mapperID);
     }
 }
 
@@ -51,11 +70,14 @@ bool Gamepak::readHeader(const Header& h) {
     // next, check header format
     switch (h.byte7 & 0x0C) {
         case 0x08:
+            hFormat = HeaderFormat::NES2;
             return readHeaderNES2(h);
         case 0x00:
+            hFormat = HeaderFormat::INES;
             return readHeaderINES(h);
         case 0x04:
         default:
+            hFormat = HeaderFormat::ANES;
             return readHeaderANES(h);
     }
 }
@@ -87,7 +109,18 @@ bool Gamepak::readHeaderINES(const Header& h) {
     hasTrainer = (h.byte6 & 0x04) > 0;
     hasBattery = (h.byte6 & 0x02) > 0;
 
+    // byte 7
     mapperID = (h.byte7 & 0xF0) | (h.byte6 >> 4);
+
+    // byte 8
+    u16 ramSize = h.byte8;
+    if (memory.chr.romBanks == 0) {
+        if (ramSize == 0) ramSize = 8192;
+        if (hasBattery)
+            memory.chr.nvramSize = ramSize;
+        else
+            memory.chr.vramSize = ramSize;
+    }
 
     return true;
 }
@@ -188,12 +221,13 @@ void Gamepak::ppuWrite(u16 addr, u8 data) const {
 }
 
 void Gamepak::initMapper(u16 id) {
+    vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
     switch (id) {
-        case 0: mapper = make_shared<M000>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
-        case 1: mapper = make_shared<M001>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
-        case 2: mapper = make_shared<M002>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
-        case 3: mapper = make_shared<M003>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
-        case 4: mapper = make_shared<M004>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, chrMemory); break;
+        case 0: mapper = make_shared<M000>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
+        case 1: mapper = make_shared<M001>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
+        case 2: mapper = make_shared<M002>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
+        case 3: mapper = make_shared<M003>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
+        case 4: mapper = make_shared<M004>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);

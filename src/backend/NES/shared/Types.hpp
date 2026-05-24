@@ -18,6 +18,10 @@ namespace NES_NS {
         ONE_SCREEN_HI
     };
 
+    enum class HeaderFormat {
+        UNKNOWN, ANES, INES, NES2
+    };
+
     /**
      * @brief The header structure for NES ROM image files.
      * 

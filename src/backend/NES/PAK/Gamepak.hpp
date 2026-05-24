@@ -65,12 +65,16 @@ namespace NES_NS {
             /// @brief Getter for the mirroring format of the ROM.
             MIRROR getMirror() const;
 
+            bool hasPrgRam() const { return prgRamNonVolatile.size() > 0 || prgRamVolatile.size() > 0; }
+
             /// @brief Getter for PRG-ROM memory
             vector<u8> PRG() { return prgMemory; }
             /// @brief Getter for CHR-MEM memory
             vector<u8> CHR() { return chrMemory; }
 
         private:
+            HeaderFormat hFormat = HeaderFormat::UNKNOWN;
+
             ConsoleRegion region = ConsoleRegion::NTSC;
             ConsoleType cType = ConsoleType::NES_FAMICOM;
 
@@ -96,8 +100,12 @@ namespace NES_NS {
 
             /// @brief Vector containing all PRG-ROM memory data
             vector<u8> prgMemory = {};
+            vector<u8> prgRamVolatile = {};
+            vector<u8> prgRamNonVolatile = {};
             /// @brief Vector containing all CHR-MEM memory data
             vector<u8> chrMemory = {};
+            vector<u8> chrRamVolatile = {};
+            vector<u8> chrRamNonVolatile = {};
 
             u8 miscRoms = 0;
 
