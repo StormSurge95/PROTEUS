@@ -13,6 +13,7 @@
 
 using namespace NES_NS;
 Gamepak::Gamepak(const string& path) {
+    filePath = path;
     // open rom file
     ifstream file(path, ifstream::binary);
 
@@ -32,13 +33,11 @@ Gamepak::Gamepak(const string& path) {
         prgMemory.resize(memory.prg.romSize);
         file.read(reinterpret_cast<char*>(prgMemory.data()), prgMemory.size());
 
-        // initialize prg-vram
-        if (memory.prg.vramSize > 0)
-            prgRamVolatile.resize(memory.prg.vramSize, 0x00);
-
-        // initialize prg-nvram
-        if (memory.prg.nvramSize > 0)
+        
+        if (memory.prg.nvramSize > 0) // initialize prg-nvram
             prgRamNonVolatile.resize(memory.prg.nvramSize, 0x00);
+        else if (memory.prg.vramSize > 0) // initialize prg-vram
+            prgRamVolatile.resize(memory.prg.vramSize, 0x00);
 
         // read chr-rom memory (if present)
         if (memory.chr.romSize > 0) {
@@ -46,21 +45,57 @@ Gamepak::Gamepak(const string& path) {
             file.read(reinterpret_cast<char*>(chrMemory.data()), chrMemory.size());
         }
 
-        // initialize chr-vram
-        if (memory.chr.vramSize > 0)
-            chrRamVolatile.resize(memory.chr.vramSize, 0x00);
-
-        // initialize chr-nvram
-        if (memory.chr.nvramSize > 0)
+        if (memory.chr.nvramSize > 0) // initialize chr-nvram
             chrRamNonVolatile.resize(memory.chr.nvramSize, 0x00);
-
+        else if (memory.chr.vramSize > 0) // initialize chr-vram
+            chrRamVolatile.resize(memory.chr.vramSize, 0x00);
         // iNES fallback: CHR-ROM size of 0 implies 8KB CHR-RAM unless NES 2.0 declared RAM sizes.
-        if (memory.chr.romSize == 0 && chrRamVolatile.empty() && chrRamNonVolatile.empty())
+        else if (memory.chr.romSize == 0 && chrRamVolatile.empty() && chrRamNonVolatile.empty())
             chrRamVolatile.resize(8192, 0x00);
 
         // initialize mapper only after all memory vectors have been allocated/read.
         initMapper(mapperID);
+
+        if (prgRamNonVolatile.size() > 0) LoadRAM();
     }
+
+    file.close();
+}
+
+path Gamepak::GetSavePath() {
+    path p = "C:/ROMS/SAVES/NES"; // base path here is SAVES/NES; TODO: Change "C:/ROMS/" to an install directory for release mode
+    p /= filePath.filename(); // get the filename for the rom and use it to name our save file
+    p.replace_extension(".sav"); // replace the ".nes" extension with ".sav"
+    p = p.make_preferred();
+    return p.make_preferred();
+}
+
+void Gamepak::SaveRAM() {
+    // create save file
+    ofstream file(GetSavePath(), ofstream::binary);
+
+    // write each byte within NonVolatile RAM to our file
+    for (const u8& byte : prgRamNonVolatile) {
+        file.put(byte);
+    }
+
+    // close the file
+    file.close();
+}
+
+void Gamepak::LoadRAM() {
+    // try to open save file
+    ifstream file(GetSavePath(), ifstream::binary);
+
+    if (file.is_open()) { // can't load a save unless a save exists
+        printf("save file found\n");
+        // copy data from save file into our non-volatile ram array
+        file.read(reinterpret_cast<char*>(prgRamNonVolatile.data()), prgRamNonVolatile.size());
+    } else
+        printf("no save file found\n");
+
+    // close the file
+    file.close();
 }
 
 bool Gamepak::readHeader(const Header& h) {
@@ -114,13 +149,11 @@ bool Gamepak::readHeaderINES(const Header& h) {
 
     // byte 8
     u16 ramSize = h.byte8;
-    if (memory.chr.romBanks == 0) {
-        if (ramSize == 0) ramSize = 8192;
-        if (hasBattery)
-            memory.chr.nvramSize = ramSize;
-        else
-            memory.chr.vramSize = ramSize;
-    }
+    if (ramSize == 0) ramSize = 8192;
+    if (hasBattery)
+        memory.prg.nvramSize = ramSize;
+    else
+        memory.prg.vramSize = ramSize;
 
     return true;
 }
@@ -222,12 +255,13 @@ void Gamepak::ppuWrite(u16 addr, u8 data) const {
 
 void Gamepak::initMapper(u16 id) {
     vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
+    vector<u8>* pRam = hasPrgRam() ? (prgRamNonVolatile.size() > 0 ? &prgRamNonVolatile : &prgRamVolatile) : nullptr;
     switch (id) {
-        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
-        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
-        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
-        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
-        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
+        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);

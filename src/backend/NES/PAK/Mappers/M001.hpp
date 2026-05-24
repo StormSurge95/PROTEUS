@@ -50,8 +50,8 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem) :
-                Mapper(pBnk, pMem, cBnk, cMem), PRGRam(0x2000, 0x00) {}
+            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
 
             /**
              * @brief Resets the mapper to a known state
@@ -79,8 +79,9 @@ namespace NES_NS {
                         return prgRom->at(mappedAddr & (size - 1));
                     else
                         return prgRom->at(mappedAddr % size);
-                } else if (addr >= 0x6000 && !PRGRamDisabled) // return PRG-RAM for addresses over $5FFF
-                    return PRGRam[addr & 0x1FFF]; // properly mask the address
+                } else if (addr >= 0x6000 && hasPrgRam && !disablePrgRam) { // return PRG-RAM for addresses over $5FFF
+                    return prgRam->at(addr & 0x1FFF); // properly mask the address
+                }
                 // return 0 for invalid addresses
                 return 0x00;
             }
@@ -93,8 +94,8 @@ namespace NES_NS {
             void cpuWrite(u16 addr, u8 data) override {
                 if (addr < 0x8000) {
                     // Only perform writes on PRG-RAM if the RAM is not disabled.
-                    if (PRGRamDisabled) return;
-                    PRGRam[addr & 0x1FFF] = data; // properly mask address
+                    if (disablePrgRam || !hasPrgRam) return;
+                    prgRam->at(addr & 0x1FFF) = data; // properly mask address
                     return;
                 }
 
@@ -256,7 +257,7 @@ namespace NES_NS {
              *              - 1: PRG-RAM disabled
              */
             u8 PRGBank = 0;
-            bool PRGRamDisabled = false; /// flag for disabling PRG-RAM
+            bool disablePrgRam = false; /// flag for disabling PRG-RAM
             std::vector<u8> PRGRam; // TODO: move this to base Mapper class
 
             u64 cpuCycle = 0;
@@ -273,7 +274,7 @@ namespace NES_NS {
                     case 1: chrBank0 = val; break;
                     case 2: chrBank1 = val; break;
                     case 3:
-                        PRGRamDisabled = !!(val & 0x10);
+                        disablePrgRam = !!(val & 0x10);
                         PRGBank = val % prgBanks;
                         break;
                 }

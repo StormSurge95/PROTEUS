@@ -29,7 +29,7 @@ namespace NES_NS {
              */
             Gamepak(const string& path);
             /// @brief Default destructor
-            ~Gamepak() = default;
+            ~Gamepak() { if (prgRamNonVolatile.size() > 0) SaveRAM(); }
 
             /// @brief Getter for ROM validity
             inline bool isValid() const { return valid; }
@@ -73,6 +73,8 @@ namespace NES_NS {
             vector<u8> CHR() { return chrMemory; }
 
         private:
+            path filePath;
+
             HeaderFormat hFormat = HeaderFormat::UNKNOWN;
 
             ConsoleRegion region = ConsoleRegion::NTSC;
@@ -128,5 +130,10 @@ namespace NES_NS {
              * @param mapperID ID number for the mapper implemented by this ROM.
              */
             void initMapper(u16 mapperID);
+
+            path GetSavePath();
+
+            void SaveRAM();
+            void LoadRAM();
     };
 }
