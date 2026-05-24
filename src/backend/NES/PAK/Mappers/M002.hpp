@@ -31,8 +31,8 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak.
              */
-            M002(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
-                Mapper(pBnk, pMem, cBnk, cMem) {};
+            M002(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -48,10 +48,10 @@ namespace NES_NS {
                     addr += ((u16)PRGBankSelect << 15);
                 } else if (addr >= 0xC000) { // map to fixed last bank
                     addr &= 0x3FFF;
-                    addr += ((u16)(PRGBanks - 1) << 15);
+                    addr += ((u16)(prgBanks - 1) << 15);
                 }
 
-                return PRGMemory->at(addr);
+                return prgRom->at(addr);
             }
 
             /**
@@ -61,7 +61,7 @@ namespace NES_NS {
              * @param data Data to be written.
              */
             void cpuWrite(u16 addr, u8 data) override {
-                if (addr >= 0x8000) PRGBankSelect = data & (PRGBanks - 1);
+                if (addr >= 0x8000) PRGBankSelect = data & (prgBanks - 1);
             }
 
             /**
@@ -72,7 +72,7 @@ namespace NES_NS {
              */
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
-                    return CHRMemory->at(addr);
+                    return chrMem->at(addr);
                 }
                 return 0x00;
             }
@@ -85,7 +85,7 @@ namespace NES_NS {
              */
             void ppuWrite(u16 addr, u8 data) override {
                 if (addr < 0x2000)
-                    CHRMemory->at(addr) = data;
+                    chrMem->at(addr) = data;
             }
 
         private:

@@ -50,7 +50,7 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M001(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
+            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem) :
                 Mapper(pBnk, pMem, cBnk, cMem), PRGRam(0x2000, 0x00) {}
 
             /**
@@ -60,8 +60,8 @@ namespace NES_NS {
                 shiftReg = 0x10;
                 control = 0x0C;
 
-                CHRBank0 = 0;
-                CHRBank1 = 0;
+                chrBank0 = 0;
+                chrBank1 = 0;
                 PRGBank = 0;
             }
 
@@ -74,11 +74,11 @@ namespace NES_NS {
             u8 cpuRead(u16 addr, bool readonly = false) override {
                 if (addr >= 0x8000) { // return PRG-ROM for addresses over $7FFF
                     u32 mappedAddr = mapPRG(addr); // properly map/mask the address
-                    size_t size = PRGMemory->size();
+                    size_t size = prgRom->size();
                     if ((size & (size - 1)) == 0)
-                        return PRGMemory->at(mappedAddr & (size - 1));
+                        return prgRom->at(mappedAddr & (size - 1));
                     else
-                        return PRGMemory->at(mappedAddr % size);
+                        return prgRom->at(mappedAddr % size);
                 } else if (addr >= 0x6000 && !PRGRamDisabled) // return PRG-RAM for addresses over $5FFF
                     return PRGRam[addr & 0x1FFF]; // properly mask the address
                 // return 0 for invalid addresses
@@ -150,7 +150,7 @@ namespace NES_NS {
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
                     u32 mappedAddr = mapCHR(addr); // properly map/mask the address
-                    return CHRMemory->at(mappedAddr);
+                    return chrMem->at(mappedAddr);
                 }
                 return 0x00;
             }
@@ -163,9 +163,9 @@ namespace NES_NS {
              * @param data Data to be written
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (addr < 0x2000 && CHRBanks == 0) {
+                if (addr < 0x2000 && chrBanks == 0) {
                     u32 mappedAddr = mapCHR(addr); // properly map/mask address
-                    CHRMemory->at(mappedAddr) = data;
+                    chrMem->at(mappedAddr) = data;
                 }
             }
 
@@ -230,7 +230,7 @@ namespace NES_NS {
              *      |||||
              *      +++++-- Select 4 KB or 8 KB CHR bank at PPU $0000 (low bit ignored in 8 KB mode)
              */
-            u8 CHRBank0 = 0;
+            u8 chrBank0 = 0;
 
             /**
              * @brief CHR bank 1 (internal, $C000-$DFFF)
@@ -241,7 +241,7 @@ namespace NES_NS {
              *      |||||
              *      +++++-- Select 4 KB CHR bank at PPU $1000 (ignored in 8 KB mode)
              */
-            u8 CHRBank1 = 0;
+            u8 chrBank1 = 0;
 
             /**
              * @brief PRG bank (internal, $E000-$FFFF)
@@ -270,11 +270,11 @@ namespace NES_NS {
             void writeRegister(u16 addr, u8 val) {
                 switch ((addr >> 13) & 0x03) {
                     case 0: control = val; break;
-                    case 1: CHRBank0 = val; break;
-                    case 2: CHRBank1 = val; break;
+                    case 1: chrBank0 = val; break;
+                    case 2: chrBank1 = val; break;
                     case 3:
                         PRGRamDisabled = !!(val & 0x10);
-                        PRGBank = val % PRGBanks;
+                        PRGBank = val % prgBanks;
                         break;
                 }
             }
@@ -287,7 +287,7 @@ namespace NES_NS {
             u32 mapPRG(u16 addr) {
                 // determine which PRG mode we are in
                 u8 mode = (control >> 2) & 0x03;
-                u32 b16c = static_cast<u32>(PRGBanks);
+                u32 b16c = static_cast<u32>(prgBanks);
                 if (b16c < 1) b16c = 1;
                 u32 b32c = b16c / 2;
                 if (b32c < 1) b32c = 1;
@@ -312,7 +312,7 @@ namespace NES_NS {
                             bank = (PRGBank & 0x0F) % b16c;
                             return (bank * 0x4000) + offset;
                         } else
-                            return ((PRGBanks - 1) * 0x4000) + offset;
+                            return ((prgBanks - 1) * 0x4000) + offset;
                 }
             }
 
@@ -322,36 +322,37 @@ namespace NES_NS {
              * @return Properly mapped address.
              */
             u32 mapCHR(u16 addr) {
-                // determine CHR bank mode
-                bool mode = ((control >> 4) & 0x01) == 1; // true means 4KB mode
-                
-                // determine what values to use for bank0 and bank1
-                u32 count = (u32)CHRMemory->size() >> 12;
-                u32 b0 = CHRBank0 % count;
-                u32 b1 = CHRBank1 % count;
-                if (hasCHR_RAM) {
-                    b0 = CHRBank0;
-                    b1 = CHRBank1;
+                // mask address to ensure we only access [$0000-$2000)
+                u16 a = addr & 0x1FFF;
+                // determine if we are in 8KB mode or dual-4KB mode
+                bool switch8 = ((control >> 4) & 0x01) == 0x00;
+
+                u16 bank;   // variable to hold bank value
+                u16 mapped; // variable to hold mapped address value
+
+                if (switch8) {
+                    // ignore chrBank1 and high bit of chrBank0
+                    bank = (chrBank0 & 0x1E);
+                    // map the address to a value within the entire 8KB region
+                    mapped = (bank << 12) | a;
+                } else {
+                    if (a < 0x1000) // if the address is in the first half, we want to use bank0
+                        bank = (chrBank0 << 12);
+                    else // otherwise, we want to use bank1
+                        bank = (chrBank1 << 12);
+                    // map the address based on the desired bank
+                    // we also mask the address again here to ensure that were are accessing only the region-half desired
+                    mapped = (bank | (a & 0x0FFF));
                 }
 
-                u32 size = (u32)CHRMemory->size();
+                // calculate size and determine if we can use bitwise operations to prevent expensive division operation
+                u32 size = (u32)chrMem->size();
                 bool bit = (size & (size - 1)) == 0;
 
-                if (mode) { // switch two separate 4KB banks
-                    if (addr < 0x1000) { // use first 4KB bank
-                        addr += (b0 << 12);
-                        if (bit) return addr & (size - 1);
-                        else return addr % size;
-                    } else { // use second 4KB bank
-                        addr = ((b1 << 12) + (addr & 0x0FFF));
-                        if (bit) return addr & (size - 1);
-                        else return addr % size;
-                    }
-                } else { // switch 8KB at a time
-                    addr += (u32)(b0 & 0x1E) << 12;
-                    if (bit) return addr & (size - 1);
-                    else return addr % size;
-                }
+                if (bit) // size is a power of 2; we can use bit-wise AND
+                    return mapped & (size - 1);
+                else // size is not power of 2; we have to use modulo
+                    return mapped % size;
             }
     };
 }

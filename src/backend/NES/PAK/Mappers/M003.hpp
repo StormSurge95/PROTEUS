@@ -32,9 +32,8 @@ namespace NES_NS {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M003(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
-                Mapper(pBnk, pMem, cBnk, cMem) {
-            };
+            M003(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -44,7 +43,7 @@ namespace NES_NS {
              */
             u8 cpuRead(u16 addr, bool readonly = false) override {
                 if (addr >= 0x8000 && addr <= 0xFFFF)
-                    return PRGMemory->at(addr & (PRGBanks == 1 ? 0x3FFF : 0x7FFF));
+                    return prgRom->at(addr & (prgBanks == 1 ? 0x3FFF : 0x7FFF));
 
                 return 0x00;
             }
@@ -57,7 +56,7 @@ namespace NES_NS {
              */
             void cpuWrite(u16 addr, u8 data) override {
                 if (addr >= 0x8000 && addr <= 0xFFFF) {
-                    if (CHRBanks == 0) {
+                    if (chrBanks == 0) {
                         // With no CHR banks, only one bank selection value is possible.
                         bankSelect = 0;
                         return;
@@ -71,13 +70,13 @@ namespace NES_NS {
                     u8 romData = cpuRead(addr, true); // PRG-ROM content at address being written to
                     u8 latched = data & romData; // effective value
 
-                    // determine whether or not CHRBanks is a power of 2
-                    bool po2 = (CHRBanks & (CHRBanks - 1)) == 0;
+                    // determine whether or not chrBanks is a power of 2
+                    bool po2 = (chrBanks & (chrBanks - 1)) == 0;
 
                     if (po2) // power of 2 means we can use AND to lessen CPU load
-                        bankSelect = latched & (CHRBanks - 1);
+                        bankSelect = latched & (chrBanks - 1);
                     else // otherwise; we have to use modulus
-                        bankSelect = latched % CHRBanks;
+                        bankSelect = latched % chrBanks;
                 }
             }
 
@@ -89,12 +88,12 @@ namespace NES_NS {
              */
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
-                    if (CHRBanks == 0)
-                        return CHRMemory->at(addr);
+                    if (chrBanks == 0)
+                        return chrMem->at(addr);
 
                     addr += ((u16)bankSelect << 13);
 
-                    return CHRMemory->at(addr);
+                    return chrMem->at(addr);
                 }
 
                 return 0x00;
@@ -107,8 +106,8 @@ namespace NES_NS {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (addr < 0x2000 && CHRBanks == 0)
-                    CHRMemory->at(addr) = data;
+                if (addr < 0x2000 && chrBanks == 0)
+                    chrMem->at(addr) = data;
             }
 
         private:

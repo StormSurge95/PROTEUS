@@ -223,11 +223,11 @@ void Gamepak::ppuWrite(u16 addr, u8 data) const {
 void Gamepak::initMapper(u16 id) {
     vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
     switch (id) {
-        case 0: mapper = make_shared<M000>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
-        case 1: mapper = make_shared<M001>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
-        case 2: mapper = make_shared<M002>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
-        case 3: mapper = make_shared<M003>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
-        case 4: mapper = make_shared<M004>(memory.prg.romBanks, prgMemory, memory.chr.romBanks, cMem); break;
+        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
+        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
+        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
+        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
+        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);

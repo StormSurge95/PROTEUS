@@ -45,12 +45,12 @@ namespace NES_NS {
      */
     class M004 : public Mapper {
         public:
-            M004(u16 pBnk, vector<u8>& pMem, u16 cBnk, vector<u8>& cMem) :
-                Mapper(pBnk, pMem, cBnk, cMem) {}
+            M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
 
             /**
              * @brief Data read request from CPU for PRG memory.
-             * @todo TODO: Ensure that all accesses respect maximum PRGBanks.
+             * @todo TODO: Ensure that all accesses respect maximum prgBanks.
              * @todo TODO: Incorporate PRG-RAM
              * @param addr Address to be read.
              * @param readonly Flag to block side-effects.
@@ -60,34 +60,34 @@ namespace NES_NS {
                 u16 mapped = addr & 0x1FFF;
                 if (addr >= 0xE000 && addr <= 0xFFFF) {
                     // fixed to last bank
-                    mapped += (((u16)PRGBanks - 1) << 15);
-                    return PRGMemory->at(mapped);
+                    mapped += (((u16)prgBanks - 1) << 15);
+                    return prgRom->at(mapped);
                 }
                 if (bankData.pMode) { // PRG-ROM bank mode 1
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // fixed to second-last bank
-                        mapped += (((u16)PRGBanks - 2) << 15);
-                        return PRGMemory->at(mapped);
+                        mapped += (((u16)prgBanks - 2) << 15);
+                        return prgRom->at(mapped);
                     }
                     if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
                         mapped += ((u16)bankData.R7 << 15);
-                        return PRGMemory->at(mapped);
+                        return prgRom->at(mapped);
                     }
                     if (addr >= 0xC000 && addr <= 0xDFFF) { // R6
                         mapped += ((u16)bankData.R6 << 15);
-                        return PRGMemory->at(mapped);
+                        return prgRom->at(mapped);
                     }
                 } else { // PRG-ROM bank mode 0
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // R6
                         mapped += ((u16)bankData.R6 << 15);
-                        return PRGMemory->at(mapped);
+                        return prgRom->at(mapped);
                     }
                     if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
                         mapped += ((u16)bankData.R7 << 15);
-                        return PRGMemory->at(mapped);
+                        return prgRom->at(mapped);
                     }
                     if (addr >= 0xC000 && addr <= 0xDFFF) { // second-last
-                        mapped += (((u16)PRGBanks - 2) << 15);
-                        return PRGMemory->at(mapped);
+                        mapped += (((u16)prgBanks - 2) << 15);
+                        return prgRom->at(mapped);
                     }
                 }
 
@@ -200,7 +200,7 @@ namespace NES_NS {
                                 mapped += ((u16)bankData.R5 << 15);
                         }
                     }
-                    return CHRMemory->at(mapped);
+                    return chrMem->at(mapped);
                 }
                 return 0x00;
             }
@@ -212,7 +212,7 @@ namespace NES_NS {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (CHRBanks != 0) return;
+                if (chrBanks != 0) return;
                 // TODO: implement writing to CHR-RAM
             }
 
