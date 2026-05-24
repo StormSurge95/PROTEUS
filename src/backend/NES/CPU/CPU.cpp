@@ -296,10 +296,6 @@ void CPU::clockDMC() {
      * is delayed by an odd number of cycles. However, bugs can cause additional cycles.
      */
     bool put = (totalCycles & 0x01) > 0; // determine first cycle; odd = put, !odd = get
-    // odd = put
-    // !odd = get
-    // load = halt on get
-    // REload = halt on put
     if (dmaDummy) {
         if (put)
             dmaDummy = false;
@@ -310,11 +306,10 @@ void CPU::clockDMC() {
             u16 addr = apu.lock()->getDmcCurrentAddr();
             dmcData = read(addr);
         } else {
-            apu.lock()->setDmcSampleByte(dmcData);
+            apu.lock()->dmcOnByteFetched(dmcData);
             halted = false;
             dmcActive = false;
         }
-        apu.lock()->dmcFetch(!put);
         halted = false;
     }
 }
@@ -354,6 +349,7 @@ void CPU::clockInstruction() {
     cycles++;
     delayDMA = false;
     if (cycles == 1) {
+        pollInterrupts();
         /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
         if (interruptSource != INTERRUPT::NONE) {
             // interrupts force BRK into opcode slot
@@ -367,13 +363,6 @@ void CPU::clockInstruction() {
         }
         // set current instruction based on opcode value
         currInst = &lookup[opcode];
-        // schedule interrupt poll if necessary
-        // TODO: This is done wrong; figure out how to fix it
-        if (currInst->address == &CPU::IMM_A ||
-            currInst->address == &CPU::ACC_A ||
-            currInst->address == &CPU::IMP_A ||
-            currInst->address == &CPU::REL_B)
-            schedulePoll();
     } else {
         if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
             (this->*currInst->address)();
@@ -386,8 +375,7 @@ void CPU::pollInterrupts() {
     if (nmiTrigger) {
         // acknowledge NMI
         interruptSource = INTERRUPT::NMI;
-    }
-    if (irqTrigger && getFlag(FLAGS::I) == 0) {
+    } else if (irqTrigger && getFlag(FLAGS::I) == 0) {
         if (!delayInterrupt) {
             // acknowlege IRQ
             interruptSource = INTERRUPT::IRQ;

@@ -85,20 +85,9 @@ namespace NES_NS {
              */
             void collectSamples(vector<float>& buffer);
 
-            /// @brief get the current sample address from DMC
-            u16 getDmcCurrentAddr() const { return dmc->getCurrAddr(); }
-            /// @brief get the base sample address from DMC
-            u16 getDmcSampleAddr() const { return dmc->getSampleAddr(); }
-            /** @brief set the new sample byte within DMC
-             *  @param data the value to push to DMC sample buffer
-             */
-            void setDmcSampleByte(u8 data) { dmc->setSampleByte(data); }
+            void dmcOnByteFetched(u8 byte) { dmc->onByteFetch(byte); }
 
-            /**
-             * @brief Handles call to DMC channel sample fetch method.
-             * @param first Whether or not this is the first call to `dmcFetch` for this round.
-             */
-            inline void dmcFetch(bool first) { dmc->fetchSample(first); }
+            inline u16 getDmcCurrentAddr() const { return dmc->getCurrentAddr(); }
 
         private:
             /// @brief Used to keep track of when to reset FrameCounter.

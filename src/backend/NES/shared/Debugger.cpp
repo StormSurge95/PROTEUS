@@ -546,27 +546,27 @@ vector<array<string, 4>> Debugger::GetStateAPU() const {
     lines.push_back({ "--", "Output", to_string(temp), hex(temp, 2) });
 
     // DMC
-    lines.push_back({ "", "DMC", "", "" });
-    temp = nes->apu->dmc->period;
-    lines.push_back({ "$4010.0-3", "Period", to_string(temp), hex(temp, 4) });
-    temp = nes->apu->dmc->loop;
-    lines.push_back({ "$4010.6", "Loop Flag", temp ? "True" : "False", "" });
-    temp = nes->apu->dmc->irqEnabled;
-    lines.push_back({ "$4010.7", "IRQ Enabled", temp ? "True" : "False", "" });
-    temp = nes->apu->dmc->outputLevel;
-    lines.push_back({ "$4011", "Output Level", to_string(temp), hex(temp, 2) });
-    temp = nes->apu->dmc->sampleAddr;
-    lines.push_back({ "$4012", "Sample Address", to_string(temp), hex(temp, 4) });
-    temp = nes->apu->dmc->sampleLength;
-    lines.push_back({ "$4013", "Sample Length", to_string(temp), hex(temp, 4) });
-    temp = nes->apu->dmc->currAddr;
-    lines.push_back({ "--", "Next Sample Address", to_string(temp), hex(temp, 4) });
-    temp = nes->apu->dmc->bytesRemaining;
-    lines.push_back({ "--", "Sample Bytes Remaining", to_string(temp), hex(temp, 4) });
-    temp = nes->apu->dmc->timer;
-    lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    temp = CLOCK_RATE_NTSC / nes->apu->dmc->period;
-    lines.push_back({ "--", "Frequency", format("{} Hz", temp), ""});
+    //lines.push_back({ "", "DMC", "", "" });
+    //temp = nes->apu->dmc->period;
+    //lines.push_back({ "$4010.0-3", "Period", to_string(temp), hex(temp, 4) });
+    //temp = nes->apu->dmc->loop;
+    //lines.push_back({ "$4010.6", "Loop Flag", temp ? "True" : "False", "" });
+    //temp = nes->apu->dmc->irqEnabled;
+    //lines.push_back({ "$4010.7", "IRQ Enabled", temp ? "True" : "False", "" });
+    //temp = nes->apu->dmc->outputLevel;
+    //lines.push_back({ "$4011", "Output Level", to_string(temp), hex(temp, 2) });
+    //temp = nes->apu->dmc->sampleAddr;
+    //lines.push_back({ "$4012", "Sample Address", to_string(temp), hex(temp, 4) });
+    //temp = nes->apu->dmc->sampleLength;
+    //lines.push_back({ "$4013", "Sample Length", to_string(temp), hex(temp, 4) });
+    //temp = nes->apu->dmc->currAddr;
+    //lines.push_back({ "--", "Next Sample Address", to_string(temp), hex(temp, 4) });
+    //temp = nes->apu->dmc->bytesRemaining;
+    //lines.push_back({ "--", "Sample Bytes Remaining", to_string(temp), hex(temp, 4) });
+    //temp = nes->apu->dmc->timer;
+    //lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
+    //temp = CLOCK_RATE_NTSC / nes->apu->dmc->period;
+    //lines.push_back({ "--", "Frequency", format("{} Hz", temp), ""});
 
     // FRAME COUNTER
     lines.push_back({ "", "Frame Counter", "", "" });

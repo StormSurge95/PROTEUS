@@ -20,7 +20,6 @@ namespace NES_NS {
             bool frameComplete = false;
             // suppress nmi flag
             bool suppressNMI = false;
-            bool vbl2nmi = false;
 
             // default constructor
             PPU() = default;
@@ -80,8 +79,6 @@ namespace NES_NS {
             void connectCART(sptr<Gamepak>& c) { cart = c; }
             // connects the cpu to the ppu
             void connectCPU(sptr<CPU>& c) { cpu = c; }
-
-            inline bool getNMI() const { return nmiOutput && vbl2nmi; }
         private:
             // current nmi output value
             bool nmiOutput = false;

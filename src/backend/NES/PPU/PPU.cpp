@@ -85,14 +85,11 @@ void PPU::write(u16 addr, u8 data) {
         switch (addr) {
             case 0x00: // write to PPUCTRL
                 {
-                    bool prevNMI = inVBlank() && getNMIEnabled();
                     // update register
                     PPUCTRL = data;
-                    bool currNMI = inVBlank() && getNMIEnabled();
                     // update t register bits 11 & 12 using bits 0 & 1 of new data
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
-                    if (!prevNMI && currNMI)
-                        nmiRequested = true;
+                    recompNMI();
                     return;
                 }
             case 0x01: // write to PPUMASK
@@ -549,13 +546,13 @@ void PPU::onVisibleLine() {
 }
 
 void PPU::onStartVBlankLine() {
-    if (cycle == 1 && !suppressVBL) {
-        bool prev = inVBlank();
-        inVBlank(true);
-        if (!prev && inVBlank() && getNMIEnabled() && !suppressNMI) {
-            nmiRequested = true;
-        } else suppressNMI = false;
-    } else suppressVBL = false;
+    if (cycle == 1) {
+        if (!suppressVBL)
+            inVBlank(true);
+        recompNMI();
+        suppressVBL = false;
+        suppressNMI = false;
+    }
 }
 
 void PPU::incrementCoarseX() {
@@ -760,6 +757,6 @@ u8 PPU::readSpriteAttr(SPRITE_ATTR which, u8 attr) {
 void PPU::recompNMI() {
     bool prevNMI = nmiOutput;
     nmiOutput = inVBlank() && getNMIEnabled();
-    if (!prevNMI && nmiOutput)
+    if (!prevNMI && nmiOutput && !suppressNMI)
         nmiRequested = true;
 }

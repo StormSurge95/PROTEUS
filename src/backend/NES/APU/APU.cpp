@@ -7,7 +7,7 @@ APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.
     pulse2 = make_unique<PulseChannel>(false);
     triangle = make_unique<TriangleChannel>();
     noise = make_unique<NoiseChannel>();
-    dmc = make_unique<DMC_Channel>(this);
+    dmc = make_unique<DMC_Channel>(/*this*/);
 }
 
 u8 APU::read(u16 addr, bool readonly) {
@@ -47,9 +47,12 @@ void APU::clock() {
         pulse2->clockTimer();
     }
     // clock triangle/noise/dmc channels every CPU cycle
-    /// @todo implement dmc clocking
     triangle->clockTimer();
     noise->clockTimer();
+    dmc->clockTimer();
+
+    if (dmc->needsByteFetch() && dmc->bufferNeeded)
+        dmc->onByteFetch(0b00110011);
 
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
@@ -73,7 +76,7 @@ u8 APU::read4015() {
     // reading the frame counter interrupt flag clears it
     irqRequested = false;
     // reading the dmc interrupt flag DOES NOT clear it
-    u8 i = dmc->interrupt << 7;
+    u8 i = dmc->pending_irq << 7;
     return p1 | p2 | t | n | d | u | f | i;
 }
 
@@ -83,8 +86,7 @@ void APU::write4015(u8 data) {
     pulse2->enable(((data >> 1) & 0x01) > 0);
     triangle->enable(((data >> 2) & 0x01) > 0);
     noise->enable(((data >> 3) & 0x01) > 0);
-    /// @todo enabling dmc should trigger an automatic load
-    dmc->enabled = (((data >> 4) & 0x01) > 0);
+    if (((data >> 4) & 0x01) > 0) dmc->enable(); else dmc->disable();
 }
 
 void APU::write4017(u8 data) {

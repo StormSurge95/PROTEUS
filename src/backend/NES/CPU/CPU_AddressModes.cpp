@@ -28,7 +28,6 @@ void CPU::IND_J() {
         case 4:
             absAddr.lo = read(indAddr.value());
             indAddr.lo++;
-            schedulePoll();
             break;
         case 5:
             absAddr.hi = read(indAddr.value());
@@ -47,8 +46,6 @@ void CPU::REL_B() {
             } else spage(offset);
             break;
         case 3:
-            if (paged) schedulePoll();
-            [[fallthrough]];
         case 4:
             read(pc);
             if (paged) {
@@ -72,7 +69,6 @@ void CPU::ABS_W() {
             break;
         case 3:
             absAddr.hi = read(pc++);
-            schedulePoll();
             break;
         case 4:
             (this->*currInst->operate)();
@@ -88,7 +84,6 @@ void CPU::ABS_R() {
             break;
         case 3:
             absAddr.hi = read(pc++);
-            schedulePoll();
             break;
         case 4:
             fetched = read(absAddr.value());
@@ -111,7 +106,6 @@ void CPU::ABS_M() {
         case 5:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 6:
             write(absAddr.value(), fetched);
@@ -123,7 +117,6 @@ void CPU::ABS_J() {
     switch (cycles) {
         case 2:
             absAddr.lo = read(pc++);
-            schedulePoll();
             break;
         case 3:
             absAddr.hi = read(pc++);
@@ -146,7 +139,6 @@ void CPU::ABX_W() {
             // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
-            schedulePoll();
             break;
         case 5:
             (this->*currInst->operate)();
@@ -163,14 +155,12 @@ void CPU::ABX_R() {
         case 3:
             absAddr.hi = read(pc++);
             page(x);
-            if (!paged) schedulePoll();
             break;
         case 4:
         case 5:
             if (paged) {
                 read(absAddr.value());
                 absAddr.hi++;
-                schedulePoll();
                 paged = false;
             } else {
                 fetched = read(absAddr.value());
@@ -199,7 +189,6 @@ void CPU::ABX_M() {
         case 6:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 7:
             write(absAddr.value(), fetched);
@@ -221,7 +210,6 @@ void CPU::ABY_W() {
             // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
-            schedulePoll();
             break;
         case 5:
             (this->*currInst->operate)();
@@ -238,7 +226,6 @@ void CPU::ABY_R() {
         case 3:
             absAddr.hi = read(pc++);
             page(y);
-            if (!paged) schedulePoll();
             break;
         case 4:
         case 5:
@@ -246,7 +233,6 @@ void CPU::ABY_R() {
                 read(absAddr.value());
                 absAddr.hi++;
                 paged = false;
-                schedulePoll();
             } else {
                 fetched = read(absAddr.value());
                 (this->*currInst->operate)();
@@ -274,7 +260,6 @@ void CPU::ABY_M() {
         case 6:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 7:
             write(absAddr.value(), fetched);
@@ -287,7 +272,6 @@ void CPU::ZP0_W() {
     switch (cycles) {
         case 2:
             offset = read(pc++);
-            schedulePoll();
             break;
         case 3:
             (this->*currInst->operate)();
@@ -300,7 +284,6 @@ void CPU::ZP0_R() {
     switch (cycles) {
         case 2:
             offset = read(pc++);
-            schedulePoll();
             break;
         case 3:
             fetched = read(offset);
@@ -320,7 +303,6 @@ void CPU::ZP0_M() {
         case 4:
             write(offset, fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 5:
             write(offset, fetched);
@@ -337,7 +319,6 @@ void CPU::ZPX_W() {
         case 3:
             read(offset);
             offset += x;
-            schedulePoll();
             break;
         case 4:
             (this->*currInst->operate)();
@@ -354,7 +335,6 @@ void CPU::ZPX_R() {
         case 3:
             read(offset);
             offset += x;
-            schedulePoll();
             break;
         case 4:
             fetched = read(offset);
@@ -378,7 +358,6 @@ void CPU::ZPX_M() {
         case 5:
             write(offset, fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 6:
             write(offset, fetched);
@@ -395,7 +374,6 @@ void CPU::ZPY_W() {
         case 3:
             read(offset);
             offset += y;
-            schedulePoll();
             break;
         case 4:
             (this->*currInst->operate)();
@@ -412,7 +390,6 @@ void CPU::ZPY_R() {
         case 3:
             read(offset);
             offset += y;
-            schedulePoll();
             break;
         case 4:
             fetched = read(offset);
@@ -436,7 +413,6 @@ void CPU::ZPY_M() {
         case 5:
             write(offset, fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 6:
             write(offset, fetched);
@@ -459,7 +435,6 @@ void CPU::IZX_W() {
             break;
         case 5:
             absAddr.hi = read(offset);
-            schedulePoll();
             break;
         case 6:
             (this->*currInst->operate)();
@@ -482,7 +457,6 @@ void CPU::IZX_R() {
             break;
         case 5:
             absAddr.hi = read(offset);
-            schedulePoll();
             break;
         case 6:
             fetched = read(absAddr.value());
@@ -512,7 +486,6 @@ void CPU::IZX_M() {
         case 7:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 8:
             write(absAddr.value(), fetched);
@@ -537,7 +510,6 @@ void CPU::IZY_W() {
             // magic happens here
             read(absAddr.value());
             if (paged) absAddr.hi++;
-            schedulePoll();
             break;
         case 6:
             (this->*currInst->operate)();
@@ -557,7 +529,6 @@ void CPU::IZY_R() {
         case 4:
             absAddr.hi = read(offset);
             page(y);
-            if (!paged) schedulePoll();
             break;
         case 5:
         case 6:
@@ -565,7 +536,6 @@ void CPU::IZY_R() {
             if (paged) {
                 absAddr.hi++;
                 paged = false;
-                schedulePoll();
                 break;
             }
             (this->*currInst->operate)();
@@ -595,7 +565,6 @@ void CPU::IZY_M() {
         case 7:
             write(absAddr.value(), fetched);
             (this->*currInst->operate)();
-            schedulePoll();
             break;
         case 8:
             write(absAddr.value(), fetched);
