@@ -1,10 +1,10 @@
 #pragma once
 
 #include "./shared/NES_PCH.hpp"
-#include "./PPU/PPU.hpp"
-#include "./PAK/Mappers/Mapper.hpp"
+#include "./PPU/NesPPU.hpp"
+#include "./PAK/Mappers/NesMapper.hpp"
 
-namespace NES_NS {
+namespace NS_NES {
     /**
      * @class NES NES.h "./NES.h"
      * @implements IConsole

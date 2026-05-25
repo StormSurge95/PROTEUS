@@ -10,7 +10,7 @@ namespace NS_Proteus {
         inline static sptr<IConsole> Create(ConsoleID console) {
             switch (console) {
                 case ConsoleID::NES:
-                    return make_shared<NES_NS::NES>();
+                    return make_shared<NS_NES::NES>();
                 default:
                     return nullptr;
             }

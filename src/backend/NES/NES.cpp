@@ -1,8 +1,8 @@
 #include "./NES.hpp"
-#include "./Controller.hpp"
-#include "./APU/APU.hpp"
+#include "./NesController.hpp"
+#include "./APU/NesAPU.hpp"
 
-using namespace NES_NS;
+using namespace NS_NES;
 
 NES::NES() {
     cpu = make_shared<CPU>();

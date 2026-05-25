@@ -1,5 +1,6 @@
 #include "./frontend/app/Proteus.hpp"
-#include "./backend/NES/NES.hpp"
+
+#include "./backend/GBA/shared/GbaPCH.hpp"
 
 using namespace NS_Proteus;
 

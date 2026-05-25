@@ -11,7 +11,7 @@ namespace NS_Proteus {
         inline static sptr<IDebugger> Create(ConsoleID console, sptr<IConsole> station) {
             switch (console) {
                 case ConsoleID::NES:
-                    return dynamic_pointer_cast<IDebugger>(make_shared<NES_NS::Debugger>(dynamic_pointer_cast<NES_NS::NES>(station)));
+                    return dynamic_pointer_cast<IDebugger>(make_shared<NS_NES::Debugger>(dynamic_pointer_cast<NS_NES::NES>(station)));
                 default: return nullptr;
                     // TODO: add other console debuggers
             }

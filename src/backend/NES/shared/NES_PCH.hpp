@@ -1,5 +1,5 @@
 #pragma once
 
 #include "../../shared/BackendPCH.hpp"
-#include "./Types.hpp"
-#include "./Constants.hpp"
+#include "./NesTypes.hpp"
+#include "./NesConstants.hpp"
