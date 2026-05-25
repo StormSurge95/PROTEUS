@@ -82,88 +82,88 @@
     <ClInclude Include="resources\NES_DB.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\shared\IConsole.h">
+    <ClInclude Include="src\backend\shared\IConsole.hpp">
       <Filter>src\backend\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\shared\IDebugger.h">
+    <ClInclude Include="src\backend\shared\IDebugger.hpp">
       <Filter>src\backend\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\shared\IDevice.h">
+    <ClInclude Include="src\backend\shared\IDevice.hpp">
       <Filter>src\backend\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\shared\BackendPCH.h">
+    <ClInclude Include="src\backend\shared\BackendPCH.hpp">
       <Filter>src\backend\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\shared\NesConstants.h">
+    <ClInclude Include="src\backend\NES\shared\NesConstants.hpp">
       <Filter>src\backend\NES\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\shared\NesDebugger.h">
+    <ClInclude Include="src\backend\NES\shared\NesDebugger.hpp">
       <Filter>src\backend\NES\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\shared\NES_PCH.h">
+    <ClInclude Include="src\backend\NES\shared\NES_PCH.hpp">
       <Filter>src\backend\NES\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\shared\NesTypes.h">
+    <ClInclude Include="src\backend\NES\shared\NesTypes.hpp">
       <Filter>src\backend\NES\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PPU\NesPPU.h">
+    <ClInclude Include="src\backend\NES\PPU\NesPPU.hpp">
       <Filter>src\backend\NES\PPU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\APU\NesAPU.h">
+    <ClInclude Include="src\backend\NES\APU\NesAPU.hpp">
       <Filter>src\backend\NES\APU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\APU\NesDMC.h">
+    <ClInclude Include="src\backend\NES\APU\NesDMC.hpp">
       <Filter>src\backend\NES\APU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\APU\NesNoise.h">
+    <ClInclude Include="src\backend\NES\APU\NesNoise.hpp">
       <Filter>src\backend\NES\APU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\APU\NesPulse.h">
+    <ClInclude Include="src\backend\NES\APU\NesPulse.hpp">
       <Filter>src\backend\NES\APU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\APU\NesTriangle.h">
+    <ClInclude Include="src\backend\NES\APU\NesTriangle.hpp">
       <Filter>src\backend\NES\APU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\CPU\NesCPU.h">
+    <ClInclude Include="src\backend\NES\CPU\NesCPU.hpp">
       <Filter>src\backend\NES\CPU</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\NesController.h">
+    <ClInclude Include="src\backend\NES\NesController.hpp">
       <Filter>src\backend\NES</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\NES.h">
+    <ClInclude Include="src\backend\NES\NES.hpp">
       <Filter>src\backend\NES</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared\SharedPCH.h">
+    <ClInclude Include="src\shared\SharedPCH.hpp">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared\Utilities.h">
+    <ClInclude Include="src\shared\Utilities.hpp">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\NesGamepak.h">
+    <ClInclude Include="src\backend\NES\PAK\NesGamepak.hpp">
       <Filter>src\backend\NES\PAK</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM000.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM000.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM001.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM001.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM002.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM002.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM003.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM003.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM004.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesM004.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\NES\PAK\Mappers\NesMapper.h">
+    <ClInclude Include="src\backend\NES\PAK\Mappers\NesMapper.hpp">
       <Filter>src\backend\NES\PAK\Mappers</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\FrontendPCH.h">
+    <ClInclude Include="src\frontend\FrontendPCH.hpp">
       <Filter>src\frontend</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\Types.h">
+    <ClInclude Include="src\frontend\Types.hpp">
       <Filter>src\frontend</Filter>
     </ClInclude>
     <ClInclude Include="src\frontend\ImGui\imconfig.h">
@@ -208,76 +208,76 @@
     <ClInclude Include="src\shared\json.h">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared\Types.h">
+    <ClInclude Include="src\shared\Types.hpp">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\Consoles.h">
+    <ClInclude Include="src\backend\Consoles.hpp">
       <Filter>src\backend</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\Debuggers.h">
+    <ClInclude Include="src\backend\Debuggers.hpp">
       <Filter>src\backend</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\app\Proteus.h">
+    <ClInclude Include="src\frontend\app\Proteus.hpp">
       <Filter>src\frontend\app</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\audio\AudioManager.h">
+    <ClInclude Include="src\frontend\audio\AudioManager.hpp">
       <Filter>src\frontend\audio</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\input\InputManager.h">
+    <ClInclude Include="src\frontend\input\InputManager.hpp">
       <Filter>src\frontend\input</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\logging\Logger.h">
+    <ClInclude Include="src\frontend\logging\Logger.hpp">
       <Filter>src\frontend\logging</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\logging\LoggingTypes.h">
+    <ClInclude Include="src\frontend\logging\LoggingTypes.hpp">
       <Filter>src\frontend\logging</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\rom_library\RomLibrary.h">
+    <ClInclude Include="src\frontend\rom_library\RomLibrary.hpp">
       <Filter>src\frontend\rom_library</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\video\VideoManager.h">
+    <ClInclude Include="src\frontend\video\VideoManager.hpp">
       <Filter>src\frontend\video</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\input\InputTypes.h">
+    <ClInclude Include="src\frontend\input\InputTypes.hpp">
       <Filter>src\frontend\input</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\video\VideoTypes.h">
+    <ClInclude Include="src\frontend\video\VideoTypes.hpp">
       <Filter>src\frontend\video</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\rom_library\RomLibraryTypes.h">
+    <ClInclude Include="src\frontend\rom_library\RomLibraryTypes.hpp">
       <Filter>src\frontend\rom_library</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\session\ConsoleFactory.h">
+    <ClInclude Include="src\frontend\session\ConsoleFactory.hpp">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\session\ConsoleSession.h">
+    <ClInclude Include="src\frontend\session\ConsoleSession.hpp">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\session\DebuggerFactory.h">
+    <ClInclude Include="src\frontend\session\DebuggerFactory.hpp">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\app\IManagerContexts.h">
+    <ClInclude Include="src\frontend\app\IManagerContexts.hpp">
       <Filter>src\frontend\app</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\app\AppTypes.h">
+    <ClInclude Include="src\frontend\app\AppTypes.hpp">
       <Filter>src\frontend\app</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\session\SessionTypes.h">
+    <ClInclude Include="src\frontend\session\SessionTypes.hpp">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\GBA\PAK\Gamepak.h">
+    <ClInclude Include="src\backend\GBA\PAK\Gamepak.hpp">
       <Filter>src\backend\GBA\PAK</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\GBA\shared\GbaPCH.h">
+    <ClInclude Include="src\backend\GBA\shared\GbaPCH.hpp">
       <Filter>src\backend\GBA\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\GBA\shared\GbaTypes.h">
+    <ClInclude Include="src\backend\GBA\shared\GbaTypes.hpp">
       <Filter>src\backend\GBA\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\GBA\shared\GbaConstants.h">
+    <ClInclude Include="src\backend\GBA\shared\GbaConstants.hpp">
       <Filter>src\backend\GBA\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\backend\GBA\shared\CgbTypes.h">
+    <ClInclude Include="src\backend\GBA\shared\CgbTypes.hpp">
       <Filter>src\backend\GBA\shared</Filter>
     </ClInclude>
   </ItemGroup>
