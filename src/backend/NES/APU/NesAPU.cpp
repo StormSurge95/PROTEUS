@@ -1,4 +1,4 @@
-#include "./NesAPU.hpp"
+#include "./NesAPU.h"
 
 using namespace NS_NES;
 

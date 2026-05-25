@@ -1,11 +1,13 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../session/ConsoleSession.hpp"
-#include "../../backend/shared/IConsole.hpp"
-#include "./IManagerContexts.hpp"
+#include "../FrontendPCH.h"
+#include "../session/ConsoleSession.h"
+#include "./IManagerContexts.h"
 
 namespace NS_Proteus {
+    class AudioManager;
+    class InputManager;
+    class VideoManager;
     class RomLibrary;
     class Logger;
 

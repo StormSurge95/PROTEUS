@@ -3,7 +3,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4244)
 
-#include "./SharedPCH.hpp"
+#include "./SharedPCH.h"
+#include "./Types.h"
 
 /**
  * @brief Outputs a provided number `n` in hexadecimal notation with `d` digits.
@@ -166,5 +167,14 @@ class RingBuffer {
 
         double avg() { return (double)total / count; }
 };
+
+static ConsoleID GetIDFromName(string name) {
+    for (const auto& [key, val] : ConsoleNamesShort) {
+        if (strcmp(name.c_str(), val.c_str()) == 0)
+            return key;
+    }
+
+    return ConsoleID::NONE;
+}
 
 #pragma warning(pop)

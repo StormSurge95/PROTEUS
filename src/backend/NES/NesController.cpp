@@ -1,4 +1,4 @@
-#include "./NesController.hpp"
+#include "./NesController.h"
 
 using namespace NS_NES;
 

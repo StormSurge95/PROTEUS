@@ -1,4 +1,4 @@
-#include "./InputTypes.hpp"
+#include "./InputTypes.h"
 
 using namespace NS_Proteus;
 

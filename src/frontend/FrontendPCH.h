@@ -4,9 +4,12 @@
 
 #include <SDL3/SDL.h>
 
-#include "../shared/SharedPCH.hpp"
-#include "../shared/Utilities.hpp"
-#include "./Types.hpp"
+#include "../shared/IConsole.h"
+#include "../shared/IDebugger.h"
+#include "../shared/IDevice.h"
+#include "../shared/SharedPCH.h"
+#include "../shared/Utilities.h"
+#include "../shared/Types.h"
 #include "./ImGui/imgui.h"
 #include "./ImGui/imgui_impl_sdl3.h"
 #include "./ImGui/imgui_impl_sdlrenderer3.h"

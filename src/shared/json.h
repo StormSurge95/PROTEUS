@@ -19,7 +19,7 @@
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 // Workaround for GCC template redefinition errors in C++ modules
-// When nlohmann/json.hpp is included in a C++20 module preamble after
+// When nlohmann/json.h is included in a C++20 module preamble after
 // other module imports, GCC may report spurious redefinition errors for
 // STL templates. These pragmas suppress those false positives.
 // See: https://github.com/nlohmann/json/issues/5103
@@ -41,7 +41,7 @@
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
-// #include <nlohmann/adl_serializer.hpp>
+// #include <nlohmann/adl_serializer.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -54,7 +54,7 @@
 
 #include <utility>
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -167,7 +167,7 @@
     }  // namespace nlohmann
 #endif
 
-// #include <nlohmann/detail/conversions/from_json.hpp>
+// #include <nlohmann/detail/conversions/from_json.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -190,7 +190,7 @@
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -210,7 +210,7 @@
 #include <string> // to_string
 #include <vector> // vector
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -226,7 +226,7 @@
 #include <cstdint> // uint8_t
 #include <string> // string
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -238,7 +238,7 @@
 
 
 #include <utility> // declval, pair
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <nlohmann/detail/meta/detected.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -251,7 +251,7 @@
 
 #include <type_traits>
 
-// #include <nlohmann/detail/meta/void_t.hpp>
+// #include <nlohmann/detail/meta/void_t.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -262,7 +262,7 @@
 
 
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -330,7 +330,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/thirdparty/hedley/hedley.hpp>
+// #include <nlohmann/thirdparty/hedley/hedley.h>
 
 
 //     __ _____ _____ _____
@@ -2380,9 +2380,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
     // This file contains all internal macro definitions (except those affecting ABI)
-    // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
+    // You MUST include macro_unscope.h at the end of json.h to undef all of them
 
-    // #include <nlohmann/detail/abi_macros.hpp>
+    // #include <nlohmann/detail/abi_macros.h>
 
 
     // exclude unsupported compilers
@@ -3198,7 +3198,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/string_escape.hpp>
+// #include <nlohmann/detail/string_escape.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3209,7 +3209,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3270,7 +3270,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <nlohmann/detail/input/position_t.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3283,7 +3283,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <cstddef> // size_t
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3307,9 +3307,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3326,7 +3326,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3473,7 +3473,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3492,7 +3492,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
 #include <cstddef> // byte
 #endif
-// #include <nlohmann/detail/iterators/iterator_traits.hpp>
+// #include <nlohmann/detail/iterators/iterator_traits.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3505,11 +3505,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <iterator> // random_access_iterator_tag
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/meta/void_t.hpp>
+// #include <nlohmann/detail/meta/void_t.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3552,9 +3552,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/call_std/begin.hpp>
+// #include <nlohmann/detail/meta/call_std/begin.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3565,7 +3565,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3574,7 +3574,7 @@ NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/call_std/end.hpp>
+// #include <nlohmann/detail/meta/call_std/end.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3585,7 +3585,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3594,11 +3594,11 @@ NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <nlohmann/detail/meta/detected.h>
 
-// #include <nlohmann/json_fwd.hpp>
+// #include <nlohmann/json_fwd.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -3616,7 +3616,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string
 #include <vector> // vector
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 /*!
@@ -4466,7 +4466,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -4481,9 +4481,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string
 #include <utility> // forward
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <nlohmann/detail/meta/detected.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -4842,11 +4842,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #pragma clang diagnostic pop
 #endif
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/identity_tag.hpp>
+// #include <nlohmann/detail/meta/identity_tag.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -4857,7 +4857,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -4869,7 +4869,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/std_fs.hpp>
+// #include <nlohmann/detail/meta/std_fs.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -4880,7 +4880,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
@@ -4899,12 +4899,12 @@ namespace detail {
 NLOHMANN_JSON_NAMESPACE_END
 #endif
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/meta/logic.hpp>
+// #include <nlohmann/detail/meta/logic.h>
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -4957,12 +4957,12 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
-// include after macro_scope.hpp
+// include after macro_scope.h
 #ifdef JSON_HAS_CPP_17
 #include <optional> // optional
 #endif
@@ -5456,7 +5456,7 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <nlohmann/detail/conversions/to_json.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -5467,7 +5467,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 // JSON_HAS_CPP_17
 #ifdef JSON_HAS_CPP_17
 #include <optional> // optional
@@ -5483,7 +5483,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+// #include <nlohmann/detail/iterators/iteration_proxy.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -5503,11 +5503,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <ranges> // enable_borrowed_range
 #endif
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/string_utils.hpp>
+// #include <nlohmann/detail/string_utils.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -5521,7 +5521,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <string> // string, to_string
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -5544,7 +5544,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -5742,13 +5742,13 @@ template <typename IteratorType>
 inline constexpr bool ::std::ranges::enable_borrowed_range<::nlohmann::detail::iteration_proxy<IteratorType>> = true;
 #endif
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/std_fs.hpp>
+// #include <nlohmann/detail/meta/std_fs.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6151,7 +6151,7 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/identity_tag.hpp>
+// #include <nlohmann/detail/meta/identity_tag.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6189,7 +6189,7 @@ struct adl_serializer {
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/byte_container_with_subtype.hpp>
+// #include <nlohmann/byte_container_with_subtype.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6204,7 +6204,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <tuple> // tie
 #include <utility> // move
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6283,13 +6283,13 @@ class byte_container_with_subtype : public BinaryType {
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/conversions/from_json.hpp>
+// #include <nlohmann/detail/conversions/from_json.h>
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <nlohmann/detail/conversions/to_json.h>
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/hash.hpp>
+// #include <nlohmann/detail/hash.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6304,9 +6304,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <functional> // hash
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6415,7 +6415,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/input/binary_reader.hpp>
+// #include <nlohmann/detail/input/binary_reader.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6442,9 +6442,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <bit>  //byteswap
 #endif
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <nlohmann/detail/input/input_adapters.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6471,13 +6471,13 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <istream>  // istream
 #endif                  // JSON_NO_IO
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/iterators/iterator_traits.hpp>
+// #include <nlohmann/detail/iterators/iterator_traits.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6925,7 +6925,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/input/json_sax.hpp>
+// #include <nlohmann/detail/input/json_sax.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6942,9 +6942,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <nlohmann/detail/input/lexer.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -6965,13 +6965,13 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <nlohmann/detail/input/input_adapters.h>
 
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <nlohmann/detail/input/position_t.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -8481,9 +8481,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -9358,11 +9358,11 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <nlohmann/detail/input/lexer.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/is_sax.hpp>
+// #include <nlohmann/detail/meta/is_sax.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -9377,11 +9377,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // declval
 #include <string> // string
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <nlohmann/detail/meta/detected.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -9523,11 +9523,11 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -12329,11 +12329,11 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <nlohmann/detail/input/input_adapters.h>
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <nlohmann/detail/input/lexer.h>
 
-// #include <nlohmann/detail/input/parser.hpp>
+// #include <nlohmann/detail/input/parser.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -12351,21 +12351,21 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <nlohmann/detail/input/input_adapters.h>
 
-// #include <nlohmann/detail/input/json_sax.hpp>
+// #include <nlohmann/detail/input/json_sax.h>
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <nlohmann/detail/input/lexer.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/is_sax.hpp>
+// #include <nlohmann/detail/meta/is_sax.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -12820,7 +12820,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+// #include <nlohmann/detail/iterators/internal_iterator.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -12831,9 +12831,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <nlohmann/detail/iterators/primitive_iterator.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -12847,7 +12847,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -12975,7 +12975,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/iterators/iter_impl.hpp>
+// #include <nlohmann/detail/iterators/iter_impl.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -12989,19 +12989,19 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+// #include <nlohmann/detail/iterators/internal_iterator.h>
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <nlohmann/detail/iterators/primitive_iterator.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -13697,9 +13697,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+// #include <nlohmann/detail/iterators/iteration_proxy.h>
 
-// #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
+// #include <nlohmann/detail/iterators/json_reverse_iterator.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -13714,7 +13714,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -13821,9 +13821,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <nlohmann/detail/iterators/primitive_iterator.h>
 
-// #include <nlohmann/detail/json_custom_base_class.hpp>
+// #include <nlohmann/detail/json_custom_base_class.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -13836,7 +13836,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <type_traits> // conditional, is_same
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -13864,7 +13864,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/json_pointer.hpp>
+// #include <nlohmann/detail/json_pointer.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -13888,15 +13888,15 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/string_escape.hpp>
+// #include <nlohmann/detail/string_escape.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -14796,7 +14796,7 @@ inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/json_ref.hpp>
+// #include <nlohmann/detail/json_ref.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -14810,9 +14810,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <initializer_list>
 #include <utility>
 
-// #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -14868,19 +14868,19 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/string_escape.hpp>
+// #include <nlohmann/detail/string_escape.h>
 
-// #include <nlohmann/detail/string_utils.hpp>
+// #include <nlohmann/detail/string_utils.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
-// #include <nlohmann/detail/output/binary_writer.hpp>
+// #include <nlohmann/detail/output/binary_writer.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -14902,11 +14902,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/input/binary_reader.hpp>
+// #include <nlohmann/detail/input/binary_reader.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <nlohmann/detail/output/output_adapters.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -14929,7 +14929,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <ostream>  // basic_ostream
 #endif  // JSON_NO_IO
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -15040,7 +15040,7 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -16551,9 +16551,9 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <nlohmann/detail/output/output_adapters.h>
 
-// #include <nlohmann/detail/output/serializer.hpp>
+// #include <nlohmann/detail/output/serializer.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -16578,7 +16578,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // is_same
 #include <utility> // move
 
-// #include <nlohmann/detail/conversions/to_chars.hpp>
+// #include <nlohmann/detail/conversions/to_chars.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -16597,7 +16597,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -17651,19 +17651,19 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/exceptions.h>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <nlohmann/detail/meta/cpp_future.h>
 
-// #include <nlohmann/detail/output/binary_writer.hpp>
+// #include <nlohmann/detail/output/binary_writer.h>
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <nlohmann/detail/output/output_adapters.h>
 
-// #include <nlohmann/detail/string_concat.hpp>
+// #include <nlohmann/detail/string_concat.h>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -18539,11 +18539,11 @@ namespace detail {
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/value_t.h>
 
-// #include <nlohmann/json_fwd.hpp>
+// #include <nlohmann/json_fwd.h>
 
-// #include <nlohmann/ordered_map.hpp>
+// #include <nlohmann/ordered_map.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -18563,9 +18563,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // pair
 #include <vector> // vector
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/macro_scope.h>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <nlohmann/detail/meta/type_traits.h>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -23679,7 +23679,7 @@ using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc
 #endif
 #endif
 
-// #include <nlohmann/detail/macro_unscope.hpp>
+// #include <nlohmann/detail/macro_unscope.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
@@ -23727,7 +23727,7 @@ using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc
 #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
 #endif
 
-// #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
+// #include <nlohmann/thirdparty/hedley/hedley_undef.h>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0

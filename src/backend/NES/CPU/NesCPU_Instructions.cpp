@@ -1,4 +1,4 @@
-#include "NesCPU.hpp"
+#include "NesCPU.h"
 
 using namespace NS_NES;
 

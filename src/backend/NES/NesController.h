@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./shared/NES_PCH.hpp"
+#include "./shared/NesPCH.h"
 
 namespace NS_NES {
     class Controller : public IDeviceIO<u8> {

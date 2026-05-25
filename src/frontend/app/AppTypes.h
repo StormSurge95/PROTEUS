@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../session/SessionTypes.hpp"
+#include "../FrontendPCH.h"
+#include "../session/SessionTypes.h"
 
 namespace NS_Proteus {
     struct FrameState {
@@ -16,13 +16,6 @@ namespace NS_Proteus {
         bool runRender = false;
         bool runAudio = false;
         bool throttleFrame = false;
-    };
-
-    struct AppState {
-        AppView currentView = AppView::CONSOLE_SELECT;
-        ConsoleID selectedConsole = ConsoleID::NONE;
-        string selectedGame = "";
-        bool isLoading = false;
     };
 
     struct RuntimeStats {
@@ -54,4 +47,17 @@ namespace NS_Proteus {
 
     static SDL_EventType WINDOW_EVENTS[] = { SDL_EVENT_WINDOW_CLOSE_REQUESTED, SDL_EVENT_WINDOW_RESIZED };
     static SDL_EventType GAMEPAD_EVENTS[] = { SDL_EVENT_GAMEPAD_ADDED, SDL_EVENT_GAMEPAD_REMOVED, SDL_EVENT_GAMEPAD_BUTTON_DOWN };
+
+    enum class AppView {
+        CONSOLE_SELECT,
+        GAME_LIST,
+        GAME_VIEW,
+    };
+
+    struct AppState {
+        AppView currentView = AppView::CONSOLE_SELECT;
+        ConsoleID selectedConsole = ConsoleID::NONE;
+        string selectedGame = "";
+        bool isLoading = false;
+    };
 }

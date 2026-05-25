@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "./SessionTypes.hpp"
-#include "../logging/Logger.hpp"
-#include "../../backend/shared/IConsole.hpp"
-#include "../../backend/shared/IDebugger.hpp"
+#include "../FrontendPCH.h"
+#include "./SessionTypes.h"
+#include "../logging/Logger.h"
+#include "../../shared/IConsole.h"
+#include "../../shared/IDebugger.h"
 
 namespace NS_Proteus {
     class Logger;

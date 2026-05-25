@@ -1,5 +1,5 @@
-#include "./Logger.hpp"
-#include "../app/AppTypes.hpp"
+#include "./Logger.h"
+#include "../app/AppTypes.h"
 
 using namespace NS_Proteus;
 

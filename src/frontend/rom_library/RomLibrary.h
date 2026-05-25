@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "./RomLibraryTypes.hpp"
+#include "../FrontendPCH.h"
+#include "./RomLibraryTypes.h"
 
 namespace NS_Proteus {
     class RomLibrary {

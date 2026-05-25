@@ -1,12 +1,12 @@
-#include "./Proteus.hpp"
-#include "../FrontendPCH.hpp"
-#include "../../backend/NES/NES.hpp"
-#include "../audio/AudioManager.hpp"
-#include "../input/InputTypes.hpp"
-#include "../input/InputManager.hpp"
-#include "../video/VideoManager.hpp"
-#include "../rom_library/RomLibrary.hpp"
-#include "../logging/Logger.hpp"
+#include "./Proteus.h"
+#include "../FrontendPCH.h"
+#include "../../backend/NES/NES.h"
+#include "../audio/AudioManager.h"
+#include "../input/InputTypes.h"
+#include "../input/InputManager.h"
+#include "../video/VideoManager.h"
+#include "../rom_library/RomLibrary.h"
+#include "../logging/Logger.h"
 
 using namespace NS_Proteus;
 
@@ -155,11 +155,11 @@ void Proteus::RunSST() {
         json data = json::parse(f);
         f.close();
         // convert json object data into a format more usable by our program
-        vector<SSTtest> SST;
+        vector<SingleStateTest> SST;
         for (int i = 0; i < data.size(); i++)
-            SST.push_back(SSTtest(data[i]));
+            SST.push_back(SingleStateTest(data[i]));
         // run our tests
-        for (const SSTtest& test : SST) {
+        for (const SingleStateTest& test : SST) {
             session->GetConsole()->initSST(test.initState);
             session->GetConsole()->runSST();
             string result;

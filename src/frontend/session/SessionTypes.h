@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
+#include "../FrontendPCH.h"
 
 namespace NS_Proteus {
     enum class ConsoleSessionState {

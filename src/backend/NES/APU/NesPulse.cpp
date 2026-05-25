@@ -1,5 +1,5 @@
-#include "../shared/NES_PCH.hpp"
-#include "./NesPulse.hpp"
+#include "../shared/NesPCH.h"
+#include "./NesPulse.h"
 
 using namespace NS_NES;
 

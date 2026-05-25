@@ -1,6 +1,6 @@
-#include "./NES.hpp"
-#include "./NesController.hpp"
-#include "./APU/NesAPU.hpp"
+#include "./NES.h"
+#include "./NesController.h"
+#include "./APU/NesAPU.h"
 
 using namespace NS_NES;
 
@@ -99,7 +99,7 @@ void NES::collectAudio(vector<float>& samples) {
     apu->collectSamples(samples);
 }
 
-void NES::initSST(SSTstate state) {
+void NES::initSST(SingleStateTest::State state) {
     cpu->init(state);
 }
 void NES::runSST() {
@@ -107,6 +107,6 @@ void NES::runSST() {
         cpu->clock();
     } while (cpu->cycles != 0);
 }
-bool NES::checkSST(SSTstate state, string& result) {
+bool NES::checkSST(SingleStateTest::State state, string& result) {
     return cpu->check(state, result);
 }

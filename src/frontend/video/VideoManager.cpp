@@ -1,4 +1,4 @@
-#include "./VideoManager.hpp"
+#include "./VideoManager.h"
 
 #include "../../../resources/FontUI.h"
 #include "../../../resources/FontUI_Bold.h"

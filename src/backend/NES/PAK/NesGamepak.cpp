@@ -1,9 +1,9 @@
-#include "./Mappers/NesM000.hpp"
-#include "./Mappers/NesM001.hpp"
-#include "./Mappers/NesM002.hpp"
-#include "./Mappers/NesM003.hpp"
-#include "./Mappers/NesM004.hpp"
-#include "./NesGamepak.hpp"
+#include "./Mappers/NesM000.h"
+#include "./Mappers/NesM001.h"
+#include "./Mappers/NesM002.h"
+#include "./Mappers/NesM003.h"
+#include "./Mappers/NesM004.h"
+#include "./NesGamepak.h"
 
 /* TODO:
  * Figure out how to implement the functionalities

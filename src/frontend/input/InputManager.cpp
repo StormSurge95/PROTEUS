@@ -1,5 +1,5 @@
-#include "./InputTypes.hpp"
-#include "./InputManager.hpp"
+#include "./InputTypes.h"
+#include "./InputManager.h"
 
 using namespace NS_Proteus;
 

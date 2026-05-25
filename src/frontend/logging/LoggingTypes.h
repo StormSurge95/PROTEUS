@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../session/SessionTypes.hpp"
+#include "../FrontendPCH.h"
+#include "../session/SessionTypes.h"
 
 namespace NS_Proteus {
     enum class AppPhaseName { INPUT, EMUDEB, RENDER, AUDIO, THROTTLE };

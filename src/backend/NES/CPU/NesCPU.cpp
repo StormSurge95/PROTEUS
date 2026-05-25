@@ -1,8 +1,8 @@
-#include "./NesCPU.hpp"
-#include "../PPU/NesPPU.hpp"
-#include "../APU/NesAPU.hpp"
-#include "../PAK/NesGamepak.hpp"
-#include "../NesController.hpp"
+#include "./NesCPU.h"
+#include "../PPU/NesPPU.h"
+#include "../APU/NesAPU.h"
+#include "../PAK/NesGamepak.h"
+#include "../NesController.h"
 
 using namespace NS_NES;
 
@@ -46,7 +46,7 @@ CPU::CPU() {
     ram.fill(0x00);
 }
 
-void CPU::init(SSTstate state) {
+void CPU::init(SingleStateTest::State state) {
     pc = state.pc;
     a = state.a;
     x = state.x;
@@ -57,7 +57,7 @@ void CPU::init(SSTstate state) {
         ram[e[0]] = (e[1] & 0xFF);
     }
 }
-bool CPU::check(SSTstate state, string& result) {
+bool CPU::check(SingleStateTest::State state, string& result) {
     bool pass = true;
     result = "PASS\n";
     stringstream ss;

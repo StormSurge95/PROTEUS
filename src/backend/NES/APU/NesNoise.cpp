@@ -1,4 +1,4 @@
-#include "./NesNoise.hpp"
+#include "./NesNoise.h"
 
 using namespace NS_NES;
 

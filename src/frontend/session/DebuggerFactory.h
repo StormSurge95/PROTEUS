@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../Types.hpp"
-#include "../../backend/shared/IDebugger.hpp"
-#include "../../backend/shared/IConsole.hpp"
-#include "../../backend/Debuggers.hpp"
+#include "../FrontendPCH.h"
+#include "../../shared/Types.h"
+#include "../../shared/IDebugger.h"
+#include "../../shared/IConsole.h"
+#include "../../backend/Debuggers.h"
 
 namespace NS_Proteus {
     namespace DebuggerFactory {

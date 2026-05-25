@@ -1,8 +1,8 @@
 #pragma once
 
-#include "./shared/NES_PCH.hpp"
-#include "./PPU/NesPPU.hpp"
-#include "./PAK/Mappers/NesMapper.hpp"
+#include "./shared/NesPCH.h"
+#include "./PPU/NesPPU.h"
+#include "./PAK/Mappers/NesMapper.h"
 
 namespace NS_NES {
     /**
@@ -22,9 +22,9 @@ namespace NS_NES {
             // default destructor
             ~NES() = default;
 
-            void initSST(SSTstate s) override;
+            void initSST(SingleStateTest::State s) override;
             void runSST() override;
-            bool checkSST(SSTstate s, string& o) override;
+            bool checkSST(SingleStateTest::State s, string& o) override;
 
             // console reset function
             // fun fact: up until starting the development of this project, I thought that the

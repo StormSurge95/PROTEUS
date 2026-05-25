@@ -1,6 +1,7 @@
 #pragma once
 
-#include "./BackendPCH.hpp"
+#include "./SharedPCH.h"
+#include "./Types.h"
 
 /**
  * @interface IDebugger IDebugger.h

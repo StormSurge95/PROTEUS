@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./NesMapper.hpp"
+#include "./NesMapper.h"
 
 namespace NS_NES {
     /**

@@ -1,3 +1,3 @@
 #pragma once
 
-#include "./NES/NES.hpp"
+#include "./NES/NES.h"

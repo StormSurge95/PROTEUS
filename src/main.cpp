@@ -1,6 +1,6 @@
-#include "./frontend/app/Proteus.hpp"
+#include "./frontend/app/Proteus.h"
 
-#include "./backend/GBA/shared/GbaPCH.hpp"
+#include "./backend/GBA/shared/GbaPCH.h"
 
 using namespace NS_Proteus;
 

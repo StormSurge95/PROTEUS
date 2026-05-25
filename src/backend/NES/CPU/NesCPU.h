@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared/NES_PCH.hpp"
+#include "../shared/NesPCH.h"
 
 namespace NS_NES {
     class PPU;
@@ -248,8 +248,8 @@ namespace NS_NES {
             /// @brief Default Destructor
             ~CPU() = default;
 
-            void init(SSTstate state);
-            bool check(SSTstate state, string& result);
+            void init(SingleStateTest::State state);
+            bool check(SingleStateTest::State state, string& result);
 
             bool RDY() const { return oamData != 0x00 || true || true; }
 

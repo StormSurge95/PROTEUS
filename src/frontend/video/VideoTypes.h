@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../Types.hpp"
+#include "../FrontendPCH.h"
 
 namespace NS_Proteus {
     static const SDL_GPUShaderFormat ShaderFlags =

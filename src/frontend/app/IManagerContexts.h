@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "../rom_library/RomLibraryTypes.hpp"
-#include "../session/ConsoleSession.hpp"
-#include "./AppTypes.hpp"
+#include "../FrontendPCH.h"
+#include "../rom_library/RomLibraryTypes.h"
+#include "../session/ConsoleSession.h"
+#include "./AppTypes.h"
 
 namespace NS_Proteus {
     class Logger;

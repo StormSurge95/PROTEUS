@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../FrontendPCH.hpp"
-#include "./LoggingTypes.hpp"
-#include "../app/AppTypes.hpp"
+#include "../FrontendPCH.h"
+#include "./LoggingTypes.h"
+#include "../app/AppTypes.h"
 #include <iostream>
 
 using std::cout;

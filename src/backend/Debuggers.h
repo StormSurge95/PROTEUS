@@ -1,3 +1,3 @@
 #pragma once
 
-#include "./NES/shared/NesDebugger.hpp"
+#include "./NES/shared/NesDebugger.h"
