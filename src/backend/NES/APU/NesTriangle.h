@@ -5,7 +5,7 @@
 namespace NS_NES {
     class TriangleChannel {
             // Allow Debugger class to access all private members of the Triangle class
-            friend class Debugger;
+            friend class NesDebugger;
         private:
             // enabled flag
             bool enabled = false;

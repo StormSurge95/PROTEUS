@@ -6,7 +6,7 @@ namespace NS_NES {
 
     class PulseChannel {
             // Allow Debugger class to access all private members of the PulseChannel class
-            friend class Debugger;
+            friend class NesDebugger;
         private:
             // flag for whether this is Pulse1 or Pulse2
             bool isPulse1 = false;

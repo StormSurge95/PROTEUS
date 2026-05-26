@@ -4,11 +4,11 @@
 
 using namespace NS_NES;
 
-Debugger::Debugger(sptr<NES> station) {
+NesDebugger::NesDebugger(sptr<NES> station) {
     nes = station;
 }
 
-void Debugger::StepInstruction() {
+void NesDebugger::StepInstruction() {
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
 
     u64 startTotalCycles = nes->cpu->totalCycles;
@@ -27,22 +27,21 @@ void Debugger::StepInstruction() {
     } while (!sawClock || nes->cpu->cycles != 0);
 }
 
-void Debugger::StepCycle() {
+void NesDebugger::StepCycle() {
     // StepCycle() should mean to step one MASTER cycle rather than cpu/ppu/apu
 
     // validate state
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    //printf("%s\n", hex(nes->cpu->pc.value()).c_str());
     nes->clockMaster();
 }
 
-void Debugger::Clear() {
+void NesDebugger::Clear() {
     enabled = false;
     nes->reset();
     nes = nullptr;
 }
 
-vector<array<string, 3>> Debugger::GetStateCPU() const {
+vector<array<string, 3>> NesDebugger::GetStateCPU() const {
     vector<array<string, 3>> lines;
 
     u16 temp = nes->cpu->pc.value();
@@ -78,7 +77,7 @@ vector<array<string, 3>> Debugger::GetStateCPU() const {
     return lines;
 }
 
-vector<array<string, 4>> Debugger::GetStatePPU() const {
+vector<array<string, 4>> NesDebugger::GetStatePPU() const {
     vector<array<string, 4>> lines;
 
     u16 temp = 0x00;
@@ -138,7 +137,7 @@ vector<array<string, 4>> Debugger::GetStatePPU() const {
     return lines;
 }
 
-vector<string> Debugger::GetStateRAM() const {
+vector<string> NesDebugger::GetStateRAM() const {
     // for NES; there will be 112 lines of RAM; each having 16 bytes
     vector<string> lines(112);
 
@@ -171,7 +170,7 @@ vector<string> Debugger::GetStateRAM() const {
     return lines;
 }
 
-string Debugger::DisassembleInstruction(u16 addr) const {
+string NesDebugger::DisassembleInstruction(u16 addr) const {
     u16 line_addr = addr;
     u8 oc = nes->cpu->read(addr++, true);
     u8 val = 0x00;
@@ -316,7 +315,7 @@ string Debugger::DisassembleInstruction(u16 addr) const {
     return ss.str();
 }
 
-void Debugger::ScanInstructions(array<u64, 25>& list) const {
+void NesDebugger::ScanInstructions(array<u64, 25>& list) const {
     int index = 0;
     for (const u16& e : nes->cpu->prevInstAddrs)
         list[index++] = e;
@@ -332,7 +331,7 @@ void Debugger::ScanInstructions(array<u64, 25>& list) const {
     }
 }
 
-vector<string> Debugger::GetDisassembly() const {
+vector<string> NesDebugger::GetDisassembly() const {
     array<u64, 25> addrs;
     ScanInstructions(addrs);
 
@@ -347,7 +346,7 @@ vector<string> Debugger::GetDisassembly() const {
     return lines;
 }
 
-vector<u32> Debugger::GetPaletteColors() {
+vector<u32> NesDebugger::GetPaletteColors() {
     vector<u32> colors;
     for (int i = 0; i < 16; ++i) {
         u8 paletteIndex = nes->ppu->ppuRead(0x3F00 + i, true);
@@ -356,7 +355,7 @@ vector<u32> Debugger::GetPaletteColors() {
     return colors;
 }
 
-vector<u32> Debugger::GetPatternTable(int index) {
+vector<u32> NesDebugger::GetPatternTable(int index) {
     vector<u32> pixels(16384, 0xFF000000);
 
     // TODO: Get Pattern Table pixel data from PPU
@@ -389,7 +388,7 @@ vector<u32> Debugger::GetPatternTable(int index) {
     return pixels;
 }
 
-string Debugger::GetFlags(int status) const {
+string NesDebugger::GetFlags(int status) const {
     stringstream ss;
     ss << ((status & 0x80) > 0 ? "1 " : "0 ");
     ss << ((status & 0x40) > 0 ? "1 " : "0 ");
@@ -402,11 +401,11 @@ string Debugger::GetFlags(int status) const {
     return ss.str();
 }
 
-vector<u32> Debugger::GetNameTables(int id) {
+vector<u32> NesDebugger::GetNameTable(int id) {
     return vector<u32>();
 }
 
-vector<array<string, 4>> Debugger::GetStateAPU() const {
+vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     vector<array<string, 4>> lines;
 
     // PULSE 1
@@ -589,26 +588,26 @@ vector<array<string, 4>> Debugger::GetStateAPU() const {
 }
 
 // TODO debug Pulse1 channel
-vector<u32> Debugger::GetPulse1() {
+vector<u32> NesDebugger::GetPulse1() {
     return vector<u32>();
 }
 
 // TODO debug Pulse2 channel
-vector<u32> Debugger::GetPulse2() {
+vector<u32> NesDebugger::GetPulse2() {
     return vector<u32>();
 }
 
 // TODO debug Triangle channel
-vector<u32> Debugger::GetTriangle() {
+vector<u32> NesDebugger::GetTriangle() {
     return vector<u32>();
 }
 
 // TODO debug Noise channel
-vector<u32> Debugger::GetNoise() {
+vector<u32> NesDebugger::GetNoise() {
     return vector<u32>();
 }
 
 // TODO debug DMC channel
-vector<u32> Debugger::GetDMC() {
+vector<u32> NesDebugger::GetDMC() {
     return vector<u32>();
 }

@@ -24,7 +24,7 @@ namespace NS_NES {
              * @brief Granting friend access to Debugger.
              * This class is allowed to access private members for debugging.
              */
-            friend class Debugger;
+            friend class NesDebugger;
         private:
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST

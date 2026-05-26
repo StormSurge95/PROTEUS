@@ -5,7 +5,7 @@
 namespace NS_NES {
     class NoiseChannel {
             /// @brief Allow Debugger class to access all private members of the NoiseChannel class
-            friend class Debugger;
+            friend class NesDebugger;
         private:
             /// @brief enabled flag
             bool enabled = false;

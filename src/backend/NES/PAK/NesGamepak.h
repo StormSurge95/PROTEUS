@@ -15,7 +15,7 @@ namespace NS_NES {
      */
     class Gamepak : IDevice<u8, u16> {
             // Allow Debugger class to access all private members of the Gamepak class
-            friend class Debugger;
+            friend class NesDebugger;
         public:
             /// @brief reference to the mapper contained within this ROM
             sptr<Mapper> mapper = nullptr;

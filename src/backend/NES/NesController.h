@@ -4,7 +4,7 @@
 
 namespace NS_NES {
     class Controller : public IDeviceIO<u8> {
-        friend class Debugger;
+        friend class NesDebugger;
         public:
             /// @brief strobe flag
             bool strobe = false;

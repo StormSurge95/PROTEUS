@@ -5,11 +5,11 @@
 
 namespace NS_NES {
     /**
-     * @class Debugger Debugger.h "./Debugger.h"
-     * @implements IDebugger
+     * @class NesDebugger NesDebugger.h "./NesDebugger.h"
+     * @implements INesDebugger
      * @brief This is meant to be the main debugging tool of the NES emulator.
      */
-    class Debugger : public IDebugger {
+    class NesDebugger : public IDebugger {
         private:
             /// @brief enabled flag
             bool enabled = false;
@@ -30,11 +30,11 @@ namespace NS_NES {
              * @brief explicit constructor
              * @param n reference to the NES station this debugger is attached to
              */
-            Debugger(sptr<NES> n);
+            NesDebugger(sptr<NES> n);
             /**
              * @brief explicit destructor; simply calls clear in order to detach the NES reference
              */
-            ~Debugger() { Clear(); }
+            ~NesDebugger() { Clear(); }
 
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;
@@ -109,7 +109,7 @@ namespace NS_NES {
              * @param id The id number of the nametable to get
              * @return A vector containing the constructed pixel data of the requested nametable
              */
-            vector<u32> GetNameTables(int id) override;
+            vector<u32> GetNameTable(int id) override;
 
             /// @section APU
             /// @brief APU-related debugging methods; currenly unimplemented

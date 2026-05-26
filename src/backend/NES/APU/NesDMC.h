@@ -5,7 +5,7 @@
 namespace NS_NES {
     class DMC_Channel {
             // Allow Debugger class to access all private members of the DMC_Channel class
-            friend class Debugger;
+            friend class NesDebugger;
         private:
             bool irq_enable = false;
             bool loop_flag = true;

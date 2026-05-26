@@ -77,6 +77,9 @@
     <Filter Include="src\backend\GBA\shared">
       <UniqueIdentifier>{e0900bde-d4c6-4f62-b61e-e65738474354}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\shared\core_utils">
+      <UniqueIdentifier>{b6c6508f-e22a-40fd-b79d-b38b394a554f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\NES_DB.h">
@@ -276,6 +279,9 @@
     </ClInclude>
     <ClInclude Include="src\shared\IDevice.h">
       <Filter>src\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared\core_utils\CoreExports.h">
+      <Filter>src\shared\core_utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,7 +12,7 @@ namespace NS_NES {
      */
     class NES : public IConsole {
             /// @brief Allow Debugger class to access all private members of the NES class
-            friend class Debugger;
+            friend class NesDebugger;
         public:
             // master clock counter for the console
             u64 masterClock = 0x00;

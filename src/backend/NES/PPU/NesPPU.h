@@ -8,7 +8,7 @@
 namespace NS_NES {
     class PPU : public IDevice<u8, u16> {
             // allow Debugger class to access all private members of the PPU class
-            friend class Debugger;
+            friend class NesDebugger;
         public:
             // current scanline of current frame
             u16 scanline = 0;

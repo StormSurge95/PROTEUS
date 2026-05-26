@@ -52,6 +52,7 @@
     <ClCompile Include="src\frontend\session\ConsoleSession.cpp" />
     <ClCompile Include="src\frontend\video\VideoManager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\shared\core_utils\CoreLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\FontDebug.h" />
@@ -113,10 +114,12 @@
     <ClInclude Include="src\frontend\session\SessionTypes.h" />
     <ClInclude Include="src\frontend\video\VideoManager.h" />
     <ClInclude Include="src\frontend\video\VideoTypes.h" />
+    <ClInclude Include="src\shared\core_utils\CoreLoader.h" />
     <ClInclude Include="src\shared\IConsole.h" />
     <ClInclude Include="src\shared\IDebugger.h" />
     <ClInclude Include="src\shared\IDevice.h" />
     <ClInclude Include="src\shared\json.h" />
+    <ClInclude Include="src\shared\core_utils\CoreExports.h" />
     <ClInclude Include="src\shared\SharedPCH.h" />
     <ClInclude Include="src\shared\Types.h" />
     <ClInclude Include="src\shared\Utilities.h" />
