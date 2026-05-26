@@ -251,7 +251,8 @@ public:
 #define ICONSOLE_CONTRACT_VERSION 1
 ```
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 #### 0.1.2 Review and Document Current IDebugger Interface
@@ -320,7 +321,8 @@ public:
 #define IDEBUGGER_CONTRACT_VERSION 1
 ```
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 #### 0.1.3 Create Plugin Manifest Structure
@@ -462,7 +464,8 @@ struct PluginManifest {
 };
 ```
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 #### 0.1.4 Define Plugin Export Macros
@@ -611,7 +614,8 @@ class IDebugger;
     PLUGIN_EXPORT const PluginManifest* PLUGIN_CALLING_CONVENTION funcName(void)
 ```
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 ### 0.2 Create Cross-Platform Plugin Loading System
@@ -723,7 +727,9 @@ private:
 };
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 0.2.2 Create Windows Plugin Loader
 
@@ -810,7 +816,9 @@ std::string PluginLoader::GetLastError() {
 #endif
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 0.2.3 Create Linux Plugin Loader
 
@@ -889,7 +897,9 @@ std::string PluginLoader::GetLastError() {
 #endif
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 0.2.4 Create macOS Plugin Loader
 
@@ -968,7 +978,9 @@ std::string PluginLoader::GetLastError() {
 #endif
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 0.2.5 Create Platform-Agnostic Plugin Loader Implementation
 
@@ -1067,7 +1079,9 @@ std::string PluginLoader::GetExpectedFilename(const std::string& consoleName) {
 
 **Phase 0 Deliverable:** Cross-platform plugin loader fully implemented and tested
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 1: NES Core as First Plugin
 
@@ -1149,7 +1163,9 @@ set_target_properties(ProteusNES PROPERTIES
 install(TARGETS ProteusNES DESTINATION ${INSTALL_PLUGIN_DIR})
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 1.1.2 Create NES Plugin Exports
 
@@ -1223,7 +1239,9 @@ PLUGIN_MANIFEST_EXPORT(GetPluginManifest) {
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 1.1.3 Create NES Core Implementation Header
 
@@ -1273,7 +1291,9 @@ private:
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 1.1.4 Create NES Core Implementation
 
@@ -1370,7 +1390,9 @@ bool NESCoreImpl::checkSST(SSTstate state, string& outMessage) {
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 1.1.5 Create NES Debugger Implementation
 
@@ -1441,7 +1463,9 @@ bool NESDebuggerImpl::isBreakpointSet() const {
 
 **Phase 1 Deliverable:** NES compiles as plugin DLL/SO/DYLIB with proper exports
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 2: Plugin Registry & Discovery
 
@@ -1554,7 +1578,9 @@ private:
 };
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 2.1.2 Create Plugin Registry Implementation
 
@@ -1746,7 +1772,9 @@ bool PluginRegistry::UnloadAllPlugins() {
 
 **Phase 2 Deliverable:** Plugin registry system complete
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 3: Update Frontend to Use Plugin System
 
@@ -1847,7 +1875,9 @@ private:
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 3.1.2 Create Plugin Manager Implementation
 
@@ -1955,7 +1985,9 @@ void PluginManager::LogPluginStatus() {
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 3.1.3 Update ConsoleFactory
 
@@ -2007,7 +2039,9 @@ std::shared_ptr<IConsole> ConsoleFactory::Create(ConsoleID console) {
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 3.1.4 Update Proteus::Init()
 
@@ -2063,7 +2097,9 @@ void Proteus::Deinit() {
 
 **Phase 3 Deliverable:** Frontend uses plugin system dynamically at runtime
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 4: Build System Configuration
 
@@ -2118,7 +2154,9 @@ endif()
 add_subdirectory(src)
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 4.2 src/CMakeLists.txt
 
@@ -2142,7 +2180,9 @@ endif()
 add_subdirectory(frontend)
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 4.3 src/common/CMakeLists.txt
 
@@ -2171,7 +2211,9 @@ set_target_properties(ProteusCommon PROPERTIES
 )
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 4.4 src/backends/CMakeLists.txt
 
@@ -2203,7 +2245,9 @@ if(BUILD_STUB_PLUGINS)
 endif()
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 4.5 src/frontend/CMakeLists.txt
 
@@ -2253,7 +2297,9 @@ install(TARGETS Proteus DESTINATION ${INSTALL_BIN_DIR})
 
 **Phase 4 Deliverable:** Build system complete and functional on all platforms
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 5: Multi-Instance & Inter-Core Communication
 
@@ -2348,7 +2394,9 @@ private:
 }
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 #### 5.1.2 Create Multi-Core Session Implementation
 
@@ -2433,7 +2481,9 @@ SessionResult MultiCoreSession::ShutdownAll() {
 
 **Phase 5 Deliverable:** Multi-instance architecture designed and implemented
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 6: Cross-Platform Build Scripts
 
@@ -2484,7 +2534,9 @@ Write-Host "`nBuild successful!" -ForegroundColor Green
 Write-Host "Output: $BuildDir\$BuildType" -ForegroundColor Cyan
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 6.2 Linux Build Script
 
@@ -2530,7 +2582,9 @@ echo "Build successful!"
 echo "Output: $BUILD_DIR"
 ```
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ### 6.3 macOS Build Script
 
@@ -2583,7 +2637,9 @@ echo "Output: $BUILD_DIR"
 
 **Phase 6 Deliverable:** One-command builds functional on all platforms
 
-[^](#table-of-contents)---
+[^TOC](#table-of-contents)
+
+---
 
 ## Phase 7: Testing & Validation
 
@@ -2656,7 +2712,8 @@ TEST_F(PluginLoadTest, ContractVersionCompatibility) {
 }
 ```
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 ### 7.2 Create Plugin Integration Tests
@@ -2737,7 +2794,8 @@ TEST_F(PluginIntegrationTest, InputHandling) {
 
 **Phase 7 Deliverable:** Comprehensive automated tests on all platforms
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 ## Phase 8: Documentation & Release
@@ -2817,7 +2875,8 @@ Template:
 
 **Phase 8 Deliverable:** Complete documentation set
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 ## Phase 9: Final Validation & Release
@@ -2873,7 +2932,8 @@ Tasks:
 
 **Phase 9 Deliverable:** Production release ready for all platforms
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
 
 ## Timeline & Success Criteria
@@ -2920,5 +2980,6 @@ Phase 0.0 → 0.1 → 0.2 → 1.1 → 2.1 → 3.1 → 4.x → 7.x → 9.x
 6. Registry pattern for plugin management
 7. Frontend remains console-agnostic
 
-[^](#table-of-contents)
+[^TOC](#table-of-contents)
+
 ---
