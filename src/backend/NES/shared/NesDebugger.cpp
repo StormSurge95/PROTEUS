@@ -4,7 +4,7 @@
 
 using namespace NS_NES;
 
-NesDebugger::NesDebugger(sptr<NES> station) {
+NesDebugger::NesDebugger(NES* station) {
     nes = station;
 }
 

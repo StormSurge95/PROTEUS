@@ -3,133 +3,104 @@
 ## Phase 0: Foundation & Preparation
 
 ### 0.1 Establish IConsole and IDebugger as Plugin Contracts
-- [ ] 0.1.1 Review and Document Current IConsole Interface
-  - [ ] Update `src/backend/shared/IConsole.hpp` with contract version
-  - [ ] Document all required methods
-  - [ ] Add contract stability notes
-  - [ ] Verify existing implementations align with interface
+- [x] 0.1.1 Review and Document Current IConsole Interface
+  - [x] Update `src/backend/shared/IConsole.h` with contract version
+  - [x] Document all required methods
+  - [x] Add contract stability notes
+  - [x] Verify existing implementations align with interface
 
-- [ ] 0.1.2 Review and Document Current IDebugger Interface
-  - [ ] Update `src/backend/shared/IDebugger.hpp` with contract version
-  - [ ] Document all methods
-  - [ ] Mark as optional for plugins
-  - [ ] Verify backwards compatibility
+- [x] 0.1.2 Review and Document Current IDebugger Interface
+  - [x] Update `src/backend/shared/IDebugger.h` with contract version
+  - [x] Document all methods
+  - [x] Mark as optional for plugins
+  - [x] Verify backwards compatibility
 
-- [ ] 0.1.3 Create Plugin Manifest Structure
-  - [ ] Create `src/common/plugin/PluginManifest.hpp`
-  - [ ] Define version fields (major, minor, patch)
-  - [ ] Define contract version references
-  - [ ] Add metadata fields (name, author, description, etc.)
-  - [ ] Add development status enum
+- [x] 0.1.3 Create Plugin Manifest Structure
+  - [x] Create `src/shared/core_utils/CoreExports.h`
+  - [x] Define version fields (major, minor, patch)
+  - [x] Define contract version references
+  - [x] Add metadata fields (name, author, description, etc.)
+  - [x] Add development status enum
 
-- [ ] 0.1.4 Define Plugin Export Macros
-  - [ ] Create `src/common/plugin/PluginExports.hpp`
-  - [ ] Define `PLUGIN_EXPORT` macro (platform-specific)
-  - [ ] Define `PLUGIN_CALLING_CONVENTION` macro
-  - [ ] Create `PLUGIN_FACTORY_CREATE` macro
-  - [ ] Create `PLUGIN_FACTORY_DESTROY` macro
-  - [ ] Create `PLUGIN_DEBUGGER_CREATE` macro (optional)
-  - [ ] Create `PLUGIN_DEBUGGER_DESTROY` macro (optional)
-  - [ ] Create `PLUGIN_MANIFEST_EXPORT` macro
-  - [ ] Test macros compile on all platforms
+- [x] 0.1.4 Define Plugin Export Macros
+  - [x] Define `CORE_EXPORT` macro (platform-specific)
+  - [x] Define `CORE_INVOKE` macro
+  - [x] Create `CORE_CREATE` macro
+  - [x] Create `CORE_DESTROY` macro
+  - [x] Create `DEBUGGER_CREATE` macro (optional)
+  - [x] Create `DEBUGGER_DESTROY` macro (optional)
+  - [x] Create `CORE_MANIFEST` macro
+  - [x] Test macros compile on all platforms
 
 **Deliverable:** Interfaces and export macros documented. No functional changes.
 
 ---
 
-### 0.2 Create Cross-Platform Plugin Loading System
+### 0.2 Create Cross-Platform Core Loading System
 
-- [ ] 0.2.1 Create Core Plugin Loader
-  - [ ] Create `src/common/plugin/PluginLoader.hpp`
-  - [ ] Define function pointer types for exports
-  - [ ] Create `LoadedPlugin` struct
-  - [ ] Define `LoadPlugin()` method
-  - [ ] Define `UnloadPlugin()` method
-  - [ ] Define `GetExpectedFilename()` helper
-  - [ ] Define `GetPluginExtension()` method
-  - [ ] Define `GetLibraryPrefix()` method
-  - [ ] Define `GetLastError()` method
-  - [ ] Declare platform-specific implementations
+- [x] 0.2.1 Define Core Loader
+  - [x] Create `src/shared/core_utils/CoreLoader.h`
+  - [x] Define function pointer types for exports
+  - [x] Create `LoadedCore` struct
+  - [x] Define `LoadCore()` method
+  - [x] Define `UnloadCore()` method
+  - [x] Define `GetExpectedFilename()` helper
+  - [x] Define `GetCoreExtension()` method
+  - [x] Define `GetLibraryPrefix()` method
+  - [x] Define `GetLastError()` method
+  - [x] Declare platform-specific implementations
 
-- [ ] 0.2.2 Create Windows Plugin Loader
-  - [ ] Create `src/common/plugin/platform/PluginLoaderWindows.cpp`
-  - [ ] Implement `LoadLibraryInternal()` using `LoadLibraryA()`
-  - [ ] Implement `UnloadLibraryInternal()` using `FreeLibrary()`
-  - [ ] Implement `GetSymbolInternal()` using `GetProcAddress()`
-  - [ ] Implement `GetPluginExtension()` returning ".dll"
-  - [ ] Implement `GetLibraryPrefix()` returning ""
-  - [ ] Implement `GetLastError()` with proper error messages
+- [ ] 0.2.2 Create Windows Core Loader
+  - [x] Create `src/shared/core_utils/platform/CoreLoader.cpp`
+  - [x] Implement `LoadLibraryInternal()` using `LoadLibraryA()`
+  - [x] Implement `UnloadLibraryInternal()` using `FreeLibrary()`
+  - [x] Implement `GetSymbolInternal()` using `GetProcAddress()`
+  - [x] Implement `GetCoreExtension()` returning ".dll"
+  - [x] Implement `GetLibraryPrefix()` returning ""
+  - [x] Implement `GetLastError()` with proper error messages
   - [ ] Test with real DLL loading
 
-- [ ] 0.2.3 Create Linux Plugin Loader
-  - [ ] Create `src/common/plugin/platform/PluginLoaderLinux.cpp`
-  - [ ] Implement `LoadLibraryInternal()` using `dlopen()`
-  - [ ] Implement `UnloadLibraryInternal()` using `dlclose()`
-  - [ ] Implement `GetSymbolInternal()` using `dlsym()`
-  - [ ] Implement `GetPluginExtension()` returning ".so"
-  - [ ] Implement `GetLibraryPrefix()` returning "lib"
-  - [ ] Implement `GetLastError()` using `dlerror()`
+- [ ] 0.2.3 Create Linux Core Loader
+  - [x] Implement `LoadLibraryInternal()` using `dlopen()`
+  - [x] Implement `UnloadLibraryInternal()` using `dlclose()`
+  - [x] Implement `GetSymbolInternal()` using `dlsym()`
+  - [x] Implement `GetCoreExtension()` returning ".so"
+  - [x] Implement `GetLibraryPrefix()` returning "lib"
+  - [x] Implement `GetLastError()` using `dlerror()`
   - [ ] Test with real SO loading
 
-- [ ] 0.2.4 Create macOS Plugin Loader
-  - [ ] Create `src/common/plugin/platform/PluginLoaderMacOS.cpp`
-  - [ ] Implement `LoadLibraryInternal()` using `dlopen()`
-  - [ ] Implement `UnloadLibraryInternal()` using `dlclose()`
-  - [ ] Implement `GetSymbolInternal()` using `dlsym()`
-  - [ ] Implement `GetPluginExtension()` returning ".dylib"
-  - [ ] Implement `GetLibraryPrefix()` returning "lib"
-  - [ ] Implement `GetLastError()` using `dlerror()`
+- [ ] 0.2.4 Create macOS Core Loader
+  - [x] Create `src/shared/core_utils/platform/CoreLoaderMacOS.cpp`
+  - [x] Implement `LoadLibraryInternal()` using `dlopen()`
+  - [x] Implement `UnloadLibraryInternal()` using `dlclose()`
+  - [x] Implement `GetSymbolInternal()` using `dlsym()`
+  - [x] Implement `GetCoreExtension()` returning ".dylib"
+  - [x] Implement `GetLibraryPrefix()` returning "lib"
+  - [x] Implement `GetLastError()` using `dlerror()`
   - [ ] Test with real DYLIB loading
   - [ ] Handle Apple Silicon and Intel architectures
 
-- [ ] 0.2.5 Create Platform-Agnostic Plugin Loader Implementation
-  - [ ] Create `src/common/plugin/PluginLoader.cpp`
-  - [ ] Implement `LoadPlugin()` with validation
-  - [ ] Implement manifest loading and version checking
-  - [ ] Implement factory function resolution
-  - [ ] Implement optional debugger function resolution
-  - [ ] Implement `UnloadPlugin()` with cleanup
-  - [ ] Implement `GetExpectedFilename()` helper
+- [ ] 0.2.5 Create Platform-Agnostic Core Loader Implementation
+  - [x] Create `src/shared/core_utils/CoreLoader.cpp`
+  - [x] Implement `LoadCore()` with validation
+  - [x] Implement manifest loading and version checking
+  - [x] Implement factory function resolution
+  - [x] Implement optional debugger function resolution
+  - [x] Implement `UnloadCore()` with cleanup
+  - [x] Implement `GetExpectedFilename()` helper
   - [ ] Add comprehensive error handling
 
-**Deliverable:** Cross-platform plugin loader compiles and links. Plugins can be loaded/unloaded dynamically.
+**Deliverable:** Cross-platform plugin loader compiles and links. Cores can be loaded/unloaded dynamically.
 
 ---
 
-## Phase 1: Backend Infrastructure Consolidation
+## Phase 1: NES Core as First Library
 
-### 1.1 Consolidate Shared Backend Interfaces
+### 1.1 Create NES Plugin Structure
 
-- [ ] 1.1.1 Update Backend PCH
-  - [ ] Create/Update `src/backend/shared/BackendPCH.hpp`
-  - [ ] Define type aliases (u8, u16, u32, u64, etc.)
-  - [ ] Define smart pointer aliases (sptr, uptr)
-  - [ ] Include standard library headers
-  - [ ] Include `IConsole.hpp`
-  - [ ] Include `IDebugger.hpp`
-  - [ ] Define `SSTstate` enum
-  - [ ] Verify all backends can compile with this PCH
-
-- [ ] 1.1.2 Create Shared Backend Utilities
-  - [ ] Create `src/backend/shared/BackendUtils.hpp`
-  - [ ] Create `GetConsoleName()` helper
-  - [ ] Create `GetButtonName()` conversion
-  - [ ] Create `Clamp()` template function
-  - [ ] Create bit manipulation helpers (IsBitSet, SetBit, ClearBit)
-  - [ ] Add utility functions used across backends
-  - [ ] Document all utilities
-
-**Deliverable:** Backend infrastructure organized. Shared utilities available for all plugins.
-
----
-
-## Phase 2: NES Core as First Plugin
-
-### 2.1 Create NES Plugin Structure
-
-- [ ] 2.1.1 Create NES CMakeLists.txt (SHARED Library)
-  - [ ] Create `src/backends/nes/CMakeLists.txt`
-  - [ ] Define shared library target `ProteusNES`
+- [ ] 1.1.1 Create NES CMakeLists.txt (SHARED Library)
+  - [x] Create `src/backends/nes/CMakeLists.txt`
+  - [x] Define shared library target `ProteusNES`
   - [ ] Add plugin interface source files
   - [ ] Add core emulation source files
   - [ ] Add CPU, PPU, APU source files
@@ -140,151 +111,27 @@
   - [ ] Configure install targets
   - [ ] Set output to `${CMAKE_BINARY_DIR}/plugins`
 
-- [ ] 2.1.2 Create NES Plugin Manifest and Exports
-  - [ ] Create `src/backends/nes/plugin/NESPluginExports.cpp`
-  - [ ] Define `PluginManifest` static instance
-  - [ ] Populate all manifest fields
-  - [ ] Implement `CreateCore()` factory function
-  - [ ] Implement `DestroyCore()` cleanup function
-  - [ ] Implement `CreateDebugger()` optional function
-  - [ ] Implement `DestroyDebugger()` optional function
-  - [ ] Implement `GetPluginManifest()` export
-  - [ ] Verify all exports use correct macros
-
-- [ ] 2.1.3 Create NES Core Implementation Header
-  - [ ] Create `src/backends/nes/plugin/NESCoreImpl.hpp`
-  - [ ] Define `NESCoreImpl` class implementing `IConsole`
-  - [ ] Declare all IConsole methods
-  - [ ] Add member variable for `NS_NES::NES`
-  - [ ] Add initialization state tracking
-  - [ ] Document class purpose and relationship to backend
-
-- [ ] 2.1.4 Create NES Core Implementation
-  - [ ] Create `src/backends/nes/plugin/NESCoreImpl.cpp`
-  - [ ] Implement constructor and destructor
-  - [ ] Implement `Initialize()`
-  - [ ] Implement `Shutdown()`
-  - [ ] Implement `loadROM()`
-  - [ ] Implement `reset()`
-  - [ ] Implement `clock()`
-  - [ ] Implement `getFrameBuffer()`
-  - [ ] Implement `collectAudio()`
-  - [ ] Implement `update()`
-  - [ ] Implement SST methods
-  - [ ] Add error handling and logging
-
-- [ ] 2.1.5 Create NES Debugger Implementation
-  - [ ] Create `src/backends/nes/plugin/NESDebuggerImpl.hpp`
-  - [ ] Define `NESDebuggerImpl` class implementing `IDebugger`
-  - [ ] Declare all IDebugger methods
-  - [ ] Add reference to associated console
-
-- [ ] 2.1.6 Create NES Debugger Implementation
-  - [ ] Create `src/backends/nes/plugin/NESDebuggerImpl.cpp`
-  - [ ] Implement constructor
-  - [ ] Implement all debugger methods
-  - [ ] Add breakpoint handling
-  - [ ] Add condition tracking
+- [x] 1.1.2 Create NES Plugin Manifest and Exports
+  - [x] Create `src/backends/nes/core_utils/NESCoreExports.cpp`
+  - [x] Define `CoreManifest` static instance
+  - [x] Populate all manifest fields
+  - [x] Implement `CreateCore()` factory function
+  - [x] Implement `DestroyCore()` cleanup function
+  - [x] Implement `CreateDebugger()` optional function
+  - [x] Implement `DestroyDebugger()` optional function
+  - [x] Implement `GetPluginManifest()` export
+  - [x] Verify all exports use correct macros
 
 **Deliverable:** NES compiles as plugin DLL/SO/DYLIB. Implements IConsole contract.
 
 ---
 
-## Phase 3: Other Console Cores as Plugins
+## Phase 2: Plugin Registry & Discovery
 
-### 3.1 Repeat NES Plugin Structure for GBA
+### 2.1 Create Plugin Registry
 
-- [ ] 3.1.1 Create GBA CMakeLists.txt
-  - [ ] Create `src/backends/gba/CMakeLists.txt`
-  - [ ] Follow same structure as NES plugin
-  - [ ] Configure for GBA-specific sources
-  - [ ] Set output directory
-
-- [ ] 3.1.2 Create GBA Plugin Exports
-  - [ ] Create `src/backends/gba/plugin/GBAPluginExports.cpp`
-  - [ ] Define manifest for GBA
-  - [ ] Implement factory functions
-  - [ ] Implement debugger functions
-
-- [ ] 3.1.3 Create GBA Core Implementation
-  - [ ] Create `src/backends/gba/plugin/GBACoreImpl.hpp`
-  - [ ] Create `src/backends/gba/plugin/GBACoreImpl.cpp`
-  - [ ] Implement all IConsole methods
-  - [ ] Reference GBA-specific backends
-
-- [ ] 3.1.4 Create GBA Debugger Implementation
-  - [ ] Create `src/backends/gba/plugin/GBADebuggerImpl.hpp`
-  - [ ] Create `src/backends/gba/plugin/GBADebuggerImpl.cpp`
-  - [ ] Implement debugger functionality
-
-### 3.2 Create Stub Cores for Unsupported Consoles
-
-- [ ] 3.2.1 Create SNES Stub Plugin
-  - [ ] Create `src/backends/snes/CMakeLists.txt`
-  - [ ] Create `src/backends/snes/plugin/SNESStubImpl.hpp`
-  - [ ] Create `src/backends/snes/plugin/SNESPluginExports.cpp`
-  - [ ] Set development status to "stub"
-
-- [ ] 3.2.2 Create PS1 Stub Plugin
-  - [ ] Create `src/backends/ps1/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.3 Create N64 Stub Plugin
-  - [ ] Create `src/backends/n64/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.4 Create PS2 Stub Plugin
-  - [ ] Create `src/backends/ps2/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.5 Create GBC Stub Plugin
-  - [ ] Create `src/backends/gbc/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.6 Create NGC (GameCube) Stub Plugin
-  - [ ] Create `src/backends/ngc/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.7 Create Xbox Stub Plugin
-  - [ ] Create `src/backends/xbox/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.8 Create NDS Stub Plugin
-  - [ ] Create `src/backends/nds/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.9 Create Xbox 360 Stub Plugin
-  - [ ] Create `src/backends/x360/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.10 Create PS3 Stub Plugin
-  - [ ] Create `src/backends/ps3/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-- [ ] 3.2.11 Create Wii Stub Plugin
-  - [ ] Create `src/backends/wii/CMakeLists.txt`
-  - [ ] Create stub implementation
-  - [ ] Create plugin exports
-
-**Deliverable:** All console cores (NES, GBA, and stubs) compile as plugins.
-
----
-
-## Phase 4: Plugin Registry & Discovery
-
-### 4.1 Create Plugin Registry
-
-- [ ] 4.1.1 Plugin Registry Header
-  - [ ] Create `src/common/plugin/PluginRegistry.hpp`
+- [ ] 2.1.1 Plugin Registry Header
+  - [ ] Create `src/shared/core_utils/PluginRegistry.h`
   - [ ] Define `PluginRegistry` class
   - [ ] Define `RegistryEntry` struct
   - [ ] Declare `DiscoverPlugins()` method
@@ -296,12 +143,12 @@
   - [ ] Declare `IsPluginDiscovered()` check
   - [ ] Declare `GetManifest()` accessor
   - [ ] Declare `GetDiscoveredPlugins()` lister
-  - [ ] Declare `GetLoadedPlugins()` lister
+  - [ ] Declare `GetLoadedCores()` lister
   - [ ] Declare `UnloadAllPlugins()` method
   - [ ] Document all methods
 
-- [ ] 4.1.2 Plugin Registry Implementation
-  - [ ] Create `src/common/plugin/PluginRegistry.cpp`
+- [ ] 2.1.2 Plugin Registry Implementation
+  - [ ] Create `src/shared/core_utils/PluginRegistry.cpp`
   - [ ] Implement `GetSearchPaths()` helper
     - [ ] Add Windows search paths
     - [ ] Add Linux search paths
@@ -334,12 +181,12 @@
 
 ---
 
-## Phase 5: Update Frontend to Use Plugin System
+## Phase 3: Update Frontend to Use Plugin System
 
-### 5.1 Create Plugin Manager for Frontend
+### 3.1 Create Plugin Manager for Frontend
 
-- [ ] 5.1.1 Plugin Manager Header
-  - [ ] Create `src/frontend/plugin/PluginManager.hpp`
+- [ ] 3.1.1 Plugin Manager Header
+  - [ ] Create `src/frontend/core_utils/PluginManager.h`
   - [ ] Define `PluginManager` class
   - [ ] Declare `Initialize()` method
   - [ ] Declare `Shutdown()` method
@@ -353,8 +200,8 @@
   - [ ] Declare `LogPluginStatus()` helper
   - [ ] Document all methods
 
-- [ ] 5.1.2 Plugin Manager Implementation
-  - [ ] Create `src/frontend/plugin/PluginManager.cpp`
+- [ ] 3.1.2 Plugin Manager Implementation
+  - [ ] Create `src/frontend/core_utils/PluginManager.cpp`
   - [ ] Implement `Initialize()`
     - [ ] Call `PluginRegistry::DiscoverPlugins()`
     - [ ] Call `PluginRegistry::LoadAllPlugins()`
@@ -376,27 +223,27 @@
   - [ ] Implement `GetConsoleMetadata()`
   - [ ] Implement `LogPluginStatus()`
 
-- [ ] 5.1.3 Update ConsoleFactory to Use Plugins
+- [ ] 3.1.3 Update ConsoleFactory to Use Plugins
   - [ ] Update `src/frontend/session/ConsoleFactory.cpp`
   - [ ] Create `GetConsoleNameString()` mapper
   - [ ] Modify `Create()` to use PluginManager
   - [ ] Update error handling
   - [ ] Add logging
 
-- [ ] 5.1.4 Update DebuggerFactory to Use Plugins
+- [ ] 3.1.4 Update DebuggerFactory to Use Plugins
   - [ ] Update `src/frontend/session/DebuggerFactory.cpp`
   - [ ] Modify `Create()` to use PluginManager
   - [ ] Handle missing debugger support gracefully
   - [ ] Update error handling
 
-- [ ] 5.1.5 Update Proteus::Init() to Use Plugin Manager
+- [ ] 3.1.5 Update Proteus::Init() to Use Plugin Manager
   - [ ] Modify `src/frontend/app/Proteus.cpp`
   - [ ] Call `PluginManager::Initialize()` early
   - [ ] Create `UpdateConsoleAvailability()` method
   - [ ] Populate `ConsoleEmuStarted` from loaded plugins
   - [ ] Add error handling
 
-- [ ] 5.1.6 Update Proteus::Deinit() to Use Plugin Manager
+- [ ] 3.1.6 Update Proteus::Deinit() to Use Plugin Manager
   - [ ] Call `PluginManager::Shutdown()` at exit
   - [ ] Handle cleanup errors
   - [ ] Add logging
@@ -405,13 +252,13 @@
 
 ---
 
-## Phase 6: Build System Configuration
+## Phase 4: Build System Configuration
 
-### 6.1 Root CMakeLists.txt
+### 4.1 Root CMakeLists.txt
 
-- [ ] 6.1.1 Create Root CMakeLists.txt
+- [ ] 4.1.1 Create Root CMakeLists.txt
   - [ ] Create `CMakeLists.txt` in project root
-  - [ ] Set minimum version to 3.16
+  - [ ] Set minimum version to 2.16
   - [ ] Set project name and version
   - [ ] Set C++ standard to 17
   - [ ] Add platform detection
@@ -423,17 +270,17 @@
   - [ ] Set install directories per platform
   - [ ] Add src subdirectory
 
-### 6.2 src/CMakeLists.txt
+### 4.2 src/CMakeLists.txt
 
-- [ ] 6.2.1 Create src/CMakeLists.txt
+- [ ] 4.2.1 Create src/CMakeLists.txt
   - [ ] Add common subdirectory
   - [ ] Add backend/shared subdirectory
   - [ ] Add backends subdirectory (conditional)
   - [ ] Add frontend subdirectory
 
-### 6.3 src/common/CMakeLists.txt
+### 4.3 src/shared/CMakeLists.txt
 
-- [ ] 6.3.1 Create src/common/CMakeLists.txt
+- [ ] 4.3.1 Create src/shared/CMakeLists.txt
   - [ ] Create `ProteusCommon` static library
   - [ ] Add plugin source files
   - [ ] Add platform-specific loaders
@@ -441,17 +288,17 @@
   - [ ] Set compiler settings
   - [ ] Enable position-independent code (PIC)
 
-### 6.4 src/backends/CMakeLists.txt
+### 4.4 src/backends/CMakeLists.txt
 
-- [ ] 6.4.1 Create src/backends/CMakeLists.txt
+- [ ] 4.4.1 Create src/backends/CMakeLists.txt
   - [ ] Conditionally add NES subdirectory
   - [ ] Conditionally add GBA subdirectory
   - [ ] Conditionally add stub subdirectories
   - [ ] Configure install for all plugins
 
-### 6.5 src/frontend/CMakeLists.txt
+### 4.5 src/frontend/CMakeLists.txt
 
-- [ ] 6.5.1 Create src/frontend/CMakeLists.txt
+- [ ] 4.5.1 Create src/frontend/CMakeLists.txt
   - [ ] Find SDL3 package
   - [ ] Create `Proteus` executable
   - [ ] Add all frontend source files
@@ -464,12 +311,12 @@
 
 ---
 
-## Phase 7: Multi-Instance & Inter-Core Communication
+## Phase 5: Multi-Instance & Inter-Core Communication
 
-### 7.1 Design Multi-Instance Session Management
+### 5.1 Design Multi-Instance Session Management
 
-- [ ] 7.1.1 Multi-Core Session Header
-  - [ ] Create `src/frontend/session/MultiCoreSession.hpp`
+- [ ] 5.1.1 Multi-Core Session Header
+  - [ ] Create `src/frontend/session/MultiCoreSession.h`
   - [ ] Define `MultiCoreSession` class
   - [ ] Add primary session member
   - [ ] Add secondary session member
@@ -482,7 +329,7 @@
   - [ ] Declare `ShutdownAll()` method
   - [ ] Add synchronization state members
 
-- [ ] 7.1.2 Multi-Core Session Implementation
+- [ ] 5.1.2 Multi-Core Session Implementation
   - [ ] Create `src/frontend/session/MultiCoreSession.cpp`
   - [ ] Implement constructor
   - [ ] Implement destructor
@@ -499,15 +346,15 @@
   - [ ] Implement `ShutdownAll()`
   - [ ] Add error handling
 
-### 7.2 Link Cable Simulation (Phase 7.2)
+### 5.2 Link Cable Simulation (Phase 5.2)
 
-- [ ] 7.2.1 Design Link Cable Protocol
-  - [ ] Create `src/frontend/session/LinkCableSimulator.hpp`
+- [ ] 5.2.1 Design Link Cable Protocol
+  - [ ] Create `src/frontend/session/LinkCableSimulator.h`
   - [ ] Define data transfer format
   - [ ] Define handshake protocol
   - [ ] Support multiple console pairs
 
-- [ ] 7.2.2 Implement Link Cable
+- [ ] 5.2.2 Implement Link Cable
   - [ ] Create `src/frontend/session/LinkCableSimulator.cpp`
   - [ ] Implement data transfer
   - [ ] Implement synchronization
@@ -517,11 +364,11 @@
 
 ---
 
-## Phase 8: Cross-Platform Build Scripts
+## Phase 6: Cross-Platform Build Scripts
 
-### 8.1 Create Windows Build Script
+### 6.1 Create Windows Build Script
 
-- [ ] 8.1.1 Create build_windows.ps1
+- [ ] 6.1.1 Create build_windows.ps1
   - [ ] Create `build_windows.ps1` script
   - [ ] Accept BuildType parameter (Release/Debug)
   - [ ] Accept Architecture parameter (x64/x86)
@@ -531,9 +378,9 @@
   - [ ] Handle errors
   - [ ] Report output location
 
-### 8.2 Create Linux Build Script
+### 6.2 Create Linux Build Script
 
-- [ ] 8.2.1 Create build_linux.sh
+- [ ] 6.2.1 Create build_linux.sh
   - [ ] Create `build_linux.sh` script
   - [ ] Accept BuildType parameter
   - [ ] Create build directory
@@ -542,9 +389,9 @@
   - [ ] Handle errors
   - [ ] Report output location
 
-### 8.3 Create macOS Build Script
+### 6.3 Create macOS Build Script
 
-- [ ] 8.3.1 Create build_macos.sh
+- [ ] 6.3.1 Create build_macos.sh
   - [ ] Create `build_macos.sh` script
   - [ ] Accept BuildType parameter
   - [ ] Accept Architecture parameter (x86_64/arm64)
@@ -558,12 +405,12 @@
 
 ---
 
-## Phase 9: Testing & Validation
+## Phase 7: Testing & Validation
 
-### 9.1 Create Plugin Load Tests
+### 7.1 Create Plugin Load Tests
 
-- [ ] 9.1.1 Create Plugin Load Test Suite
-  - [ ] Create `tests/plugin/PluginLoadTest.cpp`
+- [ ] 7.1.1 Create Plugin Load Test Suite
+  - [ ] Create `tests/core_utils/PluginLoadTest.cpp`
   - [ ] Add `DiscoverPlugins` test
   - [ ] Add `LoadNESPlugin` test
   - [ ] Add `LoadGBAPlugin` test
@@ -573,10 +420,10 @@
   - [ ] Add `ContractVersion` compatibility test
   - [ ] Test error handling
 
-### 9.2 Create Plugin Integration Tests
+### 7.2 Create Plugin Integration Tests
 
-- [ ] 9.2.1 Create Plugin Integration Test Suite
-  - [ ] Create `tests/plugin/PluginIntegrationTest.cpp`
+- [ ] 7.2.1 Create Plugin Integration Test Suite
+  - [ ] Create `tests/core_utils/PluginIntegrationTest.cpp`
   - [ ] Test load ROM through plugin
   - [ ] Test emulation cycles
   - [ ] Test frame buffer access
@@ -584,21 +431,21 @@
   - [ ] Test input handling
   - [ ] Test for each loaded plugin
 
-### 9.3 Create Platform-Specific Tests
+### 7.3 Create Platform-Specific Tests
 
-- [ ] 9.3.1 Test Windows Build
+- [ ] 7.3.1 Test Windows Build
   - [ ] Build on Windows
   - [ ] Run plugin tests
   - [ ] Verify DLL loading
   - [ ] Test all plugins load
 
-- [ ] 9.3.2 Test Linux Build
+- [ ] 7.3.2 Test Linux Build
   - [ ] Build on Ubuntu/Debian
   - [ ] Run plugin tests
   - [ ] Verify SO loading
   - [ ] Test all plugins load
 
-- [ ] 9.3.3 Test macOS Build
+- [ ] 7.3.3 Test macOS Build
   - [ ] Build on macOS (Intel)
   - [ ] Build on macOS (Apple Silicon)
   - [ ] Run plugin tests
@@ -609,11 +456,11 @@
 
 ---
 
-## Phase 10: Documentation & Release
+## Phase 8: Documentation & Release
 
-### 10.1 Create Developer Documentation
+### 8.1 Create Developer Documentation
 
-- [ ] 10.1.1 Create Architecture Documentation
+- [ ] 8.1.1 Create Architecture Documentation
   - [ ] Create `docs/ARCHITECTURE.md`
   - [ ] Document plugin system design
   - [ ] Document IConsole contract
@@ -622,7 +469,7 @@
   - [ ] Document factory pattern
   - [ ] Add diagrams
 
-- [ ] 10.1.2 Create Plugin Development Guide
+- [ ] 8.1.2 Create Plugin Development Guide
   - [ ] Create `docs/PLUGIN_DEVELOPMENT.md`
   - [ ] Step-by-step guide for new console
   - [ ] Template plugin structure
@@ -631,7 +478,7 @@
   - [ ] Build system example
   - [ ] Debugging tips
 
-- [ ] 10.1.3 Create Plugin API Reference
+- [ ] 8.1.3 Create Plugin API Reference
   - [ ] Create `docs/PLUGIN_API.md`
   - [ ] Document IConsole interface
   - [ ] Document IDebugger interface
@@ -639,15 +486,15 @@
   - [ ] Document export macros
   - [ ] Document error codes
 
-- [ ] 10.1.4 Create Build System Documentation
+- [ ] 8.1.4 Create Build System Documentation
   - [ ] Create `docs/BUILD_SYSTEM.md`
   - [ ] Document CMake structure
   - [ ] Document build options
   - [ ] Document platform differences
 
-### 10.2 Create User Documentation
+### 8.2 Create User Documentation
 
-- [ ] 10.2.1 Create Installation Guide
+- [ ] 8.2.1 Create Installation Guide
   - [ ] Create `docs/INSTALLATION.md`
   - [ ] Windows installation steps
   - [ ] Linux installation steps
@@ -655,16 +502,16 @@
   - [ ] System requirements
   - [ ] Troubleshooting
 
-- [ ] 10.2.2 Create Custom Plugins Guide
+- [ ] 8.2.2 Create Custom Plugins Guide
   - [ ] Create `docs/CUSTOM_PLUGINS.md`
   - [ ] Explain plugin search paths
   - [ ] Document environment variables
   - [ ] Explain plugin discovery
   - [ ] Document plugin directories
 
-### 10.3 Create Release Artifacts
+### 8.3 Create Release Artifacts
 
-- [ ] 10.3.1 Create Release Notes Template
+- [ ] 8.3.1 Create Release Notes Template
   - [ ] Create `RELEASE_NOTES.md` template
   - [ ] Document version changes
   - [ ] Document new plugins
@@ -675,11 +522,11 @@
 
 ---
 
-## Phase 11: Final Validation & Release
+## Phase 9: Final Validation & Release
 
-### 11.1 Full Integration Testing
+### 9.1 Full Integration Testing
 
-- [ ] 11.1.1 Test Complete Application Flow
+- [ ] 9.1.1 Test Complete Application Flow
   - [ ] Test startup and plugin loading
   - [ ] Test console selection
   - [ ] Test ROM loading per console
@@ -693,9 +540,9 @@
   - [ ] Test console switching
   - [ ] Test linked mode (GBA<->GBA, GCN+GBA)
 
-### 11.2 Performance Benchmarking
+### 9.2 Performance Benchmarking
 
-- [ ] 11.2.1 Benchmark Plugin Performance
+- [ ] 9.2.1 Benchmark Plugin Performance
   - [ ] Measure plugin load time
   - [ ] Measure core instantiation time
   - [ ] Benchmark NES emulation speed
@@ -705,24 +552,24 @@
   - [ ] Check for memory leaks
   - [ ] Verify performance parity
 
-### 11.3 Cleanup & Optimization
+### 9.3 Cleanup & Optimization
 
-- [ ] 11.3.1 Code Cleanup
+- [ ] 9.3.1 Code Cleanup
   - [ ] Remove old monolithic code
   - [ ] Remove deprecated #ifdefs
   - [ ] Clean up old factory patterns
   - [ ] Remove unused includes
   - [ ] Update all includes to use plugins
 
-- [ ] 11.3.2 Final Optimization
+- [ ] 9.3.2 Final Optimization
   - [ ] Profile bottlenecks
   - [ ] Optimize critical paths
   - [ ] Reduce compile times
   - [ ] Minimize binary sizes
 
-### 11.4 Create Release Builds
+### 9.4 Create Release Builds
 
-- [ ] 11.4.1 Generate Windows Release
+- [ ] 9.4.1 Generate Windows Release
   - [ ] Build Release configuration
   - [ ] Create distribution package
   - [ ] Include all DLLs
@@ -730,7 +577,7 @@
   - [ ] Generate checksums
   - [ ] Sign binaries
 
-- [ ] 11.4.2 Generate Linux Release
+- [ ] 9.4.2 Generate Linux Release
   - [ ] Build Release configuration
   - [ ] Create distribution package
   - [ ] Include all SOs
@@ -738,7 +585,7 @@
   - [ ] Generate checksums
   - [ ] Create .deb/.rpm if applicable
 
-- [ ] 11.4.3 Generate macOS Release
+- [ ] 9.4.3 Generate macOS Release
   - [ ] Build Release configuration
   - [ ] Create app bundle
   - [ ] Include all DYLIBs
@@ -747,7 +594,7 @@
   - [ ] Create DMG
   - [ ] Notarize for Gatekeeper
 
-- [ ] 11.4.4 Publish Release
+- [ ] 9.4.4 Publish Release
   - [ ] Create GitHub release
   - [ ] Upload all packages
   - [ ] Publish release notes
@@ -759,14 +606,14 @@
 
 ## Post-Launch Maintenance
 
-### 12.1 Monitor & Support
+### 10.1 Monitor & Support
 
 - [ ] Set up issue tracking
 - [ ] Monitor crash reports
 - [ ] Track performance metrics
 - [ ] Support user issues
 
-### 12.2 Future Plugin Development
+### 10.2 Future Plugin Development
 
 - [ ] Document lessons learned
 - [ ] Create plugin templates
@@ -784,8 +631,8 @@
 
 ## Summary Statistics
 
-- **Total Phases:** 12
+- **Total Phases:** 11
 - **Total Steps:** 60+
 - **Total Substeps:** 400+
 - **Estimated Duration:** 15-23 weeks
-- **Critical Path:** 0.0 → 0.1 → 0.2 → 1.1 → 2.1 → 4.1 → 5.1 → 6.x → 9.x → 11.x
+- **Critical Path:** 0.0 → 0.1 → 0.2 → 1.1 → 1.1 → 3.1 → 4.1 → 5.x → 8.x → 10.x

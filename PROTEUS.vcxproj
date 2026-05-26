@@ -26,6 +26,7 @@
     <ClCompile Include="src\backend\NES\APU\NesNoise.cpp" />
     <ClCompile Include="src\backend\NES\APU\NesPulse.cpp" />
     <ClCompile Include="src\backend\NES\APU\NesTriangle.cpp" />
+    <ClCompile Include="src\backend\NES\NesCoreExports.cpp" />
     <ClCompile Include="src\backend\NES\NesController.cpp" />
     <ClCompile Include="src\backend\NES\CPU\NesCPU.cpp" />
     <ClCompile Include="src\backend\NES\CPU\NesCPU_AddressModes.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="resources\FontUI_Italic.h" />
     <ClInclude Include="resources\NES_DB.h" />
     <ClInclude Include="src\backend\Consoles.h" />
+    <ClInclude Include="src\backend\CorePCH.h" />
     <ClInclude Include="src\backend\Debuggers.h" />
     <ClInclude Include="src\backend\GBA\PAK\Gamepak.h" />
     <ClInclude Include="src\backend\GBA\shared\CgbTypes.h" />
@@ -88,7 +90,6 @@
     <ClInclude Include="src\backend\NES\shared\NesDebugger.h" />
     <ClInclude Include="src\backend\NES\shared\NesPCH.h" />
     <ClInclude Include="src\backend\NES\shared\NesTypes.h" />
-    <ClInclude Include="src\backend\shared\BackendPCH.h" />
     <ClInclude Include="src\frontend\app\AppTypes.h" />
     <ClInclude Include="src\frontend\app\IManagerContexts.h" />
     <ClInclude Include="src\frontend\app\Proteus.h" />
@@ -126,6 +127,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="docs\RESTRUCTURE_CHECKLIST.md" />
+    <None Include="docs\RESTRUCTURE_OUTLINE.md" />
     <None Include="LICENSE.md">
       <SubType>
       </SubType>
@@ -137,7 +140,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="TODO.txt" />
+    <Text Include="src\shared\core_utils\CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

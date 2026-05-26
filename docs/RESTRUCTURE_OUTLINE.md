@@ -12,18 +12,16 @@ Complete Outline with Code Examples
 
 1. [Architecture Overview](#architecture-overview)
 2. [Phase 0: Foundation & Preparation](#phase-0-foundation-preparation)
-3. [Phase 1: Backend Infrastructure Consolidation](#phase-1-backend-infrastructure-consolidation)
-4. [Phase 2: NES Core as First Plugin](#phase-2-nes-core-as-first-plugin)
-5. [Phase 3: Other Console Cores as Plugins](#phase-3-other-console-cores-as-plugins)
-6. [Phase 4: Plugin Registry & Discovery](#phase-4-plugin-registry-discovery)
-7. [Phase 5: Update Frontend to Use Plugin System](#phase-5-update-frontend-to-use-plugin-system)
-8. [Phase 6: Build System Configuration](#phase-6-build-system-configuration)
-9. [Phase 7: Multi-Instance & Inter-Core Communication](#phase-7-multi-instance-inter-core-communication)
-10. [Phase 8: Cross-Platform Build Scripts](#phase-8-cross-platform-build-scripts)
-11. [Phase 9: Testing & Validation](#phase-9-testing-validation)
-12. [Phase 10: Documentation & Release](#phase-10-documentation-release)
-13. [Phase 11: Final Validation & Release](#phase-11-final-validation-release)
-14. [Timeline & Success Criteria](#timeline-success-criteria)
+4. [Phase 1: NES Core as First Plugin](#phase-2-nes-core-as-first-plugin)
+5. [Phase 2: Plugin Registry & Discovery](#phase-3-plugin-registry-discovery)
+6. [Phase 3: Update Frontend to Use Plugin System](#phase-4-update-frontend-to-use-plugin-system)
+7. [Phase 4: Build System Configuration](#phase-5-build-system-configuration)
+8. [Phase 5: Multi-Instance & Inter-Core Communication](#phase-6-multi-instance-inter-core-communication)
+9. [Phase 6: Cross-Platform Build Scripts](#phase-7-cross-platform-build-scripts)
+10. [Phase 7: Testing & Validation](#phase-8-testing-validation)
+11. [Phase 8: Documentation & Release](#phase-9-documentation-release)
+12. [Phase 9: Final Validation & Release](#phase-10-final-validation-release)
+13. [Timeline & Success Criteria](#timeline-success-criteria)
 
 ---
 
@@ -107,7 +105,7 @@ This phase establishes the foundational interfaces and plugin loading infrastruc
 
 #### 0.1.1 Review and Document Current IConsole Interface
 
-**File to Update:** `src/backend/shared/IConsole.hpp`
+**File to Update:** `src/backend/shared/IConsole.h`
 
 **Actions:**
 
@@ -121,7 +119,7 @@ This phase establishes the foundational interfaces and plugin loading infrastruc
 ```
 #pragma once
 
-#include "./BackendPCH.hpp"
+#include "./BackendPCH.h"
 
 /**
  * @interface IConsole
@@ -258,7 +256,7 @@ public:
 
 #### 0.1.2 Review and Document Current IDebugger Interface
 
-**File to Update:** `src/backend/shared/IDebugger.hpp`
+**File to Update:** `src/backend/shared/IDebugger.h`
 
 **Actions:**
 
@@ -272,7 +270,7 @@ public:
 ```
 #pragma once
 
-#include "./BackendPCH.hpp"
+#include "./BackendPCH.h"
 
 // Forward declaration
 class IConsole;
@@ -327,12 +325,12 @@ public:
 
 #### 0.1.3 Create Plugin Manifest Structure
 
-**File to Create:** `src/common/plugin/PluginManifest.hpp`
+**File to Create:** `src/common/plugin/PluginManifest.h`
 
 **Actions:**
 
 1. Create new directory `src/common/plugin/` if it doesn't exist
-2. Create the PluginManifest.hpp file with the structure below
+2. Create the PluginManifest.h file with the structure below
 
 **New Code:**
 
@@ -469,7 +467,7 @@ struct PluginManifest {
 
 #### 0.1.4 Define Plugin Export Macros
 
-**File to Create:** `src/common/plugin/PluginExports.hpp`
+**File to Create:** `src/common/plugin/PluginExports.h`
 
 **Actions:**
 
@@ -482,7 +480,7 @@ struct PluginManifest {
 ```
 #pragma once
 
-#include "PluginManifest.hpp"
+#include "PluginManifest.h"
 
 // ============================================================================
 // Platform-Specific Export Declarations
@@ -622,7 +620,7 @@ class IDebugger;
 
 #### 0.2.1 Create Core Plugin Loader Header
 
-**File to Create:** `src/common/plugin/PluginLoader.hpp`
+**File to Create:** `src/common/plugin/PluginLoader.h`
 
 **Actions:**
 
@@ -636,7 +634,7 @@ class IDebugger;
 ```
 #pragma once
 
-#include "PluginManifest.hpp"
+#include "PluginManifest.h"
 #include <string>
 #include <memory>
 
@@ -736,7 +734,7 @@ private:
 ```
 #ifdef _WIN32
 
-#include "../PluginLoader.hpp"
+#include "../PluginLoader.h"
 #include <windows.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
@@ -823,7 +821,7 @@ std::string PluginLoader::GetLastError() {
 ```
 #ifdef __linux__
 
-#include "../PluginLoader.hpp"
+#include "../PluginLoader.h"
 #include <dlfcn.h>
 #include <cstring>
 
@@ -902,7 +900,7 @@ std::string PluginLoader::GetLastError() {
 ```
 #ifdef __APPLE__
 
-#include "../PluginLoader.hpp"
+#include "../PluginLoader.h"
 #include <dlfcn.h>
 #include <cstring>
 
@@ -979,7 +977,7 @@ std::string PluginLoader::GetLastError() {
 **New Code:**
 
 ```
-#include "PluginLoader.hpp"
+#include "PluginLoader.h"
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -1071,172 +1069,13 @@ std::string PluginLoader::GetExpectedFilename(const std::string& consoleName) {
 
 [^](#table-of-contents)---
 
-## Phase 1: Backend Infrastructure Consolidation
+## Phase 1: NES Core as First Plugin
 
-### 1.1 Consolidate Shared Backend Interfaces
-
-**Goal:** Organize backend shared code for use by all plugins
-
-#### 1.1.1 Update Backend PCH
-
-**File to Update:** `src/backend/shared/BackendPCH.hpp`
-
-**Actions:**
-
-1. Add standard library includes
-2. Add type aliases for consistency
-3. Add smart pointer aliases
-4. Include IConsole and IDebugger
-5. Define SSTstate enum
-
-**Updated Code:**
-
-```
-#pragma once
-
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <map>
-#include <memory>
-#include <iostream>
-#include <cstring>
-
-// Type aliases
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
-using s8 = int8_t;
-using s16 = int16_t;
-using s32 = int32_t;
-using s64 = int64_t;
-
-using string = std::string;
-using vector = std::vector;
-using map = std::map;
-
-template<typename T>
-using sptr = std::shared_ptr<T>;
-template<typename T>
-using uptr = std::unique_ptr<T>;
-
-// Debugging step state enumeration
-enum class SSTstate : u8 {
-    NONE = 0,
-    RESET,
-    LOAD,
-    RUN,
-    PAUSE,
-    STEP_FRAME,
-    STEP_SCANLINE,
-    STEP_CYCLE
-};
-
-// Core interfaces - the bridge between frontend and plugins
-#include "./IConsole.hpp"
-#include "./IDebugger.hpp"
-```
-
-[^](#table-of-contents)---
-
-#### 1.1.2 Create Shared Backend Utilities
-
-**File to Create:** `src/backend/shared/BackendUtils.hpp`
-
-**New Code:**
-
-```
-#pragma once
-
-#include "BackendPCH.hpp"
-
-/**
- * @namespace BackendUtils
- * @brief Utility functions shared across all backend implementations
- */
-namespace BackendUtils {
-    /**
-     * @brief Get the human-readable name of this console
-     * @note Override in each backend to return appropriate name
-     * @return Console name string
-     */
-    inline const char* GetConsoleName() {
-        return "Unknown Console";
-    }
-
-    /**
-     * @brief Convert a button index to its human-readable name
-     * @param index Button index (0-7)
-     * @return Button name or "Unknown" if out of range
-     */
-    inline const char* GetButtonName(u8 index) {
-        const char* names[] = {
-            "Up", "Down", "Left", "Right", "A", "B", "Select", "Start"
-        };
-        if (index < 8) return names[index];
-        return "Unknown";
-    }
-
-    /**
-     * @brief Clamp a value between minimum and maximum
-     * @param value The value to clamp
-     * @param minVal The minimum allowed value
-     * @param maxVal The maximum allowed value
-     * @return Clamped value
-     */
-    template<typename T>
-    inline T Clamp(T value, T minVal, T maxVal) {
-        if (value < minVal) return minVal;
-        if (value > maxVal) return maxVal;
-        return value;
-    }
-
-    /**
-     * @brief Check if a specific bit is set in a value
-     * @param value The value to check
-     * @param bit The bit index (0-7)
-     * @return true if bit is set
-     */
-    inline bool IsBitSet(u8 value, u8 bit) {
-        return (value >> bit) & 1;
-    }
-
-    /**
-     * @brief Set a specific bit in a value
-     * @param value The value to modify
-     * @param bit The bit index (0-7)
-     * @return Modified value with bit set
-     */
-    inline u8 SetBit(u8 value, u8 bit) {
-        return value | (1 << bit);
-    }
-
-    /**
-     * @brief Clear a specific bit in a value
-     * @param value The value to modify
-     * @param bit The bit index (0-7)
-     * @return Modified value with bit cleared
-     */
-    inline u8 ClearBit(u8 value, u8 bit) {
-        return value & ~(1 << bit);
-    }
-}
-```
-
----
-
-**Phase 1 Deliverable:** Backend infrastructure organized and consolidated
-
-[^](#table-of-contents)---
-
-## Phase 2: NES Core as First Plugin
-
-### 2.1 Create NES Plugin Structure
+### 1.1 Create NES Plugin Structure
 
 **Goal:** Transform NES from monolithic component to standalone plugin library
 
-#### 2.1.1 Create NES CMakeLists.txt
+#### 1.1.1 Create NES CMakeLists.txt
 
 **File to Create:** `src/backends/nes/CMakeLists.txt`
 
@@ -1312,16 +1151,16 @@ install(TARGETS ProteusNES DESTINATION ${INSTALL_PLUGIN_DIR})
 
 [^](#table-of-contents)---
 
-#### 2.1.2 Create NES Plugin Exports
+#### 1.1.2 Create NES Plugin Exports
 
 **File to Create:** `src/backends/nes/plugin/NESPluginExports.cpp`
 
 **New Code:**
 
 ```
-#include "../../common/plugin/PluginExports.hpp"
-#include "NESCoreImpl.hpp"
-#include "NESDebuggerImpl.hpp"
+#include "../../common/plugin/PluginExports.h"
+#include "NESCoreImpl.h"
+#include "NESDebuggerImpl.h"
 
 namespace NS_NESplugin {
 
@@ -1386,17 +1225,17 @@ PLUGIN_MANIFEST_EXPORT(GetPluginManifest) {
 
 [^](#table-of-contents)---
 
-#### 2.1.3 Create NES Core Implementation Header
+#### 1.1.3 Create NES Core Implementation Header
 
-**File to Create:** `src/backends/nes/plugin/NESCoreImpl.hpp`
+**File to Create:** `src/backends/nes/plugin/NESCoreImpl.h`
 
 **New Code:**
 
 ```
 #pragma once
 
-#include "../../common/plugin/PluginExports.hpp"
-#include "../NES.hpp"
+#include "../../common/plugin/PluginExports.h"
+#include "../NES.h"
 
 namespace NS_NESplugin {
 
@@ -1436,14 +1275,14 @@ private:
 
 [^](#table-of-contents)---
 
-#### 2.1.4 Create NES Core Implementation
+#### 1.1.4 Create NES Core Implementation
 
 **File to Create:** `src/backends/nes/plugin/NESCoreImpl.cpp`
 
 **New Code:**
 
 ```
-#include "NESCoreImpl.hpp"
+#include "NESCoreImpl.h"
 
 namespace NS_NESplugin {
 
@@ -1533,16 +1372,16 @@ bool NESCoreImpl::checkSST(SSTstate state, string& outMessage) {
 
 [^](#table-of-contents)---
 
-#### 2.1.5 Create NES Debugger Implementation
+#### 1.1.5 Create NES Debugger Implementation
 
-**File to Create:** `src/backends/nes/plugin/NESDebuggerImpl.hpp`
+**File to Create:** `src/backends/nes/plugin/NESDebuggerImpl.h`
 
 **New Code:**
 
 ```
 #pragma once
 
-#include "../../backend/shared/IDebugger.hpp"
+#include "../../backend/shared/IDebugger.h"
 
 class IConsole;
 
@@ -1574,7 +1413,7 @@ private:
 **New Code:**
 
 ```
-#include "NESDebuggerImpl.hpp"
+#include "NESDebuggerImpl.h"
 
 namespace NS_NESplugin {
 
@@ -1600,206 +1439,24 @@ bool NESDebuggerImpl::isBreakpointSet() const {
 
 ---
 
-**Phase 2 Deliverable:** NES compiles as plugin DLL/SO/DYLIB with proper exports
+**Phase 1 Deliverable:** NES compiles as plugin DLL/SO/DYLIB with proper exports
 
 [^](#table-of-contents)---
 
-## Phase 3: Other Console Cores as Plugins
+## Phase 2: Plugin Registry & Discovery
 
-### 3.1 Repeat NES Plugin Structure for GBA
+### 2.1 Create Plugin Registry
 
-#### 3.1.1 Create GBA CMakeLists.txt
+#### 2.1.1 Create Plugin Registry Header
 
-**File to Create:** `src/backends/gba/CMakeLists.txt`
-
-**Pattern:** Follow the same structure as NES CMakeLists.txt, but substitute:
-- Project name: ProteusGBAPlugin
-- Sources: GBA-specific files (ARM7TDMI.cpp, GPURenderer.cpp, etc.)
-- Output library: ProteusGBA
-
-#### 3.1.2 Create GBA Plugin Exports
-
-**File to Create:** `src/backends/gba/plugin/GBAPluginExports.cpp`
-
-**Pattern:** Follow NES exports, but modify:
-- consoleName: "gba"
-- consoleFullName: "Game Boy Advance"
-- pluginName: "Proteus GBA Emulation Core"
-- developmentStatus: 2 (partial)
-- statusDescription: "Core functionality implemented"
-- Implement GBACoreImpl and GBADebuggerImpl
-
-#### 3.1.3 Create GBA Core Implementation
-
-**File to Create:** `src/backends/gba/plugin/GBACoreImpl.hpp` and `src/backends/gba/plugin/GBACoreImpl.cpp`
-
-**Pattern:** Follow NES implementation, wrapping NS_GBA::GBA class
-
-#### 3.1.4 Create GBA Debugger Implementation
-
-**File to Create:** `src/backends/gba/plugin/GBADebuggerImpl.hpp` and `src/backends/gba/plugin/GBADebuggerImpl.cpp`
-
-**Pattern:** Follow NES debugger implementation
-
-### 3.2 Create Stub Plugins for Unsupported Consoles
-
-For each remaining console (SNES, PS1, N64, PS2, GBC, NGC, Xbox, NDS, Xbox 360, PS3, Wii):
-
-#### 3.2.1 Create Console Stub Implementation
-
-**File to Create:** `src/backends/{console}/plugin/{CONSOLE}StubImpl.hpp`
-
-**Pattern Example (SNES):**
-
-```
-#pragma once
-
-#include "../../backend/shared/IConsole.hpp"
-
-namespace NS_SNESplugin {
-
-/**
- * @class SNESStubImpl
- * @brief Stub implementation for SNES - not yet implemented
- */
-class SNESStubImpl : public IConsole {
-public:
-    bool Initialize() override { return true; }
-    bool Shutdown() override { return true; }
-    bool loadROM(const string& path) override {
-        std::cerr << "SNES emulation not yet implemented" << std::endl;
-        return false;
-    }
-    void reset() override {}
-    void clock() override {}
-    const u32* getFrameBuffer() const override { return nullptr; }
-    const int SCREEN_WIDTH() const override { return 256; }
-    const int SCREEN_HEIGHT() const override { return 224; }
-    void collectAudio(vector<float>&) override {}
-    void update(u8, bool*) override {}
-    void initSST(SSTstate) override {}
-    void runSST() override {}
-    bool checkSST(SSTstate, string&) override { return false; }
-};
-
-}
-```
-
-#### 3.2.2 Create Stub Plugin Exports
-
-**File to Create:** `src/backends/{console}/plugin/{CONSOLE}PluginExports.cpp`
-
-**Pattern Example (SNES):**
-
-```
-#include "../../common/plugin/PluginExports.hpp"
-#include "SNESStubImpl.hpp"
-
-namespace NS_SNESplugin {
-
-static const PluginManifest g_snesPluginManifest = {
-    .pluginVersion_major = 0,
-    .pluginVersion_minor = 1,
-    .pluginVersion_patch = 0,
-    .iConsoleContractVersion = ICONSOLE_CONTRACT_VERSION,
-    .iDebuggerContractVersion = IDEBUGGER_CONTRACT_VERSION,
-    
-    .consoleName = "snes",
-    .consoleFullName = "Super Nintendo Entertainment System",
-    .pluginName = "Proteus SNES Stub",
-    .authorName = "Proteus Development Team",
-    .description = "SNES emulator stub - not implemented",
-    
-    .buildDate = __DATE__,
-    .licenseType = "MIT",
-    
-    .developmentStatus = 0,
-    .statusDescription = "Stub implementation only"
-};
-
-PLUGIN_FACTORY_CREATE(CreateCore) {
-    try {
-        return new SNESStubImpl();
-    } catch (...) {
-        return nullptr;
-    }
-}
-
-PLUGIN_FACTORY_DESTROY(DestroyCore) {
-    delete reinterpret_cast<SNESStubImpl*>(core);
-}
-
-PLUGIN_MANIFEST_EXPORT(GetPluginManifest) {
-    return &g_snesPluginManifest;
-}
-
-}
-```
-
-#### 3.2.3 Create Stub CMakeLists.txt
-
-**File to Create:** `src/backends/{console}/CMakeLists.txt`
-
-**Pattern:**
-
-```
-cmake_minimum_required(VERSION 3.16)
-
-project(Proteus{CONSOLE}Plugin VERSION 0.1.0 LANGUAGES CXX)
-
-add_library(Proteus{CONSOLE} SHARED
-    plugin/{CONSOLE}PluginExports.cpp
-)
-
-target_include_directories(Proteus{CONSOLE}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        ${CMAKE_SOURCE_DIR}/src
-)
-
-set_target_properties(Proteus{CONSOLE} PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-    CXX_VISIBILITY_PRESET hidden
-)
-
-if(WIN32)
-    set_target_properties(Proteus{CONSOLE} PROPERTIES PREFIX "" SUFFIX ".dll")
-elseif(APPLE)
-    set_target_properties(Proteus{CONSOLE} PROPERTIES PREFIX "lib" SUFFIX ".dylib")
-else()
-    set_target_properties(Proteus{CONSOLE} PROPERTIES PREFIX "lib" SUFFIX ".so")
-endif()
-
-set_target_properties(Proteus{CONSOLE} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
-)
-
-install(TARGETS Proteus{CONSOLE} DESTINATION ${INSTALL_PLUGIN_DIR})
-```
-
-**Repeat for:** SNES, PS1, N64, PS2, GBC, NGC, Xbox, NDS, Xbox 360, PS3, Wii
-
-**Phase 3 Deliverable:** All console cores (NES, GBA, and stubs) compile as plugins
-
-[^](#table-of-contents)---
-
-## Phase 4: Plugin Registry & Discovery
-
-### 4.1 Create Plugin Registry
-
-#### 4.1.1 Create Plugin Registry Header
-
-**File to Create:** `src/common/plugin/PluginRegistry.hpp`
+**File to Create:** `src/common/plugin/PluginRegistry.h`
 
 **New Code:**
 
 ```
 #pragma once
 
-#include "PluginLoader.hpp"
+#include "PluginLoader.h"
 #include <map>
 #include <vector>
 
@@ -1899,14 +1556,14 @@ private:
 
 [^](#table-of-contents)---
 
-#### 4.1.2 Create Plugin Registry Implementation
+#### 2.1.2 Create Plugin Registry Implementation
 
 **File to Create:** `src/common/plugin/PluginRegistry.cpp`
 
 **New Code:**
 
 ```
-#include "PluginRegistry.hpp"
+#include "PluginRegistry.h"
 #include <filesystem>
 #include <cstdlib>
 #include <iostream>
@@ -2087,26 +1744,26 @@ bool PluginRegistry::UnloadAllPlugins() {
 
 ---
 
-**Phase 4 Deliverable:** Plugin registry system complete
+**Phase 2 Deliverable:** Plugin registry system complete
 
 [^](#table-of-contents)---
 
-## Phase 5: Update Frontend to Use Plugin System
+## Phase 3: Update Frontend to Use Plugin System
 
-### 5.1 Create Plugin Manager for Frontend
+### 3.1 Create Plugin Manager for Frontend
 
-#### 5.1.1 Create Plugin Manager Header
+#### 3.1.1 Create Plugin Manager Header
 
-**File to Create:** `src/frontend/plugin/PluginManager.hpp`
+**File to Create:** `src/frontend/plugin/PluginManager.h`
 
 **New Code:**
 
 ```
 #pragma once
 
-#include "../../common/plugin/PluginRegistry.hpp"
-#include "../../backend/shared/IConsole.hpp"
-#include "../../backend/shared/IDebugger.hpp"
+#include "../../common/plugin/PluginRegistry.h"
+#include "../../backend/shared/IConsole.h"
+#include "../../backend/shared/IDebugger.h"
 
 namespace NS_Proteus {
 
@@ -2192,14 +1849,14 @@ private:
 
 [^](#table-of-contents)---
 
-#### 5.1.2 Create Plugin Manager Implementation
+#### 3.1.2 Create Plugin Manager Implementation
 
 **File to Create:** `src/frontend/plugin/PluginManager.cpp`
 
 **New Code:**
 
 ```
-#include "PluginManager.hpp"
+#include "PluginManager.h"
 #include <iostream>
 
 namespace NS_Proteus {
@@ -2300,15 +1957,15 @@ void PluginManager::LogPluginStatus() {
 
 [^](#table-of-contents)---
 
-#### 5.1.3 Update ConsoleFactory
+#### 3.1.3 Update ConsoleFactory
 
 **File to Update:** `src/frontend/session/ConsoleFactory.cpp`
 
 **New Code (Add to existing file):**
 
 ```
-#include "ConsoleFactory.hpp"
-#include "../plugin/PluginManager.hpp"
+#include "ConsoleFactory.h"
+#include "../plugin/PluginManager.h"
 
 namespace NS_Proteus {
 
@@ -2352,14 +2009,14 @@ std::shared_ptr<IConsole> ConsoleFactory::Create(ConsoleID console) {
 
 [^](#table-of-contents)---
 
-#### 5.1.4 Update Proteus::Init()
+#### 3.1.4 Update Proteus::Init()
 
 **File to Update:** `src/frontend/app/Proteus.cpp`
 
 **Code to Add at Start of Init Method:**
 
 ```
-#include "../plugin/PluginManager.hpp"
+#include "../plugin/PluginManager.h"
 
 void Proteus::Init() {
     SetMetadata();
@@ -2404,20 +2061,20 @@ void Proteus::Deinit() {
 
 ---
 
-**Phase 5 Deliverable:** Frontend uses plugin system dynamically at runtime
+**Phase 3 Deliverable:** Frontend uses plugin system dynamically at runtime
 
 [^](#table-of-contents)---
 
-## Phase 6: Build System Configuration
+## Phase 4: Build System Configuration
 
-### 6.1 Root CMakeLists.txt
+### 4.1 Root CMakeLists.txt
 
 **File to Create:** `CMakeLists.txt` (at project root)
 
 **New Code:**
 
 ```
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 2.16)
 
 project(Proteus VERSION 1.0.0 LANGUAGES CXX)
 
@@ -2463,7 +2120,7 @@ add_subdirectory(src)
 
 [^](#table-of-contents)---
 
-### 6.2 src/CMakeLists.txt
+### 4.2 src/CMakeLists.txt
 
 **File to Create:** `src/CMakeLists.txt`
 
@@ -2487,7 +2144,7 @@ add_subdirectory(frontend)
 
 [^](#table-of-contents)---
 
-### 6.3 src/common/CMakeLists.txt
+### 4.3 src/common/CMakeLists.txt
 
 **File to Create:** `src/common/CMakeLists.txt`
 
@@ -2516,7 +2173,7 @@ set_target_properties(ProteusCommon PROPERTIES
 
 [^](#table-of-contents)---
 
-### 6.4 src/backends/CMakeLists.txt
+### 4.4 src/backends/CMakeLists.txt
 
 **File to Create:** `src/backends/CMakeLists.txt`
 
@@ -2548,7 +2205,7 @@ endif()
 
 [^](#table-of-contents)---
 
-### 6.5 src/frontend/CMakeLists.txt
+### 4.5 src/frontend/CMakeLists.txt
 
 **File to Create:** `src/frontend/CMakeLists.txt`
 
@@ -2594,25 +2251,25 @@ install(TARGETS Proteus DESTINATION ${INSTALL_BIN_DIR})
 
 ---
 
-**Phase 6 Deliverable:** Build system complete and functional on all platforms
+**Phase 4 Deliverable:** Build system complete and functional on all platforms
 
 [^](#table-of-contents)---
 
-## Phase 7: Multi-Instance & Inter-Core Communication
+## Phase 5: Multi-Instance & Inter-Core Communication
 
-### 7.1 Design Multi-Instance Session Management
+### 5.1 Design Multi-Instance Session Management
 
-#### 7.1.1 Create Multi-Core Session Header
+#### 5.1.1 Create Multi-Core Session Header
 
-**File to Create:** `src/frontend/session/MultiCoreSession.hpp`
+**File to Create:** `src/frontend/session/MultiCoreSession.h`
 
 **New Code:**
 
 ```
 #pragma once
 
-#include "./ConsoleSession.hpp"
-#include "../../backend/shared/IConsole.hpp"
+#include "./ConsoleSession.h"
+#include "../../backend/shared/IConsole.h"
 #include <vector>
 
 namespace NS_Proteus {
@@ -2693,14 +2350,14 @@ private:
 
 [^](#table-of-contents)---
 
-#### 7.1.2 Create Multi-Core Session Implementation
+#### 5.1.2 Create Multi-Core Session Implementation
 
 **File to Create:** `src/frontend/session/MultiCoreSession.cpp`
 
 **New Code:**
 
 ```
-#include "MultiCoreSession.hpp"
+#include "MultiCoreSession.h"
 
 namespace NS_Proteus {
 
@@ -2774,13 +2431,13 @@ SessionResult MultiCoreSession::ShutdownAll() {
 
 ---
 
-**Phase 7 Deliverable:** Multi-instance architecture designed and implemented
+**Phase 5 Deliverable:** Multi-instance architecture designed and implemented
 
 [^](#table-of-contents)---
 
-## Phase 8: Cross-Platform Build Scripts
+## Phase 6: Cross-Platform Build Scripts
 
-### 8.1 Windows Build Script
+### 6.1 Windows Build Script
 
 **File to Create:** `build_windows.ps1`
 
@@ -2829,7 +2486,7 @@ Write-Host "Output: $BuildDir\$BuildType" -ForegroundColor Cyan
 
 [^](#table-of-contents)---
 
-### 8.2 Linux Build Script
+### 6.2 Linux Build Script
 
 **File to Create:** `build_linux.sh`
 
@@ -2875,7 +2532,7 @@ echo "Output: $BUILD_DIR"
 
 [^](#table-of-contents)---
 
-### 8.3 macOS Build Script
+### 6.3 macOS Build Script
 
 **File to Create:** `build_macos.sh`
 
@@ -2924,13 +2581,13 @@ echo "Output: $BUILD_DIR"
 
 ---
 
-**Phase 8 Deliverable:** One-command builds functional on all platforms
+**Phase 6 Deliverable:** One-command builds functional on all platforms
 
 [^](#table-of-contents)---
 
-## Phase 9: Testing & Validation
+## Phase 7: Testing & Validation
 
-### 9.1 Create Plugin Load Tests
+### 7.1 Create Plugin Load Tests
 
 **File to Create:** `tests/plugin/PluginLoadTest.cpp`
 
@@ -2938,8 +2595,8 @@ echo "Output: $BUILD_DIR"
 
 ```
 #include <gtest/gtest.h>
-#include "common/plugin/PluginLoader.hpp"
-#include "common/plugin/PluginRegistry.hpp"
+#include "common/plugin/PluginLoader.h"
+#include "common/plugin/PluginRegistry.h"
 
 class PluginLoadTest : public ::testing::Test {
 protected:
@@ -3002,7 +2659,7 @@ TEST_F(PluginLoadTest, ContractVersionCompatibility) {
 [^](#table-of-contents)
 ---
 
-### 9.2 Create Plugin Integration Tests
+### 7.2 Create Plugin Integration Tests
 
 **File to Create:** `tests/plugin/PluginIntegrationTest.cpp`
 
@@ -3010,7 +2667,7 @@ TEST_F(PluginLoadTest, ContractVersionCompatibility) {
 
 ```
 #include <gtest/gtest.h>
-#include "common/plugin/PluginRegistry.hpp"
+#include "common/plugin/PluginRegistry.h"
 
 class PluginIntegrationTest : public ::testing::Test {
 protected:
@@ -3078,14 +2735,14 @@ TEST_F(PluginIntegrationTest, InputHandling) {
 
 ---
 
-**Phase 9 Deliverable:** Comprehensive automated tests on all platforms
+**Phase 7 Deliverable:** Comprehensive automated tests on all platforms
 
 [^](#table-of-contents)
 ---
 
-## Phase 10: Documentation & Release
+## Phase 8: Documentation & Release
 
-### 10.1 Create Developer Documentation
+### 8.1 Create Developer Documentation
 
 Create the following documentation files:
 
@@ -3125,7 +2782,7 @@ Contents:
 - Platform-specific build notes
 - Plugin build configuration
 
-### 10.2 Create User Documentation
+### 8.2 Create User Documentation
 
 **File to Create:** `docs/INSTALLATION.md`
 
@@ -3144,7 +2801,7 @@ Contents:
 - Plugin compatibility checking
 - Custom plugin loading
 
-### 10.3 Create Release Documentation
+### 8.3 Create Release Documentation
 
 **File to Create:** `RELEASE_NOTES.md`
 
@@ -3158,14 +2815,14 @@ Template:
 - Installation instructions
 - Supported consoles
 
-**Phase 10 Deliverable:** Complete documentation set
+**Phase 8 Deliverable:** Complete documentation set
 
 [^](#table-of-contents)
 ---
 
-## Phase 11: Final Validation & Release
+## Phase 9: Final Validation & Release
 
-### 11.1 Full Integration Testing
+### 9.1 Full Integration Testing
 
 Tasks:
 - Test complete application flow on Windows, Linux, macOS
@@ -3177,7 +2834,7 @@ Tasks:
 - Test save/load state functionality
 - Test input handling across all platforms
 
-### 11.2 Performance Benchmarking
+### 9.2 Performance Benchmarking
 
 Tasks:
 - Measure plugin discovery time
@@ -3189,7 +2846,7 @@ Tasks:
 - Check memory usage across platforms
 - Verify no memory leaks
 
-### 11.3 Cleanup & Optimization
+### 9.3 Cleanup & Optimization
 
 Tasks:
 - Remove old monolithic code
@@ -3200,7 +2857,7 @@ Tasks:
 - Optimize critical paths
 - Minimize binary sizes
 
-### 11.4 Create Release Builds
+### 9.4 Create Release Builds
 
 Tasks:
 - Build Release configuration on Windows
@@ -3214,7 +2871,7 @@ Tasks:
 - Sign binaries appropriately
 - Create GitHub releases
 
-**Phase 11 Deliverable:** Production release ready for all platforms
+**Phase 9 Deliverable:** Production release ready for all platforms
 
 [^](#table-of-contents)
 ---
@@ -3225,22 +2882,20 @@ Tasks:
 
 - Phase 0: 1-2 weeks
 - Phase 1: 1 week
-- Phase 2: 2-3 weeks
-- Phase 3: 2-3 weeks
+- Phase 2: 1-2 weeks
+- Phase 3: 1-2 weeks
 - Phase 4: 1-2 weeks
-- Phase 5: 1-2 weeks
-- Phase 6: 1-2 weeks
-- Phase 7: 2-3 weeks
-- Phase 8: 1 week
+- Phase 5: 2-3 weeks
+- Phase 6: 1 week
+- Phase 7: 1-2 weeks
+- Phase 8: 1-2 weeks
 - Phase 9: 1-2 weeks
-- Phase 10: 1-2 weeks
-- Phase 11: 1-2 weeks
 
 **Total Estimated Duration: 15-23 weeks**
 
 ### Critical Path
 
-Phase 0.0 → 0.1 → 0.2 → 1.1 → 2.1 → 4.1 → 5.1 → 6.x → 9.x → 11.x
+Phase 0.0 → 0.1 → 0.2 → 1.1 → 2.1 → 3.1 → 4.x → 7.x → 9.x
 
 ### Success Criteria
 

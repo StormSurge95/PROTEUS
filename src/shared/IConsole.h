@@ -1,6 +1,5 @@
 #pragma once
 
-#include "./SharedPCH.h"
 #include "./Types.h"
 
 /**

@@ -35,9 +35,6 @@
     <Filter Include="src\backend\NES\PAK\Mappers">
       <UniqueIdentifier>{6ac803f8-917d-4bf6-a55f-881728613c27}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\backend\shared">
-      <UniqueIdentifier>{0c8ad021-a8d8-4a95-854a-b7093aa1b5b2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\frontend">
       <UniqueIdentifier>{c623cc32-b275-4b9c-bbca-f1070b02100b}</UniqueIdentifier>
     </Filter>
@@ -80,13 +77,13 @@
     <Filter Include="src\shared\core_utils">
       <UniqueIdentifier>{b6c6508f-e22a-40fd-b79d-b38b394a554f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{4c48871b-a9cf-4b0a-93c0-3db6c332f7be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\NES_DB.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\backend\shared\BackendPCH.h">
-      <Filter>src\backend\shared</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\NES\shared\NesConstants.h">
       <Filter>src\backend\NES\shared</Filter>
@@ -283,6 +280,12 @@
     <ClInclude Include="src\shared\core_utils\CoreExports.h">
       <Filter>src\shared\core_utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\shared\core_utils\CoreLoader.h">
+      <Filter>src\shared\core_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backend\CorePCH.h">
+      <Filter>src\backend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frontend\ImGui\imgui.cpp">
@@ -381,14 +384,28 @@
     <ClCompile Include="src\backend\GBA\PAK\Gamepak.cpp">
       <Filter>src\backend\GBA\PAK</Filter>
     </ClCompile>
+    <ClCompile Include="src\shared\core_utils\CoreLoader.cpp">
+      <Filter>src\shared\core_utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend\NES\NesCoreExports.cpp">
+      <Filter>src\backend\NES</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="README.md" />
     <None Include="LICENSE.md" />
     <None Include=".gitignore" />
+    <None Include="docs\RESTRUCTURE_CHECKLIST.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="docs\RESTRUCTURE_OUTLINE.md">
+      <Filter>docs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="TODO.txt" />
+    <Text Include="src\shared\core_utils\CMakeLists.txt">
+      <Filter>src\backend\NES</Filter>
+    </Text>
   </ItemGroup>
 </Project>

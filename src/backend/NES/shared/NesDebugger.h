@@ -14,7 +14,7 @@ namespace NS_NES {
             /// @brief enabled flag
             bool enabled = false;
             /// @brief reference to the station
-            sptr<NES> nes = nullptr;
+            NES* nes = nullptr;
 
             /**
              * @brief Helper function for decoding instructions
@@ -30,7 +30,7 @@ namespace NS_NES {
              * @brief explicit constructor
              * @param n reference to the NES station this debugger is attached to
              */
-            NesDebugger(sptr<NES> n);
+            NesDebugger(NES* n);
             /**
              * @brief explicit destructor; simply calls clear in order to detach the NES reference
              */
