@@ -29,7 +29,7 @@ Complete Outline with Code Examples
 
 The restructuring transforms Proteus from a monolithic application into a plugin-based architecture:
 
-```
+```cpp
 ┌─────────────────────────────────────────────────────────────────┐
 │                      PROTEUS FRONTEND                           │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -116,7 +116,7 @@ This phase establishes the foundational interfaces and plugin loading infrastruc
 
 **Updated Code:**
 
-```
+```cpp
 #pragma once
 
 #include "./BackendPCH.h"
@@ -267,7 +267,7 @@ public:
 
 **Updated Code:**
 
-```
+```cpp
 #pragma once
 
 #include "./BackendPCH.h"
@@ -334,7 +334,7 @@ public:
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include <cstdint>
@@ -477,7 +477,7 @@ struct PluginManifest {
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "PluginManifest.h"
@@ -631,7 +631,7 @@ class IDebugger;
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "PluginManifest.h"
@@ -731,7 +731,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #ifdef _WIN32
 
 #include "../PluginLoader.h"
@@ -818,7 +818,7 @@ std::string PluginLoader::GetLastError() {
 
 **New Code:**
 
-```
+```cpp
 #ifdef __linux__
 
 #include "../PluginLoader.h"
@@ -897,7 +897,7 @@ std::string PluginLoader::GetLastError() {
 
 **New Code:**
 
-```
+```cpp
 #ifdef __APPLE__
 
 #include "../PluginLoader.h"
@@ -976,7 +976,7 @@ std::string PluginLoader::GetLastError() {
 
 **New Code:**
 
-```
+```cpp
 #include "PluginLoader.h"
 #include <filesystem>
 
@@ -1081,7 +1081,7 @@ std::string PluginLoader::GetExpectedFilename(const std::string& consoleName) {
 
 **New Code:**
 
-```
+```cpp
 cmake_minimum_required(VERSION 3.16)
 
 project(ProteusNESPlugin VERSION 1.0.0 LANGUAGES CXX)
@@ -1157,7 +1157,7 @@ install(TARGETS ProteusNES DESTINATION ${INSTALL_PLUGIN_DIR})
 
 **New Code:**
 
-```
+```cpp
 #include "../../common/plugin/PluginExports.h"
 #include "NESCoreImpl.h"
 #include "NESDebuggerImpl.h"
@@ -1231,7 +1231,7 @@ PLUGIN_MANIFEST_EXPORT(GetPluginManifest) {
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "../../common/plugin/PluginExports.h"
@@ -1281,7 +1281,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #include "NESCoreImpl.h"
 
 namespace NS_NESplugin {
@@ -1378,7 +1378,7 @@ bool NESCoreImpl::checkSST(SSTstate state, string& outMessage) {
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "../../backend/shared/IDebugger.h"
@@ -1412,7 +1412,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #include "NESDebuggerImpl.h"
 
 namespace NS_NESplugin {
@@ -1453,7 +1453,7 @@ bool NESDebuggerImpl::isBreakpointSet() const {
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "PluginLoader.h"
@@ -1562,7 +1562,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #include "PluginRegistry.h"
 #include <filesystem>
 #include <cstdlib>
@@ -1758,7 +1758,7 @@ bool PluginRegistry::UnloadAllPlugins() {
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "../../common/plugin/PluginRegistry.h"
@@ -1855,7 +1855,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #include "PluginManager.h"
 #include <iostream>
 
@@ -1963,7 +1963,7 @@ void PluginManager::LogPluginStatus() {
 
 **New Code (Add to existing file):**
 
-```
+```cpp
 #include "ConsoleFactory.h"
 #include "../plugin/PluginManager.h"
 
@@ -2015,7 +2015,7 @@ std::shared_ptr<IConsole> ConsoleFactory::Create(ConsoleID console) {
 
 **Code to Add at Start of Init Method:**
 
-```
+```cpp
 #include "../plugin/PluginManager.h"
 
 void Proteus::Init() {
@@ -2073,7 +2073,7 @@ void Proteus::Deinit() {
 
 **New Code:**
 
-```
+```cpp
 cmake_minimum_required(VERSION 2.16)
 
 project(Proteus VERSION 1.0.0 LANGUAGES CXX)
@@ -2126,7 +2126,7 @@ add_subdirectory(src)
 
 **New Code:**
 
-```
+```cpp
 # Common library (plugin system)
 add_subdirectory(common)
 
@@ -2150,7 +2150,7 @@ add_subdirectory(frontend)
 
 **New Code:**
 
-```
+```cpp
 add_library(ProteusCommon STATIC
     plugin/PluginLoader.cpp
     plugin/PluginRegistry.cpp
@@ -2179,7 +2179,7 @@ set_target_properties(ProteusCommon PROPERTIES
 
 **New Code:**
 
-```
+```cpp
 if(BUILD_NES_PLUGIN)
     add_subdirectory(nes)
 endif()
@@ -2211,7 +2211,7 @@ endif()
 
 **New Code:**
 
-```
+```cpp
 find_package(SDL3 REQUIRED)
 
 add_executable(Proteus
@@ -2265,7 +2265,7 @@ install(TARGETS Proteus DESTINATION ${INSTALL_BIN_DIR})
 
 **New Code:**
 
-```
+```cpp
 #pragma once
 
 #include "./ConsoleSession.h"
@@ -2356,7 +2356,7 @@ private:
 
 **New Code:**
 
-```
+```cpp
 #include "MultiCoreSession.h"
 
 namespace NS_Proteus {
@@ -2443,7 +2443,7 @@ SessionResult MultiCoreSession::ShutdownAll() {
 
 **New Code:**
 
-```
+```cpp
 param(
     [string]$BuildType = "Release",
     [string]$Architecture = "x64"
@@ -2492,7 +2492,7 @@ Write-Host "Output: $BuildDir\$BuildType" -ForegroundColor Cyan
 
 **New Code:**
 
-```
+```cpp
 #!/bin/bash
 
 BUILD_TYPE=${1:-Release}
@@ -2538,7 +2538,7 @@ echo "Output: $BUILD_DIR"
 
 **New Code:**
 
-```
+```cpp
 #!/bin/bash
 
 BUILD_TYPE=${1:-Release}
@@ -2593,7 +2593,7 @@ echo "Output: $BUILD_DIR"
 
 **New Code:**
 
-```
+```cpp
 #include <gtest/gtest.h>
 #include "common/plugin/PluginLoader.h"
 #include "common/plugin/PluginRegistry.h"
@@ -2665,7 +2665,7 @@ TEST_F(PluginLoadTest, ContractVersionCompatibility) {
 
 **New Code:**
 
-```
+```cpp
 #include <gtest/gtest.h>
 #include "common/plugin/PluginRegistry.h"
 
