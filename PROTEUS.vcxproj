@@ -53,7 +53,8 @@
     <ClCompile Include="src\frontend\session\ConsoleSession.cpp" />
     <ClCompile Include="src\frontend\video\VideoManager.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\shared\core_utils\CoreLoader.cpp" />
+    <ClCompile Include="src\shared\core_utils\PluginLoader.cpp" />
+    <ClCompile Include="src\shared\core_utils\PluginRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\FontDebug.h" />
@@ -115,7 +116,8 @@
     <ClInclude Include="src\frontend\session\SessionTypes.h" />
     <ClInclude Include="src\frontend\video\VideoManager.h" />
     <ClInclude Include="src\frontend\video\VideoTypes.h" />
-    <ClInclude Include="src\shared\core_utils\CoreLoader.h" />
+    <ClInclude Include="src\shared\core_utils\PluginLoader.h" />
+    <ClInclude Include="src\shared\core_utils\PluginRegistry.h" />
     <ClInclude Include="src\shared\IConsole.h" />
     <ClInclude Include="src\shared\IDebugger.h" />
     <ClInclude Include="src\shared\IDevice.h" />
@@ -140,7 +142,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="src\shared\core_utils\CMakeLists.txt" />
+    <Text Include="CMakeLists.txt" />
+    <Text Include="src\backend\NES\CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

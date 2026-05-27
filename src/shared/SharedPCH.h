@@ -15,11 +15,11 @@
 #include "./json.h"
 #include <map>
 #include <memory>
-#include <SDL3/SDL.h>
 #include <set>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 // algorithm
@@ -63,10 +63,12 @@ using std::deque;
 using std::filesystem::path;
 using std::filesystem::directory_iterator;
 using std::filesystem::directory_entry;
-using std::filesystem::exists;
-using std::filesystem::create_directory;
-using std::filesystem::is_regular_file;
 using std::filesystem::absolute;
+using std::filesystem::create_directory;
+using std::filesystem::current_path;
+using std::filesystem::exists;
+using std::filesystem::is_regular_file;
+using std::filesystem::weakly_canonical;
 
 // fstream & iomanip
 using std::ifstream;
@@ -78,9 +80,9 @@ using std::endl;
 using nlohmann::json;
 
 // map
-using std::unordered_map;
 using std::map;
 using std::pair;
+using std::unordered_map;
 
 // memory
 template <class T>
@@ -96,6 +98,8 @@ using std::static_pointer_cast;
 
 // set
 using std::set;
+using std::unordered_set;
+
 
 // sstream & string
 using std::stringstream;

@@ -280,11 +280,14 @@
     <ClInclude Include="src\shared\core_utils\CoreExports.h">
       <Filter>src\shared\core_utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared\core_utils\CoreLoader.h">
+    <ClInclude Include="src\shared\core_utils\PluginLoader.h">
       <Filter>src\shared\core_utils</Filter>
     </ClInclude>
     <ClInclude Include="src\backend\CorePCH.h">
       <Filter>src\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared\core_utils\PluginRegistry.h">
+      <Filter>src\shared\core_utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -384,11 +387,14 @@
     <ClCompile Include="src\backend\GBA\PAK\Gamepak.cpp">
       <Filter>src\backend\GBA\PAK</Filter>
     </ClCompile>
-    <ClCompile Include="src\shared\core_utils\CoreLoader.cpp">
+    <ClCompile Include="src\shared\core_utils\PluginLoader.cpp">
       <Filter>src\shared\core_utils</Filter>
     </ClCompile>
     <ClCompile Include="src\backend\NES\NesCoreExports.cpp">
       <Filter>src\backend\NES</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shared\core_utils\PluginRegistry.cpp">
+      <Filter>src\shared\core_utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -404,8 +410,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="src\shared\core_utils\CMakeLists.txt">
+    <Text Include="src\backend\NES\CMakeLists.txt">
       <Filter>src\backend\NES</Filter>
     </Text>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
 </Project>

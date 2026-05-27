@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/devenv/PROTEUS/Proteus/build/cmake_install.cmake",
+		"C:/devenv/PROTEUS/Proteus/build/src/backend/NES/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

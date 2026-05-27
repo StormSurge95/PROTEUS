@@ -46,8 +46,10 @@ namespace NS_NES {
             // provides the original pixel height of the NES console screen
             const int SCREEN_HEIGHT() const override { return 240; }
 
+            size_t buttonCount() const override { return 8; }
+
             // allows frontend to pass input data back to the backend
-            void update(u8, bool*) override;
+            void update(u8, const bool*) override;
 
         private:
             sptr<CPU> cpu;              // shared pointer reference to the cpu

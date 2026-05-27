@@ -5,11 +5,8 @@
 /**
  * @interface IDebugger
  * @brief Debugging interface for console cores
- * @details Provides debugging capabiltities for console emulation.
+ * @details Provides debugging capabilities for console emulation.
  *          Debuggers are OPTIONAL - not all cores need to implement.
- * 
- * Debuggers are typically created alongside IConsole instances
- * via DebuggerFactory and are specific to each console type.
  */
 class IDebugger {
     public:
@@ -42,7 +39,7 @@ class IDebugger {
 
         /**
          * @brief Get the individual state of each of the CPU status flags
-         * @param status A number containing the bit-wise flage of the CPU status
+         * @param status A number containing the bit-wise flags of the CPU status
          * @return a string containing a `'1'` for each set flag and a `'0'` for each clear flag; separated by spaces
          */
         virtual string GetFlags(int) const = 0;
@@ -57,7 +54,7 @@ class IDebugger {
         virtual vector<string> GetStateRAM() const = 0;
 
         /**
-         * @brief Get a disassembly of the surrounding cpu instructions based on the current PC value
+         * @brief Get a disassembly of the surrounding CPU instructions based on the current PC value
          * @return A vector containing a string for each of the surrounding cpu instructions
          * @todo should there be a concrete instruction limit?
          */
@@ -119,7 +116,7 @@ class IDebugger {
         virtual void BreakOnCondition(const string&) {}
 
         /**
-         * @brief Tell whether we are expecting program execution to paused at some particular point.
+         * @brief Tell whether we are expecting program execution to be paused at some particular point.
          * @return true of a breakpoint is set
          */
         virtual bool IsBreakpointSet() const { return false; }

@@ -1,6 +1,6 @@
 #include "./frontend/app/Proteus.h"
 
-#include "./backend/GBA/shared/GbaPCH.h"
+#include "./shared/core_utils/PluginLoader.h"
 
 using namespace NS_Proteus;
 

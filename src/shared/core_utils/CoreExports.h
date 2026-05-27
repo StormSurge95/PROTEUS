@@ -22,11 +22,11 @@ const map<DevStatusValue, const char*> DevStatusDescription = {
 };
 
 /**
- * @struct CoreManifest
- * @brief Metadata exported by each core
- * @details Every core must export GetCoreManifest() returning
+ * @struct PluginManifest
+ * @brief Metadata exported by each plugin
+ * @details Every plugin must export GetPluginManifest() returning
  *          a valid manifest. The frontend uses this to validate
- *          compatibility and display core information.
+ *          compatibility and display plugin information.
  * 
  * The manifest serves several purposes:
  * - Validates API contract compatibility before loading
@@ -34,31 +34,31 @@ const map<DevStatusValue, const char*> DevStatusDescription = {
  * - Allows versioning and future extensibility
  * - Documents plugin capabilities and status
  */
-struct CoreManifest {
+struct PluginManifest {
     // === VERSION & COMPATIBILITY ===
 
     /**
-     * @brief Core version (major component)
+     * @brief Plugin version (major component)
      * @details Typically incremented for major feature releases
      */
-    u16 coreVersion_major;
+    u16 pluginVersion_major;
 
     /**
-     * @brief Core version (minor component)
+     * @brief Plugin version (minor component)
      * @details Typically incremented for minor features or fixes
      */
-    u16 coreVersion_minor;
+    u16 pluginVersion_minor;
 
     /**
-     * @brief Core version (patch component)
+     * @brief Plugin version (patch component)
      * @details Typically increment for bug fixes only
      */
-    u16 coreVersion_patch;
+    u16 pluginVersion_patch;
 
     /**
-     * @brief IConsole contract version this core implements
+     * @brief IConsole contract version this plugin implements
      * @details Must match ICONSOLE_CONTRACT_VERSION in frontend
-     *          If mismatch detected, core will be rejected as incompatible
+     *          If mismatch detected, plugin will be rejected as incompatible
      */
     u16 iConsoleContractVersion;
 
@@ -74,7 +74,7 @@ struct CoreManifest {
     /**
      * @brief Short console name (lowercase, no spaces)
      * @example "nes"
-     * @details Used for core discovery and identification
+     * @details Used for plugin discovery and identification
      * @todo Should we just use our ConsoleID enum values?
      */
     const char* consoleName;
@@ -87,21 +87,21 @@ struct CoreManifest {
     const char* consoleFullName;
 
     /**
-     * @brief Core display name
-     * @example "Proteus NES Emulation Core"
+     * @brief Plugin display name
+     * @example "Proteus NES Emulation Plugin"
      * @details Used in UI to identify the specific plugin
      */
-    const char* coreName;
+    const char* pluginName;
 
     /**
      * @brief Author or organization name
-     * @details Credit line for the core creator(s)
+     * @details Credit line for the plugin creator(s)
      */
     const char* authorName;
 
     /**
-     * @brief Core description
-     * @details Brief description of what this core emulates
+     * @brief Plugin description
+     * @details Brief description of what this plugin emulates
      *          and any notable features
      */
     const char* description;
@@ -115,7 +115,7 @@ struct CoreManifest {
     const char* buildDate;
 
     /**
-     * @brief Licent type identifier
+     * @brief License type identifier
      * @example "GPL-3.0"
      */
     const char* licenseType;
@@ -123,7 +123,7 @@ struct CoreManifest {
     // === STATUS ===
 
     /**
-     * @brief Development status of this core
+     * @brief Development status of this plugin
      */
     DevStatusValue devStatus;
 
@@ -135,88 +135,88 @@ struct CoreManifest {
 
 // Platform specific export declarations
 #ifdef _WIN32
-    #define CORE_EXPORT extern "C" __declspec(dllexport)
-    #define CORE_INVOKE __cdecl
+    #define PLUGIN_EXPORT extern "C" __declspec(dllexport)
+    #define PLUGIN_INVOKE __cdecl
 #elif defined(__GNUC__)
-    #define CORE_EXPORT extern "C" __attribute__((visibility("default")))
-    #define CORE_INVOKE __cdecl
+    #define PLUGIN_EXPORT extern "C" __attribute__((visibility("default")))
+    #define PLUGIN_INVOKE __cdecl
 #else
-    #define CORE_EXPORT extern "C"
-    #define CORE_INVOKE
+    #define PLUGIN_EXPORT extern "C"
+    #define PLUGIN_INVOKE
 #endif
 
 /**
  * @def CORE_CREATE
  * @brief Declares the core factory function
- * @details REQUIRED EXPORT - Every core must provide:
+ * @details REQUIRED EXPORT - Every plugin must provide:
  * 
- *   CORE_CREATE(CreateXXXCore) {
+ *   CORE_CREATE(CreateCore) {
  *       return new XXX();
  *   }
  * 
- * Signature: IConsole* CreateXXXCore()
+ * Signature: IConsole* CreateCore()
  */
 #define CORE_CREATE(funcName) \
-    CORE_EXPORT IConsole* CORE_INVOKE funcName()
+    PLUGIN_EXPORT IConsole* PLUGIN_INVOKE funcName()
 
 /**
  * @def CORE_DESTROY
  * @brief Declares the core destructor function
- * @details REQUIRED EXPORT - Every core must provide:
+ * @details REQUIRED EXPORT - Every plugin must provide:
  * 
- *   CORE_DESTROY(DestroyXXXCore) {
+ *   CORE_DESTROY(DestroyCore) {
  *       if (core)
-             delete core;
+             delete reinterpret_cast<XXX*>(core);
  *   }
  * 
- * Signature: void DestroyXXXCore(IConsole* core)
+ * Signature: void DestroyCore(IConsole* core)
  */
 #define CORE_DESTROY(funcName) \
-    CORE_EXPORT void CORE_INVOKE funcName(IConsole* core)
+    PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IConsole* core)
 
 /**
  * @def DEBUGGER_CREATE
  * @brief Declares the debugger factory function
- * @details OPTIONAL EXPORT - Cores may provide debugger support:
+ * @details OPTIONAL EXPORT - Plugins may provide debugger support:
  * 
- *   DEBUGGER_CREATE(CreateXXXDebugger) {
+ *   DEBUGGER_CREATE(CreateDebugger) {
  *       return new XXXDebugger();
  *   }
  * 
- * Signature: IDebugger* CreateXXXDebugger(IConsole* core)
+ * Signature: IDebugger* CreateDebugger(IConsole* core)
  * 
  * @note while debugger implementation is pending, the
- * function provided by the core may return `nullptr`
+ * function provided by the plugin may return `nullptr`
  */
 #define DEBUGGER_CREATE(funcName) \
-    CORE_EXPORT IDebugger* CORE_INVOKE funcName(IConsole* core)
+    PLUGIN_EXPORT IDebugger* PLUGIN_INVOKE funcName(IConsole* core)
 
 /**
  * @def DEBUGGER_DESTROY
  * @brief Declares the debugger destructor function
  * @details OPTIONAL EXPORT - Must exist if DEBUGGER_CREATE exists
  * 
- *   DEBUGGER_DESTROY(DestroyXXXDebugger) {
+ *   DEBUGGER_DESTROY(DestroyDebugger) {
  *       if (debugger)
- *           delete debugger;
+ *           delete reinterpret_cast<XXXDebugger*>(debugger);
  *   }
  * 
- * Signature: void DestroyXXXDebugger(IDebugger* debugger);
+ * Signature: void DestroyDebugger(IDebugger* debugger);
  */
 #define DEBUGGER_DESTROY(funcName) \
-    CORE_EXPORT void CORE_INVOKE funcName(IDebugger* debugger)
+    PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IDebugger* debugger)
 
 /**
- * @def CORE_MANIFEST
+ * @def PLUGIN_MANIFEST
  * @brief Declares the manifest export function
- * @details REQUIRED EXPORT - Every core must provide:
+ * @details REQUIRED EXPORT - Every plugin must provide:
  * 
- *   CORE_MANIFEST(GetXXXCoreManifest) {
- *       static CoreManifest manifest = { ... };
+ *   PLUGIN_MANIFEST(GetPluginManifest) {
+ *       static PluginManifest manifest = { ... };
  *       return &manifest;
  *   }
  * 
- * Signature: const CoreManifest* GetXXXCoreManifest()
+ * Signature: const PluginManifest* GetPluginManifest()
  */
-#define CORE_MANIFEST(funcName) \
-    CORE_EXPORT const CoreManifest* CORE_INVOKE funcName()
+#define PLUGIN_MANIFEST(funcName) \
+    PLUGIN_EXPORT const PluginManifest* PLUGIN_INVOKE funcName()

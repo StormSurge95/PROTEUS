@@ -1,0 +1,6 @@
+C:/devenv/PROTEUS/Proteus/build/CMakeFiles/INSTALL.dir
+C:/devenv/PROTEUS/Proteus/build/CMakeFiles/ALL_BUILD.dir
+C:/devenv/PROTEUS/Proteus/build/CMakeFiles/ZERO_CHECK.dir
+C:/devenv/PROTEUS/Proteus/build/src/backend/NES/CMakeFiles/ProteusNES.dir
+C:/devenv/PROTEUS/Proteus/build/src/backend/NES/CMakeFiles/INSTALL.dir
+C:/devenv/PROTEUS/Proteus/build/src/backend/NES/CMakeFiles/ALL_BUILD.dir

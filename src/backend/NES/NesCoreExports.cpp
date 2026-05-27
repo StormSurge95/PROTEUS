@@ -4,7 +4,7 @@
 
 namespace NS_NES {
     // static manifect for this core
-    static const CoreManifest NesCoreManifest = {
+    static const PluginManifest NesPluginManifest = {
         1, 0, 0,
         ICONSOLE_CONTRACT_VERSION,
         IDEBUGGER_CONTRACT_VERSION,
@@ -53,7 +53,7 @@ namespace NS_NES {
 
     // === MANIFEST EXPORT ===
 
-    CORE_MANIFEST(GetCoreManifest) {
-        return &NesCoreManifest;
+    PLUGIN_MANIFEST(GetPluginManifest) {
+        return &NesPluginManifest;
     }
 }

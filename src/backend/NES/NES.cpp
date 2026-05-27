@@ -83,7 +83,7 @@ void NES::clock() {
     }
 }
 
-void NES::update(u8 player, bool* buttons) {
+void NES::update(u8 player, const bool* buttons) {
     if (player == 0) {
         for (int x = 0; x < 8; x++) {
             player1->update(static_cast<BUTTONS>(x), buttons[x]);

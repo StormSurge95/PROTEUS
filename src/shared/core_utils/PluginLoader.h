@@ -8,20 +8,20 @@
  * @details Handles loading, unloading, and symbol resolution for plugins
  *          on Windows, Linux, and macOS. Uses platform specific implementation.
  */
-class CoreLoader {
+class PluginLoader {
     public:
         // Function pointer types matching plugin exports
         using CreateCoreFunc = IConsole* (*)();
         using DestroyCoreFunc = void (*)(IConsole*);
         using CreateDebuggerFunc = IDebugger * (*)(IConsole*);
         using DestroyDebuggerFunc = void (*)(IDebugger*);
-        using GetManifestFunc = const CoreManifest* (*)();
+        using GetManifestFunc = const PluginManifest* (*)();
 
         /**
          * @struct LoadedCore
          * @brief Information about a loaded core in memory
          */
-        struct LoadedCore {
+        struct LoadedPlugin {
             string filePath;            // Full path to DLL/SO/DYLIB
             string consoleName;         // Short name ("NES", "GBA", "N64", etc.)
 
@@ -33,7 +33,7 @@ class CoreLoader {
             DestroyDebuggerFunc DestroyDebugger;
             GetManifestFunc GetManifest;
 
-            CoreManifest manifest;
+            PluginManifest manifest;
         };
 
         /**
@@ -42,14 +42,14 @@ class CoreLoader {
          * @param core [out] Populated with loaded core info
          * @return true if load was successful
          */
-        static bool LoadCore(const string& filePath, LoadedCore& core);
+        static bool LoadPlugin(const string& filePath, LoadedPlugin& core);
 
         /**
          * @brief Unload a previously loaded core
          * @param core The core to unload
          * @return true if unload was successful
          */
-        static bool UnloadCore(LoadedCore& core);
+        static bool UnloadPlugin(LoadedPlugin& core);
 
         /**
          * @brief Get the expected core filename for current platform
@@ -62,7 +62,7 @@ class CoreLoader {
          * @brief Get platform-specific file extension
          * @return ".dll" on windows, ".so" on Linux, ".dylib" on macOS
          */
-        static string GetCoreExtension();
+        static string GetPluginExtension();
 
         /**
          * @brief Get platform-specific library prefix

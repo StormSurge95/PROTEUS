@@ -9,24 +9,24 @@
  *          cores MUST implement. Frontend code ONLY interacts with
  *          console cores through this interface.
  * @important Changes to this interface are BREAKING CHANGES for all
- *            existing plugins. Version carefully
+ *            existing cores. Version carefully.
  */
 class IConsole {
     public:
-        /// @brief default virtual deconstructor
+        /// @brief default virtual destructor
         virtual ~IConsole() = default;
 
         /**
          * @brief Initialize the console
          * @return true if successful
          */
-        virtual bool Initialize() { return true; }
+        virtual bool initialize() { return true; }
 
         /**
          * @brief Shutdown the console and release resources
          * @return true if successful
          */
-        virtual bool Shutdown() { return true; }
+        virtual bool shutdown() { return true; }
 
         /**
          * @brief Load a ROM file into the console
@@ -42,8 +42,10 @@ class IConsole {
         virtual void clock() = 0;
 
         /**
-         * @brief Get the framebuffer containing rendered pixels
-         * @return Pointer to ARGB8888 framebuffer data
+         * @brief Get the current framebuffer
+         * @return Non-ownding pointer managed by the core;
+         *      valid until the next `clock()` call or `shutdown()`.
+         *      Never free this pointer in frontend code.
          */
         virtual const u32* getFrameBuffer() const = 0;
 
@@ -60,11 +62,17 @@ class IConsole {
         virtual void collectAudio(vector<float>&) = 0;
 
         /**
+         * @brief Number of button states expected by `update(...)` for this console
+         */
+        virtual size_t buttonCount() const = 0;
+
+        /**
          * @brief Send input state to the console
          * @param playerIndex Player index (0-3 for multiplayer)
-         * @param buttonStates Array of button states (size varies by console)
+         * @param buttonStates Pointer to at least `buttonCount()` booleans.
+         *          Read-only for the duration of this call; must not be null
          */
-        virtual void update(u8, bool*) = 0;
+        virtual void update(u8, const bool*) = 0;
 
         /**
          * @brief Initialize console for Single State Test

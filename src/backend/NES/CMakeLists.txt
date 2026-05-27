@@ -4,16 +4,37 @@ project(ProteusNESCore VERSION 1.0.0 LANGUAGES CXX)
 
 # Build as shared library (plugin)
 add_library(ProteusNES SHARED
-	# Core emulation (TODO)
+	# core contract info
+	NesCoreExports.cpp
+
+	### emulator implementation(s) ###
+
+	# core
 	NES.cpp
+	NesController.cpp
+
+	# APU
 	APU/NesAPU.cpp
 	APU/NesDMC.cpp
 	APU/NesNoise.cpp
 	APU/NesPulse.cpp
 	APU/NesTriangle.cpp
+
+	# CPU
 	CPU/NesCPU.cpp
 	CPU/NesCPU_AddressModes.cpp
 	CPU/NesCPU_Instructions.cpp
+
+	# PAK
+	PAK/NesGamepak.cpp
+
+	# PPU
+	PPU/NesPPU.cpp
+	PPU/NesPPU_BG.cpp
+	PPU/NesPPU_Sprites.cpp
+
+	# shared
+	shared/NesDebugger.cpp
 )
 
 # Include directories
@@ -25,7 +46,7 @@ target_include_directories(ProteusNES PRIVATE
 
 # Compiler settings
 set_target_properties(ProteusNES PROPERTIES
-	CXX_STANDARD 17
+	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_VISIBILITY_PRESET hidden
 	VISIBILITY_INLINES_HIDDEN ON

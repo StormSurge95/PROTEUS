@@ -1,12 +1,14 @@
-#include "./CoreLoader.h"
+#include "./PluginLoader.h"
 
 #ifdef _WIN32
 #include <Windows.h>
 #include <Shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
-#undef max // prevent Windows.h macro from messing up our custom max function
 
-void* CoreLoader::LoadLib(const string& filePath) {
+// prevent Windows.h macro from messing up our custom max function
+#undef max
+
+void* PluginLoader::LoadLib(const string& filePath) {
     SetLastError(0);
     HMODULE handle = LoadLibraryA(filePath.c_str());
 
@@ -24,7 +26,7 @@ void* CoreLoader::LoadLib(const string& filePath) {
     return reinterpret_cast<void*>(handle);
 }
 
-bool CoreLoader::UnloadLib(void* handle) {
+bool PluginLoader::UnloadLib(void* handle) {
     if (!handle) return false;
 
     BOOL success = FreeLibrary(reinterpret_cast<HMODULE>(handle));
@@ -42,7 +44,7 @@ bool CoreLoader::UnloadLib(void* handle) {
     return success != 0;
 }
 
-void* CoreLoader::GetSym(void* handle, const string& symName) {
+void* PluginLoader::GetSym(void* handle, const string& symName) {
     if (!handle) {
         lastError = "Invalid library handle";
         return nullptr;
@@ -51,7 +53,12 @@ void* CoreLoader::GetSym(void* handle, const string& symName) {
     FARPROC sym = GetProcAddress(reinterpret_cast<HMODULE>(handle), symName.c_str());
     
     if (!sym) {
-        lastError = "Symbol not found: " + symName;
+        DWORD error = ::GetLastError();
+        char buffer[1024];
+        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            buffer, sizeof(buffer), nullptr);
+        lastError = string("GetProcAddress() failed: ") + buffer;
         return nullptr;
     }
 
@@ -59,13 +66,13 @@ void* CoreLoader::GetSym(void* handle, const string& symName) {
     return reinterpret_cast<void*>(sym);
 }
 
-string CoreLoader::GetCoreExtension() { return ".dll"; }
-string CoreLoader::GetLibraryPrefix() { return ""; }
+string PluginLoader::GetPluginExtension() { return ".dll"; }
+string PluginLoader::GetLibraryPrefix() { return ""; }
 #else
 #include <dlfcn.h>
 #include <cstring>
 
-void* CoreLoader::LoadLib(const string& filePath) {
+void* PluginLoader::LoadLib(const string& filePath) {
     void* handle = dlopen(filePath.c_str(), RTLD_LAZY | RTLD_LOCAL);
 
     if (!handle) {
@@ -78,7 +85,7 @@ void* CoreLoader::LoadLib(const string& filePath) {
     return handle;
 }
 
-bool CoreLoader::UnloadLib(void* handle) {
+bool PluginLoader::UnloadLib(void* handle) {
     if (!handle) return false;
 
     int result = dlclose(handle);
@@ -92,7 +99,7 @@ bool CoreLoader::UnloadLib(void* handle) {
     return result == 0;
 }
 
-void* CoreLoader::GetSym(void* handle, const string& symName) {
+void* PluginLoader::GetSym(void* handle, const string& symName) {
     if (!handle) {
         lastError = "Invalid lib handle";
         return nullptr;
@@ -112,38 +119,47 @@ void* CoreLoader::GetSym(void* handle, const string& symName) {
 }
 
     #ifdef __linux__
-    string CoreLoader::GetCoreExtension() { return ".so"; }
+    string PluginLoader::GetPluginExtension() { return ".so"; }
     #else // __APPLE__
-    string CoreLoader::GetCoreExtension() { return ".dylib"; }
+    string PluginLoader::GetPluginExtension() { return ".dylib"; }
     #endif
-string CoreLoader::GetLibraryPrefix() { return ".lib"; }
+string PluginLoader::GetLibraryPrefix() { return "lib"; }
 #endif
 
-bool CoreLoader::LoadCore(const string& filePath, LoadedCore& core) {
+bool PluginLoader::LoadPlugin(const string& filePath, LoadedPlugin& core) {
     // verify file exists
-    if (!exists(filePath)) return false;
+    if (!exists(filePath)) {
+        lastError = filePath + ": Plugin Library file does not exist";
+        return false;
+    }
 
     // load lib
     void* handle = LoadLib(filePath);
-    if (!handle) return false;
+    if (!handle) {
+        lastError = "LoadPlugin - " + lastError + "\n" + filePath + ": Plugin Library failed to load";
+        return false;
+    }
 
     // load function to get manifest
     GetManifestFunc getManifest = reinterpret_cast<GetManifestFunc>(
         GetSym(handle, "GetCoreManifest"));
     if (!getManifest) {
+        lastError = "LoadPlugin - " + lastError + "\n" + filePath + ": Plugin Library missing GetCoreManifest() function";
         UnloadLib(handle);
         return false;
     }
 
     // get manifest to validate compat
-    const CoreManifest* manifest = getManifest();
+    const PluginManifest* manifest = getManifest();
     if (!manifest) {
+        lastError = "LoadPlugin - " + filePath + ": Plugin Library GetCoreManifest() returns null";
         UnloadLib(handle);
         return false;
     }
 
     // validate contract versions
     if (manifest->iConsoleContractVersion != ICONSOLE_CONTRACT_VERSION) {
+        lastError = "LoadPlugin - " + filePath + ": CoreManifest/Application iConsoleContractVersion mismatch";
         UnloadLib(handle);
         return false;
     }
@@ -153,7 +169,13 @@ bool CoreLoader::LoadCore(const string& filePath, LoadedCore& core) {
         GetSym(handle, "CreateCore"));
     DestroyCoreFunc destroyCore = reinterpret_cast<DestroyCoreFunc>(
         GetSym(handle, "DestroyCore"));
-    if (!createCore || !destroyCore) {
+    if (!createCore) {
+        lastError = "LoadPlugin - " + lastError + "\n" + filePath + ": CreateCore() function missing";
+        UnloadLib(handle);
+        return false;
+    }
+    if (!destroyCore) {
+        lastError = "LoadPlugin - " + lastError + "\n" + filePath + ": DestroyCore() function missing";
         UnloadLib(handle);
         return false;
     }
@@ -164,8 +186,9 @@ bool CoreLoader::LoadCore(const string& filePath, LoadedCore& core) {
     DestroyDebuggerFunc destroyDebugger = reinterpret_cast<DestroyDebuggerFunc>(
         GetSym(handle, "DestroyDebugger"));
 
-    // debugger function must both exist or both be null
+    // debugger functions must both exist or both be null
     if (bool(createDebugger) != bool(destroyDebugger)) {
+        lastError = "LoadPlugin - " + lastError + "\n" + filePath + ": CreateDebugger() and DestroyDebugger() must either BOTH exist or BOTH be null";
         UnloadLib(handle);
         return false;
     }
@@ -183,15 +206,21 @@ bool CoreLoader::LoadCore(const string& filePath, LoadedCore& core) {
     return true;
 }
 
-bool CoreLoader::UnloadCore(LoadedCore& core) {
-    if (!core.libHandle) return false;
+bool PluginLoader::UnloadPlugin(LoadedPlugin& core) {
+    if (!core.libHandle) {
+        lastError = "UnloadPlugin() failed: null library handle";
+        return false;
+    }
 
-    if (!UnloadLib(core.libHandle)) return false;
+    if (!UnloadLib(core.libHandle)) {
+        lastError += "\nUnloadPlugin() failure during platform call";
+        return false;
+    }
 
     core.libHandle = nullptr;
     return true;
 }
 
-string CoreLoader::GetExpectedFilename(const string& consoleName) {
-    return GetLibraryPrefix() + consoleName + GetCoreExtension();
+string PluginLoader::GetExpectedFilename(const string& consoleName) {
+    return GetLibraryPrefix() + consoleName + GetPluginExtension();
 }
