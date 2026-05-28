@@ -9,4 +9,4 @@ if(NOT DEFINED INSTALL_PLUGIN_DIR)
 	set(INSTALL_PLUGIN_DIR "plugins")
 endif()
 
-add_subdirectory(src/backend/NES)
+add_subdirectory(src)

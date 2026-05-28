@@ -23,7 +23,6 @@
     <ClCompile Include="src\frontend\app\Proteus.cpp" />
     <ClCompile Include="src\frontend\audio\AudioManager.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui.cpp" />
-    <ClCompile Include="src\frontend\ImGui\imgui_demo.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_draw.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_impl_sdl3.cpp" />
     <ClCompile Include="src\frontend\ImGui\imgui_impl_sdlrenderer3.cpp" />
@@ -88,15 +87,7 @@
     <None Include=".gitignore" />
     <None Include="docs\RESTRUCTURE_CHECKLIST.md" />
     <None Include="docs\RESTRUCTURE_OUTLINE.md" />
-    <None Include="LICENSE.md">
-      <SubType>
-      </SubType>
-    </None>
     <None Include="packages.config" />
-    <None Include="README.md">
-      <SubType>
-      </SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
@@ -177,7 +168,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\src\frontend\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\Proteus\src\**;$(ProjectDir)src\frontend\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -203,7 +194,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\Proteus\src\**;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -219,7 +210,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\src\frontend\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\Proteus\src\**;$(ProjectDir)src\frontend\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -245,7 +236,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDL3_ttf\include;C:\devenv\PROTEUS\Proteus\src\**;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

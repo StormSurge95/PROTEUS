@@ -183,9 +183,6 @@
     <ClCompile Include="src\frontend\ImGui\imgui.cpp">
       <Filter>src\frontend\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\frontend\ImGui\imgui_demo.cpp">
-      <Filter>src\frontend\ImGui</Filter>
-    </ClCompile>
     <ClCompile Include="src\frontend\ImGui\imgui_draw.cpp">
       <Filter>src\frontend\ImGui</Filter>
     </ClCompile>
@@ -240,8 +237,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="README.md" />
-    <None Include="LICENSE.md" />
     <None Include=".gitignore" />
     <None Include="docs\RESTRUCTURE_CHECKLIST.md">
       <Filter>docs</Filter>
