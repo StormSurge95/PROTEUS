@@ -39,10 +39,10 @@ jobs:
           choco install openssl.light -y
 
       - name: Configure
-        uses: cmake -S Proteus -B Proteus/build-ci -DCMAKE_BUILD_TYPE=${{ matrix.config }} - DPROTEUS_BUILD_TESTS=ON
+        run: cmake -S Proteus -B Proteus/build-ci -DCMAKE_BUILD_TYPE=${{ matrix.config }} - DPROTEUS_BUILD_TESTS=ON
 
       - name: Build
-        uses: cmake --build Proteus/build-ci --config ${{ matrix.config }}
+        run: cmake --build Proteus/build-ci --config ${{ matrix.config }}
 
       - name: Test (non-timing)
         run: ctest --test-dir Proteus/build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
