@@ -32,6 +32,7 @@ mono_crash.*
 
 # CMake build trees
 **/build/
+**/build-cmake/
 **/out/build/
 **/CMakeFiles/
 **/CMakeCache.txt
@@ -39,6 +40,8 @@ mono_crash.*
 **/install_manifest.txt
 **/compile_commands.json
 **/Testing/
+**/ALL_BUILD.*
+**/INSTALL.*
 
 # Resource output files (as in your current ruleset)
 # Note: remove these if you intend to version binary assets under resources/
