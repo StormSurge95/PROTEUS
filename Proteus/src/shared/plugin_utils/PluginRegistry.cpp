@@ -117,6 +117,20 @@ bool PluginRegistry::UnloadPlugin(const string& id) {
     // If the plugin is not currently loaded; no further processing is necessary
     if (!IsPluginLoaded(id)) return true;
 
+    for (const auto& [ptr, plugin] : consoleCreators) {
+        if (id == plugin) {
+            lastError = "UnloadPlugin() failed: Cannot unload a plugin when there is an active core.";
+            return false;
+        }
+    }
+
+    for (const auto& [ptr, plugin] : debuggerCreators) {
+        if (id == plugin) {
+            lastError = "UnloadPlugin() failed: Cannot unload a plugin when there is an active debugger.";
+            return false;
+        }
+    }
+
     // plugin is currentlyloaded, and therefore exists within our map;
     // so accessing via the id is safe
     RegistryEntry& e = registry[id];
@@ -440,17 +454,13 @@ vector<string> PluginRegistry::GetSearchPaths() {
     if (!exePath.empty()) // not sure how it could be empty if the executable is running; but test just in case
         AddIfDir(paths, seen, exePath.parent_path() / "plugins");
 
-    #if defined(_DEBUG)
-    const char* cfg = "Debug";
-    #else
-    const char* cfg = "Release";
-    #endif
-
     std::error_code ec;
     path cwd = current_path(ec);
     if (!ec && !cwd.empty()) {
         AddIfDir(paths, seen, cwd / "plugins");
-        AddIfDir(paths, seen, cwd / "plugins" / cfg);
+        #ifdef _DEBUG
+        AddIfDir(paths, seen, cwd.parent_path() / "plugins");
+        #endif
     }
 
     return paths;

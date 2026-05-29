@@ -131,6 +131,9 @@ class PluginRegistry {
         inline static unordered_map<string, string> libBaseNames = {
             { "nes", "ProteusNES" },
             { "gba", "ProteusGBA" },
+            #ifdef _DEBUG
+            { "bad_symbols", "BadSymbolsPlugin" },
+            #endif
         };
 
         /// @brief map of IConsole pointers used as keys to determine the ID of the RegistryEntry context used to create them

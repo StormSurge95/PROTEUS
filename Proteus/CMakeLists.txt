@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(PROTEUS_BUILD_TESTS "Build Proteus test targets" OFF)
+include(CTest)
 
 # Temporary default until full install layout is added
 if(NOT DEFINED INSTALL_PLUGIN_DIR)
@@ -12,11 +13,6 @@ if(NOT DEFINED INSTALL_PLUGIN_DIR)
 endif()
 
 # locate required SDL3 package binaries
-set(SDL_ROOT "C:/SDL3")
-list(APPEND CMAKE_PREFIX_PATH
-	"${SDL_ROOT}"
-	"${SDL_ROOT}/cmake"
-)
 find_package(SDL3 CONFIG REQUIRED)
 
 # locate required OpenSSL headers and binaries
@@ -37,10 +33,13 @@ if(NOT EXISTS "${OPENSSL_CRYPTO_LIB}")
 endif()
 
 # locate required nlohmann/json header (headonly-only version; no binaries necessary)
-set(JSON_DIR "${CMAKE_SOURCE_DIR}/packages/nlohmann.json.3.12.0/build/native/include/nlohmann")
-if(NOT EXISTS "${JSON_DIR}/json.h")
-	message(FATAL_ERROR "nlohmann/json header not found at ${JSON_DIR}")
-endif()
+include(FetchContent)
+FetchContent_Declare(
+  nlohmann_json
+  URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
 # Detailed target wiring lives under src/
 add_subdirectory(src)

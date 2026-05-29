@@ -12,7 +12,7 @@ namespace NS_NES {
         "NES",
         "Nintendo Entertainment System",
         "Proteus NES Emulation Core",
-        "StormSurge Development",
+        "Storm Cassidy",
         "Cycle-accurate NES/Famicom emulator",
         __DATE__,
         "GPL-3.0",

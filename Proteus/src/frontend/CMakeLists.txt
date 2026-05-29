@@ -33,13 +33,13 @@ target_include_directories(Proteus PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../shared/plugin_utils
 	${CMAKE_CURRENT_SOURCE_DIR}/ImGui
 	${OPENSSL_INCLUDE_DIR}
-	${JSON_DIR}
 )
 
 target_link_libraries(Proteus PRIVATE
 	SDL3::SDL3
-	${OPENSSL_CRYPTO_LIB}
 	${OPENSSL_SSL_LIB}
+	${OPENSSL_CRYPTO_LIB}
+	nlohmann_json::nlohmann_json
 )
 
 set_target_properties(Proteus PROPERTIES

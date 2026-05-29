@@ -91,16 +91,16 @@ Exit gate:
 ## Phase 5: Testing and Validation
 
 ### 5.1 Plugin Runtime Tests
-- [ ] Add plugin load tests (discover/load/unload/version mismatch/symbol mismatch).
-- [ ] Add plugin integration tests (core lifecycle + basic APIs).
-- [ ] Add regression tests for negative scenarios and error messages.
+- [x] Add plugin load tests (discover/load/unload/version mismatch/symbol mismatch).
+- [x] Add plugin integration tests (core lifecycle + basic APIs).
+- [x] Add regression tests for negative scenarios and error messages.
 
 ### 5.2 Execution Targets
-- [ ] Run tests on Windows CI or repeatable local harness.
-- [ ] Record baseline timings for plugin discovery/load.
+- [x] Run tests on Windows CI or repeatable local harness.
+- [x] Record baseline timings for plugin discovery/load.
 
 Exit gate:
-- [ ] Phase 5 gate: automated Windows plugin test suite passes.
+- [x] Phase 5 gate: automated Windows plugin test suite passes.
 
 ## Phase 6: Cross-Platform Enablement
 

@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="CMakePresets.json" />
     <None Include="docs\RESTRUCTURE_CHECKLIST.md" />
     <None Include="docs\RESTRUCTURE_OUTLINE.md" />
     <None Include="packages.config" />

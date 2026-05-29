@@ -250,6 +250,7 @@
     <None Include="docs\RESTRUCTURE_OUTLINE.md">
       <Filter>docs</Filter>
     </None>
+    <None Include="CMakePresets.json" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

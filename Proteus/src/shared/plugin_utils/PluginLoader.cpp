@@ -38,8 +38,7 @@ bool PluginLoader::UnloadLib(void* handle) {
             nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
             buffer, sizeof(buffer), nullptr);
         lastError = string("FreeLibrary() failed: ") + buffer;
-    } else
-        lastError.clear();
+    }
 
     return success != 0;
 }
@@ -144,8 +143,8 @@ bool PluginLoader::LoadPlugin(const string& filePath, LoadedPlugin& core) {
     GetManifestFunc getManifest = reinterpret_cast<GetManifestFunc>(
         GetSym(handle, "GetPluginManifest"));
     if (!getManifest) {
-        lastError = string("LoadPlugin - ") + lastError + "\n" + filePath + ": Plugin Library missing GetCoreManifest() function";
         UnloadLib(handle);
+        lastError = string("LoadPlugin - ") + lastError + "\n" + filePath + ": GetCoreManifest() function missing";
         return false;
     }
 

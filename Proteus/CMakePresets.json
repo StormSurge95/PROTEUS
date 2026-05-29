@@ -59,8 +59,18 @@
       "name": "test-debug",
       "configurePreset": "vs2026-x64-debug-tests",
       "configuration": "Debug",
-      "output": {
-        "outputOnFailure": true
+      "output": { "outputOnFailure": true },
+      "filter": {
+        "exclude": { "label": "timing" }
+      }
+    },
+    {
+      "name": "test-debug-timing",
+      "configurePreset": "vs2026-x64-debug-tests",
+      "configuration": "Debug",
+      "output": { "verbosity": "verbose" },
+      "filter": {
+        "include": { "label": "timing" }
       }
     }
   ]

@@ -1,3 +1,5 @@
+# Proteus\src\CMakeLists.txt
+
 # Frontend app (local)
 add_subdirectory(frontend)
 
@@ -13,7 +15,6 @@ add_subdirectory(
 # TODO: add other subdirs as they become available
 
 # Tests for validating application runtime
-option(PROTEUS_BUILD_TESTS "Build tests" OFF)
 if(PROTEUS_BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
