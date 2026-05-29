@@ -38,6 +38,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\shared\plugin_utils\PluginLoader.cpp" />
     <ClCompile Include="src\shared\plugin_utils\PluginRegistry.cpp" />
+    <ClCompile Include="src\tests\PluginSmokeTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\FontDebug.h" />
@@ -91,6 +92,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+    <Text Include="src\CMakeLists.txt" />
+    <Text Include="src\frontend\CMakeLists.txt" />
+    <Text Include="src\tests\CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

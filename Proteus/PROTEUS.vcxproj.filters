@@ -50,6 +50,9 @@
     <Filter Include="src\shared\plugin_utils">
       <UniqueIdentifier>{b6c6508f-e22a-40fd-b79d-b38b394a554f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\tests">
+      <UniqueIdentifier>{08f7f38b-d9e6-40c9-bc64-90e70c368524}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resources\NES_DB.h">
@@ -109,9 +112,6 @@
     <ClInclude Include="src\shared\Types.h">
       <Filter>src\shared</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\app\Proteus.h">
-      <Filter>src\frontend\app</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\audio\AudioManager.h">
       <Filter>src\frontend\audio</Filter>
     </ClInclude>
@@ -148,12 +148,6 @@
     <ClInclude Include="src\frontend\session\DebuggerFactory.h">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
-    <ClInclude Include="src\frontend\app\IManagerContexts.h">
-      <Filter>src\frontend\app</Filter>
-    </ClInclude>
-    <ClInclude Include="src\frontend\app\AppTypes.h">
-      <Filter>src\frontend\app</Filter>
-    </ClInclude>
     <ClInclude Include="src\frontend\session\SessionTypes.h">
       <Filter>src\frontend\session</Filter>
     </ClInclude>
@@ -177,6 +171,15 @@
     </ClInclude>
     <ClInclude Include="src\frontend\plugin\PluginManager.h">
       <Filter>src\frontend\plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\app\Proteus.h">
+      <Filter>src\frontend\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\app\AppTypes.h">
+      <Filter>src\frontend\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\frontend\app\IManagerContexts.h">
+      <Filter>src\frontend\app</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +237,9 @@
     <ClCompile Include="src\frontend\plugin\PluginManager.cpp">
       <Filter>src\frontend\plugin</Filter>
     </ClCompile>
+    <ClCompile Include="src\tests\PluginSmokeTests.cpp">
+      <Filter>src\tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -247,5 +253,12 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+    <Text Include="src\CMakeLists.txt">
+      <Filter>src</Filter>
+    </Text>
+    <Text Include="src\tests\CMakeLists.txt">
+      <Filter>src\tests</Filter>
+    </Text>
+    <Text Include="src\frontend\CMakeLists.txt" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-<a id="top"></a>
+﻿<a id="top"></a>
 
 # PROTEUS: GOD OF EMULATION
 
@@ -12,6 +12,7 @@ console game-development workflows (especially homebrew and testing).
 - [Roadmap Direction](#roadmap-direction)
 - [Current Notes](#current-notes)
 - [License and Legal Scope](#license-and-legal-scope)
+- [Third-Party Dependencies](#third-party-dependencies)
 - [Problems/Questions/Comments](#problemsquestionscomments)
 
 ---
@@ -76,8 +77,21 @@ For commercial licensing requests, use the contact method listed in `LICENSE.md`
 
 ---
 
+## Third-Party Dependencies
+This repository uses third-party components with separate license terms:
+- `third_party_licenses/imgui-MIT.txt`
+- `third_party_licenses/sdl3-zlib.txt`
+- `third_party_licenses/nlohmann-json-MIT.txt`
+- `third_party_licenses/openssl-Apache-2.0.txt`
+- `Proteus/THIRD_PARTY_NOTICES.md`
+
+[Back to top](#top)
+
+---
+
 ## Problems/Questions/Comments
 If you have any issues and/or suggestions, please submit an issue with all
 relevant details.
 
 [Back to top](#top)
+

@@ -1,10 +1,10 @@
-# NOTICE
+﻿# NOTICE
 
-Project: Proteus  
+Project: Proteus
 Copyright (c) 2026 Storm Cassidy
 
 ## License Notice
-This repository is licensed under the terms in `LICENSE.md`.
+This repository is licensed under the terms in LICENSE.md.
 
 ## Scope Notice
 The license applies to the software project distributed as "Proteus"
@@ -19,5 +19,6 @@ content without authorization from the respective rights holders.
 
 ## Commercial Use Notice
 Direct commercial use is prohibited unless separately authorized by a
-written agreement signed by the Original Developer. See `LICENSE.md` for
-full terms and commercial contact details.
+written agreement signed by the Original Developer. For commercial requests,
+contact proteus.dev.contact@gmail.com. If no response is received within 14 days,
+open a public issue labeled: "Commercial License Request".

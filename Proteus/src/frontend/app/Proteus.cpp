@@ -14,11 +14,13 @@ Proteus::Proteus() {
     videoManager = std::make_shared<VideoManager>(this);
     inputManager = std::make_shared<InputManager>(this);
     audioManager = std::make_shared<AudioManager>(this);
+    logger = make_shared<Logger>();
 
-    PluginManager::Initialize();
+    if (!PluginManager::Initialize()) {
+        printf(PluginManager::GetLastError().c_str());
+    }
 
     lib = make_unique<RomLibrary>();
-    logger = make_shared<Logger>();
     session = make_shared<ConsoleSession>(logger.get());
 }
 

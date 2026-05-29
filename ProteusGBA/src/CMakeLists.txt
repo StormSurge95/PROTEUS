@@ -4,7 +4,22 @@ project(ProteusGBACore VERSION 1.0.0 LANGUAGES CXX)
 
 # Build as shared library (plugin)
 add_library(ProteusGBA SHARED
-	# Core emulation (TODO)
+	# Core contract info TODO
+
+	### emulator implementation(s) ###
+
+	# core TODO
+
+	# APU TODO
+
+	# CPU TODO
+
+	# PAK
+	PAK/GbaGamepak.cpp
+
+	# PPU TODO
+
+	# shared TODO
 )
 
 # Include directories
@@ -43,8 +58,8 @@ endif()
 
 # Set output directory for cores
 set_target_properties(ProteusGBA PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/plugins"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/plugins"
 )
 
 # Install plugin

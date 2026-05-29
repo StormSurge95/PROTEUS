@@ -1,143 +1,61 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="src">
-      <UniqueIdentifier>{9ba18c29-0479-4689-871c-5224c096dc10}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\APU">
-      <UniqueIdentifier>{73bef8c9-9c16-47ad-9cea-5f4c84e19a8a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\CPU">
-      <UniqueIdentifier>{af8a310c-73b7-473c-9e35-a38a0629393a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\PAK">
-      <UniqueIdentifier>{164501c7-3194-41c5-bc08-059b9567472b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\PPU">
-      <UniqueIdentifier>{ef3e0c4c-672e-40aa-b6ea-e811a8dda7a0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\shared">
-      <UniqueIdentifier>{3dce1bc6-1ba4-4854-813a-7a33e50feeae}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\PAK\Mappers">
-      <UniqueIdentifier>{c759af71-a7fa-4b5b-a263-89ae59f60145}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="src\CMakeLists.txt">
-      <Filter>src</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\NES.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\NesCoreExports.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\NesController.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\NES.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\NesCoreExports.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\NesController.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\APU\NesAPU.cpp">
-      <Filter>src\APU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\APU\NesAPU.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\APU\NesDMC.cpp">
-      <Filter>src\APU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\APU\NesDMC.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\APU\NesNoise.cpp">
-      <Filter>src\APU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\APU\NesNoise.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\APU\NesPulse.cpp">
-      <Filter>src\APU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\APU\NesPulse.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\APU\NesTriangle.cpp">
-      <Filter>src\APU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\APU\NesTriangle.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CPU\NesCPU.cpp">
-      <Filter>src\CPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\CPU\NesCPU.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CPU\NesCPU_AddressModes.cpp">
-      <Filter>src\CPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\CPU\NesCPU_AddressModes.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CPU\NesCPU_Instructions.cpp">
-      <Filter>src\CPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\CPU\NesCPU_Instructions.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PAK\NesGamepak.cpp">
-      <Filter>src\PAK</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\PAK\NesGamepak.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PPU\NesPPU.cpp">
-      <Filter>src\PPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\PPU\NesPPU.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PPU\NesPPU_BG.cpp">
-      <Filter>src\PPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\PPU\NesPPU_BG.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PPU\NesPPU_Sprites.cpp">
-      <Filter>src\PPU</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\PPU\NesPPU_Sprites.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\shared\NesDebugger.cpp">
-      <Filter>src\shared</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusNES\src\shared\NesDebugger.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\NES.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\NesController.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\APU\NesAPU.h">
-      <Filter>src\APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\APU\NesDMC.h">
-      <Filter>src\APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\APU\NesNoise.h">
-      <Filter>src\APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\APU\NesPulse.h">
-      <Filter>src\APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\APU\NesTriangle.h">
-      <Filter>src\APU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\CPU\NesCPU.h">
-      <Filter>src\CPU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\NesGamepak.h">
-      <Filter>src\PAK</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesM000.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesM001.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesM002.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesM003.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesM004.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Mappers\NesMapper.h">
-      <Filter>src\PAK\Mappers</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PPU\NesPPU.h">
-      <Filter>src\PPU</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\NesConstants.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\NesDebugger.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\NesPCH.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\NesTypes.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
+    <CustomBuild Include="C:\devenv\PROTEUS\ProteusNES\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{CF56B180-4D8A-3B97-A936-B93CF3E530B4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

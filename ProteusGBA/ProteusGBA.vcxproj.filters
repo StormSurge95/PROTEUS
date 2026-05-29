@@ -1,36 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="src">
-      <UniqueIdentifier>{97611959-e670-4035-9ae4-1e59494256c5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\PAK">
-      <UniqueIdentifier>{0930e9a7-2048-40a5-801a-b6d577fedc7e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\shared">
-      <UniqueIdentifier>{53bb8609-d7f2-4e94-9681-9174ce3b33a6}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\shared\CgbTypes.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\GbaConstants.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\GbaPCH.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared\GbaTypes.h">
-      <Filter>src\shared</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PAK\Gamepak.h">
-      <Filter>src\PAK</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\PAK\Gamepak.cpp">
-      <Filter>src\PAK</Filter>
+    <ClCompile Include="C:\devenv\PROTEUS\ProteusGBA\src\PAK\GbaGamepak.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\devenv\PROTEUS\ProteusGBA\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{CF56B180-4D8A-3B97-A936-B93CF3E530B4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

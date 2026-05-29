@@ -74,19 +74,19 @@ Exit gate:
 ## Phase 4: Build System Consolidation (Windows + Visual Studio first)
 
 ### 4.1 CMake Topology
-- [ ] Add root `CMakeLists.txt`.
-- [ ] Add `src/CMakeLists.txt`.
-- [ ] Add backend aggregation `CMakeLists.txt` (or equivalent).
-- [ ] Add frontend executable `CMakeLists.txt`.
-- [ ] Add tests `CMakeLists.txt`.
+- [x] Add root `CMakeLists.txt`.
+- [x] Add `src/CMakeLists.txt`.
+- [x] Add backend aggregation `CMakeLists.txt` (or equivalent).
+- [x] Add frontend executable `CMakeLists.txt`.
+- [x] Add tests `CMakeLists.txt`.
 
 ### 4.2 Build Behavior
-- [ ] Standardize plugin output directory conventions.
-- [ ] Ensure Visual Studio CMake workflow is fully usable.
-- [ ] Keep existing `.vcxproj` build path functional during migration period.
+- [x] Standardize plugin output directory conventions.
+- [x] Ensure Visual Studio CMake workflow is fully usable.
+- [x] Keep existing `.vcxproj` build path functional during migration period.
 
 Exit gate:
-- [ ] Phase 4 gate: Windows CMake build emits app + plugins in expected layout.
+- [x] Phase 4 gate: Windows CMake build emits app + plugins in expected layout.
 
 ## Phase 5: Testing and Validation
 

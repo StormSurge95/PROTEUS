@@ -37,11 +37,24 @@ add_library(ProteusNES SHARED
 	shared/NesDebugger.cpp
 )
 
+# locate shared headers
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+	# building ProteusNES as sibling project
+	set(PROTEUS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/src/shared/IConsole.h")
+	# building ProteusNES as sub project
+	set(PROTEUS_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+else()
+	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
+endif()
+
 # Include directories
 target_include_directories(ProteusNES PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/..
-	${CMAKE_SOURCE_DIR}/src
+	${PROTEUS_SRC_DIR}
+	${PROTEUS_SRC_DIR}/shared
+	${PROTEUS_SRC_DIR}/shared/plugin_utils
 )
 
 # Compiler settings
@@ -73,18 +86,8 @@ endif()
 
 # Set output directory for plugin binaries
 set_target_properties(ProteusNES PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
-
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/plugins/Debug"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/plugins/Release"
-    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/plugins/RelWithDebInfo"
-    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_BINARY_DIR}/plugins/MinSizeRel"
-
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/plugins/Debug"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/plugins/Release"
-    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/plugins/RelWithDebInfo"
-    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_BINARY_DIR}/plugins/MinSizeRel"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/plugins"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/plugins"
 )
 
 # Install plugin

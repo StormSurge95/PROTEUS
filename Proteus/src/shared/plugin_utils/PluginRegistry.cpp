@@ -361,6 +361,10 @@ vector<string> PluginRegistry::GetLoadedPlugins() {
     return l;
 }
 
+/**
+ * @brief Use OS-specific methods to get the system path of the executable
+ * @return std::filesystem::path object containing the executable filepath
+ */
 static path GetExecutablePath() {
     #if defined(_WIN32)
         char buffer[MAX_PATH];
@@ -384,23 +388,39 @@ static path GetExecutablePath() {
     #endif
 }
 
+/**
+ * @brief Adds a path to a vector of valid paths if it is a valid existing directory
+ * @param [in,out] out Reference to the vector of valid directory paths
+ * @param [in,out] seen Reference to a set of seen paths
+ * @param [in] p The path to be tested and possibly added to `out`
+ */
 static void AddIfDir(vector<string>& out, unordered_set<string>& seen, path p) {
+    // initialize var to hold any possible error code(s) produced
     std::error_code ec;
+
+    // make sure `p` is not an empty path
     if (p.empty()) return;
+
+    // normalize the path variable
     path norm = weakly_canonical(p, ec);
     if (ec) norm = p.lexically_normal();
+
+    // make sure the produced normalized path exists and is a directory
     if (!exists(norm, ec) || !is_directory(norm, ec)) return;
 
+    // add the verified path to `out` only if we haven't already
     string s = norm.string();
     if (seen.insert(s).second) out.push_back(s);
 }
 
 vector<string> PluginRegistry::GetSearchPaths() {
+    // initialize return variable
     vector<string> paths;
+    // initialize helper variables
     unordered_set<string> seen;
 
+    // try to get the current env directory variable from PATH
     string envPluginDir;
-
     #ifdef _WIN32
     char* raw = nullptr;
     size_t len = 0;
@@ -411,11 +431,13 @@ vector<string> PluginRegistry::GetSearchPaths() {
     if (const char* env = getenv("PROTEUS_PLUGIN_DIR"); env && *env)
         envPluginDir = env;
     #endif
+    // ensure that the value obtained from PATH actually exists before trying to add it
     if (!envPluginDir.empty())
         AddIfDir(paths, seen, path(envPluginDir));
 
+    // get the current path of the executable
     path exePath = GetExecutablePath();
-    if (!exePath.empty())
+    if (!exePath.empty()) // not sure how it could be empty if the executable is running; but test just in case
         AddIfDir(paths, seen, exePath.parent_path() / "plugins");
 
     #if defined(_DEBUG)
@@ -424,13 +446,12 @@ vector<string> PluginRegistry::GetSearchPaths() {
     const char* cfg = "Release";
     #endif
 
-    path cwd = current_path();
-    AddIfDir(paths, seen, cwd / "plugins");
-    AddIfDir(paths, seen, cwd / "build" / "plugins" / cfg);
-    AddIfDir(paths, seen, cwd / "build" / "plugins");
-    AddIfDir(paths, seen, cwd / "build-ninja" / "plugins");
-    AddIfDir(paths, seen, cwd / "build-x64" / "plugins");
-    AddIfDir(paths, seen, cwd / "out" / "build" / "plugins");
+    std::error_code ec;
+    path cwd = current_path(ec);
+    if (!ec && !cwd.empty()) {
+        AddIfDir(paths, seen, cwd / "plugins");
+        AddIfDir(paths, seen, cwd / "plugins" / cfg);
+    }
 
     return paths;
 }
