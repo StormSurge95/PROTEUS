@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-test:
     strategy:
-      fail-test: false
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         config: [Debug, Release]
