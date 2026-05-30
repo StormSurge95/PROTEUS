@@ -2,12 +2,12 @@
 #include "../Utilities.h"
 
 #if defined(_WIN32)
-#include <Windows.h>
+    #include <Windows.h>
 #else
-#if defined(__APPLE__)
-#include <mach-o/dyld.h>
-#endif
-#include <unistd.h>
+    #if defined(__APPLE__)
+        #include <mach-o/dyld.h>
+    #endif
+    #include <unistd.h>
 #endif
 
 bool PluginRegistry::DiscoverPlugins() {

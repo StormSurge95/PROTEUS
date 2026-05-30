@@ -1,128 +1,127 @@
 #include "./PluginLoader.h"
 
 #ifdef _WIN32
-#include <Windows.h>
-#include <Shlwapi.h>
-#pragma comment(lib, "shlwapi.lib")
+    #include <Windows.h>
+    #include <Shlwapi.h>
+    #pragma comment(lib, "shlwapi.lib") 
 
-// prevent Windows.h macro from messing up our custom max function
-#undef max
+    // prevent Windows.h macro from messing up our custom max function
+    #undef max
 
-void* PluginLoader::LoadLib(const string& filePath) {
-    SetLastError(0);
-    HMODULE handle = LoadLibraryA(filePath.c_str());
+    void* PluginLoader::LoadLib(const string& filePath) {
+        SetLastError(0);
+        HMODULE handle = LoadLibraryA(filePath.c_str());
 
-    if (!handle) {
-        DWORD error = ::GetLastError();
-        char buffer[1024];
-        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            buffer, sizeof(buffer), nullptr);
-        lastError = string("LoadLibrary() failed: ") + buffer;
-        return nullptr;
-    }
+        if (!handle) {
+            DWORD error = ::GetLastError();
+            char buffer[1024];
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                buffer, sizeof(buffer), nullptr);
+            lastError = string("LoadLibrary() failed: ") + buffer;
+            return nullptr;
+        }
 
-    lastError.clear();
-    return reinterpret_cast<void*>(handle);
-}
-
-bool PluginLoader::UnloadLib(void* handle) {
-    if (!handle) return false;
-
-    BOOL success = FreeLibrary(reinterpret_cast<HMODULE>(handle));
-
-    if (!success) {
-        DWORD error = ::GetLastError();
-        char buffer[1024];
-        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            buffer, sizeof(buffer), nullptr);
-        lastError = string("FreeLibrary() failed: ") + buffer;
-    }
-
-    return success != 0;
-}
-
-void* PluginLoader::GetSym(void* handle, const string& symName) {
-    if (!handle) {
-        lastError = "Invalid library handle";
-        return nullptr;
-    }
-
-    FARPROC sym = GetProcAddress(reinterpret_cast<HMODULE>(handle), symName.c_str());
-    
-    if (!sym) {
-        DWORD error = ::GetLastError();
-        char buffer[1024];
-        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            buffer, sizeof(buffer), nullptr);
-        lastError = string("GetProcAddress() failed: ") + buffer;
-        return nullptr;
-    }
-
-    lastError.clear();
-    return reinterpret_cast<void*>(sym);
-}
-
-string PluginLoader::GetPluginExtension() { return ".dll"; }
-string PluginLoader::GetLibraryPrefix() { return ""; }
-#else
-#include <dlfcn.h>
-#include <cstring>
-
-void* PluginLoader::LoadLib(const string& filePath) {
-    void* handle = dlopen(filePath.c_str(), RTLD_LAZY | RTLD_LOCAL);
-
-    if (!handle) {
-        const char* error = dlerror();
-        lastError = error ? string(error) : "Unknown dlopen error";
-        return nullptr;
-    }
-
-    lastError.clear();
-    return handle;
-}
-
-bool PluginLoader::UnloadLib(void* handle) {
-    if (!handle) return false;
-
-    int result = dlclose(handle);
-
-    if (result != 0) {
-        const char* error = dlerror();
-        lastError = error ? string(error) : "Unknown dlclose error";
-    } else
         lastError.clear();
-
-    return result == 0;
-}
-
-void* PluginLoader::GetSym(void* handle, const string& symName) {
-    if (!handle) {
-        lastError = "Invalid lib handle";
-        return nullptr;
+        return reinterpret_cast<void*>(handle);
     }
 
-    dlerror();  // clear previous errors
-    void* sym = dlsym(handle, symName.c_str());
+    bool PluginLoader::UnloadLib(void* handle) {
+        if (!handle) return false;
 
-    const char* error = dlerror();
-    if (error) {
-        lastError = string(error);
-        return nullptr;
+        BOOL success = FreeLibrary(reinterpret_cast<HMODULE>(handle));
+
+        if (!success) {
+            DWORD error = ::GetLastError();
+            char buffer[1024];
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                buffer, sizeof(buffer), nullptr);
+            lastError = string("FreeLibrary() failed: ") + buffer;
+        }
+
+        return success != 0;
     }
 
-    lastError.clear();
-    return sym;
-}
+    void* PluginLoader::GetSym(void* handle, const string& symName) {
+        if (!handle) {
+            lastError = "Invalid library handle";
+            return nullptr;
+        }
 
-    #ifdef __linux__
-    string PluginLoader::GetPluginExtension() { return ".so"; }
-    #else // __APPLE__
-    string PluginLoader::GetPluginExtension() { return ".dylib"; }
-    #endif
-string PluginLoader::GetLibraryPrefix() { return "lib"; }
+        FARPROC sym = GetProcAddress(reinterpret_cast<HMODULE>(handle), symName.c_str());
+        
+        if (!sym) {
+            DWORD error = ::GetLastError();
+            char buffer[1024];
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                buffer, sizeof(buffer), nullptr);
+            lastError = string("GetProcAddress() failed: ") + buffer;
+            return nullptr;
+        }
+
+        lastError.clear();
+        return reinterpret_cast<void*>(sym);
+    }
+
+    string PluginLoader::GetPluginExtension() { return ".dll"; }
+    string PluginLoader::GetLibraryPrefix() { return ""; }
+#else
+    #include <dlfcn.h>
+    #include <cstring>
+
+    void* PluginLoader::LoadLib(const string& filePath) {
+        void* handle = dlopen(filePath.c_str(), RTLD_LAZY | RTLD_LOCAL);
+
+        if (!handle) {
+            const char* error = dlerror();
+            lastError = error ? string(error) : "Unknown dlopen error";
+            return nullptr;
+        }
+
+        lastError.clear();
+        return handle;
+    }
+
+    bool PluginLoader::UnloadLib(void* handle) {
+        if (!handle) return false;
+
+        int result = dlclose(handle);
+
+        if (result != 0) {
+            const char* error = dlerror();
+            lastError = error ? string(error) : "Unknown dlclose error";
+        }
+
+        return result == 0;
+    }
+
+    void* PluginLoader::GetSym(void* handle, const string& symName) {
+        if (!handle) {
+            lastError = "Invalid lib handle";
+            return nullptr;
+        }
+
+        dlerror();  // clear previous errors
+        void* sym = dlsym(handle, symName.c_str());
+
+        const char* error = dlerror();
+        if (error) {
+            lastError = string(error);
+            return nullptr;
+        }
+
+        lastError.clear();
+        return sym;
+    }
+
+        #ifdef __linux__
+        string PluginLoader::GetPluginExtension() { return ".so"; }
+        #else // __APPLE__
+        string PluginLoader::GetPluginExtension() { return ".dylib"; }
+        #endif
+    string PluginLoader::GetLibraryPrefix() { return "lib"; }
 #endif
 
 bool PluginLoader::LoadPlugin(const string& filePath, LoadedPlugin& core) {
