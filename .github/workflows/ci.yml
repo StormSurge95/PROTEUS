@@ -49,14 +49,14 @@ jobs:
 
       - name: Configure
         run: >
-          cmake -S Proteus -B Proteus/build-ci
+          cmake -S . -B build-ci
           -DPROTEUS_BUILD_TESTS=ON
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
           -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
           -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
-        run: cmake --build Proteus/build-ci --config ${{ matrix.config }}
+        run: cmake --build build-ci --config ${{ matrix.config }}
 
       - name: Test (non-timing)
-        run: ctest --test-dir Proteus/build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
+        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
