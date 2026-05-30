@@ -32,6 +32,7 @@ mono_crash.*
 # CMake build trees
 **/build/
 **/build-cmake/
+**/build-ninja/
 **/out/build/
 **/CMakeFiles/
 **/CMakeCache.txt

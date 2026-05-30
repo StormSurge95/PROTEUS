@@ -25,6 +25,8 @@ jobs:
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
 
       - name: Select vcpkg triplet
         id: triplet
