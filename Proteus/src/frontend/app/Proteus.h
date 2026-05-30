@@ -60,7 +60,7 @@ namespace NS_Proteus {
                 if (view == AppView::GAME_LIST) state.selectedConsole = console;
             }
 
-            Logger* GetLogger() const { return logger.get(); }
+            Logger* GetLogger() const override { return logger.get(); }
 
         private:
             static std::shared_ptr<Proteus> instance;

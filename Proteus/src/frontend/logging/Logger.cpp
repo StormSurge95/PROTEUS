@@ -19,8 +19,8 @@ bool Logger::IsEnabled(LogLevel level, LogCategory category) {
 void Logger::Log(LogLevel level, LogCategory category, string message, map<string, string> fields) {
     if (IsEnabled(level, category)) {
         stringstream ss;
-        ss << GetTimestamp();
-        ss << " [" << LogLevels.at(level) << " - ";
+        ss << GetTimestamp() << " ";
+        ss << "[" << LogLevels.at(level) << " - ";
         ss << LogCategories.at(category) << "] ";
         ss << message << " ";
         for (const auto& [name, value] : fields) {

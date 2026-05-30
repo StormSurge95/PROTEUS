@@ -256,7 +256,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
     // then there's no point in letting the user attempt to start a ROM
     if (!PluginManager::IsConsoleAvailable(console)) {
         char msg[100];
-        sprintf_s(msg, 100, "EMULATION DEVELOPMENT OF THE %s HAS NOT STARTED YET; PLEASE CHECK BACK LATER", ConsoleNamesShort.at(console).c_str());
+        snprintf(msg, 100, "EMULATION DEVELOPMENT OF THE %s HAS NOT STARTED YET; PLEASE CHECK BACK LATER", ConsoleNamesShort.at(console).c_str());
         ImGui::TextWrappedCentered(msg);
     } else {
         // get list of games
@@ -284,7 +284,7 @@ void VideoManager::RenderGameSelection(ConsoleID console) {
             ImGui::EndDisabled();
         } else { // if there are no games in the list, display a message to let user know we didn't find anything
             char msg[50];
-            sprintf_s(msg, 50, "NO %s GAMES FOUND", ConsoleNamesShort.at(console).c_str());
+            snprintf(msg, 50, "NO %s GAMES FOUND", ConsoleNamesShort.at(console).c_str());
             ImGui::TextWrappedCentered(msg);
         }
     }

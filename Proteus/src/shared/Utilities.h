@@ -97,18 +97,31 @@ static string FormatDisplayName(const string& fullname, bool wrap = false) {
 }
 
 static string GetTimestamp() {
-    local_time t = std::chrono::current_zone()->to_local(system_clock::now());
+    #if __cpp_lib_chrono >= 201907L
+        local_time t = std::chrono::current_zone()->to_local(system_clock::now());
 
-    std::chrono::year_month_day ymd{ std::chrono::floor<std::chrono::days>(t) };
-    int year = static_cast<int>(ymd.year());
-    int month = static_cast<unsigned>(ymd.month());
-    int day = static_cast<unsigned>(ymd.day());
+        std::chrono::year_month_day ymd{ std::chrono::floor<std::chrono::days>(t) };
+        int year = static_cast<int>(ymd.year());
+        int month = static_cast<unsigned>(ymd.month());
+        int day = static_cast<unsigned>(ymd.day());
 
-    system_clock::duration r = t - std::chrono::floor<std::chrono::days>(t);
-    std::chrono::hh_mm_ss<system_clock::duration> hms{ duration_cast<milliseconds>(r) };
-    int hour = hms.hours().count();
-    int minute = hms.minutes().count();
-    int second = hms.seconds().count();
+        system_clock::duration r = t - std::chrono::floor<std::chrono::days>(t);
+        std::chrono::hh_mm_ss<system_clock::duration> hms{ duration_cast<milliseconds>(r) };
+        int hour = hms.hours().count();
+        int minute = hms.minutes().count();
+        int second = hms.seconds().count();
+    #else // compatible with Apple Clang; cuz Apples really does suck at everything
+        auto now = std::chrono::system_clock::now();
+        std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+        std::tm* local_tm = std::localtime(&now_time);
+
+        int year = local_tm->tm_year;
+        int month = local_tm->tm_mon;
+        int day = local_tm->tm_mday;
+        int hour = local_tm->tm_hour;
+        int minute = local_tm->tm_min;
+        int second = local_tm->tm_sec;
+    #endif
 
     stringstream ss;
     if (month < 10) ss << '0';

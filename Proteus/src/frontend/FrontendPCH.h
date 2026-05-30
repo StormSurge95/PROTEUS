@@ -73,7 +73,7 @@ namespace ImGui {
             // set cursor x position
             cPos.x = (region.x - tSize.x) * 0.5f;
             ImGui::SetCursorPos(cPos);
-            ImGui::Text(cstr);
+            ImGui::Text("%s", cstr);
             cPos.y += font_size;
         }
     }
