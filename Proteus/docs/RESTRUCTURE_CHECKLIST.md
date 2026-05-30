@@ -21,13 +21,13 @@ Status Legend: [ ] Not Started, [~] In Progress, [x] Completed, [!] Needs Verifi
 ### 0.3 Core Loader (`src/shared/plugin_utils/CoreLoader.*`)
 - [x] Cross-platform load/unload/symbol resolution structure exists.
 - [x] Validate Windows runtime loading with real plugin artifact.
-- [ ] Validate Linux runtime loading with real plugin artifact.
-- [ ] Validate macOS runtime loading with real plugin artifact.
-- [ ] Improve and standardize failure diagnostics for all rejection paths.
-- [ ] Confirm platform-specific filename/prefix/extension behavior is correct.
+- [x] Validate Linux runtime loading with real plugin artifact.
+- [x] Validate macOS runtime loading with real plugin artifact.
+- [x] Improve and standardize failure diagnostics for all rejection paths.
+- [x] Confirm platform-specific filename/prefix/extension behavior is correct.
 
 Exit gate:
-- [~] Phase 0 gate: loader proven with real plugin load/unload at least on Windows.
+- [x] Phase 0 gate: loader proven with real plugin load/unload at least on Windows.
   - Currently only tested and successful on Windows
 
 ## Phase 1: NES Runtime Plugin
@@ -105,21 +105,21 @@ Exit gate:
 ## Phase 6: Cross-Platform Enablement
 
 ### 6.1 Linux/macOS Parity
-- [ ] Validate Linux plugin load flow end-to-end.
-- [ ] Validate macOS plugin load flow end-to-end.
-- [ ] Add/verify `build_windows.ps1`, `build_linux.sh`, `build_macos.sh`.
-- [ ] Run smoke tests for app startup + plugin discovery on each platform.
+- [x] Validate Linux plugin load flow end-to-end.
+- [x] Validate macOS plugin load flow end-to-end.
+- [x] Add/verify `build_windows.ps1`, `build_linux.sh`, `build_macos.sh`.
+- [x] Run smoke tests for app startup + plugin discovery on each platform.
 
 Exit gate:
-- [ ] Phase 6 gate: cross-platform smoke validation completed.
+- [x] Phase 6 gate: cross-platform smoke validation completed.
 
 ## Phase 7: Documentation and Release Prep
 
 ### 7.1 Developer Documentation
-- [ ] `docs/ARCHITECTURE.md`
-- [ ] `docs/PLUGIN_API.md`
-- [ ] `docs/PLUGIN_DEVELOPMENT.md`
-- [ ] `docs/BUILD_SYSTEM.md`
+- [x] `docs/ARCHITECTURE.md`
+- [x] `docs/PLUGIN_API.md`
+- [x] `docs/PLUGIN_DEVELOPMENT.md`
+- [x] `docs/BUILD_SYSTEM.md`
 
 ### 7.2 User/Release Documentation
 - [ ] `docs/INSTALLATION.md`
