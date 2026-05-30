@@ -139,36 +139,29 @@ void RomLibrary::Load() {
     // if we don't already have a saved reference, create a new library
     // this allows us to only do the search/hash/create loop on first run
     if (!exists(libraryPath)) {
-        printf("%s does not exist; creating library from scratch...\n", libraryPath);
         Create();
     } else {
         // open our file for input
-        printf("Opening %s file...\n", libraryPath);
         ifstream f(libraryPath);
 
         // use provided `libraryPath` value to open our json file
         // and parse it into something processable.
         // this `j` object will become our `library` map
-        printf("Parsing data from library file...\n");
         json j = json::parse(f);
 
         // for each ConsoleID/vector pair `data` within `j`...
-        printf("Starting outer for loop...\n");
         for (json::iterator it = j.begin(); it != j.end(); it++) {
             if (it.value().is_null()) {
-                printf("null iterator value...\n");
                 continue;
             }
             // id had to be converted to a string for json format;
             // convert it back for use within our map
             ConsoleID id = GetIDFromName(it.key());
-            printf("Acquired ConsoleID: %d\n", id);
 
             // create a vector to hold the parse data from the file
             vector<ROM_DATA> v = {};
 
             // `e` will be the json format of each ROM_DATA entry
-            printf("Starting inner for loop...\n");
             for (const json& e : it.value()) {
                 string gName = e["gameName"];
                 string fPath = e["path"];

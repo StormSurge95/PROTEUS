@@ -8,6 +8,8 @@ on:
 
 jobs:
   build-and-test:
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +39,19 @@ jobs:
             Linux)   echo "value=x64-linux"   >> "$GITHUB_OUTPUT" ;;
             macOS)   echo "value=x64-osx"     >> "$GITHUB_OUTPUT" ;;
           esac
+
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-bincache
+            ${{ env.VCPKG_ROOT }}/downloads
+            ${{ env.VCPKG_ROOT }}/installed
+            ${{ env.VCPKG_ROOT }}/packages
+            ${{ env.VCPKG_ROOT }}/buildtrees
+          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/ci.yml') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-
 
       - name: Install dependencies (vcpkg)
         shell: bash

@@ -11,21 +11,13 @@
 using namespace NS_Proteus;
 
 Proteus::Proteus() {
-    printf("Creating VideoManager...\n");
     videoManager = std::make_shared<VideoManager>(this);
-    printf("VideoManager created; creating InputManager...\n");
     inputManager = std::make_shared<InputManager>(this);
-    printf("InputManager created; creating AudioManager...\n");
     audioManager = std::make_shared<AudioManager>(this);
-    printf("AudioManager created; creating Logger...\n");
     logger = make_shared<Logger>();
-    printf("Logger created; initializing PluginManager...\n");
     PluginManager::Initialize();
-    printf("PluginManager initialized; creating RomLibrary...\n");
     lib = make_unique<RomLibrary>();
-    printf("RomLibrary created; creating ConsoleSession...\n");
     session = make_shared<ConsoleSession>(logger.get());
-    printf("ConsoleSession created\n");
 }
 
 Proteus::~Proteus() {
@@ -39,18 +31,11 @@ Proteus::~Proteus() {
 }
 
 void Proteus::Init() {
-    printf("Setting Metadata...\n");
     SetMetadata();
 
-    printf("Initializing VideoManager...\n");
     videoManager->Init();
-    printf("VideoManager Initialized\n");
-    printf("Initializing InputManager...\n");
     inputManager->Init();
-    printf("InputManager Initialized\n");
-    printf("Initializing AudioManager...\n");
     audioManager->Init();
-    printf("AudioManager Initialized\n");
 }
 
 void Proteus::Deinit() {
