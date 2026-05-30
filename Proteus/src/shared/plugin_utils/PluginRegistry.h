@@ -131,7 +131,7 @@ class PluginRegistry {
         inline static unordered_map<string, string> libBaseNames = {
             { "nes", "ProteusNES" },
             { "gba", "ProteusGBA" },
-            #ifdef _DEBUG
+            #ifndef NDEBUG
             { "bad_symbols", "BadSymbolsPlugin" },
             #endif
         };

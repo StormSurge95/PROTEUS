@@ -24,7 +24,6 @@ mono_crash.*
 **/[Aa][Rr][Mm]/
 **/[Aa][Rr][Mm]64/
 **/bld/
-**/[Tt]ests/
 **/[Bb]in/
 **/[Oo]bj/
 **/[Ll]og/
@@ -42,6 +41,14 @@ mono_crash.*
 **/Testing/
 **/ALL_BUILD.*
 **/INSTALL.*
+**/RUN_TESTS.*
+**/ZERO_CHECK.*
+**/CTestTestfile.cmake
+**/CMakeScripts/
+**/CMakeTmp/
+**/_deps/
+**/CPackConfig.cmake
+**/CPackSourceConfig.cmake
 
 # Resource output files (as in your current ruleset)
 # Note: remove these if you intend to version binary assets under resources/
@@ -192,6 +199,10 @@ PublishScripts/
 *.nuget.props
 *.nuget.targets
 
+# Keep vendored package roots in source control when intentionally committed
+!Proteus/packages/
+!Proteus/packages/**
+
 # Azure
 csx/
 *.build.csdef
@@ -325,6 +336,10 @@ ASALocalRun/
 !.vscode/extensions.json
 *.code-workspace
 .history/
+
+# CMake user presets (machine-local)
+CMakeUserPresets.json
+**/CMakeUserPresets.json
 
 # Windows Installer artifacts
 *.cab

@@ -74,9 +74,9 @@ void NES::clockFrame() {
 }
 
 void NES::clock() {
-    steady_clock::time_point start = high_resolution_clock::now();
+    steady_clock::time_point start = steady_clock::now();
     clockFrame();
-    steady_clock::time_point end = high_resolution_clock::now();
+    steady_clock::time_point end = steady_clock::now();
     double sleep = 15.0 - duration<double, milli>(end - start).count();
     if (sleep > 0.0) {
         sleep_for(duration<double, milli>(sleep));

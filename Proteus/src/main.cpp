@@ -1,22 +1,15 @@
 #include "./frontend/app/Proteus.h"
 
-#include "./shared/plugin_utils/PluginLoader.h"
-
 using namespace NS_Proteus;
 
 // TODO: switch to WINDOWS mode instead of CONSOLE
-#if (WINSUB)
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-#else
-int main(int i, int args[]) {
-#endif
+int main(int i, char** args) {
+    printf("Creating Proteus instance...\n");
     Proteus* proteus = new Proteus();
+    printf("Proteus instance created; initializing Proteus...\n");
     proteus->Init();
-    #ifdef TEST_SST
-    proteus->RunSST();
-    #else
+    printf("Proteus Initialized; running Proteus application...\n");
     proteus->Run();
-    #endif
     delete proteus;
 
     return 0;

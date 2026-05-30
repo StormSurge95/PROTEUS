@@ -1,0 +1,110 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 16,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja-debug-x64",
+      "displayName": "Ninja Debug x64",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build-ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PROTEUS_BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "ninja-debug-tests-x64",
+      "displayName": "Ninja Debug x64 (Tests ON)",
+      "inherits": "ninja-debug-x64",
+      "cacheVariables": {
+        "PROTEUS_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "ninja-release-x64",
+      "displayName": "Ninja Release x64",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build-ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "CMAKE_BUILD_TYPE": "Release",
+        "PROTEUS_BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "ninja-release-tests-x64",
+      "displayName": "Ninja Release x64 (Tests ON)",
+      "inherits": "ninja-release-x64",
+      "cacheVariables": {
+        "PROTEUS_BUILD_TESTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja-build-debug",
+      "configurePreset": "ninja-debug-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ninja-build-debug-tests",
+      "configurePreset": "ninja-debug-tests-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ninja-build-release",
+      "configurePreset": "ninja-release-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "ninja-build-release-tests",
+      "configurePreset": "ninja-release-tests-x64",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "ninja-test-debug",
+      "configurePreset": "ninja-debug-tests-x64",
+      "configuration": "Debug",
+      "output": { "outputOnFailure": true },
+      "filter": {
+        "exclude": { "label": "timing" }
+      }
+    },
+    {
+      "name": "ninja-test-debug-timing",
+      "configurePreset": "ninja-debug-tests-x64",
+      "configuration": "Debug",
+      "output": { "verbosity": "verbose" },
+      "filter": {
+        "include": { "label": "timing" }
+      }
+    },
+    {
+      "name": "ninja-test-release",
+      "configurePreset": "ninja-release-tests-x64",
+      "configuration": "Release",
+      "output": { "outputOnFailure": true },
+      "filter": {
+        "exclude": { "label": "timing" }
+      }
+    },
+    {
+      "name": "ninja-test-release-timing",
+      "configurePreset": "ninja-release-tests-x64",
+      "configuration": "Release",
+      "output": { "verbosity": "verbose" },
+      "filter": {
+        "include": { "label": "timing" }
+      }
+    }
+  ]
+}

@@ -22,11 +22,24 @@ add_library(ProteusGBA SHARED
 	# shared TODO
 )
 
+# locate shared headers
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+	# building ProteusGBA as sibling project
+	set(PROTEUS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/src/shared/IConsole.h")
+	#building ProteusGBA as sub project
+	set(PROTEUS_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+else()
+	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
+endif()
+
 # Include directories
 target_include_directories(ProteusGBA PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/..
-	${CMAKE_SOURCE_DIR}/src
+	${PROTEUS_SRC_DIR}
+	${PROTEUS_SRC_DIR}/shared
+	${PROTEUS_SRC_DIR}/shared/plugin_utils
 )
 
 # Compiler settings

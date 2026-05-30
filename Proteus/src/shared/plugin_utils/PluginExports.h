@@ -156,8 +156,7 @@ struct PluginManifest {
  * 
  * Signature: IConsole* CreateCore()
  */
-#define CORE_CREATE(funcName) \
-    PLUGIN_EXPORT IConsole* PLUGIN_INVOKE funcName()
+#define CORE_CREATE(funcName) PLUGIN_EXPORT IConsole* PLUGIN_INVOKE funcName()
 
 /**
  * @def CORE_DESTROY
@@ -171,8 +170,7 @@ struct PluginManifest {
  * 
  * Signature: void DestroyCore(IConsole* core)
  */
-#define CORE_DESTROY(funcName) \
-    PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IConsole* core)
+#define CORE_DESTROY(funcName) PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IConsole* core)
 
 /**
  * @def DEBUGGER_CREATE
@@ -188,8 +186,7 @@ struct PluginManifest {
  * @note while debugger implementation is pending, the
  * function provided by the plugin may return `nullptr`
  */
-#define DEBUGGER_CREATE(funcName) \
-    PLUGIN_EXPORT IDebugger* PLUGIN_INVOKE funcName(IConsole* core)
+#define DEBUGGER_CREATE(funcName) PLUGIN_EXPORT IDebugger* PLUGIN_INVOKE funcName(IConsole* core)
 
 /**
  * @def DEBUGGER_DESTROY
@@ -203,8 +200,7 @@ struct PluginManifest {
  * 
  * Signature: void DestroyDebugger(IDebugger* debugger);
  */
-#define DEBUGGER_DESTROY(funcName) \
-    PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IDebugger* debugger)
+#define DEBUGGER_DESTROY(funcName) PLUGIN_EXPORT void PLUGIN_INVOKE funcName(IDebugger* debugger)
 
 /**
  * @def PLUGIN_MANIFEST
@@ -218,5 +214,4 @@ struct PluginManifest {
  * 
  * Signature: const PluginManifest* GetPluginManifest()
  */
-#define PLUGIN_MANIFEST(funcName) \
-    PLUGIN_EXPORT const PluginManifest* PLUGIN_INVOKE funcName()
+#define PLUGIN_MANIFEST(funcName) PLUGIN_EXPORT const PluginManifest* PLUGIN_INVOKE funcName()

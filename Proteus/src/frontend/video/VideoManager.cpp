@@ -536,7 +536,7 @@ void VideoManager::RenderDebugCPU() {
         vector<array<string, 3>> cpuState = ctx->GetDebugger()->GetStateCPU();
         for (int i = 0; i < cpuState.size(); i++) {
             ImGui::TableNextRow();
-            if (memcmp(cpuState[i][0].data(), "", 2) == 0)
+            if (memcmp(cpuState[i][0].data(), "", 1) == 0)
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
             ImGui::TableNextColumn();
             ImGui::Text("%s", cpuState[i][0].c_str());
@@ -582,7 +582,7 @@ void VideoManager::RenderDebugPPU() {
         vector<array<string, 4>> ppuState = ctx->GetDebugger()->GetStatePPU();
         for (int i = 0; i < ppuState.size(); i++) {
             ImGui::TableNextRow();
-            if (memcmp(ppuState[i][0].data(), "", 2) == 0)
+            if (memcmp(ppuState[i][0].data(), "", 1) == 0)
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
             ImGui::TableNextColumn();
             ImGui::Text("%s", ppuState[i][0].c_str());
@@ -607,7 +607,7 @@ void VideoManager::RenderDebugAPU() {
         vector<array<string, 4>> apuState = ctx->GetDebugger()->GetStateAPU();
         for (int i = 0; i < apuState.size(); i++) {
             ImGui::TableNextRow();
-            if (memcmp(apuState[i][0].data(), "", 2) == 0)
+            if (memcmp(apuState[i][0].data(), "", 1) == 0)
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImVec4(1, 1, 1, 0.25)));
             ImGui::TableNextColumn();
             ImGui::Text("%s", apuState[i][0].c_str());

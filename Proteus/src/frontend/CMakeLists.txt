@@ -37,8 +37,8 @@ target_include_directories(Proteus PRIVATE
 
 target_link_libraries(Proteus PRIVATE
 	SDL3::SDL3
-	${OPENSSL_SSL_LIB}
-	${OPENSSL_CRYPTO_LIB}
+	OpenSSL::SSL
+	OpenSSL::Crypto
 	nlohmann_json::nlohmann_json
 )
 
@@ -46,8 +46,11 @@ set_target_properties(Proteus PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
 )
 
-add_custom_command(TARGET Proteus POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"C:/SDL3/lib/x64/SDL3.dll"
-		"$<TARGET_FILE_DIR:Proteus>/SDL3.dll"
-)
+if(WIN32)
+	add_custom_command(TARGET Proteus POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			$<TARGET_RUNTIME_DLLS:Proteus>
+			$<TARGET_FILE_DIR:Proteus>
+		COMMAND_EXPAND_LISTS
+	)
+endif()

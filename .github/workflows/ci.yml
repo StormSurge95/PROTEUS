@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -16,30 +17,41 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
 
-      - name: Install deps (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl3-dev libssl-dev
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
 
-      - name: Install deps (macOS)
-        if: runner.os == 'maxOS'
+      - name: Select vcpkg triplet
+        id: triplet
+        shell: bash
         run: |
-          brew update
-          brew install sdl3 openssl
+          case "${{ runner.os }}" in
+            Windows) echo "value=x64-windows" >> "$GITHUB_OUTPUT" ;;
+            Linux)   echo "value=x64-linux"   >> "$GITHUB_OUTPUT" ;;
+            macOS)   echo "value=x64-osx"     >> "$GITHUB_OUTPUT" ;;
+          esac
 
-      - name: Install deps (Windows)
-        if: runner.os == 'Windows'
+      - name: Install dependencies (vcpkg)
+        shell: bash
         run: |
-          choco install sdl3 openssl.light -y
+          vcpkg install \
+            sdl3:${{ steps.triplet.outputs.value }} \
+            sdl3-ttf:${{ steps.triplet.outputs.value }} \
+            openssl:${{ steps.triplet.outputs.value }} \
+            nlohmann-json:${{ steps.triplet.outputs.value }}
 
       - name: Configure
-        run: cmake -S Proteus -B Proteus/build-ci -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DPROTEUS_BUILD_TESTS=ON
+        run: >
+          cmake -S Proteus -B Proteus/build-ci
+          -DPROTEUS_BUILD_TESTS=ON
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         run: cmake --build Proteus/build-ci --config ${{ matrix.config }}
