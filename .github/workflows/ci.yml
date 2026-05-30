@@ -34,11 +34,33 @@ jobs:
         id: triplet
         shell: bash
         run: |
-          case "${{ runner.os }}" in
-            Windows) echo "value=x64-windows" >> "$GITHUB_OUTPUT" ;;
-            Linux)   echo "value=x64-linux"   >> "$GITHUB_OUTPUT" ;;
-            macOS)   echo "value=x64-osx"     >> "$GITHUB_OUTPUT" ;;
-          esac
+          os="${{ runner.os }}"
+          arch="${{ runner.arch }}"
+
+          if [ "$os" = "Windows" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-windows" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-windows" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "Linux" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-linux" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-linux" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "macOS" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-osx" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-osx" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "Unsupported runner.os='$os' runner.arch='$arch'" >&2
+            exit 1
+          fi
+
+          echo "Selected triplet: $(cat "$GITHUB_OUTPUT")"
 
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4

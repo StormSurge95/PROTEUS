@@ -137,9 +137,9 @@ struct PluginManifest {
 #ifdef _WIN32
     #define PLUGIN_EXPORT extern "C" __declspec(dllexport)
     #define PLUGIN_INVOKE __cdecl
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
     #define PLUGIN_EXPORT extern "C" __attribute__((visibility("default")))
-    #define PLUGIN_INVOKE __cdecl
+    #define PLUGIN_INVOKE
 #else
     #define PLUGIN_EXPORT extern "C"
     #define PLUGIN_INVOKE
