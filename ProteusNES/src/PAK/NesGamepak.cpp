@@ -266,7 +266,7 @@ void Gamepak::initMapper(u16 id) {
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);
             string msg = "THIS MAPPER (M" + num.insert(0, 3 - num.size(), '0') + ") IS CURRENTLY NOT IMPLEMENTED";
-            printf(msg.c_str());
+            printf("%s", msg.c_str());
             exit(EXIT_FAILURE);
     }
 }

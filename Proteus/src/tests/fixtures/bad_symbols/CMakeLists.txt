@@ -1,5 +1,12 @@
 add_library(BadSymbolsPlugin SHARED BadSymbolsPlugin.cpp)
 
+target_link_libraries(BadSymbolsPlugin PRIVATE
+	SDL3::SDL3
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	nlohmann_json::nlohmann_json
+)
+
 set_target_properties(BadSymbolsPlugin PROPERTIES
 	OUTPUT_NAME "BadSymbolsPlugin"
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/plugins"

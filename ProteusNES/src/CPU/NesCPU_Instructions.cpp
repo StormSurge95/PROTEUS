@@ -272,8 +272,10 @@ void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
         case 7: // read pc.hi from BRK vector and reset cycles
             pc.hi = read(interruptVector[interruptSource] + 1);
             switch (interruptSource) {
+                default:
                 case INTERRUPT::RST:
                     // TODO: have some kind of reset trigger or something maybe?
+                    break;
                 case INTERRUPT::NMI:
                     nmiTrigger = false;
                     break;

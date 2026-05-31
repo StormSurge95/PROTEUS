@@ -143,6 +143,8 @@ void InputManager::TranslateInputs(const sptr<IConsole>& station, ConsoleID cons
                     inputs->DPAD_UP, inputs->DPAD_DOWN, inputs->DPAD_LEFT, inputs->DPAD_RIGHT };
                 station->update(i, btns.data());
                 break;
+            default:
+                break;
         }
     }
 }

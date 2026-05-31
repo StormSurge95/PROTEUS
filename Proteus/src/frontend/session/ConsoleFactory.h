@@ -9,7 +9,7 @@ namespace NS_Proteus {
         inline static sptr<IConsole> Create(ConsoleID console) {
             IConsole* c = PluginManager::CreateConsole(console);
             if (!c) {
-                printf(PluginManager::GetLastError().c_str());
+                printf("%s", PluginManager::GetLastError().c_str());
                 return nullptr;
             }
             return sptr<IConsole>(c, [](IConsole* p) {

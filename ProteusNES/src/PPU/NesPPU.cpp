@@ -195,6 +195,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
          *      (0,479)   (256,479)   (511,479)
          */
         switch (cart.lock()->getMirror()) {
+            default:
             case MIRROR::VERTICAL: // horizontal arrangement
                 // vertical mirror means NT1 = NT3 and NT2 = NT4
                 // update return value to relevant nametable based on address
@@ -272,6 +273,7 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 
         /// @see PPU::ppuRead for table layout
         switch (cart.lock()->getMirror()) {
+            default:
             case MIRROR::VERTICAL: // horizontal arrangement
                 // vertical mirror means NT1 = NT3 and NT2 = NT4
                 // update relevant nametable based on address

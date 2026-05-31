@@ -521,6 +521,8 @@ void VideoManager::RenderDebug(float scale) {
         case DebugView::APU_CHANNELS:
             // TODO: Add APU channel display with toggles for (de)activating various channels and waveform graphs for display
             break;
+        default:
+            break;
     }
     ImGui::End();
 

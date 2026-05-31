@@ -70,7 +70,7 @@ namespace NS_NES {
              * @brief Copies the CPU instruction history and then scans through the following memory to fill the supplied vector with addresses.
              * @param [out] list Reference to the vector to fill with instruction opcode addresses
              */
-            void ScanInstructions(array<u64, 25>& list) const;
+            void ScanInstructions(array<u64, 25>& list) const override;
             /**
              * @brief Acquires and formats a list of 25 CPU instructions.
              * @return A dynamically allocated pointer to the array of strings representing CPU instructions
