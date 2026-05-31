@@ -1,6 +1,6 @@
 #pragma once
 
 #include <CorePCH.h>
-#include <GbaTypes.h>
-#include <GbaConstants.h>
-#include <CgbTypes.h>
+#include "./GbaTypes.h"
+#include "./GbaConstants.h"
+#include "./CgbTypes.h"

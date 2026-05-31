@@ -1,7 +1,7 @@
 #pragma once
 
-#include <FrontendPCH.h>
-#include <ConsoleSession.h>
+#include "../FrontendPCH.h"
+#include "ConsoleSession.h"
 
 namespace NS_Proteus {
     /// @brief Stable identifier for managed console sessions.

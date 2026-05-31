@@ -1,6 +1,6 @@
-#include <PluginExports.h>
-#include <NES.h>
-#include <NesDebugger.h>
+#include "../../shared/plugin_utils/PluginExports.h"
+#include "./NES.h"
+#include "./shared/NesDebugger.h"
 
 namespace NS_NES {
     // static manifect for this core

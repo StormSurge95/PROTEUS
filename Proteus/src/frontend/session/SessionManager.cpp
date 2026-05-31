@@ -1,5 +1,5 @@
-#include <SessionManager.h>
-#include <PluginManager.h>
+#include "SessionManager.h"
+#include "../plugin/PluginManager.h"
 
 using namespace NS_Proteus;
 

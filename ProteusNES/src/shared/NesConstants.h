@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NesTypes.h>
+#include "./NesTypes.h"
 
 // TODO: COLLECT OTHER NECESSARY CONSTANTS FOR VARIOUS NES SYSTEMS
 

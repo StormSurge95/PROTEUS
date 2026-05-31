@@ -1,6 +1,6 @@
-#include <NES.h>
-#include <NesDebugger.h>
-#include <NesAPU.h>
+#include "../NES.h"
+#include "./NesDebugger.h"
+#include "../APU/NesAPU.h"
 
 using namespace NS_NES;
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <NesPCH.h>
-#include <NesPPU.h>
-#include <NesMapper.h>
+#include "./shared/NesPCH.h"
+#include "./PPU/NesPPU.h"
+#include "./PAK/Mappers/NesMapper.h"
 
 namespace NS_NES {
     /**

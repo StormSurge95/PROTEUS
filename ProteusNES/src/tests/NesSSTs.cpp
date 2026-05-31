@@ -11,7 +11,7 @@
 // we define this here so that including NES.h after will create the right SST environment
 #define TEST_SST
 
-#include <NES.h>
+#include "NES.h"
 
 using std::string;
 using std::runtime_error;

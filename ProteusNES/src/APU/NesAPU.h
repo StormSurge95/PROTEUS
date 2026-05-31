@@ -1,10 +1,10 @@
 #pragma once
 
-#include <NesPCH.h>
-#include <NesPulse.h>
-#include <NesTriangle.h>
-#include <NesNoise.h>
-#include <NesDMC.h>
+#include "../shared/NesPCH.h"
+#include "./NesPulse.h"
+#include "./NesTriangle.h"
+#include "./NesNoise.h"
+#include "./NesDMC.h"
 
 namespace NS_NES {
     class APU : IDevice<u8, u16> {

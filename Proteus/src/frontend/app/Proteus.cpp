@@ -1,12 +1,12 @@
-#include <Proteus.h>
-#include <FrontendPCH.h>
-#include <AudioManager.h>
-#include <InputTypes.h>
-#include <InputManager.h>
-#include <VideoManager.h>
-#include <RomLibrary.h>
-#include <Logger.h>
-#include <PluginManager.h>
+#include "./Proteus.h"
+#include "../FrontendPCH.h"
+#include "../audio/AudioManager.h"
+#include "../input/InputTypes.h"
+#include "../input/InputManager.h"
+#include "../video/VideoManager.h"
+#include "../rom_library/RomLibrary.h"
+#include "../logging/Logger.h"
+#include "../plugin/PluginManager.h"
 
 using namespace NS_Proteus;
 

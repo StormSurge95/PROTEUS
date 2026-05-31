@@ -1,4 +1,4 @@
-#include <NesDMC.h>
+#include "./NesDMC.h"
 
 using namespace NS_NES;
 

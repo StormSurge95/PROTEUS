@@ -1,5 +1,5 @@
-#include <RomLibrary.h>
-#include <NES_DB.h>
+#include "RomLibrary.h"
+#include "../../../resources/NES_DB.h"
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>

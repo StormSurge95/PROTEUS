@@ -1,8 +1,8 @@
 #pragma once
 
-#include <FrontendPCH.h>
-#include <IConsole.h>
-#include <PluginManager.h>
+#include "../FrontendPCH.h"
+#include "../../shared/IConsole.h"
+#include "../plugin/PluginManager.h"
 
 namespace NS_Proteus {
     namespace ConsoleFactory {

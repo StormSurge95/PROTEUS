@@ -1,4 +1,4 @@
-#include <PluginLoader.h>
+#include "./PluginLoader.h"
 
 #ifdef _WIN32
     #include <Windows.h>
