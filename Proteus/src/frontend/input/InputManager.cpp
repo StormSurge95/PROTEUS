@@ -139,9 +139,11 @@ void InputManager::TranslateInputs(const sptr<IConsole>& station, ConsoleID cons
 
         switch (console) {
             case ConsoleID::NES:
-                std::array<bool, 8> btns = { inputs->A_BUTTON, inputs->B_BUTTON, inputs->SELECT, inputs->START,
-                    inputs->DPAD_UP, inputs->DPAD_DOWN, inputs->DPAD_LEFT, inputs->DPAD_RIGHT };
-                station->update(i, btns.data());
+                {
+                    std::array<bool, 8> btns = { inputs->A_BUTTON, inputs->B_BUTTON, inputs->SELECT, inputs->START,
+                        inputs->DPAD_UP, inputs->DPAD_DOWN, inputs->DPAD_LEFT, inputs->DPAD_RIGHT };
+                    station->update(i, btns.data());
+                }
                 break;
             default:
                 break;
