@@ -107,13 +107,13 @@ jobs:
           vcpkg version
 
       - name: Configure
-        run: >
+        run: |
           rm -rf build-ci
-          cmake -S . -B build-ci
-          -DPROTEUS_BUILD_TESTS=ON
-          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
-          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          cmake -S . -B build-ci \
+          -DPROTEUS_BUILD_TESTS=ON \
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
+          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
           -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
 
       - name: Verify CMake cache contract
