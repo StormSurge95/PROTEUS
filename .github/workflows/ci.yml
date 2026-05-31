@@ -11,6 +11,9 @@ jobs:
     env:
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      SDL3_DIR: ""
+      OpenSSL_DIR: ""
+      nlohmann_json_DIR: ""
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +34,13 @@ jobs:
         with:
           vcpkgDirectory: ${{ env.VCPKG_ROOT }}
           vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
+
+      - name: Retrieve SST Data
+        shell: bash
+        run: |
+          SST_REPO_DIR="${GITHUB_WORKSPACE}/sst-65x02"
+          rm -rf "$SST_REPO_DIR"
+          git clone https://github.com/SingleStepTests/65x02.git "$SST_REPO_DIR"
 
       - name: Select vcpkg triplet
         id: triplet
@@ -85,21 +95,35 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
-      - name: Retrieve SST Data
+      - name: Diagnostics (pre-configure)
         shell: bash
         run: |
-          SST_DIR="${GITHUB_WORKSPACE}/sst-65x02"
-          rm -rf "$SST_DIR"
-          git clone https://github.com/SingleStepTests/65x02.git "$SST_DIR"
+          echo "runner.os=${{ runner.os }}"
+          echo "runner.arch=${{ runner.arch }}"
+          echo "triplet=${{ steps.triplet.outputs.value }}"
+          echo "VCPKG_ROOT=${VCPKG_ROOT}"
+          echo "SSTROOT=${GITHUB_WORKSPACE}/sst-65x02/nes6502/v1"
+          cmake --version
+          vcpkg version
 
       - name: Configure
         run: >
+          rm -rf build-ci
           cmake -S . -B build-ci
           -DPROTEUS_BUILD_TESTS=ON
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
           -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
           -DCMAKE_BUILD_TYPE=${{ matrix.config }}
           -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
+
+      - name: Verify CMake cache contract
+        shell: bash
+        run: |
+          test -f build-ci/CMakeCache.txt
+          grep -E "^CMAKE_TOOLCHAIN_FILE:FILEPATH=${VCPKG_ROOT//\//\\/}\\/scripts\\/buildsystems\\/vcpkg\\.cmake$" build-ci/CMakeCache.txt
+          grep -E "^VCPKG_TARGET_TRIPLET:STRING=${{ steps.triplet.outputs.value }}$" build-ci/CMakeCache.txt
+          grep -E "^VCPKG_INSTALLED_DIR:PATH=" build-ci/CMakeCache.txt
+          grep -E "^SSTROOT:PATH=" build-ci/CMakeCache.txt || grep -E "^SSTROOT:STRING=" build-ci/CMakeCache.txt
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
