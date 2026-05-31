@@ -42,6 +42,13 @@ target_include_directories(ProteusGBA PRIVATE
 	${PROTEUS_SRC_DIR}/shared/plugin_utils
 )
 
+target_link_libraries(ProteusGBA PRIVATE
+	SDL3::SDL3
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	nlohmann_json::nlohmann_json
+)
+
 # Compiler settings
 set_target_properties(ProteusGBA PROPERTIES
 	CXX_STANDARD 17

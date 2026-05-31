@@ -28,6 +28,19 @@ target_include_directories(PluginPerfTests PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../shared/plugin_utils
 )
 
+target_link_libraries(PluginTests PRIVATE
+	SDL3::SDL3
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	nlohmann_json::nlohmann_json
+)
+target_link_libraries(PluginPerfTests PRIVATE
+	SDL3::SDL3
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	nlohmann_json::nlohmann_json
+)
+
 set_target_properties(PluginTests PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/tests"
 )

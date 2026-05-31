@@ -57,6 +57,13 @@ target_include_directories(ProteusNES PRIVATE
 	${PROTEUS_SRC_DIR}/shared/plugin_utils
 )
 
+target_link_libraries(ProteusNES PRIVATE
+	SDL3::SDL3
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	nlohmann_json::nlohmann_json
+)
+
 # Compiler settings
 set_target_properties(ProteusNES PROPERTIES
 	CXX_STANDARD 20
