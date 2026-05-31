@@ -1,7 +1,7 @@
 #pragma once
 
-#include <NesPCH.h>
-#include <NES.h>
+#include "./NesPCH.h"
+#include "../NES.h"
 
 namespace NS_NES {
     /**

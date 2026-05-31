@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SstTypes.h>
+#include "./Types.h"
 
 /**
  * @interface IConsole

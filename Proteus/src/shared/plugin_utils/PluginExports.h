@@ -1,8 +1,9 @@
 #pragma once
 
-#include <SharedPCH.h>
-#include <IConsole.h>
-#include <IDebugger.h>
+#include "../SharedPCH.h"
+#include "../Types.h"
+#include "../IConsole.h"
+#include "../IDebugger.h"
 
 enum class DevStatusValue {
     STUB,

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <FrontendPCH.h>
-#include <SessionTypes.h>
+#include "../FrontendPCH.h"
+#include "../session/SessionTypes.h"
 
 namespace NS_Proteus {
     struct FrameState {

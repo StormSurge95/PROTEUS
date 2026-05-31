@@ -1,8 +1,8 @@
 #pragma once
 
-#include <FrontendPCH.h>
-#include <ConsoleSession.h>
-#include <IManagerContexts.h>
+#include "../FrontendPCH.h"
+#include "../session/ConsoleSession.h"
+#include "./IManagerContexts.h"
 
 namespace NS_Proteus {
     class AudioManager;

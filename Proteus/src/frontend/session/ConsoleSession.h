@@ -1,10 +1,10 @@
 #pragma once
 
-#include <FrontendPCH.h>
-#include <SessionTypes.h>
-#include <Logger.h>
-#include <IConsole.h>
-#include <IDebugger.h>
+#include "../FrontendPCH.h"
+#include "./SessionTypes.h"
+#include "../logging/Logger.h"
+#include "../../shared/IConsole.h"
+#include "../../shared/IDebugger.h"
 
 namespace NS_Proteus {
     class Logger;
@@ -46,8 +46,6 @@ namespace NS_Proteus {
             const ConsoleSessionState GetState() const { return currentState; }
             const sptr<IConsole>& GetConsole() const { return station; }
             const sptr<IDebugger>& GetDebugger() const { return debugger; }
-            const string GetRomName() const { return loadedRomName; }
-            const path GetRomPath() const { return loadedRomPath; }
             const string GetError() const { return lastError; }
     };
 }

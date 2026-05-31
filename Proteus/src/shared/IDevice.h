@@ -1,6 +1,7 @@
 #pragma once
 
-#include <SharedPCH.h>
+#include "./SharedPCH.h"
+#include "./Types.h"
 
 /**
  * @interface IDevice IDevice.h

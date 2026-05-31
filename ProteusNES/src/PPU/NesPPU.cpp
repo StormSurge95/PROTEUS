@@ -1,5 +1,5 @@
-#include <NesMapper.h>
-#include <NesPPU.h>
+#include "../PAK/Mappers/NesMapper.h"
+#include "./NesPPU.h"
 
 using namespace NS_NES;
 

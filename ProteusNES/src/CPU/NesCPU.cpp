@@ -1,8 +1,8 @@
-#include <NesCPU.h>
-#include <NesPPU.h>
-#include <NesAPU.h>
-#include <NesGamepak.h>
-#include <NesController.h>
+#include "./NesCPU.h"
+#include "../PPU/NesPPU.h"
+#include "../APU/NesAPU.h"
+#include "../PAK/NesGamepak.h"
+#include "../NesController.h"
 
 using namespace NS_NES;
 

@@ -33,9 +33,9 @@ Index of this file:
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
-#include <imgui.h>
+#include "imgui.h"
 #ifndef IMGUI_DISABLE
-#include <imgui_internal.h>
+#include "imgui_internal.h"
 #ifdef IMGUI_ENABLE_FREETYPE
 #include "misc/freetype/imgui_freetype.h"
 #endif

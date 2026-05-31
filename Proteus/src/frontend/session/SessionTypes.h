@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrontendPCH.h>
+#include "../FrontendPCH.h"
 
 namespace NS_Proteus {
     enum class ConsoleSessionState {
@@ -50,61 +50,5 @@ namespace NS_Proteus {
         ConsoleSessionState postState;
         ConsoleSessionErrorCode code;
         string message;
-    };
-
-    inline const SessionResult INVALID_ARGUMENT_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::INVALID_ARGUMENT,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::INVALID_ARGUMENT)
-    };
-
-    inline const SessionResult UNSUPPORTED_CONSOLE_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::UNSUPPORTED_CONSOLE,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::UNSUPPORTED_CONSOLE)
-    };
-
-    inline const SessionResult CONSOLE_CREATE_FAILED_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::CONSOLE_CREATE_FAILED,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::CONSOLE_CREATE_FAILED)
-    };
-
-    inline const SessionResult DEBUGGER_CREATE_FAILED_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::DEBUGGER_CREATE_FAILED,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::DEBUGGER_CREATE_FAILED)
-    };
-
-    inline const SessionResult INVALID_TRANSITION_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::INVALID_TRANSITION,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::INVALID_TRANSITION)
-    };
-
-    inline const SessionResult NO_ACTIVE_CONSOLE_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::NO_ACTIVE_CONSOLE,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::NO_ACTIVE_CONSOLE)
-    };
-
-    inline const SessionResult ROM_LOAD_FAILED_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::ROM_LOAD_FAILED,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::ROM_LOAD_FAILED)
-    };
-
-    inline const SessionResult INTERNAL_ERROR_SESSION_RESULT {
-        .success = false,
-        .postState = ConsoleSessionState::ERROR,
-        .code = ConsoleSessionErrorCode::INTERNAL_ERROR,
-        .message = ConsoleSessionErrors.at(ConsoleSessionErrorCode::INTERNAL_ERROR)
     };
 }

@@ -3,7 +3,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4244)
 
-#include <SharedPCH.h>
+#include "./SharedPCH.h"
+#include "./Types.h"
 
 /**
  * @brief Outputs a provided number `n` in hexadecimal notation with `d` digits.

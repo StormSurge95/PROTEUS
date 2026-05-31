@@ -1,5 +1,5 @@
-#include <PluginRegistry.h>
-#include <Utilities.h>
+#include "./PluginRegistry.h"
+#include "../Utilities.h"
 
 #if defined(_WIN32)
     #include <Windows.h>

@@ -1,12 +1,12 @@
-#include <Proteus.h>
-#include <FrontendPCH.h>
-#include <AudioManager.h>
-#include <InputTypes.h>
-#include <InputManager.h>
-#include <VideoManager.h>
-#include <RomLibrary.h>
-#include <Logger.h>
-#include <PluginManager.h>
+#include "./Proteus.h"
+#include "../FrontendPCH.h"
+#include "../audio/AudioManager.h"
+#include "../input/InputTypes.h"
+#include "../input/InputManager.h"
+#include "../video/VideoManager.h"
+#include "../rom_library/RomLibrary.h"
+#include "../logging/Logger.h"
+#include "../plugin/PluginManager.h"
 
 using namespace NS_Proteus;
 
@@ -145,6 +145,33 @@ void Proteus::PhaseAudio(FrameContext& ctx) {
         logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::END);
     } else
         logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::SKIPPED, "Audio phase disabled this frame");
+}
+
+void Proteus::RunSST() {
+    session->CreateSession(ConsoleID::NES);
+    for (u16 i = 0; i <= 0xFF; i++) {
+        printf("Instruction 0x%02x...", i);
+        // get sst data from json file
+        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
+        json data = json::parse(f);
+        f.close();
+        // convert json object data into a format more usable by our program
+        vector<SingleStateTest> SST;
+        for (int i = 0; i < data.size(); i++)
+            SST.push_back(SingleStateTest(data[i]));
+        // run our tests
+        for (const SingleStateTest& test : SST) {
+            session->GetConsole()->initSST(test.initState);
+            session->GetConsole()->runSST();
+            string result;
+            bool pass = session->GetConsole()->checkSST(test.finalState, result);
+            if (!pass) {
+                printf("FAIL\n%s\n", result.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        printf("PASS\n");
+    }
 }
 
 void Proteus::SetMetadata() {

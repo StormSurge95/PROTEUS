@@ -351,5 +351,3 @@ CMakeUserPresets.json
 
 # Rider
 *.sln.iml
-
-SSTs/**
