@@ -1,11 +1,11 @@
-#include "./VideoManager.h"
-#include "../plugin/PluginManager.h"
+#include <VideoManager.h>
+#include <PluginManager.h>
 
-#include "../../../resources/FontUI.h"
-#include "../../../resources/FontUI_Bold.h"
-#include "../../../resources/FontUI_Italic.h"
-#include "../../../resources/FontUI_BoldItalic.h"
-#include "../../../resources/FontDebug.h"
+#include <FontUI.h>
+#include <FontUI_Bold.h>
+#include <FontUI_Italic.h>
+#include <FontUI_BoldItalic.h>
+#include <FontDebug.h>
 
 using namespace NS_Proteus;
 

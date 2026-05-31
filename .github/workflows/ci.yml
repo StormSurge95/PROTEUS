@@ -10,6 +10,7 @@ jobs:
   build-and-test:
     env:
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     strategy:
       fail-fast: false
       matrix:
@@ -28,6 +29,7 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
+          vcpkgDirectory: ${{ env.VCPKG_ROOT }}
           vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
 
       - name: Select vcpkg triplet
@@ -83,6 +85,10 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
+      - name: Retrieve SST Data
+        shell: bash
+        run: git clone https://github.com/SingleStepTests/65x02.git ${{ github.workspace }}
+
       - name: Configure
         run: >
           cmake -S . -B build-ci
@@ -90,6 +96,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
           -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
           -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          -DSSTROOT=${{ github.workspace }}/nes6502/v1
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}

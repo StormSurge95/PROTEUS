@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../FrontendPCH.h"
+#include <FrontendPCH.h>
 
 namespace NS_Proteus {
     struct ROM_DATA {

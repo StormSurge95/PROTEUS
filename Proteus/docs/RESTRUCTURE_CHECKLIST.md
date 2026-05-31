@@ -133,7 +133,7 @@ Exit gate:
 ## Phase 8: Optional Advanced Work (Non-Critical Path)
 
 ### 8.1 Multi-Instance and Inter-Core Features
-- [ ] Design multi-core session orchestration.
+- [x] Design multi-core session orchestration.
 - [ ] Implement optional linked-console data bridge (where applicable).
 - [ ] Add focused tests that do not regress single-core runtime.
 

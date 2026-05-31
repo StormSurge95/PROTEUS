@@ -1,5 +1,5 @@
-#include "./PluginManager.h"
-#include "../../shared/plugin_utils/PluginRegistry.h"
+#include <PluginManager.h>
+#include <PluginRegistry.h>
 
 using namespace NS_Proteus;
 

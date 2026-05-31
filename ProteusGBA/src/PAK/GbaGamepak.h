@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared/GbaPCH.h"
+#include <GbaPCH.h>
 
 namespace NS_GBA {
 

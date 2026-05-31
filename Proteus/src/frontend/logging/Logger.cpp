@@ -1,6 +1,8 @@
-#include "./Logger.h"
-#include "../app/AppTypes.h"
+#include <Logger.h>
+#include <AppTypes.h>
+#include <iostream>
 
+using std::cout;
 using namespace NS_Proteus;
 
 Logger::~Logger() {

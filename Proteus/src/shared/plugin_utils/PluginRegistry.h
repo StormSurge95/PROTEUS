@@ -1,7 +1,6 @@
 #pragma once
 
-#include "./PluginLoader.h"
-#include "../Types.h"
+#include <PluginLoader.h>
 
 class PluginRegistry {
     public:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared/NesPCH.h"
+#include <NesPCH.h>
 
 namespace NS_NES {
     class PPU;
@@ -28,7 +28,7 @@ namespace NS_NES {
         private:
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST
-            array<u8, 0xFFFF> ram; /// @brief CPU ram container for SSTs
+            array<u8, 65536> ram; /// @brief CPU ram container for SSTs
             #else
             array<u8, 2048> ram; /// @brief CPU ram container for general use
             #endif

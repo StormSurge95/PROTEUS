@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../FrontendPCH.h"
-#include "../../shared/plugin_utils/PluginExports.h"
+#include <FrontendPCH.h>
+#include <PluginExports.h>
 
 namespace NS_Proteus {
     /// @brief mapping table from ConsoleID values to plugin registry IDs

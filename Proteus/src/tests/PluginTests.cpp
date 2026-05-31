@@ -6,8 +6,8 @@
 #include <utility>
 #include <vector>
 
-#include "../shared/plugin_utils/PluginRegistry.h"
-#include "../shared/IConsole.h"
+#include <PluginRegistry.h>
+#include <IConsole.h>
 
 using std::string;
 using std::runtime_error;

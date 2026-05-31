@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared/NesPCH.h"
+#include <NesPCH.h>
 
 namespace NS_NES {
     class TriangleChannel {
