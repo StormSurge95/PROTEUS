@@ -107,6 +107,7 @@ jobs:
           vcpkg version
 
       - name: Configure
+        shell: bash
         run: |
           rm -rf build-ci
           cmake -S . -B build-ci \
