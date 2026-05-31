@@ -1,4 +1,7 @@
 {
     "cmake.configureOnOpen": false,
-    "cmake.automaticReconfigure": false
+    "cmake.automaticReconfigure": false,
+    "cmake.configureOnEdit": false,
+    "cmake.useCMakePresets": "always",
+    "cmake.configurePreset": "ninja-debug-tests-x64"
 }

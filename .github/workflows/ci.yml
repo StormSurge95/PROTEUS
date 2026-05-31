@@ -33,6 +33,7 @@ jobs:
       github.event_name != 'pull_request' ||
       github.event.pull_request.draft == false
     env:
+      LLVM_PATH: ""
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       SDL3_DIR: ""
@@ -52,6 +53,12 @@ jobs:
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Setup Clang
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "22.1.6"
+          directory: ${{ env.LLVM_PATH }}
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
@@ -119,17 +126,6 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
-      - name: Diagnostics (pre-configure)
-        shell: bash
-        run: |
-          echo "runner.os=${{ runner.os }}"
-          echo "runner.arch=${{ runner.arch }}"
-          echo "triplet=${{ steps.triplet.outputs.value }}"
-          echo "VCPKG_ROOT=${VCPKG_ROOT}"
-          echo "SSTROOT=${GITHUB_WORKSPACE}/sst-65x02/nes6502/v1"
-          cmake --version
-          vcpkg version
-
       - name: Configure
         shell: bash
         run: |
@@ -138,6 +134,8 @@ jobs:
           -DPROTEUS_BUILD_TESTS=ON \
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
           -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
+          -DCMAKE_C_COMPILER=${{ env.LLVM_PATH }} \
+          -DCMAKE_CXX_COMPILER=${{ env.LLVM_PATH }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
           -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
 
@@ -145,4 +143,7 @@ jobs:
         run: cmake --build build-ci --config ${{ matrix.config }}
 
       - name: Test (non-timing)
-        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
+        shell: bash
+        run: |
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L sst -j
