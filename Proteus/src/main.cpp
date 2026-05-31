@@ -1,4 +1,4 @@
-#include "./frontend/app/Proteus.h"
+#include <Proteus.h>
 
 using namespace NS_Proteus;
 

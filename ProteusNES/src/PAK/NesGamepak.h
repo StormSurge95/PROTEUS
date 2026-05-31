@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NesPCH.h"
+#include <NesPCH.h>
 
 namespace NS_NES {
     class Mapper;

@@ -1,5 +1,5 @@
 #include <cstdint>
-#include "../../../shared/plugin_utils/PluginExports.h"
+#include <PluginExports.h>
 
 static PluginManifest badManifest = {
     0, 0, 1,

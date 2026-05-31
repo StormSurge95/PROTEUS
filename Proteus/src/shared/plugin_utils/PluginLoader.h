@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./PluginExports.h"
+#include <PluginExports.h>
 
 /**
  * @class CoreLoader

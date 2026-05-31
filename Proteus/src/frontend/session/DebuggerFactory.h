@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../FrontendPCH.h"
-#include "../../shared/IDebugger.h"
-#include "../../shared/IConsole.h"
-#include "../plugin/PluginManager.h"
+#include <FrontendPCH.h>
+#include <IDebugger.h>
+#include <IConsole.h>
+#include <PluginManager.h>
 
 namespace NS_Proteus {
     namespace DebuggerFactory {

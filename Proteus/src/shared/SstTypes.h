@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SharedPCH.h"
+#include <SharedPCH.h>
 
 struct SingleStateTest {
     string name;

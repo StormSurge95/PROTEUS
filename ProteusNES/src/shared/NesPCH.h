@@ -5,5 +5,5 @@
 #include <IConsole.h>
 #include <IDebugger.h>
 #include <IDevice.h>
-#include "./NesTypes.h"
-#include "./NesConstants.h"
+#include <NesTypes.h>
+#include <NesConstants.h>

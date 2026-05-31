@@ -4,15 +4,15 @@
 
 #include <SDL3/SDL.h>
 
-#include "../shared/IConsole.h"
-#include "../shared/IDebugger.h"
-#include "../shared/IDevice.h"
-#include "../shared/SharedPCH.h"
-#include "../shared/Utilities.h"
-#include "./ImGui/imgui.h"
-#include "./ImGui/imgui_impl_sdl3.h"
-#include "./ImGui/imgui_impl_sdlrenderer3.h"
-#include "./ImGui/imgui_internal.h"
+#include <IConsole.h>
+#include <IDebugger.h>
+#include <IDevice.h>
+#include <SharedPCH.h>
+#include <Utilities.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
+#include <imgui_internal.h>
 // TODO: switch to imgui_impl_sdlgpu3 somehow
 
 namespace NS_Proteus {

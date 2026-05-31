@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../FrontendPCH.h"
-#include "../app/IManagerContexts.h"
-#include "../logging/Logger.h"
+#include <FrontendPCH.h>
+#include <IManagerContexts.h>
+#include <Logger.h>
 
 namespace NS_Proteus {
     class Logger;

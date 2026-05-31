@@ -1,6 +1,6 @@
-#include "./ConsoleSession.h"
-#include "./DebuggerFactory.h"
-#include "./ConsoleFactory.h"
+#include <ConsoleSession.h>
+#include <DebuggerFactory.h>
+#include <ConsoleFactory.h>
 
 using namespace NS_Proteus;
 

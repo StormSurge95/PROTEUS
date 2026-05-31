@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../FrontendPCH.h"
-#include "SessionManager.h"
+#include <FrontendPCH.h>
+#include <SessionManager.h>
 
 namespace NS_Proteus {
     /// @brief Stable identifier for one active link connection
