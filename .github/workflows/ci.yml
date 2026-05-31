@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
@@ -85,6 +85,13 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
+      - name: Retrieve SST Data
+        shell: bash
+        run: |
+          SST_DIR="${GITHUB_WORKSPACE}/sst-65x02"
+          rm -rf "$SST_DIR"
+          git clone https://github.com/SingleStepTests/65x02.git "$SST_DIR"
+
       - name: Configure
         run: >
           cmake -S . -B build-ci
@@ -92,6 +99,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
           -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
           -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
