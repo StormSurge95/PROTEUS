@@ -60,8 +60,8 @@ Deliver `ProteusNES` as a Windows-first plugin that integrates cleanly with the 
 - [x] Complete SST hooks used by existing test flow (`RunSST` path in app).
 - [ ] Add plugin-level deterministic checks:
   - [x] repeatable CPU state progression
-  - [ ] repeatable frame hash
-  - [ ] repeatable audio hash/window
+  - [x] repeatable frame hash
+  - [x] repeatable audio hash/window
 - [x] Ensure no frontend/UI dependencies inside plugin core.
 
 ## Phase 3: High-Impact Mapper Coverage

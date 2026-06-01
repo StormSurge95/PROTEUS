@@ -9,18 +9,18 @@ namespace NS_NES {
      * @details
      * Nintendo MMC3 is a mapper ASIC used in Nintendo's TxROM Game Pak boards.
      * 
-     * BANKS:
-     * - CPU $6000-$7FFF: 8KB PRG-RAM bank (optional)
-     * - CPU $8000-$9FFF OR $C000-$DFFF: 8KB switchable PRG-ROM bank
-     * - CPU $A000-$BFFF: 8KB switchable PRG-ROM bank
-     * - CPU $C000-$DFFF OR $8000-$9FFF: 8KB switchable PRG-ROM bank
-     * - CPU $E000-$FFFF: 8KB PRG-ROM bank, fixed to the last bank
-     * - PPU $0000-$07FF OR $1000-$17FF: 2KB switchable CHR bank
-     * - PPU $0800-$0FFF OR $1800-$1FFF: 2KB switchable CHR bank
-     * - PPU $1000-$13FF OR $0000-$03FF: 1KB switchable CHR bank
-     * - PPU $1400-$17FF OR $0400-$07FF: 1KB switchable CHR bank
-     * - PPU $1800-$1BFF OR $0800-$0BFF: 1KB switchable CHR bank
-     * - PPU $1C00-$1FFF OR $0C00-$0FFF: 1KB switchable CHR bank
+     * - BANKS:
+     *   - CPU $6000-$7FFF: 8KB PRG-RAM bank (optional)
+     *   - CPU $8000-$9FFF OR $C000-$DFFF: 8KB switchable PRG-ROM bank
+     *   - CPU $A000-$BFFF: 8KB switchable PRG-ROM bank
+     *   - CPU $C000-$DFFF OR $8000-$9FFF: 8KB switchable PRG-ROM bank
+     *   - CPU $E000-$FFFF: 8KB PRG-ROM bank, fixed to the last bank
+     *   - PPU $0000-$07FF OR $1000-$17FF: 2KB switchable CHR bank
+     *   - PPU $0800-$0FFF OR $1800-$1FFF: 2KB switchable CHR bank
+     *   - PPU $1000-$13FF OR $0000-$03FF: 1KB switchable CHR bank
+     *   - PPU $1400-$17FF OR $0400-$07FF: 1KB switchable CHR bank
+     *   - PPU $1800-$1BFF OR $0800-$0BFF: 1KB switchable CHR bank
+     *   - PPU $1C00-$1FFF OR $0C00-$0FFF: 1KB switchable CHR bank
      * 
      * MMC3 has 4 pairs of registers at $8000-$9FFF, $A000-$BFFF, $C000-$DFFF, and $E000-$FFFF
      * Within each pair of registers:
@@ -30,18 +30,18 @@ namespace NS_NES {
      *      memory mapping ($8000-$9FFF & $A000-$BFFF)
      *      scanline counting ($C000-$DFFF & $E000-$FFFF)
      * 
-     * REGISTERS:
-     * - Bank Select ($8000-$9FFE, even)            \
-     * - Bank Data ($8001-$9FFF, odd)                \
-     *                                                |-->memory mapping
-     * - Nametable Arrangement ($A000-$BFFE, even)   /
-     * - PRG-RAM Protect ($A001-$BFFF, odd)         /
+     * - REGISTERS:
+     *   - Bank Select ($8000-$9FFE, even)            \
+     *   - Bank Data ($8001-$9FFF, odd)                \
+     *                                                  |-->memory mapping
+     *   - Nametable Arrangement ($A000-$BFFE, even)   /
+     *   - PRG-RAM Protect ($A001-$BFFF, odd)         /
      * 
-     * - IRQ Latch ($C000-$DFFE, even)      \
-     * - IRQ Reload ($C001-$DFFF, odd)       \
-     *                                        |-->scanline counting
-     * - IRQ Disable ($E000-$FFFE, even)     /
-     * - IRQ Enable ($E001-$FFFF, odd)      /
+     *   - IRQ Latch ($C000-$DFFE, even)      \
+     *   - IRQ Reload ($C001-$DFFF, odd)       \
+     *                                          |-->scanline counting
+     *   - IRQ Disable ($E000-$FFFE, even)     /
+     *   - IRQ Enable ($E001-$FFFF, odd)      /
      */
     class M004 : public Mapper {
         public:

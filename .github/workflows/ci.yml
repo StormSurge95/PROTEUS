@@ -133,6 +133,10 @@ jobs:
           mkdir -p "${GITHUB_WORKSPACE}/roms"
           curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" \
             -o ${GITHUB_WORKSPACE}/roms/cpu.nes
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/volumes.nes
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/litewall2.nes
 
       - name: Configure
         shell: bash
@@ -146,8 +150,9 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ env.LLVM_PATH }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
           -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1 \
-          -DNES_TEST_ROM=${{ github.workspace }}/roms/cpu.nes
-          
+          -DNES_DET_CPU=${{ github.workspace }}/roms/cpu.nes \
+          -DNES_DET_FRAME=${{ github.workspace }}/roms/litewall2.nes \
+          -DNES_DET_AUDIO=${{ github.workspace }}/roms/volumes.nes
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
@@ -157,4 +162,4 @@ jobs:
         run: |
           ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin
           ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L emulator:nes -L type:sst -L kind:cpu -j
-          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L emulator:nes -L type:determinism -L kind:cpu
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L emulator:nes -L type:determinism
