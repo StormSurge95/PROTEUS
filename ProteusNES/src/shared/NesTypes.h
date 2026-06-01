@@ -6,6 +6,23 @@
 namespace NS_NES {
     class CPU;
 
+    enum class INTERRUPT {
+        NONE, RST, NMI, IRQ, BRK
+    };
+
+    struct CPU_STATE {
+        u16 pc;
+        u8 a;
+        u8 x;
+        u8 y;
+        u8 sp;
+        u8 status;
+        u64 cycle;
+        bool irqLatch;
+        bool nmiLatch;
+        INTERRUPT interrupt;
+    };
+
     /**
      * @brief Enumeration of the various Mirroring arrangements within NES ROMs
      */

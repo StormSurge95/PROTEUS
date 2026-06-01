@@ -20,6 +20,17 @@ set(NES_CORE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/shared/NesDebugger.cpp
 )
 
+# locate shared headers
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+	# building ProteusNES as sibling project
+	set(PROTEUS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/src/shared/IConsole.h")
+	# building ProteusNES as sub project
+	set(PROTEUS_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+else()
+	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
+endif()
+
 if(PROTEUS_BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
@@ -31,17 +42,6 @@ add_library(ProteusNES SHARED
 	### emulator implementation(s) ###
 	${NES_CORE_SOURCES}
 )
-
-# locate shared headers
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
-	# building ProteusNES as sibling project
-	set(PROTEUS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Proteus/src")
-elseif(EXISTS "${CMAKE_SOURCE_DIR}/src/shared/IConsole.h")
-	# building ProteusNES as sub project
-	set(PROTEUS_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
-else()
-	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
-endif()
 
 # Include directories
 target_include_directories(ProteusNES PRIVATE

@@ -203,9 +203,6 @@ namespace NS_NES {
             #pragma endregion
 
             #pragma region Interrupts
-            enum class INTERRUPT {
-                NONE, RST, NMI, IRQ, BRK
-            };
             INTERRUPT interruptSource = INTERRUPT::NONE;
             map<INTERRUPT, u16> interruptVector{
                 { INTERRUPT::RST, 0xFFFC },
@@ -233,8 +230,9 @@ namespace NS_NES {
             /// @brief cycle tracker for instruction operation
             u8 cycles = 0;
 
-            /// @brief Delay flat for the DMA operations
+            /// @brief Delay flag for the DMA operations
             bool delayDMA = false;
+            /// @brief Halted flag to stop regular CPU ops during DMA
             bool halted = false;
             /// @brief Flag for OAMDMA
             bool oamActive = false;
@@ -304,5 +302,7 @@ namespace NS_NES {
             void reset();
             /// @brief 'clock' function
             void clock();/// @brief WRAM of the console/cartridge.
+
+            const CPU_STATE GetState() const;
     };
 }

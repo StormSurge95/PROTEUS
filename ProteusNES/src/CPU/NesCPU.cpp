@@ -384,3 +384,9 @@ void CPU::pollInterrupts() {
     delayInterrupt = false;
     pollScheduled = false;
 }
+
+const CPU_STATE CPU::GetState() const {
+    return {
+        pc.value(), a, x, y, sp, status, totalCycles, irqTrigger, nmiTrigger
+    };
+}

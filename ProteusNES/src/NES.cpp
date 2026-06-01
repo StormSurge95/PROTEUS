@@ -99,6 +99,10 @@ void NES::collectAudio(vector<float>& samples) {
     apu->collectSamples(samples);
 }
 
+const CPU_STATE NES::GetSnapshotCPU() const {
+    return cpu->GetState();
+}
+
 void NES::initSST(SingleStateTest::State state) {
     cpu->init(state);
 }

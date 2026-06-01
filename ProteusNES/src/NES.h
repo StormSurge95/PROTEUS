@@ -32,6 +32,14 @@ namespace NS_NES {
             void reset() override;
             // clock function of the console; controls the clocking of the inner pieces
             void clock() override;
+            // helper function for clocking an entire frame's-worth of cycles
+            void clockFrame();
+            // helper function for clocking a single cpu cycle
+            void clockCycleCPU();
+            // helper function for clocking a single ppu cycle
+            void clockCyclePPU();
+            // helper function for putting the other "clockXXX" functions together to clock a single master cycle
+            void clockMaster();
 
             // loads a rom (i.e. gamepak) into the console.
             bool loadROM(const string&) override;
@@ -51,6 +59,8 @@ namespace NS_NES {
             // allows frontend to pass input data back to the backend
             void update(u8, const bool*) override;
 
+            const CPU_STATE GetSnapshotCPU() const;
+
         private:
             sptr<CPU> cpu;              // shared pointer reference to the cpu
             sptr<Gamepak> cart;         // shared pointer reference to the cartridge/gamepak/rom
@@ -58,14 +68,5 @@ namespace NS_NES {
             sptr<APU> apu;              // shared pointer reference to the apu
             sptr<Controller> player1;   // shared pointer reference to p1 controller
             sptr<Controller> player2;   // shared pointer refernece to p2 contorller
-
-            // helper function for clocking an entire frame's-worth of cycles
-            void clockFrame();
-            // helper function for clocking a single cpu cycle
-            void clockCycleCPU();
-            // helper function for clocking a single ppu cycle
-            void clockCyclePPU();
-            // helper function for putting the other "clockXXX" functions together to clock a single master cycle
-            void clockMaster();
     };
 }

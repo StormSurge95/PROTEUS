@@ -54,6 +54,7 @@ jobs:
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
 
+      # TODO: verify that this does in fact put the path into the environment
       - name: Setup Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
@@ -126,6 +127,13 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
+      - name: Get Test ROM(s)
+        shell: bash
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/roms"
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/cpu.nes
+
       - name: Configure
         shell: bash
         run: |
@@ -137,7 +145,9 @@ jobs:
           -DCMAKE_C_COMPILER=${{ env.LLVM_PATH }} \
           -DCMAKE_CXX_COMPILER=${{ env.LLVM_PATH }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
-          -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
+          -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1 \
+          -DNES_TEST_ROM=${{ github.workspace }}/roms/cpu.nes
+          
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
@@ -146,4 +156,5 @@ jobs:
         shell: bash
         run: |
           ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin
-          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L sst -j
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L emulator:nes -L type:sst -L kind:cpu -j
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L emulator:nes -L type:determinism -L kind:cpu
