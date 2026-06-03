@@ -49,9 +49,7 @@ namespace NS_NES {
             /// @brief CPU-related debugging methods; fully functional, but subject to change
             /**
              * @brief Acquires and formats the current state of the CPU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PC","0x0123"],["A","0x45"],["X","0x67],["Y","0x89"],["STATUS","0xAB"],["SP","0xCD"]]`
+             * @return A vector of 3-string arrays, with one entry per CPU register/value.
              */
             vector<array<string, 3>> GetStateCPU() const override;
             /**
@@ -88,9 +86,7 @@ namespace NS_NES {
             /// @brief PPU-related debugging methods; currently in progress and subject to change
             /**
              * @brief Acquires and formats the current state of the PPU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PPUCTRL (0x2000)","0x01"],["PPUMASK (0x2001)","0x23"]]`
+             * @return A vector of 4-string arrays, with one entry per PPU register/value
              */
             vector<array<string, 4>> GetStatePPU() const override;
             /**
@@ -115,9 +111,7 @@ namespace NS_NES {
             /// @brief APU-related debugging methods; currenly unimplemented
             /**
              * @brief Acquires and formats the current state of the APU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return A dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PULSE1CTRL (0x4000)", "0x01"]<...>["NOISECTRL (0x400C)","0x3F"]<...>["FRAMECOUNTERCTRL (0x4017)","0xC0"]]`
+             * @return A vector of 4-string arrays, with one entry per APU register/value
              */
             vector<array<string, 4>> GetStateAPU() const override;
             /**
@@ -145,5 +139,13 @@ namespace NS_NES {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
+
+            /// @section PAK
+            /// @section PAK-related debuggin methods; currently limited to just acquiring header-defined information
+            /**
+             * @brief Acquires and formats the information defined within the Gamepak Header as a 2D array of strings
+             * @return A vector of 2-string arrays, with one entry per Header-defined value
+             */
+            vector<array<string, 2>> GetPakHeader() const override;
     };
 }

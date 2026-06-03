@@ -48,7 +48,7 @@ namespace NS_Proteus {
         DEBUG_TRACE =   0x40,
         LOGGING =       0x80,
 
-        ALL_CATS =           0xFF
+        ALL_CATS =      0xFF
     };
     static const map<LogCategory, string> LogCategories = {
         { LogCategory::APP_LOOP, "APP:LOOP" },
@@ -218,4 +218,4 @@ namespace NS_Proteus {
             }
         }
     };
-}
+};

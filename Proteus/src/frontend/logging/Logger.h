@@ -17,8 +17,8 @@ namespace NS_Proteus {
 
             high_resolution_clock::time_point lastPhaseStart;
 
-            inline static u16 LevelsEnabled = LogLevel::ALL_LVLS;
-            inline static u16 CategoriesEnabled = LogCategory::SESSION | LogCategory::LOGGING;
+            inline static u16 LevelsEnabled = LogLevel::WARN | LogLevel::ERROR;
+            inline static u16 CategoriesEnabled = LogCategory::ALL_CATS;
         public:
             ~Logger();
 

@@ -76,7 +76,8 @@ namespace NS_Proteus {
                 { DebugView::PPU_PATTERNTABLES, false },
                 { DebugView::PPU_NAMETABLES, false },
                 { DebugView::APU_REGISTERS, false },
-                { DebugView::APU_CHANNELS, false }
+                { DebugView::APU_CHANNELS, false },
+                { DebugView::PAK_HEADER, false }
             };
             DebugView currentDebugView = DebugView::CPU_REGS;
             bool overlayActive = false;
@@ -120,6 +121,7 @@ namespace NS_Proteus {
             void RenderDebugRAM();
             void RenderDebugPPU();
             void RenderDebugAPU();
+            void RenderDebugPAK();
             void RenderOverlay();
 
             void PrepViewport(ImGuiViewport* vp);

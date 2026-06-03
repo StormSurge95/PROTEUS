@@ -110,6 +110,8 @@ namespace NS_NES {
                     chrMem->at(addr) = data;
             }
 
+            vector<array<string, 2>> getDebugData() override { return {}; }
+
         private:
             // keeps track of which CHR bank to use
             u8 bankSelect = 0;

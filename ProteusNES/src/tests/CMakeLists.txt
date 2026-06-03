@@ -83,39 +83,3 @@ foreach(TEST_KIND IN LISTS NES_DET_TYPES)
         message(WARNING "${TEST_NAME} disabled: ROM path not set for kind '${TEST_KIND}'")
     endif()
 endforeach()
-
-# Mapper testing
-add_executable(NesMapperTests
-    NesMapperTests.cpp
-    ${NES_CORE_SOURCES}
-)
-# target_compile_definitions(NesMapperTests PRIVATE SELF_TEST); # only uncomment if testing forced-failure
-target_include_directories(NesMapperTests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${CMAKE_CURRENT_SOURCE_DIR}/../shared
-    ${CMAKE_CURRENT_SOURCE_DIR}/../PAK/Mappers
-    ${PROTEUS_SRC_DIR}/shared
-)
-target_link_libraries(NesMapperTests PRIVATE nlohmann_json::nlohmann::json)
-set_target_properties(NesMapperTests PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/tests"
-)
-target_compile_features(NesMapperTests PRIVATE cxx_std_20)
-set(NES_MAPPERS 0 1 2 3 4 7 9 10)
-set(NES_MAPPER_SCENARIOS default prg crom cram mirror ram wrapping)
-foreach(MAPPER IN LISTS NES_MAPPERS)
-    foreach(SCENARIO IN LISTS NES_MAPPER_SCENARIOS)
-        string(TOUPPER "${SCENARIO}" TEST_KIND)
-        set(TEST_NAME "NES.MAPPER${MAPPER}.${TEST_KIND}")
-
-        if (SCENARIO STREQUAL "default")
-        elseif (SCENARIO STREQUAL "prom")
-        elseif (SCENARIO STREQUAL "pram")
-        elseif (SCENARIO STREQUAL "crom")
-        elseif (SCENARIO STREQUAL "cram")
-        elseif (SCENARIO STREQUAL "mirror")
-        elseif (SCENARIO STREQUAL "wrapping")
-        else()
-        endif()
-    endforeach()
-endforeach()

@@ -65,14 +65,39 @@ Deliver `ProteusNES` as a Windows-first plugin that integrates cleanly with the 
 - [x] Ensure no frontend/UI dependencies inside plugin core.
 
 ## Phase 3: High-Impact Mapper Coverage
-- [ ] Implement major commercial mappers first:
+- [ ] Implement major commercial mappers first and test against various ROMs for behavior:
   - [x] NROM (0)
+    - [x] Boot/Load Smoke ---------- Donkey Kong
+    - [x] Core Functionality ------- Excitebike
+    - [x] Edge Behavior  ----------- Mach Rider
   - [x] MMC1 (1)
+    - [x] Boot/Load Smoke ---------- The Legend of Zelda
+    - [x] Core Functionality ------- Metroid
+    - [x] Edge Behavior ------------ Mega Man 2
   - [x] UxROM (2)
+    - [x] Boot/Load Smoke ---------- Mega Man
+    - [x] Core Functionality ------- Castlevania
+    - [x] Edge Behavior ------------ Contra
   - [x] CNROM (3)
+    - [x] Boot/Load Smoke ---------- Arkanoid
+    - [x] Core Functionality ------- Gradius
+    - [x] Edge Behavior ------------ Adventure Island
   - [ ] MMC3/MMC6 (4)
+    - [ ] Boot/Load Smoke ---------- Batman
+    - [ ] Core Functionality ------- Batman Returns
+    - [ ] Edge Behavior ------------ Alien3
   - [ ] AOROM (7)
-  - [ ] MMC2/MMC4 (9/10)
+    - [ ] Boot/Load Smoke ---------- Marble Madness
+    - [ ] Core Functionality ------- Battletoads
+    - [ ] Edge Behavior ------------ Solar Jetman
+  - [ ] MMC2 (9)
+    - [ ] Boot/Load Smoke ---------- Mike Tyson's Punch-Out!!
+    - [ ] Core Functionality ------- Punch Out!!
+    - [ ] Edge Behavior ------------ use previous
+  - [ ] MMC4 (10)
+    - [ ] Boot/Load Smoke ---------- Famicom Wars
+    - [ ] Core Functionality ------- Fire Emblem Gaiden
+    - [ ] Edge Behavior ------------ use previous
 - [ ] Implement mirroring, banking, PRG-RAM semantics per mapper.
 - [ ] Implement mapper IRQ behavior used by timing-sensitive commercial titles.
 

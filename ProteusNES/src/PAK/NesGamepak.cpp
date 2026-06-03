@@ -88,11 +88,9 @@ void Gamepak::LoadRAM() {
     ifstream file(GetSavePath(), ifstream::binary);
 
     if (file.is_open()) { // can't load a save unless a save exists
-        printf("save file found\n");
         // copy data from save file into our non-volatile ram array
         file.read(reinterpret_cast<char*>(prgRamNonVolatile.data()), prgRamNonVolatile.size());
-    } else
-        printf("no save file found\n");
+    }
 
     // close the file
     file.close();
@@ -148,7 +146,7 @@ bool Gamepak::readHeaderINES(const Header& h) {
     mapperID = (h.byte7 & 0xF0) | (h.byte6 >> 4);
 
     // byte 8
-    u16 ramSize = h.byte8;
+    u16 ramSize = h.byte8 * 8192;
     if (ramSize == 0) ramSize = 8192;
     if (hasBattery)
         memory.prg.nvramSize = ramSize;
@@ -211,7 +209,6 @@ bool Gamepak::readHeaderNES2(const Header& h) {
     region = (ConsoleRegion)(h.byteC & 0x03);
 
     // byte 13 - vs-system/extended-console info
-
     if (cType == ConsoleType::VS_SYSTEM) {
         // vs system
         vsPPU = VsPPU(h.byteD & 0x0F);

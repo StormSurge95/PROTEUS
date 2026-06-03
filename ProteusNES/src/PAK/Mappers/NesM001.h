@@ -192,6 +192,42 @@ namespace NS_NES {
                 }
             }
 
+            vector<array<string, 2>> getDebugData() override {
+                vector<array<string, 2>> v;
+                v.push_back({ "Mapper ID", "1 (MMC1)" });
+                v.push_back({ "Shift Register", bin(shiftReg) });
+                v.push_back({ "Control", bin(control) });
+                v.push_back({ "Total CHR Banks", to_string(chrBanks) });
+                v.push_back({ "CHR Bank Mode", ((control & 0x10) == 0 ? "Switch One 8KB Bank" : "Switch Two 4KB Banks")});
+                v.push_back({ "CHR Bank 0", to_string(chrBank0) });
+                v.push_back({ "CHR Bank 1", to_string(chrBank1) });
+                v.push_back({ "Total PRG Banks", to_string(prgBanks) });
+                string s;
+                switch ((control >> 2) & 0x03) {
+                    case 0:
+                    case 1:
+                        s = "Switch One 32KB Bank";
+                        break;
+                    case 2:
+                        s = "Fix First Bank at $8000;\nSwitch 16KB Bank at $C000";
+                        break;
+                    case 3:
+                        s = "Fix Last Bank at $C000;\nSwitch 16KB Bank at $8000";
+                        break;
+                }
+                v.push_back({ "PRG Bank Mode", s });
+                v.push_back({ "PRG Bank", to_string(PRGBank) });
+                v.push_back({ "Disable RAM", disablePrgRam ? "true" : "false" });
+                switch (control & 0x03) {
+                    case 0: s = "One-Screen - Lower Bank"; break;
+                    case 1: s = "One-Screen - Upper Bank"; break;
+                    case 2: s = "Horizontal Arrangment (Vertical Mirroring)"; break;
+                    case 3: s = "Vertical Arrangment (Horizontal Mirroring)"; break;
+                }
+                v.push_back({ "Nametable Layout", s });
+                return v;
+            }
+
         private:
             /**
              * @brief Holds data to be written to various internal registers; loaded via Load Register
@@ -206,7 +242,7 @@ namespace NS_NES {
              *      CPPMM
              *      |||||
              *      |||++-- Nametable arrangement
-             *      |||     - 00: one-screen, loawer bank
+             *      |||     - 00: one-screen, lower bank
              *      |||     - 01: one-screen, upper bank
              *      |||     - 10: horizontal arrangment ("vertical mirroring", PPU A10)
              *      |||     - 11: vertical arrangment ("horizontal mirroring", PPU A11)
@@ -324,12 +360,12 @@ namespace NS_NES {
              */
             u32 mapCHR(u16 addr) {
                 // mask address to ensure we only access [$0000-$2000)
-                u16 a = addr & 0x1FFF;
+                u32 a = addr & 0x1FFF;
                 // determine if we are in 8KB mode or dual-4KB mode
                 bool switch8 = ((control >> 4) & 0x01) == 0x00;
 
-                u16 bank;   // variable to hold bank value
-                u16 mapped; // variable to hold mapped address value
+                u32 bank;   // variable to hold bank value
+                u32 mapped; // variable to hold mapped address value
 
                 if (switch8) {
                     // ignore chrBank1 and high bit of chrBank0

@@ -43,6 +43,7 @@ namespace NS_Proteus {
         PPU_NAMETABLES,
         APU_REGISTERS,
         APU_CHANNELS,
+        PAK_HEADER,
         TOTAL_VIEWS
     };
 

@@ -43,15 +43,14 @@ namespace NS_NES {
             u8 cpuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x8000) return 0x00;
 
-                if (addr >= 0x8000 && addr <= 0xBFFF) { // map to switchable bank
-                    addr &= 0x3FFF;
-                    addr += ((u16)PRGBankSelect << 15);
-                } else if (addr >= 0xC000) { // map to fixed last bank
-                    addr &= 0x3FFF;
-                    addr += ((u16)(prgBanks - 1) << 15);
+                size_t mapped = (addr & 0x3FFF);
+                if (addr <= 0xBFFF) {
+                    mapped += static_cast<size_t>(PRGBankSelect) * 0x4000; // 16KB bank
+                } else {
+                    mapped += static_cast<size_t>(prgBanks - 1) * 0x4000;  // fixed last bank
                 }
 
-                return prgRom->at(addr);
+                return prgRom->at(mapped);
             }
 
             /**
@@ -61,7 +60,12 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void cpuWrite(u16 addr, u8 data) override {
-                if (addr >= 0x8000) PRGBankSelect = data & (prgBanks - 1);
+                if (addr >= 0x8000) {
+                    if (prgBanks == 0) PRGBankSelect = 0;
+                    else {
+                        PRGBankSelect = data % ((prgBanks > 1) ? (prgBanks - 1) : 1);
+                    }
+                }
             }
 
             /**
@@ -84,9 +88,11 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (addr < 0x2000)
+                if (addr < 0x2000 && chrBanks == 0)
                     chrMem->at(addr) = data;
             }
+
+            vector<array<string, 2>> getDebugData() override { return {}; }
 
         private:
             /**

@@ -28,11 +28,19 @@ void NesDebugger::StepInstruction() {
 }
 
 void NesDebugger::StepCycle() {
-    // StepCycle() should mean to step one MASTER cycle rather than cpu/ppu/apu
+    // StepCycle() should mean to step one CPU cycle (12 master cycles for NTSC/15 for PAL)
 
     // validate state
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    nes->clockMaster();
+    u8 div = 1;
+    switch (nes->cart->region) {
+        default:
+        case ConsoleRegion::NTSC: div = 12; break;
+        case ConsoleRegion::PAL: div = 16; break;
+        case ConsoleRegion::DENDY: div = 15; break;
+    }
+    for (u8 i = 0; i < div; i++)
+        nes->clockMaster();
 }
 
 void NesDebugger::Clear() {
@@ -58,6 +66,10 @@ vector<array<string, 3>> NesDebugger::GetStateCPU() const {
     lines.push_back({ "Y Register", to_string(temp), hex(temp, 2) });
     temp = nes->cpu->sp;
     lines.push_back({ "Stack Pointer", hex(0x0100 + temp, 4), hex(temp, 2) });
+    temp = nes->cpu->addrBus;
+    lines.push_back({ "Address Bus", to_string(temp), hex(temp, 4) });
+    temp = nes->cpu->cpuBus;
+    lines.push_back({ "Data Bus", to_string(temp), hex(temp, 2) });
     lines.push_back({ "", "STATUS", "" });
     temp = nes->cpu->getFlag(FLAGS::C);
     lines.push_back({ "Carry", temp ? "Set" : "Clear", "" });
@@ -139,9 +151,10 @@ vector<array<string, 4>> NesDebugger::GetStatePPU() const {
 
 vector<string> NesDebugger::GetStateRAM() const {
     // for NES; there will be 112 lines of RAM; each having 16 bytes
-    vector<string> lines(112);
+    vector<string> lines;
+    lines.reserve(112);
 
-    // for each line...
+    // WRAM window
     for (u8 l = 0; l < 112; l++) {
         // calculate start address (0x0010, 0x0010, 0x0020, etc)
         u16 start = (u16)l << 4;
@@ -164,6 +177,26 @@ vector<string> NesDebugger::GetStateRAM() const {
         // put the start address first
         ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
         // put the created string into our `lines` array
+        lines.push_back(ss.str());
+    }
+
+    // ROM window
+    for (u8 l = 0; l < 16; l++) {
+        u16 start = 0xFF00 + (l * 0x10);
+        stringstream bytes;
+        stringstream chars;
+        for (u8 i = 0x00; i < 0x10; i++) {
+            u16 addr = start + i;
+            u8 byte = nes->cpu->read(addr, true);
+            bytes << hex(byte, 2);
+            chars << (char)byte;
+            if (i < 0x0F) {
+                bytes << ' ';
+                chars << ' ';
+            }
+        }
+        stringstream ss;
+        ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
         lines.push_back(ss.str());
     }
 
@@ -610,4 +643,148 @@ vector<u32> NesDebugger::GetNoise() {
 // TODO debug DMC channel
 vector<u32> NesDebugger::GetDMC() {
     return vector<u32>();
+}
+
+vector<array<string, 2>> NesDebugger::GetPakHeader() const {
+    vector<array<string, 2>> values;
+
+    values.push_back({ "", "Header Data" });
+    switch (nes->cart->hFormat) {
+        case HeaderFormat::ANES:
+            values.push_back({ "Header Format", "Archaic iNES or iNES 0.7" });
+            break;
+        case HeaderFormat::INES:
+            values.push_back({ "Header Format", "iNES 1.0" });
+            break;
+        case HeaderFormat::NES2:
+            values.push_back({ "Header Format", "iNES 2.0" });
+            break;
+        default:
+            values.push_back({ "Header Format", "Unknown Format" });
+            break;
+    }
+    switch (nes->cart->cType) {
+        case ConsoleType::NES_FAMICOM:
+            values.push_back({ "Console Type", "NES/Famicom" });
+            break;
+        case ConsoleType::VS_SYSTEM:
+            values.push_back({ "Console Type", "Nintendo Vs. System" });
+            break;
+        case ConsoleType::PLAYCHOICE_10:
+            values.push_back({ "Console Type", "Playchoise 10" });
+            break;
+        case ConsoleType::FAMICLONE_DECIMAL:
+            values.push_back({ "Console Type", "Regular Famiclone (CPU supports Decimal Mode)" });
+            break;
+        case ConsoleType::NES_EPSM:
+            values.push_back({ "Console Type", "Regular NES/Famicom (EPSM module or plug-through cartridge)" });
+            break;
+        case ConsoleType::VR_VT01:
+            values.push_back({ "Console Type", "V.R. Technology VT01" });
+            break;
+        case ConsoleType::VR_VT02:
+            values.push_back({ "Console Type", "V.R. Technology VT02" });
+            break;
+        case ConsoleType::VR_VT03:
+            values.push_back({ "Console Type", "V.R. Technology VT03" });
+            break;
+        case ConsoleType::VR_VT09:
+            values.push_back({ "Console Type", "V.R. Technology VT09" });
+            break;
+        case ConsoleType::VR_VT32:
+            values.push_back({ "Console Type", "V.R. Technology VT32" });
+            break;
+        case ConsoleType::VR_VT369:
+            values.push_back({ "Console Type", "V.R. Technology VT369" });
+            break;
+        case ConsoleType::UMC_UM6578:
+            values.push_back({ "Console Type", "UMC UM6578" });
+            break;
+        case ConsoleType::FNS:
+            values.push_back({ "Console Type", "Famicom Network System" });
+            break;
+        default:
+            values.push_back({ "Console Type", "UNIMPLEMENTED TYPE" });
+            break;
+    }
+    switch (nes->cart->region) {
+        case ConsoleRegion::NTSC:
+            values.push_back({ "Console Region", "NTSC (US/JP)" });
+            break;
+        case ConsoleRegion::PAL:
+            values.push_back({ "Console Region", "PAL (EU)" });
+            break;
+        case ConsoleRegion::MULTI:
+            values.push_back({ "Console Region", "MULTI (WORLD)" });
+            break;
+        case ConsoleRegion::DENDY:
+            values.push_back({ "Console Region", "DENDY (RU)" });
+            break;
+        default:
+            values.push_back({ "Console Region", "UNKNOWN REGION (?\?)" });
+            break;
+    }
+    values.push_back({ "512B Trainer Present", nes->cart->hasTrainer ? "true" : "false" });
+    if (nes->cart->prgMemory.size() > 0)
+        values.push_back({ "PRG-ROM Size", to_string(nes->cart->prgMemory.size()) });
+    if (nes->cart->prgRamNonVolatile.size() > 0)
+        values.push_back({ "PRG-RAM (Non-Volatile) Size", to_string(nes->cart->prgRamNonVolatile.size()) });
+    if (nes->cart->prgRamVolatile.size() > 0)
+        values.push_back({ "PRG-RAM (Volatile) Size", to_string(nes->cart->prgRamVolatile.size()) });
+    if (nes->cart->chrMemory.size() > 0)
+        values.push_back({ "CHR-ROM Size", to_string(nes->cart->chrMemory.size()) });
+    if (nes->cart->chrRamNonVolatile.size() > 0)
+        values.push_back({ "CHR-RAM (Non-Volatile) Size", to_string(nes->cart->chrRamNonVolatile.size()) });
+    if (nes->cart->chrRamVolatile.size() > 0)
+        values.push_back({ "CHR-RAM (Volatile) Size", to_string(nes->cart->chrRamVolatile.size()) });
+    switch (nes->cart->mirror) {
+        case MIRROR::HORIZONTAL:
+            values.push_back({ "Hardware Mirror", "Horizontal" });
+            break;
+        case MIRROR::VERTICAL:
+            values.push_back({ "Hardware Mirror", "Vertical" });
+            break;
+        case MIRROR::FOUR_SCREEN:
+            values.push_back({ "Hardware Mirror", "Four-Screen (or mapper controlled)" });
+            break;
+        default:
+            values.push_back({ "Hardware Mirror", "Unknown Mirror Type" });
+            break;
+    }
+    if (nes->cart->hFormat == HeaderFormat::NES2) {
+        if (nes->cart->cType == ConsoleType::VS_SYSTEM) {
+            string ppuType = "Unknown Vs. System PPU Type";
+            switch (nes->cart->vsPPU) {
+                case VsPPU::PPU2C0X: ppuType = "Any RP2C02/RC2C03 Variant"; break;
+                case VsPPU::PPU2C04A: ppuType = "RP2C04-0001"; break;
+                case VsPPU::PPU2C04B: ppuType = "RP2C04-0002"; break;
+                case VsPPU::PPU2C04C: ppuType = "RP2C04-0003"; break;
+                case VsPPU::PPU2C04D: ppuType = "RP2C04-0004"; break;
+                case VsPPU::PPU2C05A: ppuType = "RC2C05-01 (signature unknown)"; break;
+                case VsPPU::PPU2C05B: ppuType = "RC2C05-02 ($2002 AND $3F = $3D)"; break;
+                case VsPPU::PPU2C05C: ppuType = "RC2C05-03 ($2002 AND $1F = $1C)"; break;
+                case VsPPU::PPU2C05D: ppuType = "RC2C05-04 ($2002 AND $1F = $1B)"; break;
+            }
+            values.push_back({ "Vs. System PPU Type", ppuType });
+        }
+        string expDev = "Unspecified Default Expansion Device";
+        switch (nes->cart->expDev) {
+            case ExpansionDevice::STANDARD_CONTROLLERS:
+                expDev = "Standard NES/Famicom Controllers";
+                break;
+            default:
+                expDev = "Displayable Values Still In Prgress";
+                break;
+        }
+        values.push_back({ "Default Expansion (Input) Device", expDev });
+    }
+
+    values.push_back({ "Mapper Data", "" });
+    values.push_back({ "Mapper ID", to_string(nes->cart->mapperID) });
+    if (nes->cart->subMapperID != 0)
+        values.push_back({ "Submapper ID", to_string(nes->cart->subMapperID) });
+    auto v = nes->cart->mapper->getDebugData();
+    values.insert(values.end(), v.begin(), v.end());
+
+    return values;
 }

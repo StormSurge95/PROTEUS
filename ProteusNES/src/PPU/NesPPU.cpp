@@ -162,6 +162,7 @@ void PPU::write(u16 addr, u8 data) {
 }
 
 u8 PPU::ppuRead(u16 addr, bool readonly) {
+    if (!readonly) ppuAddrBus = addr;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
     u8 ret = 0x00; // temp var for return value
     
@@ -258,6 +259,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
 }
 
 void PPU::ppuWrite(u16 addr, u8 data) {
+    ppuAddrBus = addr;
     ppuBus = data;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
     if (addr >= 0x0000 && addr <= 0x1FFF)

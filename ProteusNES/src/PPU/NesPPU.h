@@ -20,6 +20,7 @@ namespace NS_NES {
             bool frameComplete = false;
             // suppress nmi flag
             bool suppressNMI = false;
+            u16 ppuAddrBus = 0x0000;
 
             // default constructor
             PPU() = default;

@@ -120,6 +120,12 @@ class IDebugger {
          * @return true of a breakpoint is set
          */
         virtual bool IsBreakpointSet() const { return false; }
+
+        /**
+         * @brief Get the values of various header-defined portions of the gamepak
+         * @return A vector of string arrays in the format `{ <data name>, <data value> }`
+         */
+        virtual vector<array<string, 2>> GetPakHeader() const = 0;
 };
 
 #define IDEBUGGER_CONTRACT_VERSION 1

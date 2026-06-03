@@ -1,4 +1,5 @@
 #include "NesPPU.h"
+#include "../PAK/Mappers/NesMapper.h"
 
 using namespace NS_NES;
 
@@ -159,9 +160,11 @@ void PPU::spriteFetch() {
             break;
         case 5:
             calcSPRPatternAddr(sprite, sprTileIndex, secondaryOAM[sprite][0]);
+            cart.lock()->mapper->observeAddressPPU(spritePatternAddr, false);
             sprPatternLo = ppuRead(spritePatternAddr, false);
             break;
         case 6:
+            cart.lock()->mapper->observeAddressPPU(spritePatternAddr + 8, false);
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:

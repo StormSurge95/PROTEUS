@@ -100,11 +100,11 @@ namespace NS_NES {
             /// @brief Hardware (i.e. Cartridge; not Mapper) mirroring arrangement for this ROM
             MIRROR mirror = MIRROR::HORIZONTAL;
 
-            /// @brief Vector containing all PRG-ROM memory data
+            /// @brief Vectors containing all PRG memory data
             vector<u8> prgMemory = {};
             vector<u8> prgRamVolatile = {};
             vector<u8> prgRamNonVolatile = {};
-            /// @brief Vector containing all CHR-MEM memory data
+            /// @brief Vectors containing all CHR memory data
             vector<u8> chrMemory = {};
             vector<u8> chrRamVolatile = {};
             vector<u8> chrRamNonVolatile = {};

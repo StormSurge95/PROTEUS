@@ -122,7 +122,7 @@ u8 CPU::read(u16 addr, bool readonly) {
     return ram[addr];
     #else
     // update last read address for use during dummy dma reads.
-    lastReadAddr = addr;
+    lastReadAddr = addrBus = addr;
     // create helper variable to prevent updating open bus when readonly is set
     u8 ret = cpuBus;
     // all reads directly update the open bus in some way, sometimes only partially.
@@ -167,6 +167,7 @@ void CPU::write(u16 addr, u8 data) {
     ram[addr] = data;
     #else
     delayDMA = true;
+    addrBus = addr;
     // all writes fully update open bus
     cpuBus = data;
     if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -375,14 +376,15 @@ void CPU::pollInterrupts() {
     if (nmiTrigger) {
         // acknowledge NMI
         interruptSource = INTERRUPT::NMI;
-    } else if (irqTrigger && getFlag(FLAGS::I) == 0) {
-        if (!delayInterrupt) {
-            // acknowlege IRQ
-            interruptSource = INTERRUPT::IRQ;
-        }
+    } else if (irqTrigger && !interruptFlagViaPoll) {
+        // acknowlege IRQ
+        interruptSource = INTERRUPT::IRQ;
     }
-    delayInterrupt = false;
-    pollScheduled = false;
+
+    if (pendingSyncIFVP) {
+        interruptFlagViaPoll = pendingValueIFVP;
+        pendingSyncIFVP = false;
+    }
 }
 
 const CPU_STATE CPU::GetState() const {

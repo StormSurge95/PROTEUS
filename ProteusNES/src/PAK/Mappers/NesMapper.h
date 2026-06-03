@@ -18,7 +18,7 @@ namespace NS_NES {
              * @param cMem Reference to CHR-MEM memory
              * @param hasRam Whether or not the ROM in question has PRG-RAM
              */
-            Mapper(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
+            Mapper(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 subMapper = 0) :
                 prgBanks(pBnk), prgRom(pMem), chrBanks(cBnk), chrMem(cMem), prgRam(pRam) {
                 hasPrgRam = prgRam != nullptr;
                 hasChrRam = chrBanks == 0;
@@ -77,7 +77,22 @@ namespace NS_NES {
              * says; otherwise, we return whatever mirroring the mapper says to use.
              */
             virtual MIRROR getMirrorMode() const { return MIRROR::HARDWARE; }
+            /**
+             * @brief Getter function for the Mapper's IRQ flag, if it has one.
+             * @return If the mapper does not produce IRQs, then we simply return
+             *      false; otherwise, we return the current state of the IRQ flag.
+             */
+            virtual bool pullIRQ() { return false; }
+            /**
+             * @brief Observer function for keeping track of the PPU's A12 line.
+             * @param addr The address to be used for observation of the A12 line.
+             */
+            virtual void observeAddressPPU(u16 addr, bool isWrite) {}
+
+            virtual vector<array<string, 2>> getDebugData() = 0;
         protected:
+            /// @brief submapper version to use for operations
+            u8 subMapperID = 0;
             /// @brief total number of PRG-ROM banks
             u16 prgBanks = 0;
             /**

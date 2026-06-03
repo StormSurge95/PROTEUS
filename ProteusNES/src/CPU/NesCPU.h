@@ -47,7 +47,6 @@ namespace NS_NES {
             bool pendingIRQ = false; /// @brief irq flag
             bool pendingNMI = false; /// @brief nmi flag
             bool pendingRST = false; /// @brief reset flag
-            bool delayInterrupt = false; /// @brief interrupt delay flag
             deque<u16> prevInstAddrs = {}; /// @brief container for the most recent instructions; allows Debugger to provide disassembly
             ADDR pc; /// @brief Current program counter
             u8 a = 0; /// @brief Current accumulator register
@@ -65,7 +64,20 @@ namespace NS_NES {
             bool paged = false; /// @brief flag to determine page boundary crossings
             bool branch = false; /// @brief flag to determine when to take branches
             vector<INST> lookup; /// @brief instruction lookup table
-            bool pollScheduled = false; /// @brief flag to poll interrupts
+            u16 addrBus = 0x0000; /// @brief observer variable for debugger usage
+            bool interruptFlagViaPoll = false;  // I flag as seen by pollInterrupts()
+            bool pendingSyncIFVP = false;       // whether to sync I flag after next poll
+            bool pendingValueIFVP = false;      // value to apply to I on next sync.
+
+            inline void deferIFVP() {
+                pendingSyncIFVP = true;
+                pendingValueIFVP = getFlag(FLAGS::I) != 0;
+            }
+
+            inline void syncIFVP() {
+                interruptFlagViaPoll = getFlag(FLAGS::I) != 0;
+                pendingSyncIFVP = false;
+            }
 
             /**
              * @brief Helper function to determine page boundary crossings
@@ -105,11 +117,6 @@ namespace NS_NES {
              * @brief  Poll the interrupt lines to determine if the next instruction should be an interrupt.
              */
             void pollInterrupts();
-            
-            /**
-             * @brief Set flag to poll interrupts at beginning of next cycle
-             */
-            inline void schedulePoll() { pollInterrupts(); }
 
             /**
              * @brief Helper function to obtain the value of a specific status flag

@@ -267,6 +267,7 @@ void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
             break;
         case 6: // set I flag and read pc.lo from BRK vector
             setFlag(FLAGS::I, true);
+            syncIFVP();
             pc.lo = read(interruptVector[interruptSource]);
             break;
         case 7: // read pc.hi from BRK vector and reset cycles
@@ -315,6 +316,7 @@ void CPU::RTI() { // return from interrupt
             break;
         case 6: // read pc.hi from stack
             pc.hi = read(0x0100 + sp);
+            syncIFVP();
             cycles = 0;
             break;
     }
@@ -380,6 +382,7 @@ void CPU::PLP() {
                 status = (read(0x0100 + sp));
                 setFlag(FLAGS::B, b);
                 setFlag(FLAGS::U, u);
+                deferIFVP();
                 cycles = 0;
             }
             break;
@@ -406,10 +409,12 @@ void CPU::SEC() {
 }
 void CPU::CLI() {
     setFlag(FLAGS::I, false);
+    deferIFVP();
     cycles = 0;
 }
 void CPU::SEI() {
     setFlag(FLAGS::I, true);
+    deferIFVP();
     cycles = 0;
 }
 void CPU::CLD() {

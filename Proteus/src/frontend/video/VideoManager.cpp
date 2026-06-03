@@ -487,6 +487,9 @@ void VideoManager::RenderDebug(float scale) {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::MenuItem("PAK", nullptr, &debugViews.at(DebugView::PAK_HEADER))) {
+                SetDebugView(DebugView::PAK_HEADER);
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -520,6 +523,9 @@ void VideoManager::RenderDebug(float scale) {
             break;
         case DebugView::APU_CHANNELS:
             // TODO: Add APU channel display with toggles for (de)activating various channels and waveform graphs for display
+            break;
+        case DebugView::PAK_HEADER:
+            RenderDebugPAK();
             break;
         default:
             break;
@@ -646,5 +652,23 @@ void VideoManager::SetDebugView(DebugView view) {
     currentDebugView = view;
     for (const pair<DebugView, bool>& p : debugViews) {
         debugViews.at(p.first) = p.first == view;
+    }
+}
+
+void VideoManager::RenderDebugPAK() {
+    size_t i = 0;
+    vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
+    if (ImGui::BeginTable("GAMEPAK INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableSetupColumn("Data");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableHeadersRow();
+        for (; i < pakData.size(); i++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", pakData[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", pakData[i][1].c_str());
+        }
+        ImGui::EndTable();
     }
 }

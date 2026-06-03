@@ -45,9 +45,12 @@ void NES::reset() {
 
 void NES::clockCyclePPU() {
     ppu->clock();
+    cart->mapper->ppuclock(ppu->cycle);
 
     cpu->nmiTrigger |= ppu->nmiRequested;
     ppu->nmiRequested = false;
+
+    cpu->irqTrigger |= cart->mapper->pullIRQ();
 }
 
 void NES::clockCycleCPU() {

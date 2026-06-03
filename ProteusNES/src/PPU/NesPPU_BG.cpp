@@ -1,4 +1,5 @@
 #include "./NesPPU.h"
+#include "../PAK/Mappers/NesMapper.h"
 
 using namespace NS_NES;
 
@@ -40,6 +41,7 @@ void PPU::fetchBGPatternByteLo() {
     u16 addr = getBackgroundPatternTableAddr() |
         (((u16)nextNametableByte) << 4) |
         ((u16)fineY());
+    cart.lock()->mapper->observeAddressPPU(addr, false);
     nextPatternByteLo = ppuRead(addr, false);
 }
 
@@ -47,6 +49,7 @@ void PPU::fetchBGPatternByteHi() {
     u16 addr = getBackgroundPatternTableAddr() |
         (((u16)nextNametableByte) << 4) |
         ((u16)fineY());
+    cart.lock()->mapper->observeAddressPPU(addr + 8, false);
     nextPatternByteHi = ppuRead(addr + 8, false);
 }
 
@@ -54,7 +57,7 @@ void PPU::backgroundPipeline() {
     if ((cycle > 1 && cycle <= 257) || (cycle > 321 && cycle <= 337))
         shiftBackgroundShifters();
 
-    if (cycle <= 256 || cycle <= 336) {
+    if ((cycle > 0 && cycle < 257) || (cycle > 320 && cycle < 337)) {
         switch (cycle & 0x07) {
             case 1:
                 loadBackgroundShifters();

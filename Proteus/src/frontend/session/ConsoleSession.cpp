@@ -162,7 +162,7 @@ SessionResult ConsoleSession::Reset() {
         case ConsoleSessionState::PAUSED:
         case ConsoleSessionState::ROM_LOADED:
             station->reset();
-            return Success(ConsoleSessionState::ROM_LOADED, "ROM Reset Successfully");
+            return Success(currentState, "ROM Reset Successfully");
         default:
             return Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, lastError);
     }

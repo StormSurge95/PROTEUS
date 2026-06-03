@@ -70,5 +70,7 @@ namespace NS_NES {
                 if (addr <= 0x1FFF && chrBanks == 0)
                     chrMem->at(addr) = data;
             }
+
+            vector<array<string, 2>> getDebugData() override { return {{ "Mapper ID", "0 (NROM)" }}; };
     };
 }

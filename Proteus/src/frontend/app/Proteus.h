@@ -75,6 +75,7 @@ namespace NS_Proteus {
             RuntimeStats stats;
 
             bool quit = false;
+            bool pausedByOverlay = false;
             SDL_Event event = {};
 
             void ToggleDebug();

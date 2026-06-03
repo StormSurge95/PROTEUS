@@ -471,7 +471,6 @@ vector<string> PluginRegistry::GetKnownPluginIDs() {
 
     for (const auto& [key, val] : libBaseNames) {
         v.push_back(key);
-        printf("%s\n", val.c_str());
     }
 
     return v;
