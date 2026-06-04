@@ -13,7 +13,7 @@ namespace NS_NES {
      * Implements IDevice interface with `u8` data size and `u16` address size
      * Contains and maintains all data within the opened ROM file.
      */
-    class Gamepak : IDevice<u8, u16> {
+    class Gamepak : public IDevice<u8, u16> {
             // Allow Debugger class to access all private members of the Gamepak class
             friend class NesDebugger;
         public:
@@ -29,7 +29,11 @@ namespace NS_NES {
              */
             Gamepak(const string& path);
             /// @brief Default destructor
-            ~Gamepak() { if (prgRamNonVolatile.size() > 0) SaveRAM(); }
+            ~Gamepak() { powerdown(); }
+
+            void powerup(u32 seed) override;
+            void reset() override;
+            void powerdown() override;
 
             /// @brief Getter for ROM validity
             inline bool isValid() const { return valid; }

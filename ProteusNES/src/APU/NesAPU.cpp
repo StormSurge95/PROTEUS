@@ -1,13 +1,66 @@
 #include "./NesAPU.h"
+#include "../CPU/NesCPU.h"
 
 using namespace NS_NES;
+
+void APU::powerup(u32 s) {
+    initPRNG(s);
+
+    clearRuntimeState();
+    clearAudioOutputState();
+    resetFilters();
+
+    pulse1->init();
+    pulse2->init();
+    triangle->init();
+    noise->init();
+    dmc->init();
+
+    deassertIrqLines();
+}
+
+void APU::reset() {
+    masterCycle = cycle = resetAt = 0;
+    pendingReset = false;
+
+    irqRequested = false;
+    deassertIrqLines();
+
+    use5step = false;
+    inhibitIRQ = false;
+
+    apuBus = 0;
+    cycleAccumulator = 0.0;
+    sampleBuffer.clear();
+    resetFilters();
+
+    pulse1->reset();
+    pulse2->reset();
+    triangle->reset();
+    noise->reset();
+    dmc->reset();
+}
+
+void APU::powerdown() {
+    clearRuntimeState();
+    clearAudioOutputState();
+    resetFilters();
+
+    pulse1->init();
+    pulse2->init();
+    triangle->init();
+    noise->init();
+    dmc->init();
+
+    deassertIrqLines();
+}
 
 APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.0f) {
     pulse1 = make_unique<PulseChannel>(true);
     pulse2 = make_unique<PulseChannel>(false);
     triangle = make_unique<TriangleChannel>();
     noise = make_unique<NoiseChannel>();
-    dmc = make_unique<DMC_Channel>(/*this*/);
+    dmc = make_unique<DMC_Channel>(this);
 }
 
 u8 APU::read(u16 addr, bool readonly) {
@@ -51,9 +104,6 @@ void APU::clock() {
     noise->clockTimer();
     dmc->clockTimer();
 
-    if (dmc->needsByteFetch() && dmc->bufferNeeded)
-        dmc->onByteFetch(0b00110011);
-
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
 
@@ -75,8 +125,9 @@ u8 APU::read4015() {
     u8 f = (irqRequested ? 0x40 : 0x00);
     // reading the frame counter interrupt flag clears it
     irqRequested = false;
+    cpu.lock()->setIrqLine_APU(false);
     // reading the dmc interrupt flag DOES NOT clear it
-    u8 i = dmc->pending_irq << 7;
+    u8 i = dmc->interrupt << 7;
     return p1 | p2 | t | n | d | u | f | i;
 }
 
@@ -96,6 +147,7 @@ void APU::write4017(u8 data) {
     // clear IRQ flag if IRQ is inhibited
     if (inhibitIRQ) {
         irqRequested = false;
+        cpu.lock()->setIrqLine_APU(false);
     }
     // writing to 4017 triggers a delayed FrameCounter reset
     if ((masterCycle & 0x01) == 1) {
@@ -128,8 +180,10 @@ void APU::clockFrameCounter() {
             halfFrame();
             break;
         case 29828: // irq trigger (only during 4-step with irq enabled)
-            if (!use5step && !inhibitIRQ)
+            if (!use5step && !inhibitIRQ) {
                 irqRequested = true;
+                cpu.lock()->setIrqLine_APU(true);
+            }
             break;
         case 29829: // end frame (4-step)
             if (!use5step) {
@@ -205,4 +259,32 @@ float APU::mixSamples(u8 p1, u8 p2, u8 t, u8 n, u8 d) {
     LPF.process(sample);
 
     return sample;
+}
+
+void APU::clearRuntimeState() {
+    masterCycle = cycle = 0;
+    resetAt = 0;
+    apuBus = 0;
+    pendingReset = false;
+    use5step = false;
+    inhibitIRQ = false;
+    irqRequested = false;
+}
+
+void APU::clearAudioOutputState() {
+    cycleAccumulator = 0.0;
+    sampleBuffer.clear();
+}
+
+void APU::resetFilters() {
+    HPF1.prevInput = 0;
+    HPF1.prevOutput = 0;
+    HPF2.prevInput = 0;
+    HPF2.prevOutput = 0;
+    LPF.prevOutput = 0;
+}
+
+void APU::deassertIrqLines() {
+    cpu.lock()->setIrqLine_APU(false);
+    cpu.lock()->setIrqLine_DMC(false);
 }

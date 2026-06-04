@@ -120,6 +120,8 @@ namespace NS_Proteus {
             void RenderDebugDIS();
             void RenderDebugRAM();
             void RenderDebugPPU();
+            void RenderDebugPTB();
+            void RenderDebugNTB();
             void RenderDebugAPU();
             void RenderDebugPAK();
             void RenderOverlay();

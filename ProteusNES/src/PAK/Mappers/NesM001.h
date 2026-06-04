@@ -50,19 +50,39 @@ namespace NS_NES {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+                shiftReg = 0x10;
+                lastWriteCycle = UINT64_MAX;
+                cpuCycle = 0;
+
+                control = 0x0C;
+                chrBank0 = 0;
+                chrBank1 = 0;
+                PRGBank = 0;
+
+                disablePrgRam = false;
+            }
 
             /**
              * @brief Resets the mapper to a known state
              */
-            void reset() {
+            void reset() override {
                 shiftReg = 0x10;
-                control = 0x0C;
+                lastWriteCycle = UINT64_MAX;
+                cpuCycle = 0;
+            }
 
+            void powerdown() override {
+                reset();
+                control = 0;
                 chrBank0 = 0;
                 chrBank1 = 0;
                 PRGBank = 0;
+                disablePrgRam = false;
             }
 
             /**
@@ -195,6 +215,7 @@ namespace NS_NES {
             vector<array<string, 2>> getDebugData() override {
                 vector<array<string, 2>> v;
                 v.push_back({ "Mapper ID", "1 (MMC1)" });
+                v.push_back({ "Submapper ID", to_string(subMapperID) });
                 v.push_back({ "Shift Register", bin(shiftReg) });
                 v.push_back({ "Control", bin(control) });
                 v.push_back({ "Total CHR Banks", to_string(chrBanks) });

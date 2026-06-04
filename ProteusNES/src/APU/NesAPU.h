@@ -7,7 +7,7 @@
 #include "./NesDMC.h"
 
 namespace NS_NES {
-    class APU : IDevice<u8, u16> {
+    class APU : public IDevice<u8, u16> {
             // Allow Debugger class to access all private members of the APU class
             friend class NesDebugger;
         public:
@@ -54,6 +54,13 @@ namespace NS_NES {
              */
             void write(u16 addr, u8 data) override;
 
+            /// @brief turn on the APU
+            void powerup(u32 seed) override;
+            /// @brief reset the APU to a known state
+            void reset() override;
+            /// @brief turn off the APU
+            void powerdown() override;
+
             /**
              * @brief Cycle function for the APU.
              * @details
@@ -86,8 +93,6 @@ namespace NS_NES {
             void collectSamples(vector<float>& buffer);
 
             void dmcOnByteFetched(u8 byte) { dmc->onByteFetch(byte); }
-
-            inline u16 getDmcCurrentAddr() const { return dmc->getCurrentAddr(); }
 
         private:
             /// @brief Used to keep track of when to reset FrameCounter.
@@ -173,5 +178,10 @@ namespace NS_NES {
              * @return The fully mixed audio sample.
              */
             float mixSamples(u8 pulse1, u8 pulse2, u8 triangle, u8 noise, u8 dmc);
+
+            void clearRuntimeState();
+            void clearAudioOutputState();
+            void resetFilters();
+            void deassertIrqLines();
     };
 }

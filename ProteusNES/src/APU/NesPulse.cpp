@@ -106,3 +106,28 @@ u8 PulseChannel::output() const {
     // otherwise, return current volume
     return volume();
 }
+
+void PulseChannel::init() {
+    enabled = false;
+    timer = period = 0x0000;
+    dutyMode = dutyStep = 0x00;
+    lengthCounter.reset();
+    envelope.reset();
+    sweep.reset();
+}
+
+void PulseChannel::reset() {
+    enabled = false;
+    timer = 0;
+    dutyStep = 0;
+
+    lengthCounter.counter = 0;
+    lengthCounter.halt = false;
+
+    envelope.start = false;
+    envelope.divider = 0;
+    envelope.decay = 0x0F;
+
+    sweep.divider = 0;
+    sweep.reload = false;
+}

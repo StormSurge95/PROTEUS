@@ -3,7 +3,105 @@
 
 using namespace NS_NES;
 
-/* via https://nesdev.org/wiki/NMI#Operation
+void PPU::powerup(u32 s) {
+    initPRNG(s);
+
+    // initialize timing position
+    scanline = 0;
+    cycle = 0;
+    oddFrame = false;
+    frameComplete = false;
+
+    // clear transient NMI/render flags
+    nmiRequested = false;
+    nmiOutput = false;
+    suppressNMI = false;
+    suppressVBL = false;
+
+    // initialize register/latch state(s)
+    PPUCTRL = 0;
+    PPUMASK = 0;
+    PPUSTATUS = 0xA0 | (nextByte() & ~0xA0);
+    OAMADDR = 0;
+    OAMDATA = 0;
+    PPUSCROLL = 0;
+    PPUADDR = 0;
+    PPUDATA = 0;
+    OAMDMA = 0;
+    dataBuffer = 0;
+    w = false;
+    t = v = x = 0;
+    
+    // initialize open-bus helpers
+    ppuBus = 0;
+    ppuAddrBus = 0;
+
+    // initialize volatile memory containers
+    for (u8& byte : nametables) byte = nextByte();
+    for (u8& byte : palettes) byte = nextByte();
+    for (array<u8, 4>& row : primaryOAM) {
+        for (u8& byte : row) byte = nextByte();
+    }
+    for (array<u8, 5>& row : secondaryOAM) {
+        for (u8& byte : row) byte = nextByte();
+    }
+    // initialize decay counters
+    for (u8& c : decayCounters) c = 20;
+
+    // initialize background/sprite pipelines
+    clearPipelines();
+
+    ignoreEarlyCtrlWrites = true;
+}
+
+void PPU::reset() {
+    // reset timing position
+    scanline = cycle = 0;
+    oddFrame = frameComplete = false;
+
+    // clear transient NMI/render flags
+    nmiRequested = nmiOutput = suppressNMI = suppressVBL = false;
+
+    // clear registers affected by reset
+    PPUCTRL = PPUMASK = PPUSCROLL = dataBuffer = 0;
+    w = false;
+    t = x = 0;
+
+    clearPipelines();
+
+    ignoreEarlyCtrlWrites = true;
+}
+
+void PPU::powerdown() {
+    // stop further nmi generation
+    nmiRequested = nmiOutput = suppressNMI = suppressVBL = false;
+
+    // clear timing/transient exec state
+    scanline = cycle = 0;
+    frameComplete = oddFrame = false;
+
+    // clear transient bus/scratch state
+    ppuAddrBus = ppuBus = dataBuffer = 0;
+
+    clearPipelines();
+
+    ignoreEarlyCtrlWrites = false;
+}
+
+void PPU::clearPipelines() {
+    // clear background pipeline state
+    nextNametableByte = nextAttributeByte = nextPatternByteLo = nextPatternByteHi = 0;
+    bgPatternAddr = patternShiftLo = patternShiftHi = attributeShiftLo = attributeShiftHi = 0;
+
+    // clear sprite pipeline state
+    spriteIndex = n = m = oamLatch = spritesOnScanline = oamIndex = byteIndex = 0;
+    sprTileIndex = sprAttributes = sprXPosition = sprPatternLo = sprPatternHi = 0;
+    spritePatternAddr = 0;
+    sprite0HitOnNextScanline = sprite0HitOnThisScanline = false;
+    activeSprites.fill({});
+}
+
+/** via https://nesdev.org/wiki/NMI#Operation
  * Two 1-bit registers inside the PPU control the generation of NMI signals. Frame timing and accesses to the PPU's
  * PPUCTRL and PPUSTATUS registers change these registers as follows, regardless of whether rendering is enabled:
  *      1. Start of vertical blanking (scanline 241, dot 1): Set vblank_flag in PPU to true.
@@ -84,7 +182,7 @@ void PPU::write(u16 addr, u8 data) {
 
         switch (addr) {
             case 0x00: // write to PPUCTRL
-                {
+                if (!ignoreEarlyCtrlWrites) {
                     // update register
                     PPUCTRL = data;
                     // update t register bits 11 & 12 using bits 0 & 1 of new data
@@ -93,7 +191,7 @@ void PPU::write(u16 addr, u8 data) {
                     return;
                 }
             case 0x01: // write to PPUMASK
-                PPUMASK = data;
+                if (!ignoreEarlyCtrlWrites) PPUMASK = data;
                 return;
             case 0x03: // write to OAMADDR
                 OAMADDR = data;
@@ -103,53 +201,57 @@ void PPU::write(u16 addr, u8 data) {
                 OAMADDR++; // increment address
                 return;
             case 0x05: // write to PPUSCROLL
-                PPUSCROLL = data;
-                if (!w) { // first write to PPUSCROLL consists of X-scroll bits 7-0 (we got bit 8 from PPUCTRL)
-                    // update 'x' to be the right 3 bits of 'data'
-                    x = (data & 0x07);
+                if (!ignoreEarlyCtrlWrites) {
+                    PPUSCROLL = data;
+                    if (!w) { // first write to PPUSCROLL consists of X-scroll bits 7-0 (we got bit 8 from PPUCTRL)
+                        // update 'x' to be the right 3 bits of 'data'
+                        x = (data & 0x07);
 
-                    // update 't' using left 5 bits of 'data'
-                    t &= ~0x001F; // clear the right 5 bits of 't'
-                    t |= ((u16)(data >> 3) & 0x1F); // set them to the value of the left 5 bits of 'data'
+                        // update 't' using left 5 bits of 'data'
+                        t &= ~0x001F; // clear the right 5 bits of 't'
+                        t |= ((u16)(data >> 3) & 0x1F); // set them to the value of the left 5 bits of 'data'
 
-                    // set write latch so that next write to register will work properly
-                    w = true;
-                } else { // second write to PPUSCROLL consists of Y-scroll bits 7-0 (we got bit 8 from PPUCTRL)
-                    // FEDC BA98 7654 3210 = 76543210
-                    // .LMN ..GH IJK. ....   GHIJKLMN
-                    
-                    // clear bits E-C & 9-5
-                    t &= 0x0C1F;
+                        // set write latch so that next write to register will work properly
+                        w = true;
+                    } else { // second write to PPUSCROLL consists of Y-scroll bits 7-0 (we got bit 8 from PPUCTRL)
+                        // FEDC BA98 7654 3210 = 76543210
+                        // .LMN ..GH IJK. ....   GHIJKLMN
+                        
+                        // clear bits E-C & 9-5
+                        t &= 0x0C1F;
 
-                    // update bits E-C of 't' using bits 2-0 of 'data'
-                    t |= ((u16)(data & 0x07) << 12);
-                    // update bits 9-5 of 't' using bits 7-3 of 'data'
-                    t |= ((u16)(data & 0xF8) << 2);
+                        // update bits E-C of 't' using bits 2-0 of 'data'
+                        t |= ((u16)(data & 0x07) << 12);
+                        // update bits 9-5 of 't' using bits 7-3 of 'data'
+                        t |= ((u16)(data & 0xF8) << 2);
 
-                    // clear write latch so that next write to register will work properly
-                    w = false;
+                        // clear write latch so that next write to register will work properly
+                        w = false;
+                    }
                 }
                 return;
             case 0x06: // write to PPUADDR
-                // writes to PPUADDR update the VRAM address
-                if (!w) { // first write update bits 13-8 using t
-                    // clear previous high byte of 't'
-                    t &= 0x00FF;
-                    // update 't' with new high byte
-                    // we use a mask because 't' only has 15 bits and bit 15 is explicitly cleared anyways
-                    t |= ((u16)(data & 0x3F) << 8);
-                    // set write latch so that next write works properly
-                    w = true;
-                } else { // second write update bits 7-0 using t and copies final value to v
-                    // clear previous low byte of 't'
-                    t &= 0x7F00;
-                    // update 't' with new low byte (here we simply use all supplied bits)
-                    t |= ((u16)data);
-                    // transfer 't' to 'v'
-                    // theoretically, the mask here is unnecessary; but better safe than sorry.
-                    v = t & 0x3FFF;
-                    // clear write latch so next write works properly
-                    w = false;
+                if (!ignoreEarlyCtrlWrites) {
+                    // writes to PPUADDR update the VRAM address
+                    if (!w) { // first write update bits 13-8 using t
+                        // clear previous high byte of 't'
+                        t &= 0x00FF;
+                        // update 't' with new high byte
+                        // we use a mask because 't' only has 15 bits and bit 15 is explicitly cleared anyways
+                        t |= ((u16)(data & 0x3F) << 8);
+                        // set write latch so that next write works properly
+                        w = true;
+                    } else { // second write update bits 7-0 using t and copies final value to v
+                        // clear previous low byte of 't'
+                        t &= 0x7F00;
+                        // update 't' with new low byte (here we simply use all supplied bits)
+                        t |= ((u16)data);
+                        // transfer 't' to 'v'
+                        // theoretically, the mask here is unnecessary; but better safe than sorry.
+                        v = t & 0x3FFF;
+                        // clear write latch so next write works properly
+                        w = false;
+                    }
                 }
                 return;
             case 0x07: // write to PPUDATA
@@ -408,6 +510,7 @@ void PPU::onPreRenderLine() {
         spritesOverflowed(false);
         inVBlank(false);
         recompNMI();
+        ignoreEarlyCtrlWrites = false;
     }
 
     if (renderingEnabled()) {
@@ -671,34 +774,6 @@ void PPU::setStatusData(STATUS which, bool v) {
         PPUSTATUS |= (0x01 << (u8)which);
     } else {
         PPUSTATUS &= (~(0x01 << (u8)which));
-    }
-}
-
-void PPU::reset() {
-    oddFrame = false;
-    w = false;
-    PPUSCROLL = 0x00;
-    PPUCTRL = 0x00;
-    PPUMASK = 0x00;
-    PPUDATA = 0x00;
-    scanline = 0;
-    cycle = 0;
-    v = 0x0000;
-    t = 0x0000;
-    dataBuffer = 0x00;
-    OAMADDR = 0x00;
-    spriteIndex = 0;
-    byteIndex = 0;
-    spritesOnScanline = 0;
-    suppressVBL = false;
-    suppressNMI = false;
-    nmiRequested = false;
-    nmiOutput = false;
-    for (auto& a : primaryOAM) {
-        a.fill(0xFF);
-    }
-    for (auto& a : secondaryOAM) {
-        a.fill(0xFF);
     }
 }
 

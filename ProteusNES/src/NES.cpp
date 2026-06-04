@@ -23,43 +23,79 @@ NES::NES() {
     cpu->connectCONT(player2, 2);
 }
 
+bool NES::poweron() {
+    // already on: quick-return success
+    if (powered) return true;
+
+    // no valid cart: quick-return failure
+    if (cart == nullptr || !cart->isValid()) return false;
+
+    // startup timing begins at zero
+    masterClock = 0;
+
+    // clear top-level transient runtime flags
+    ppu->frameComplete = false;
+
+    // put each device into its power-on state, not reset state
+    cart->powerup(seed ^ 0xC001D00D);
+    ppu->powerup(seed ^ 0x50505531);
+    apu->powerup(seed ^ 0x41505531);
+    cpu->powerup(seed ^ 0x43505531);
+
+    // successfully turned on the console
+    powered = true;
+    return powered;
+}
+
+void NES::reset() {
+    cart->reset();
+    ppu->reset();
+    apu->reset();
+    cpu->reset();
+    masterClock = 0;
+}
+
+bool NES::shutdown() {
+    ppu->powerdown();
+    apu->powerdown();
+    cpu->powerdown();
+    cart->powerdown();
+    masterClock = 0;
+    powered = false;
+    return true;
+}
+
 bool NES::loadROM(const string& path) {
     cart = make_shared<Gamepak>(path);
 
     if (cart->isValid()) {
+        // cart is valid; wire it to the other pieces
         cpu->connectCART(cart);
         ppu->connectCART(cart);
 
-        cpu->start();
+        // calculate the PRNG seed based on the current rom
+        deriveSeed("NES", path);
 
-        return true;
+        // return result of `poweron` sequence
+        return poweron();
     }
     return false;
-}
-
-void NES::reset() {
-    cpu->reset();
-    ppu->reset();
-    masterClock = 0x00;
 }
 
 void NES::clockCyclePPU() {
     ppu->clock();
     cart->mapper->ppuclock(ppu->cycle);
 
-    cpu->nmiTrigger |= ppu->nmiRequested;
+    cpu->nmiPending |= ppu->nmiRequested;
     ppu->nmiRequested = false;
 
-    cpu->irqTrigger |= cart->mapper->pullIRQ();
+    cpu->setIrqLine_Mapper(cart->mapper->irqRequestActive());
 }
 
 void NES::clockCycleCPU() {
     cart->mapper->cpuclock(cpu->totalCycles);
     cpu->clock();
     apu->clock();
-
-    cpu->irqTrigger |= apu->irqRequested;
-    apu->irqRequested = false;
 }
 
 void NES::clockMaster() {

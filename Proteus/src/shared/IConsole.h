@@ -20,7 +20,7 @@ class IConsole {
          * @brief Initialize the console
          * @return true if successful
          */
-        virtual bool initialize() { return true; }
+        virtual bool poweron() { return true; }
 
         /**
          * @brief Shutdown the console and release resources
@@ -28,15 +28,15 @@ class IConsole {
          */
         virtual bool shutdown() { return true; }
 
+        /// @brief Reset the console to initial state
+        virtual void reset() = 0;
+
         /**
          * @brief Load a ROM file into the console
          * @param romPath Full path to ROM file
          * @return true if loaded successfully
          */
         virtual bool loadROM(const string&) = 0;
-
-        /// @brief Reset the console to initial state
-        virtual void reset() = 0;
 
         /// @brief required for frontend to progress emulation
         virtual void clock() = 0;
@@ -90,6 +90,41 @@ class IConsole {
          * @return true if final state of system is equivalent to expected final state.
          */
         virtual bool checkSST(SingleStateTest::State, string&) = 0;
+
+    protected:
+        // initial fallback seed for use in PRNG
+        u32 seed;
+
+        void deriveSeed(const string& console, const string& path) {
+            // standard hashing values for 32-bit FNV-1a
+            u32 hash = 0x811C9DC5;
+            u32 prime = 0x01000193;
+
+            // compute seed as hash of string version of the `id` argument
+            for (const char& b : console) {
+                hash ^= b;
+                hash *= prime;
+            }
+
+            string name = std::filesystem::path(path).filename().string();
+            for (const char& b : name) {
+                hash ^= tolower(b);
+                hash *= prime;
+            }
+
+            size_t size = std::filesystem::file_size(path);
+            while (size != 0x00) {
+                u8 byte = size & 0xFF; // get LSB of size
+                size >>= 8; // shift size
+                hash ^= byte;
+                hash *= prime;
+            }
+
+            if (hash == 0)
+                seed = 0xA511E9B3;
+            else
+                seed = hash;
+        }
 };
 
 // Plugin contract version - increment on breaking changes

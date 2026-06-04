@@ -34,12 +34,26 @@ namespace NS_NES {
             */
             void clock();
 
-            /*
-                Reset function of the PPU.
-                Handles and performs any operations/changes necessary to
-                reset the PPU to a known and predetermined state.
-            */
-            void reset();
+            /**
+             * @brief Power On function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          initialize the PPU to it's "power on" state.
+             */
+            void powerup(u32 seed) override;
+
+            /**
+             * @brief Reset function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          reset the PPU to a known and predetermined state.
+             */
+            void reset() override;
+
+            /**
+             * @brief Power Down function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          shut down the PPU and cease all internal operations.
+             */
+            void powerdown() override;
 
             /*
                 Performs intra-device read operations on the various
@@ -87,6 +101,10 @@ namespace NS_NES {
             bool oddFrame = false;
             // suppress vbl flag
             bool suppressVBL = false;
+            // flag for init completion
+            bool ignoreEarlyCtrlWrites = true;
+
+            void clearPipelines();
 
             /*
                 Performs read operations by reading from VRAM on

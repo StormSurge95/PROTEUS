@@ -45,8 +45,21 @@ namespace NS_NES {
      */
     class M004 : public Mapper {
         public:
-            M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk << 1, pMem, cBnk << 3, cMem, pRam) {}
+            M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+
+            }
+
+            void reset() override {
+
+            }
+
+            void powerdown() override {
+                
+            }
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -271,13 +284,7 @@ namespace NS_NES {
                 return nametableArrangement;
             }
 
-            bool pullIRQ() override {
-                if (irqRequested) {
-                    irqRequested = false;
-                    return true;
-                }
-                return false;
-            }
+            bool irqRequestActive() const override { return irqRequested; }
 
             vector<array<string, 2>> getDebugData() override { return {}; }
 

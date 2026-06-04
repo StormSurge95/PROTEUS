@@ -512,10 +512,10 @@ void VideoManager::RenderDebug(float scale) {
             RenderDebugPPU();
             break;
         case DebugView::PPU_PATTERNTABLES:
-            // TODO: Add display with SELECTABLE palette entries and render pattern tables using whatever palette entry is selected
+            RenderDebugPTB();
             break;
         case DebugView::PPU_NAMETABLES:
-            // TODO: Add current PPU nametables display
+            RenderDebugNTB();
             break;
         case DebugView::APU_REGISTERS:
             // render current state of APU registers
@@ -603,6 +603,22 @@ void VideoManager::RenderDebugPPU() {
         }
         ImGui::EndTable();
     }
+}
+
+void VideoManager::RenderDebugPTB() {
+    vector<u32> colors = ctx->GetDebugger()->GetPaletteColors();
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    float w = ImGui::GetContentRegionAvail().x / 16;
+    ImVec2 p1 = ImGui::GetCursorScreenPos();
+    for (const u32& color : colors) {
+        ImVec2 p2 = ImVec2(p1.x + w, p1.y + w);
+        dl->AddRectFilled(p1, p2, color);
+        p1.x += w;
+    }
+}
+
+void VideoManager::RenderDebugNTB() {
+
 }
 
 void VideoManager::RenderDebugAPU() {

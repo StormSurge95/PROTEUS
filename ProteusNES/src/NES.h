@@ -26,6 +26,10 @@ namespace NS_NES {
             void runSST() override;
             bool checkSST(SingleStateTest::State s, string& o) override;
 
+            // console "init" function
+            bool poweron() override;
+            // console shutdown function
+            bool shutdown() override;
             // console reset function
             // fun fact: up until starting the development of this project, I thought that the
             // reset buttons on consoles literally just power-cycled them.
@@ -68,5 +72,6 @@ namespace NS_NES {
             sptr<APU> apu;              // shared pointer reference to the apu
             sptr<Controller> player1;   // shared pointer reference to p1 controller
             sptr<Controller> player2;   // shared pointer refernece to p2 contorller
+            bool powered = false;
     };
 }

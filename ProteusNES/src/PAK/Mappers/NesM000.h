@@ -25,8 +25,21 @@ namespace NS_NES {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR-ROM memory in gamepak
              */
-            M000(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M000(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+
+            }
+
+            void reset() override {
+
+            }
+
+            void powerdown() override {
+                
+            }
 
             /**
              * @brief Data read request from CPU for PRG memory.

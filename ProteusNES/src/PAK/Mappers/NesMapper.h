@@ -8,8 +8,6 @@ namespace NS_NES {
             // Allow Debugger class to access all private members of the Mapper class
             friend class NesDebugger;
         public:
-            /// @brief default constructor
-            Mapper() = default;
             /**
              * @brief Explicit constructor
              * @param pBnk Number of PRG-ROM banks
@@ -19,12 +17,16 @@ namespace NS_NES {
              * @param hasRam Whether or not the ROM in question has PRG-RAM
              */
             Mapper(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 subMapper = 0) :
-                prgBanks(pBnk), prgRom(pMem), chrBanks(cBnk), chrMem(cMem), prgRam(pRam) {
+                prgBanks(pBnk), prgRom(pMem), chrBanks(cBnk), chrMem(cMem), prgRam(pRam), subMapperID(subMapper) {
                 hasPrgRam = prgRam != nullptr;
                 hasChrRam = chrBanks == 0;
             }
             /// @brief default destructor
             virtual ~Mapper() = default;
+
+            virtual void powerup() = 0;
+            virtual void reset() = 0;
+            virtual void powerdown() = 0;
 
             /**
              * @brief Read memory operation originating from CPU.
@@ -82,7 +84,7 @@ namespace NS_NES {
              * @return If the mapper does not produce IRQs, then we simply return
              *      false; otherwise, we return the current state of the IRQ flag.
              */
-            virtual bool pullIRQ() { return false; }
+            virtual bool irqRequestActive() const { return false; }
             /**
              * @brief Observer function for keeping track of the PPU's A12 line.
              * @param addr The address to be used for observation of the A12 line.

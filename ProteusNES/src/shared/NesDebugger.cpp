@@ -648,7 +648,7 @@ vector<u32> NesDebugger::GetDMC() {
 vector<array<string, 2>> NesDebugger::GetPakHeader() const {
     vector<array<string, 2>> values;
 
-    values.push_back({ "", "Header Data" });
+    values.push_back({ "Header Data", "" });
     switch (nes->cart->hFormat) {
         case HeaderFormat::ANES:
             values.push_back({ "Header Format", "Archaic iNES or iNES 0.7" });
@@ -780,9 +780,6 @@ vector<array<string, 2>> NesDebugger::GetPakHeader() const {
     }
 
     values.push_back({ "Mapper Data", "" });
-    values.push_back({ "Mapper ID", to_string(nes->cart->mapperID) });
-    if (nes->cart->subMapperID != 0)
-        values.push_back({ "Submapper ID", to_string(nes->cart->subMapperID) });
     auto v = nes->cart->mapper->getDebugData();
     values.insert(values.end(), v.begin(), v.end());
 

@@ -5,13 +5,8 @@
 #include "./Mappers/NesM004.h"
 #include "./NesGamepak.h"
 
-/* TODO:
- * Figure out how to implement the functionalities
- * of the various forms of RAM that may or may not
- * be available in any given rom.
- */
-
 using namespace NS_NES;
+
 Gamepak::Gamepak(const string& path) {
     filePath = path;
     // open rom file
@@ -60,6 +55,33 @@ Gamepak::Gamepak(const string& path) {
     }
 
     file.close();
+}
+
+void Gamepak::powerup(u32 s) {
+    initPRNG(s);
+
+    // tell mapper to power up
+    if (mapper) mapper->powerup();
+
+    // initialize volatile PRG-RAM (if present)
+    if (prgRamVolatile.size() > 0) {
+        for (u8& byte : prgRamVolatile) byte = nextByte();
+    }
+
+    // initialize volatile CHR-RAM (if present)
+    if (chrRamVolatile.size() > 0) {
+        for (u8& byte : chrRamVolatile) byte = nextByte();
+    }
+}
+
+void Gamepak::reset() {
+    if (mapper) mapper->reset();
+}
+
+void Gamepak::powerdown() {
+    if (mapper) mapper->powerdown();
+    if (prgRamNonVolatile.size() > 0)
+        SaveRAM();
 }
 
 path Gamepak::GetSavePath() {
@@ -254,11 +276,11 @@ void Gamepak::initMapper(u16 id) {
     vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
     vector<u8>* pRam = hasPrgRam() ? (prgRamNonVolatile.size() > 0 ? &prgRamNonVolatile : &prgRamVolatile) : nullptr;
     switch (id) {
-        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);
