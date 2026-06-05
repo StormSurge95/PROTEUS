@@ -41,6 +41,7 @@ namespace NS_Proteus {
         PPU_REGS,
         PPU_PATTERNTABLES,
         PPU_NAMETABLES,
+        PPU_SPRITES,
         APU_REGISTERS,
         APU_CHANNELS,
         PAK_HEADER,

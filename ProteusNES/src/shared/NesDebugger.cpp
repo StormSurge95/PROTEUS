@@ -379,20 +379,35 @@ vector<string> NesDebugger::GetDisassembly() const {
     return lines;
 }
 
-vector<u32> NesDebugger::GetPaletteColors() {
+vector<u8> NesDebugger::GetPaletteIndices() const {
+    vector<u8> indices;
+    for (u8 i = 0; i < 32; i++)
+        indices.push_back(nes->ppu->ppuRead(0x3F00 + i, true) & 0x3F);
+    return indices;
+}
+
+vector<u32> NesDebugger::GetPaletteColors(const vector<u8>& indices) const {
     vector<u32> colors;
-    for (int i = 0; i < 16; ++i) {
-        u8 paletteIndex = nes->ppu->ppuRead(0x3F00 + i, true);
-        colors.push_back(nes->ppu->masterPalette[paletteIndex]);
-    }
+    for (const u8& index : indices)
+        colors.push_back(nes->ppu->masterPalette[index]);
     return colors;
 }
 
-vector<u32> NesDebugger::GetPatternTable(int index) {
+const PaletteData NesDebugger::GetPaletteData() const {
+    vector<u8> indices = GetPaletteIndices();
+    vector<u32> colors = GetPaletteColors(indices);
+
+    return { colors, indices, 4, 8, 4, 4 };
+}
+
+vector<u32> NesDebugger::GetPatternTable(int tableID, int paletteID) {
     vector<u32> pixels(16384, 0xFF000000);
 
-    // TODO: Get Pattern Table pixel data from PPU
-    u16 baseAddr = index * 0x1000;
+    u16 baseAddr = tableID * 0x1000;
+
+    // get the current color palette based on the provided index
+    u16 paletteOffset = (paletteID < 4) ?
+            paletteID * 4 : 0x10 + (paletteID - 4) * 4;
 
     for (u16 tileIndex = 0; tileIndex < 256; tileIndex++) {
         u8 tileX = (tileIndex % 16);
@@ -408,7 +423,9 @@ vector<u32> NesDebugger::GetPatternTable(int index) {
 
                 u8 colorIndex = (b1 << 1) | b0;
 
-                u32 color = debugPalette[colorIndex];
+                u16 paletteAddr = 0x3F00 + paletteOffset + colorIndex;
+                u8 paletteEntry = nes->ppu->ppuRead(paletteAddr, true) & 0x3F;
+                u32 color = nes->ppu->masterPalette[paletteEntry];
 
                 u16 pixelX = tileX * 8 + col;
                 u16 pixelY = tileY * 8 + row;
@@ -435,7 +452,57 @@ string NesDebugger::GetFlags(int status) const {
 }
 
 vector<u32> NesDebugger::GetNameTable(int id) {
-    return vector<u32>();
+    vector<u32> pixels(256 * 240, 0xFF000000);
+
+    u16 ntBase = 0x2000 + (id * 0x0400);
+    u16 bgPatternBase = nes->ppu->getBackgroundPatternTableAddr();
+
+    for (size_t tileY = 0; tileY < 30; tileY++) {
+        for (size_t tileX = 0; tileX < 32; tileX++) {
+            u16 ntOffset = tileY * 32 + tileX;
+            u8 tileIndex = nes->ppu->ppuRead(ntBase + ntOffset, true);
+
+            u16 attrAddr =
+                ntBase + 0x03C0 +
+                ((tileY / 4) * 8) +
+                (tileX / 4);
+
+            u8 attrByte = nes->ppu->ppuRead(attrAddr, true);
+
+            u8 shift =
+                ((tileY & 0x02) ? 4 : 0) +
+                ((tileX & 0x02) ? 2 : 0);
+
+            u8 paletteIndex = (attrByte >> shift) & 0x03;
+            u8 paletteBase = paletteIndex * 4;
+
+            u16 tileAddr = bgPatternBase + (tileIndex * 16);
+
+            for (u8 row = 0; row < 8; row++) {
+                u8 p0 = nes->ppu->ppuRead(tileAddr + row, true);
+                u8 p1 = nes->ppu->ppuRead(tileAddr + row + 8, true);
+
+                for (u8 col = 0; col < 8; col++) {
+                    u8 b0 = (p0 >> (7 - col)) & 1;
+                    u8 b1 = (p1 >> (7 - col)) & 1;
+                    u8 colorIndex = (b1 << 1) | b0;
+
+                    u16 paletteAddr = 0x3F00;
+                    if (colorIndex != 0)
+                        paletteAddr += paletteBase + colorIndex;
+
+                    u8 masterIndex = nes->ppu->ppuRead(paletteAddr, true) & 0x3F;
+                    u32 color = nes->ppu->masterPalette[masterIndex];
+
+                    u16 pixelX = tileX * 8 + col;
+                    u16 pixelY = tileY * 8 + row;
+                    pixels[pixelY * 256 + pixelX] = color;
+                }
+            }
+        }
+    }
+
+    return pixels;
 }
 
 vector<array<string, 4>> NesDebugger::GetStateAPU() const {
@@ -784,4 +851,65 @@ vector<array<string, 2>> NesDebugger::GetPakHeader() const {
     values.insert(values.end(), v.begin(), v.end());
 
     return values;
+}
+
+vector<u32> NesDebugger::GetSprites() const {
+    const u8 sprW = 8;
+    const u8 sprH = nes->ppu->getSpriteHeight();
+    const u16 atlW = 8 * sprW;
+    const u16 atlH = 8 * sprH;
+
+    vector<u32> pixels(size_t(atlW) * atlH, 0x00000000);
+
+    for (u8 spr = 0; spr < 64; spr++) {
+        const array<u8, 4>& oam = nes->ppu->primaryOAM[spr];
+        const u8 tile = oam[1];
+        const u8 attr = oam[2];
+
+        const u16 dstBaseX = (spr % 8) * 8;
+        const u16 dstBaseY = (spr / 8) * sprH;
+
+        const bool flipX = nes->ppu->flipX(attr);
+        const bool flipY = nes->ppu->flipY(attr);
+        const u8 pal = nes->ppu->getSpritePalette(attr);
+
+        for (u8 row = 0; row < sprH; row++) {
+            u8 sampleY = flipY ? (sprH - 1 - row) : row;
+
+            u16 pattLo = 0;
+            if (sprH == 8) {
+                pattLo =
+                    nes->ppu->getSpritePatternTableAddr8x8() +
+                    (u16(tile) * 16) +
+                    sampleY;
+            } else {
+                u16 table = (tile & 0x01) ? 0x1000 : 0x0000;
+                u16 tileBase = tile & 0xFE;
+                if (sampleY >= 8) {
+                    tileBase += 1;
+                    sampleY -= 8;
+                }
+                pattLo = table + (tileBase * 16) + sampleY;
+            }
+
+            u8 p0 = nes->ppu->ppuRead(pattLo, true);
+            u8 p1 = nes->ppu->ppuRead(pattLo + 8, true);
+
+            for (u8 col = 0; col < 8; col++) {
+                const u8 bit = flipX ? col : (7 - col);
+                const u8 colorIndex = (((p1 >> bit) & 1) << 1) | ((p0 >> bit) & 1);
+
+                u32 color = 0x00000000;
+                if (colorIndex != 0) {
+                    const u16 palAddr = 0x3F10 + (pal * 4) + colorIndex;
+                    const u8 masterIndex = nes->ppu->ppuRead(palAddr, true) & 0x3F;
+                    color = nes->ppu->masterPalette[masterIndex];
+                }
+
+                pixels[(dstBaseY + row) * atlW + (dstBaseX + col)] = color;
+            }
+        }
+    }
+
+    return pixels;
 }

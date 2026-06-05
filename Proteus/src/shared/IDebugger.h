@@ -2,6 +2,15 @@
 
 #include "./SharedPCH.h"
 
+struct PaletteData {
+    vector<u32> colors = {};
+    vector<u8> indices = {};
+    u8 colorsPerPalette = 4;
+    u8 paletteCount = 8;
+    u8 bgPaletteCount = 4;
+    u8 spritePaletteOffset = 4;
+};
+
 /**
  * @interface IDebugger
  * @brief Debugging interface for console cores
@@ -75,11 +84,19 @@ class IDebugger {
          */
         virtual vector<array<string, 4>> GetStatePPU() const = 0;
 
+        virtual const PaletteData GetPaletteData() const = 0;
+
+        /**
+         * @brief Get the list of indices for the currently loaded palette colors within PPU VRAM
+         * @return A vector list of indices in the range 0-63 (inclusive); one for each color 
+         */
+        virtual vector<u8> GetPaletteIndices() const = 0;
+
         /**
          * @brief Get the list of currently loaded palette colors within PPU VRAM
          * @return A vector list containing the currently loaded palette colors as unsigned integers
          */
-        virtual vector<u32> GetPaletteColors() = 0;
+        virtual vector<u32> GetPaletteColors(const vector<u8>& indices) const = 0;
 
         /**
          * @brief Get a specified Pattern Table from ROM memory
@@ -87,7 +104,7 @@ class IDebugger {
          * @return A vector list containing each of the pixels for the requested pattern table
          * @todo should there be another parameter to hold the "pitch" of the returned pattern table?
          */
-        virtual vector<u32> GetPatternTable(int) = 0;
+        virtual vector<u32> GetPatternTable(int, int) = 0;
 
         /**
          * @brief Get a specified Nametable from ROM memory
@@ -120,6 +137,8 @@ class IDebugger {
          * @return true of a breakpoint is set
          */
         virtual bool IsBreakpointSet() const { return false; }
+
+        virtual vector<u32> GetSprites() const = 0;
 
         /**
          * @brief Get the values of various header-defined portions of the gamepak

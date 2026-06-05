@@ -757,7 +757,14 @@ void PPU::renderPixel() {
     }
 
     if (finalPixel != 0) paletteAddr += ((finalAttr << 2) + finalPixel);
-    if (sprSource) paletteAddr += 0x10;
+    if (sprSource) {
+        paletteAddr += 0x10;
+
+        // if (scanline == 8)
+        //     printf("Scanline: %d; cycle: %d; sprPixel: %d; sprAttr: %d; sprIndex: %d; bgPixel: %d; bgAttr: %d; finalPixel: %d; finalAttr: %d; sprSource: %s\n",
+        //         scanline, cycle - 1, sprPixel, sprAttr, sprIndex, bgPixel, bgAttr, finalPixel, finalAttr, sprSource ? "true" : "false"
+        //     );
+    }
 
     u8 index = ppuRead(paletteAddr, false);
 

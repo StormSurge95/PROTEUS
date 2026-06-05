@@ -90,16 +90,25 @@ namespace NS_NES {
              */
             vector<array<string, 4>> GetStatePPU() const override;
             /**
-             * @brief Acquires the various palette colors used by the ROM
+             * @brief Acquires the list of palette colors used by the ROM
              * @return A vector of the palette colors for easy processing/rendering
              */
-            vector<u32> GetPaletteColors() override;
+            vector<u32> GetPaletteColors(const vector<u8>& indices) const override;
+            /**
+             * @brief Acquires the list of indices within palette RAM that relate to the corresponding colors within `GetPaletteColor`
+             * @return A vector of index values.
+             */
+            vector<u8> GetPaletteIndices() const override;
+            /**
+             * 
+             */
+            const PaletteData GetPaletteData() const override;
             /**
              * @brief Acquires a pattern table used by the ROM to render backgrounds/sprites
              * @param id The id number of the pattern table
              * @return A vector containing pixel data for the full pattern table referred to by `id`
              */
-            vector<u32> GetPatternTable(int id) override;
+            vector<u32> GetPatternTable(int tableID, int paletteID) override;
             /**
              * @brief Acquires a specified nametable currently in use for displaying ROM background(s)
              * @param id The id number of the nametable to get
@@ -147,5 +156,7 @@ namespace NS_NES {
              * @return A vector of 2-string arrays, with one entry per Header-defined value
              */
             vector<array<string, 2>> GetPakHeader() const override;
+
+            vector<u32> GetSprites() const override;
     };
 }

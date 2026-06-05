@@ -118,23 +118,22 @@ void PPU::spriteEval() {
 }
 
 void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
-    u16 sprFineY = (scanline + 1) - y - 1;
+    u16 sprFineY = scanline - y;
 
     if (getSpriteHeight() == 8) {
         if (flipY(secondaryOAM[index][2]))
             sprFineY = 7 - sprFineY;
 
-        spritePatternAddr = (
+        spritePatternAddr =
             getSpritePatternTableAddr8x8() +
-            ((u16)id * 16) +
-            sprFineY
-            );
+            (u16(id) * 16) +
+            sprFineY;
     } else {
         if (flipY(secondaryOAM[index][2]))
             sprFineY = 15 - sprFineY;
 
-        u16 table = ((u16)id & 1) * 0x1000;
-        u16 tileIndex = (u16)id & 0xFE;
+        u16 table = (id & 0x01) * 0x1000;
+        u16 tileIndex = id & 0xFE;
 
         if (sprFineY >= 8) {
             tileIndex += 1;

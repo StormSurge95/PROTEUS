@@ -75,6 +75,7 @@ namespace NS_Proteus {
                 { DebugView::PPU_REGS, false },
                 { DebugView::PPU_PATTERNTABLES, false },
                 { DebugView::PPU_NAMETABLES, false },
+                { DebugView::PPU_SPRITES, false },
                 { DebugView::APU_REGISTERS, false },
                 { DebugView::APU_CHANNELS, false },
                 { DebugView::PAK_HEADER, false }
@@ -110,6 +111,7 @@ namespace NS_Proteus {
 
             MenuSelection selectedItem;
 
+            u8 selectedPalette = 0;
             u8 ramPage = 0x00;
 
             void RenderConsoleSelection();
@@ -122,9 +124,17 @@ namespace NS_Proteus {
             void RenderDebugPPU();
             void RenderDebugPTB();
             void RenderDebugNTB();
+            void RenderDebugSPR();
             void RenderDebugAPU();
             void RenderDebugPAK();
             void RenderOverlay();
+
+            void RenderPaletteSelector(const vector<u32>& colors, int paletteIndex, float itemWidth, u8 colorsPerPalette);
+            SDL_Texture* patternTableTextures[2] = { nullptr, nullptr };
+            bool patternTablesDirty = true;
+            SDL_Texture* nametableTextures[4] = { nullptr, nullptr, nullptr, nullptr };
+            SDL_Texture* sprTexture = nullptr;
+            u16 sprTextureHeight = 0;
 
             void PrepViewport(ImGuiViewport* vp);
             void PrepUI(ImGuiViewport* vp, MenuType type);

@@ -51,6 +51,11 @@ static int max(const int& n1, const int& n2) {
     else return n2;
 }
 
+static double min(const double& n1, const double& n2) {
+    if (n1 < n2) return n1;
+    else return n2;
+}
+
 static s32 FindMiddlestWhitespace(const std::string& s) {
     if (s.empty()) return -1;
 

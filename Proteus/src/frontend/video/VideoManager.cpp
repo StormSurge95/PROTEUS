@@ -476,6 +476,9 @@ void VideoManager::RenderDebug(float scale) {
                 if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
                     SetDebugView(DebugView::PPU_NAMETABLES);
                 }
+                if (ImGui::MenuItem("SPRITES", nullptr, &debugViews.at(DebugView::PPU_SPRITES))) {
+                    SetDebugView(DebugView::PPU_SPRITES);
+                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("APU")) {
@@ -516,6 +519,9 @@ void VideoManager::RenderDebug(float scale) {
             break;
         case DebugView::PPU_NAMETABLES:
             RenderDebugNTB();
+            break;
+        case DebugView::PPU_SPRITES:
+            RenderDebugSPR();
             break;
         case DebugView::APU_REGISTERS:
             // render current state of APU registers
@@ -605,20 +611,155 @@ void VideoManager::RenderDebugPPU() {
     }
 }
 
-void VideoManager::RenderDebugPTB() {
-    vector<u32> colors = ctx->GetDebugger()->GetPaletteColors();
+void VideoManager::RenderPaletteSelector(const vector<u32>& colors, int paletteIndex, float itemWidth, u8 colorsPerPalette) {
+    constexpr float aspect = 86.0f / 26.0f;
+
+    float itemHeight = itemWidth / aspect;
+    
+    float padding = itemHeight * (4.0f / 26.0f);
+    float gap = itemWidth * (2.0f / 86.0f);
+    if (gap < 1.0f) gap = 1.0f;
+    
+    ImVec2 swatchSize(
+        (itemWidth - (padding * 2.0f) - (gap * 3.0f)) / 4.0f,
+        itemHeight - (padding * 2.0f)
+    );
+
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    float w = ImGui::GetContentRegionAvail().x / 16;
-    ImVec2 p1 = ImGui::GetCursorScreenPos();
-    for (const u32& color : colors) {
-        ImVec2 p2 = ImVec2(p1.x + w, p1.y + w);
-        dl->AddRectFilled(p1, p2, color);
-        p1.x += w;
+    bool changed = false;
+
+    ImGui::PushID(paletteIndex);
+
+    ImVec2 itemMin = ImGui::GetCursorScreenPos();
+    ImVec2 itemSize(itemWidth, itemHeight);
+
+    if (ImGui::InvisibleButton("palette", itemSize)) {
+        if (selectedPalette != paletteIndex) {
+            selectedPalette = paletteIndex;
+            patternTablesDirty = true;
+        }
     }
+
+    bool hovered = ImGui::IsItemHovered();
+    bool selected = (selectedPalette == paletteIndex);
+
+    ImVec2 itemMax(itemMin.x + itemWidth, itemMin.y + itemHeight);
+
+    if (hovered) dl->AddRectFilled(itemMin, itemMax, IM_COL32(255, 255, 255, 12), 3.0f);
+
+    int base = paletteIndex * colorsPerPalette;
+
+    float x = itemMin.x + padding;
+    float y = itemMin.y + padding;
+
+    for (int i = 0; i < colorsPerPalette; i++) {
+        ImVec2 swatchMin(x, y);
+        ImVec2 swatchMax(x + swatchSize.x, y + swatchSize.y);
+
+        dl->AddRectFilled(swatchMin, swatchMax, colors[base + i]);
+        dl->AddRect(swatchMin, swatchMax, IM_COL32(0, 0, 0, 255), 0.0f, 0, 1.0f);
+
+        x += swatchSize.x + gap;
+    }
+
+    ImVec2 groupMin(itemMin.x + padding, itemMin.y + padding);
+    ImVec2 groupMax(itemMax.x - padding, itemMax.y - padding);
+
+    if (selected) {
+        dl->AddRect(groupMin, groupMax, IM_COL32(255, 220, 80, 255), 3.0f, 0, 2.0f);
+    } else if (hovered) {
+        dl->AddRect(groupMin, groupMax, IM_COL32(200, 200, 200, 100), 3.0f, 0, 1.0f);
+    }
+
+    ImGui::PopID();
+}
+
+void VideoManager::RenderDebugPTB() {
+    // get palette data
+    PaletteData pal = ctx->GetDebugger()->GetPaletteData();
+
+    float w = ImGui::GetContentRegionAvail().x / 4.0f;
+
+    // render the selectable palette entries
+    for (u8 i = 0; i < pal.paletteCount; i++) {
+        RenderPaletteSelector(pal.colors, i, w, pal.colorsPerPalette);
+        if (i % 4 != 3) ImGui::SameLine(0.0f, 0.0f);
+    }
+
+    if (patternTablesDirty) {
+        for (u8 i = 0; i < 2; i++) {
+            vector<u32> pixels = ctx->GetDebugger()->GetPatternTable(i, selectedPalette);
+
+            if (patternTableTextures[i] == nullptr) {
+                patternTableTextures[i] = SDL_CreateTexture(
+                    renderer, SDL_PIXELFORMAT_ABGR8888,
+                    SDL_TEXTUREACCESS_STREAMING, 128, 128
+                );
+            }
+
+            void* dots;
+            int pitch;
+            SDL_LockTexture(patternTableTextures[i], nullptr, &dots, &pitch);
+            for (u32 y = 0; y < 128; y++) {
+                memcpy(
+                    reinterpret_cast<u8*>(dots) + y * pitch,
+                    reinterpret_cast<u8*>(pixels.data()) + y * (128 * sizeof(u32)),
+                    128 * sizeof(u32)
+                );
+            }
+            SDL_UnlockTexture(patternTableTextures[i]);
+        }
+        patternTablesDirty = false;
+    }
+
+    float availH = ImGui::GetContentRegionAvail().y;
+    float space = ImGui::GetStyle().ItemSpacing.y;
+    float imgHeight = (availH - space) / 2.0f;
+    float imgWidth = imgHeight;
+
+    ImGui::Image(patternTableTextures[0], ImVec2(imgWidth, imgHeight));
+    ImGui::Image(patternTableTextures[1], ImVec2(imgWidth, imgHeight));
 }
 
 void VideoManager::RenderDebugNTB() {
+    // update our nametable textures
+    for (u8 i = 0; i < 4; i++) {
+        vector<u32> pixels = ctx->GetDebugger()->GetNameTable(i);
 
+        if (nametableTextures[i] == nullptr) {
+            nametableTextures[i] = SDL_CreateTexture(
+                renderer, SDL_PIXELFORMAT_ABGR8888,
+                SDL_TEXTUREACCESS_STREAMING, 256, 240
+            );
+        }
+
+        void* dots;
+        int pitch;
+        SDL_LockTexture(nametableTextures[i], nullptr, &dots, &pitch);
+        for (u32 y = 0; y < 240; y++) {
+            memcpy(
+                reinterpret_cast<u8*>(dots) + y * pitch,
+                reinterpret_cast<u8*>(pixels.data()) + y * (256 * sizeof(u32)),
+                256 * sizeof(u32)
+            );
+        }
+        SDL_UnlockTexture(nametableTextures[i]);
+    }
+
+    float aspect = 256.0f / 240.0f;
+
+    float space = ImGui::GetStyle().ItemSpacing.x;
+    
+    // this allows us to have a total of four nametables visible
+    float imgWidth = (ImGui::GetContentRegionAvail().x - space) / 2.0f;
+    float imgHeight = imgWidth / aspect;
+
+    ImGui::Image(nametableTextures[0], ImVec2(imgWidth, imgHeight));
+    ImGui::SameLine(0.0f, space);
+    ImGui::Image(nametableTextures[1], ImVec2(imgWidth, imgHeight));
+    ImGui::Image(nametableTextures[2], ImVec2(imgWidth, imgHeight));
+    ImGui::SameLine(0.0f, space);
+    ImGui::Image(nametableTextures[3], ImVec2(imgWidth, imgHeight));
 }
 
 void VideoManager::RenderDebugAPU() {
@@ -687,4 +828,43 @@ void VideoManager::RenderDebugPAK() {
         }
         ImGui::EndTable();
     }
+}
+
+void VideoManager::RenderDebugSPR() {
+    const vector<u32> pixels = ctx->GetDebugger()->GetSprites();
+
+    const int atlW = 64;
+    const int atlH = int(pixels.size() / atlW);
+    if (atlH <= 0) return;
+
+    if (sprTexture == nullptr || sprTextureHeight != atlH) {
+        if (sprTexture) {
+            SDL_DestroyTexture(sprTexture);
+            sprTexture = nullptr;
+        }
+
+        sprTexture = SDL_CreateTexture(
+            renderer, SDL_PIXELFORMAT_ABGR8888,
+            SDL_TEXTUREACCESS_STREAMING, atlW, atlH
+        );
+        sprTextureHeight = (u16)atlH;
+    }
+
+    void* texels = nullptr;
+    int pitch = 0;
+    SDL_LockTexture(sprTexture, nullptr, &texels, &pitch);
+    for (int y = 0; y < atlH; y++) {
+        memcpy(
+            reinterpret_cast<u8*>(texels) + y * pitch,
+            reinterpret_cast<const u8*>(pixels.data()) + y * atlW * sizeof(u32),
+            atlW * sizeof(u32)
+        );
+    }
+    SDL_UnlockTexture(sprTexture);
+
+    const ImVec2 avail = ImGui::GetContentRegionAvail();
+    float scale = floorf(min(avail.x / float(atlW), avail.y / float(atlH)));
+    if (scale < 1.0f) scale = 1.0f;
+
+    ImGui::Image(sprTexture, ImVec2(atlW * scale, atlH * scale));
 }

@@ -46,19 +46,38 @@ namespace NS_NES {
     class M004 : public Mapper {
         public:
             M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+                Mapper(pBnk << 1, pMem, cBnk << 3, cMem, pRam, id2) {
             }
 
             void powerup() override {
+                MMC6 = subMapperID == 1;
 
+                bankSelect = 0;
+                pMode = false;
+                cMode = false;
+
+                bankData = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+                nametableArrangement = MIRROR::HORIZONTAL;
+
+                ramProtect = { false, false, false, false, false, false };
+
+                irqCounter = 0;
+                irqReload = 0;
+                irqEnabled = false;
+                irqRequested = false;
+                reloadPending = false;
+
+                prevA12High = false;
+                lowFetchStreak = 0;
             }
 
             void reset() override {
-
+                powerup();
             }
 
             void powerdown() override {
-                
+                powerup();
             }
 
             /**
