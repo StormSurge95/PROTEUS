@@ -866,5 +866,21 @@ void VideoManager::RenderDebugSPR() {
     float scale = floorf(min(avail.x / float(atlW), avail.y / float(atlH)));
     if (scale < 1.0f) scale = 1.0f;
 
+    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    ImVec2 itemMin(topLeft.x, topLeft.y);
+    int sW = 8 * scale;
+    int sH = (atlH / 8) * scale;
+
     ImGui::Image(sprTexture, ImVec2(atlW * scale, atlH * scale));
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    for (int i = 0; i < 64; i++) {
+        ImVec2 itemMax(itemMin.x + sW, itemMin.y + sH);
+        dl->AddRect(itemMin, itemMax, IM_COL32(255, 255, 255, 255));
+        dl->AddText(itemMin, IM_COL32(255, 255, 255, 255), to_string(i).c_str());
+        if (i % 8 == 7) {
+            itemMin.x = topLeft.x;
+            itemMin.y += sH;
+        } else itemMin.x += sW;
+    }
 }

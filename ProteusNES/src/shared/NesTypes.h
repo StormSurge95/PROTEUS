@@ -553,10 +553,11 @@ namespace NS_NES {
         u8 patternHi = 0x00;
         u8 attr = 0x00;
         u8 xCounter = 0x00;
+        u8 index = 0x00;
 
         ActiveSprite() = default;
-        ActiveSprite(u8 pl, u8 ph, u8 a, u8 x) :
-            patternLo(pl), patternHi(ph), attr(a), xCounter(x) {}
+        ActiveSprite(u8 pl, u8 ph, u8 a, u8 x, u8 i) :
+            patternLo(pl), patternHi(ph), attr(a), xCounter(x), index(i) {}
     };
 
     /**

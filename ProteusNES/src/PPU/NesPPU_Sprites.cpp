@@ -95,8 +95,8 @@ void PPU::spriteEval() {
     else {
         // check if we're in range
         u8 h = getSpriteHeight();
-        u8 tgt = scanline + 1;
-        u8 top = oamLatch + 1;
+        u16 tgt = scanline + 1;
+        u16 top = u16(oamLatch) + 1;
 
         if (tgt >= top && tgt < (top + h)) {
             if (spriteIndex == 0) sprite0HitOnNextScanline = true;
@@ -167,7 +167,7 @@ void PPU::spriteFetch() {
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:
-            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition);
+            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition, secondaryOAM[sprite][4]);
             break;
 
     }
