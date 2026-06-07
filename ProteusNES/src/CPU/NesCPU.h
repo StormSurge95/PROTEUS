@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
     class PPU;
@@ -26,6 +27,8 @@ namespace NS_NES {
              */
             friend class NesDebugger;
         private:
+            NesEventSink* eventSink = nullptr;
+
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST
             array<u8, 65536> ram; /// @brief CPU ram container for SSTs
@@ -258,6 +261,8 @@ namespace NS_NES {
             CPU();
             /// @brief Default Destructor
             ~CPU() = default;
+
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
 
             void init(SingleStateTest::State state);
             bool check(SingleStateTest::State state, string& result);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./shared/NesPCH.h"
+#include "./shared/NesEventSink.h"
 #include "./PPU/NesPPU.h"
 #include "./PAK/Mappers/NesMapper.h"
 
@@ -17,10 +18,14 @@ namespace NS_NES {
             // master clock counter for the console
             u64 masterClock = 0x00;
 
+            NesEventSink* eventSink = nullptr;
+
             // explicit constructor
             NES();
             // default destructor
             ~NES() = default;
+
+            void connectEventSink(NesEventSink* sink);
 
             void initSST(SingleStateTest::State s) override;
             void runSST() override;

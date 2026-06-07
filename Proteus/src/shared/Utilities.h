@@ -195,4 +195,70 @@ static ConsoleID GetIDFromName(string name) {
     return ConsoleID::NONE;
 }
 
+static u32 LerpColor(u32 c1, u32 c2, float t) {
+    // ABGR
+    u8 r1 = c1 & 0xFF; u8 r2 = c2 & 0xFF;
+    u8 g1 = (c1 >> 8) & 0xFF; u8 g2 = (c2 >> 8) & 0xFF;
+    u8 b1 = (c1 >> 16) & 0xFF; u8 b2 = (c2 >> 16) & 0xFF;
+
+    u32 r = u32((r2 - r1) * t + r1);
+    u32 g = u32((g2 - g1) * t + g1);
+    u32 b = u32((b2 - b1) * t + b1);
+
+    return 0xFF000000 | (b << 16) | (g << 8) | r;
+}
+
+static u32 WithAlpha(u32 c, u32 a) {
+    // ensure that we only use 8 bits for the alpha value
+    a &= 0xFF;
+    // clear existing alpha value and then set it to our new alpha
+    return (c & 0x00FFFFFF) | (a << 24);
+}
+
+static u32 Brighten(u32 color, float factor) {
+    if (factor < 1.0f) factor = 1 / factor;
+
+    // ABGR
+    u32 r = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 g = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 b = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 a = color & 0xFF;
+
+    u32 ret = a;
+    ret <<= 8;
+    ret |= b;
+    ret <<= 8;
+    ret |= g;
+    ret <<= 8;
+    ret |= r;
+    
+    return ret;
+}
+
+static u32 Dim(u32 color, float factor) {
+    if (factor > 1.0f) factor = 1 / factor;
+
+    // ABGR
+    u32 r = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 g = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 b = (color & 0xFF) * factor;
+    color >>= 8;
+    u32 a = color & 0xFF;
+
+    u32 ret = a;
+    ret <<= 8;
+    ret |= b;
+    ret <<= 8;
+    ret |= g;
+    ret <<= 8;
+    ret |= r;
+
+    return ret;
+}
+
 #pragma warning(pop)

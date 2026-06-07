@@ -66,6 +66,7 @@ APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.
 u8 APU::read(u16 addr, bool readonly) {
     if (addr == 0x4015) {
         apuBus = read4015();
+        if (eventSink) eventSink->OnApuRegisterRead("APUSTATUS", 0x4015, apuBus);
     }
     return apuBus;
 }
@@ -73,19 +74,70 @@ u8 APU::read(u16 addr, bool readonly) {
 void APU::write(u16 addr, u8 data) {
     apuBus = data;
     // pulse 1 channels
-    if (addr >= 0x4000 && addr <= 0x4003) return pulse1->write(addr, data);
+    if (addr >= 0x4000 && addr <= 0x4003) {
+        if (eventSink) {
+            if (addr == 0x4000) eventSink->OnApuRegisterWrite("Pulse 1 - control", addr, data);
+            else if (addr == 0x4001) eventSink->OnApuRegisterWrite("Pulse 1 - sweep", addr, data);
+            else if (addr == 0x4002) eventSink->OnApuRegisterWrite("Pulse 1 - timer low", addr, data);
+            else if (addr == 0x4003) eventSink->OnApuRegisterWrite("Pulse 1 - lcl/timer high", addr, data);
+        }
+
+        return pulse1->write(addr, data);
+    }
     // pulse 2 channels
-    if (addr >= 0x4004 && addr <= 0x4007) return pulse2->write(addr, data);
+    if (addr >= 0x4004 && addr <= 0x4007) {
+        if (eventSink) {
+            if (addr == 0x4004) eventSink->OnApuRegisterWrite("Pulse 2 - control", addr, data);
+            else if (addr == 0x4005) eventSink->OnApuRegisterWrite("Pulse 2 - sweep", addr, data);
+            else if (addr == 0x4006) eventSink->OnApuRegisterWrite("Pulse 2 - timer low", addr, data);
+            else if (addr == 0x4007) eventSink->OnApuRegisterWrite("Pulse 2 - lcl/timer high", addr, data);
+        }
+
+        return pulse2->write(addr, data);
+    }
     // triangle channels
-    if (addr >= 0x4008 && addr <= 0x400B) return triangle->write(addr, data);
+    if (addr >= 0x4008 && addr <= 0x400B) {
+        if (eventSink) {
+            if (addr == 0x4008) eventSink->OnApuRegisterWrite("Triangle - control", addr, data);
+            else if (addr == 0x400A) eventSink->OnApuRegisterWrite("Triangle - timer low", addr, data);
+            else if (addr == 0x400B) eventSink->OnApuRegisterWrite("Triangle - lcl/timer high", addr, data);
+        }
+
+        return triangle->write(addr, data);
+    }
     // noise channels
-    if (addr >= 0x400C && addr <= 0x400F) return noise->write(addr, data);
+    if (addr >= 0x400C && addr <= 0x400F) {
+        if (eventSink) {
+            if (addr == 0x400C) eventSink->OnApuRegisterWrite("Noise - control", addr, data);
+            else if (addr == 0x400E) eventSink->OnApuRegisterWrite("Noise - mode/period", addr, data);
+            else if (addr == 0x400F) eventSink->OnApuRegisterWrite("Noise - lcl", addr, data);
+        }
+
+        return noise->write(addr, data);
+    }
     // dmc channels
-    if (addr >= 0x4010 && addr <= 0x4013) return dmc->write(addr, data);
+    if (addr >= 0x4010 && addr <= 0x4013) {
+        if (eventSink) {
+            if (addr == 0x4010) eventSink->OnApuRegisterWrite("DMC - irq/loop/frequency", addr, data);
+            else if (addr == 0x4011) eventSink->OnApuRegisterWrite("DMC - load counter", addr, data);
+            else if (addr == 0x4012) eventSink->OnApuRegisterWrite("DMC - sample address", addr, data);
+            else if (addr == 0x4013) eventSink->OnApuRegisterWrite("DMC - sample length", addr, data);
+        }
+
+        return dmc->write(addr, data);
+    }
     // control register
-    if (addr == 0x4015) return write4015(data);
+    if (addr == 0x4015) {
+        if (eventSink) eventSink->OnApuRegisterWrite("APU - control", addr, data);
+
+        return write4015(data);
+    }
     // frame counter register
-    if (addr == 0x4017) return write4017(data);
+    if (addr == 0x4017) {
+        if (eventSink) eventSink->OnApuRegisterWrite("APU - Frame Counter", addr, data);
+
+        return write4017(data);
+    }
 }
 
 void APU::clock() {
@@ -182,6 +234,7 @@ void APU::clockFrameCounter() {
         case 29828: // irq trigger (only during 4-step with irq enabled)
             if (!use5step && !inhibitIRQ) {
                 irqRequested = true;
+                if (eventSink) eventSink->OnInterrupt("IRQ", "requested via frame counter");
                 cpu.lock()->setIrqLine_APU(true);
             }
             break;

@@ -41,7 +41,6 @@ void PPU::fetchBGPatternByteLo() {
     u16 addr = getBackgroundPatternTableAddr() |
         (((u16)nextNametableByte) << 4) |
         ((u16)fineY());
-    cart.lock()->mapper->observeAddressPPU(addr, false);
     nextPatternByteLo = ppuRead(addr, false);
 }
 
@@ -49,7 +48,6 @@ void PPU::fetchBGPatternByteHi() {
     u16 addr = getBackgroundPatternTableAddr() |
         (((u16)nextNametableByte) << 4) |
         ((u16)fineY());
-    cart.lock()->mapper->observeAddressPPU(addr + 8, false);
     nextPatternByteHi = ppuRead(addr + 8, false);
 }
 

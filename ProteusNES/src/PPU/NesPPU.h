@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 #include "../PAK/NesGamepak.h"
 #include "../CPU/NesCPU.h"
@@ -14,6 +15,7 @@ namespace NS_NES {
             u16 scanline = 0;
             // current dot/pixel of current scanline
             u16 cycle = 0;
+            u64 totalDots = 0;
             // public nmi flag as produced by ppu
             bool nmiRequested = false;
             // frame complete flag
@@ -94,6 +96,8 @@ namespace NS_NES {
             void connectCART(sptr<Gamepak>& c) { cart = c; }
             // connects the cpu to the ppu
             void connectCPU(sptr<CPU>& c) { cpu = c; }
+            // connects the event sink instance to the PPU
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
         private:
             // current nmi output value
             bool nmiOutput = false;
@@ -103,6 +107,8 @@ namespace NS_NES {
             bool suppressVBL = false;
             // flag for init completion
             bool ignoreEarlyCtrlWrites = true;
+
+            NesEventSink* eventSink = nullptr;
 
             void clearPipelines();
 

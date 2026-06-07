@@ -11,6 +11,160 @@ struct PaletteData {
     u8 spritePaletteOffset = 4;
 };
 
+struct EventViewerDisplaySize {
+    u32 width = 0;
+    u32 height = 0;
+};
+
+struct EventViewerCategoryConfig {
+    bool visible = true;
+    u32 color = 0xFFFFFFFF;
+};
+
+struct EventViewerConfig {
+    bool autoRefresh = false;
+    bool showPreviousFrame = false;
+};
+
+namespace DebugEventFlags  {
+    enum : u32 {
+        NONE = 0,
+
+        // ACCESS FLAGS
+        READ = 1 << 0,
+        WRITE = 1 << 1,
+        EXECUTE = 1 << 2,
+
+        // SUBSYSTEM & DOMAIN FLAGS
+        MEMORY = 1 << 3,
+        IO = 1 << 4,
+        VIDEO = 1 << 5,
+        AUDIO = 1 << 6,
+        INPUT = 1 << 7,
+        DMA = 1 << 8,
+        INTERRUPT = 1 << 9,
+
+        // VIEWER & UI STATE FLAGS
+        PREVIOUS_FRAME = 1 << 10,
+        SYNTHETIC = 1 << 11,
+        HIGHLIGHTED = 1 << 12,
+        ERROR = 1 << 13,
+
+        HAS_ADDRESS = 1 << 14,
+        HAS_VALUE = 1 << 15,
+        HAS_DETAILS = 1 << 16,
+    };
+}
+
+static const u32 DebugEvent_ReadVideo =
+    DebugEventFlags::IO |
+    DebugEventFlags::READ |
+    DebugEventFlags::VIDEO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteVideo =
+    DebugEventFlags::IO |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::VIDEO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadAudio =
+    DebugEventFlags::IO |
+    DebugEventFlags::READ |
+    DebugEventFlags::AUDIO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteAudio =
+    DebugEventFlags::IO |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::AUDIO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadMapper =
+    DebugEventFlags::IO |
+    DebugEventFlags::READ |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteMapper =
+    DebugEventFlags::IO |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadInput =
+    DebugEventFlags::IO |
+    DebugEventFlags::READ |
+    DebugEventFlags::INPUT |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteInput =
+    DebugEventFlags::IO |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::INPUT |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadDma =
+    DebugEventFlags::DMA |
+    DebugEventFlags::READ |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteDma =
+    DebugEventFlags::DMA |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::IO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_Interrupt =
+    DebugEventFlags::INTERRUPT |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_Breakpoint =
+    DebugEventFlags::EXECUTE |
+    DebugEventFlags::SYNTHETIC |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_SpriteZeroHit = DebugEventFlags::VIDEO;
+
+struct DebugEventRecord {
+    u16 scanline = 0;
+    u16 cycle = 0;
+    u32 address = 0;
+    u32 value = 0;
+    u32 color = 0xFFFFFFFF;
+    u32 flags = 0;
+    string type = "";
+    string details = "";
+
+
+    bool hasAddress() const {
+        return (flags & DebugEventFlags::HAS_ADDRESS) != 0;
+    }
+    bool hasValue() const {
+        return (flags & DebugEventFlags::HAS_VALUE) != 0;
+    }
+    bool hasDetails() const {
+        return (flags & DebugEventFlags::HAS_DETAILS) != 0;
+    }
+    bool isNull() const {
+        return flags == DebugEventFlags::NONE;
+    }
+};
+
+const static DebugEventRecord NullEvent = {
+    .flags = DebugEventFlags::NONE
+};
+
 /**
  * @interface IDebugger
  * @brief Debugging interface for console cores
@@ -145,6 +299,19 @@ class IDebugger {
          * @return A vector of string arrays in the format `{ <data name>, <data value> }`
          */
         virtual vector<array<string, 2>> GetPakHeader() const = 0;
+        /**
+         * @brief Get the values of various mapper-defined portions of the gamepak
+         * @return a vector of string arrays in the format `{ "<data name>", "<data value>" }`
+         */
+        virtual vector<array<string, 2>> GetPakMapper() const = 0;
+
+        virtual EventViewerDisplaySize GetEventViewerDisplaySize() const = 0;
+        virtual void SetEventViewerConfig(const EventViewerConfig& cfg) = 0;
+        virtual EventViewerConfig GetEventViewerConfig() const = 0;
+        virtual vector<u32> GetEventViewerPixels() const = 0;
+        virtual vector<DebugEventRecord> GetEventViewerEvents() const = 0;
+        virtual const DebugEventRecord& GetEventAt(u16 scanline, u16 cycle) const = 0;
+        virtual void TakeEventViewerSnapshot(bool forAutoRefresh) = 0;
 };
 
 #define IDEBUGGER_CONTRACT_VERSION 1

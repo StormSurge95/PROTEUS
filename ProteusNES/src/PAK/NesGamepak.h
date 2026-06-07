@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
     class Mapper;
@@ -30,6 +31,8 @@ namespace NS_NES {
             Gamepak(const string& path);
             /// @brief Default destructor
             ~Gamepak() { powerdown(); }
+            
+            void connectEventSink(NesEventSink* sink);
 
             void powerup(u32 seed) override;
             void reset() override;
@@ -88,6 +91,8 @@ namespace NS_NES {
             VsHardware vsHardware = VsHardware::VS_UNISYSTEM;
 
             ExpansionDevice expDev = ExpansionDevice::UNSPECIFIED;
+
+            NesEventSink* eventSink = nullptr;
 
             /// @brief validity flag for ROM data
             bool valid = false;

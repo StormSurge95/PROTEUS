@@ -23,6 +23,14 @@ NES::NES() {
     cpu->connectCONT(player2, 2);
 }
 
+void NES::connectEventSink(NesEventSink* s) {
+    eventSink = s;
+    cpu->connectEventSink(s);
+    ppu->connectEventSink(s);
+    apu->connectEventSink(s);
+    if (cart) cart->connectEventSink(s);
+}
+
 bool NES::poweron() {
     // already on: quick-return success
     if (powered) return true;
@@ -69,6 +77,8 @@ bool NES::loadROM(const string& path) {
     cart = make_shared<Gamepak>(path);
 
     if (cart->isValid()) {
+        if (eventSink) cart->connectEventSink(eventSink);
+
         // cart is valid; wire it to the other pieces
         cpu->connectCART(cart);
         ppu->connectCART(cart);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 #include "./NesPulse.h"
 #include "./NesTriangle.h"
 #include "./NesNoise.h"
@@ -32,6 +33,8 @@ namespace NS_NES {
              * @brief Default Destructor
              */
             ~APU() = default;
+
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
 
             /**
              * @brief Connects the bus to the APU.
@@ -95,6 +98,8 @@ namespace NS_NES {
             void dmcOnByteFetched(u8 byte) { dmc->onByteFetch(byte); }
 
         private:
+            NesEventSink* eventSink = nullptr;
+
             /// @brief Used to keep track of when to reset FrameCounter.
             u64 masterCycle = 0x0000000000000000;
             /// @brief Current APU cycle.

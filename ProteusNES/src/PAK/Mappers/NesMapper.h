@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../shared/NesPCH.h"
+#include "../../shared/NesEventSink.h"
 
 namespace NS_NES {
     /// @interface Mapper Mapper.h "./Mapper.h"
@@ -23,6 +24,8 @@ namespace NS_NES {
             }
             /// @brief default destructor
             virtual ~Mapper() = default;
+            
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
 
             virtual void powerup() = 0;
             virtual void reset() = 0;
@@ -89,10 +92,11 @@ namespace NS_NES {
              * @brief Observer function for keeping track of the PPU's A12 line.
              * @param addr The address to be used for observation of the A12 line.
              */
-            virtual void observeAddressPPU(u16 addr, bool isWrite) {}
+            virtual void observeAddressPPU(u16 addr, u64 time) {}
 
             virtual vector<array<string, 2>> getDebugData() = 0;
         protected:
+            NesEventSink* eventSink = nullptr;
             /// @brief submapper version to use for operations
             u8 subMapperID = 0;
             /// @brief total number of PRG-ROM banks

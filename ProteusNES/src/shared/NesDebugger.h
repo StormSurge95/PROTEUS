@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./NesPCH.h"
+#include "./NesEventSink.h"
 #include "../NES.h"
 
 namespace NS_NES {
@@ -9,12 +10,43 @@ namespace NS_NES {
      * @implements INesDebugger
      * @brief This is meant to be the main debugging tool of the NES emulator.
      */
-    class NesDebugger : public IDebugger {
+    class NesDebugger : public IDebugger, public NesEventSink {
         private:
             /// @brief enabled flag
             bool enabled = false;
             /// @brief reference to the station
             NES* nes = nullptr;
+
+            EventViewerConfig evConfig = {};
+            vector<u32> evPixelsSnapshot = {};
+            vector<DebugEventRecord> evEventsSnapshot = {};
+            vector<DebugEventRecord> evrActiveFrame = {};
+            vector<DebugEventRecord> evrLastFrame = {};
+            vector<DebugEventRecord> evrPrevFrame = {};
+            bool evSnapshotValid = false;
+            enum class EventType {
+                PPU_READ, PPU_WRITE, APU_READ, APU_WRITE,
+                MAPPER_READ, MAPPER_WRITE, CONTROLLER_READ,
+                CONTROLLER_WRITE, DMC_READ, OAM_READ, OAM_START,
+                INTERRUPT_IRQ, INTERRUPT_NMI, ZERO_HIT, BREAKPOINT
+            };
+            map<EventType, u32> defaultEventColors = {
+                { EventType::PPU_READ,          0xFF00DFFF },
+                { EventType::PPU_WRITE,         0xFFFFA000 },
+                { EventType::APU_READ,          0xFF60E060 },
+                { EventType::APU_WRITE,         0xFF90FF40 },
+                { EventType::MAPPER_READ,       0xFF40A0FF },
+                { EventType::MAPPER_WRITE,      0xFF2080FF },
+                { EventType::CONTROLLER_READ,   0xFFFF40D0 },
+                { EventType::CONTROLLER_WRITE,  0xFFFF70F0 },
+                { EventType::DMC_READ,          0xFF40FF40 },
+                { EventType::OAM_READ,          0xFFE060A0 },
+                { EventType::OAM_START,         0xFFFF60C0 },
+                { EventType::INTERRUPT_IRQ,     0xFF4040FF },
+                { EventType::INTERRUPT_NMI,     0xFF6060FF },
+                { EventType::ZERO_HIT,          0xFFFFFFFF },
+                { EventType::BREAKPOINT,        0xFF00BFFF }
+            };
 
             /**
              * @brief Helper function for decoding instructions
@@ -44,6 +76,33 @@ namespace NS_NES {
             bool IsEnabled() const override { return enabled; }
             /// @brief clears the NES station reference
             void Clear();
+
+            /// @section EVENT
+            /// @brief Event-Viewer-related debugging methods; WIP
+            EventViewerDisplaySize GetEventViewerDisplaySize() const override;
+            void SetEventViewerConfig(const EventViewerConfig& cfg) override;
+            EventViewerConfig GetEventViewerConfig() const override;
+            vector<u32> GetEventViewerPixels() const override;
+            vector<DebugEventRecord> GetEventViewerEvents() const override;
+            const DebugEventRecord& GetEventAt(u16, u16) const override;
+            void TakeEventViewerSnapshot(bool forAutoRefresh) override;
+            void OnPpuRegisterRead(string details, u16 addr, u8 data) override;
+            void OnPpuRegisterWrite(string details, u16 addr, u8 data) override;
+            void OnApuRegisterRead(string details, u16 addr, u8 data) override;
+            void OnApuRegisterWrite(string details, u16 addr, u8 data) override;
+            void OnMapperRegisterRead(string details, u16 addr, u8 data) override;
+            void OnMapperRegisterWrite(string details, u16 addr, u8 data) override;
+            void OnControllerRead(string details, u16 addr, u8 data) override;
+            void OnControllerWrite(string details, u16 addr, u8 data) override;
+            void OnDmcDmaRead(string details, u16 addr, u8 data) override;
+            void OnOamDmaRead(u16 addr, u8 data) override;
+            void OnOamDmaStart(u8 data) override;
+            void OnInterrupt(string type, string details) override;
+            void OnSpriteZeroHit() override;
+            void OnMarkedBreakpoint(string details) override;
+            void OnFrameComplete() override;
+
+            u32 GetEventColor(EventType type);
 
             /// @section CPU
             /// @brief CPU-related debugging methods; fully functional, but subject to change
@@ -115,6 +174,15 @@ namespace NS_NES {
              * @return A vector containing the constructed pixel data of the requested nametable
              */
             vector<u32> GetNameTable(int id) override;
+            /**
+             * @brief Acquires the set of sprites defined within the primary OAM of PPU memory.
+             * @details Collects the data within `PPU::primaryOAM` and then uses it to construct each sprite.
+             *          Upon constructing a sprite, copies the constructed pixels into a pre-sized vector such
+             *          that the contents of the vector resemble a single frame consisting of an 8x8 grid of
+             *          all constructed sprites.
+             * @return A single vector containing the constructed pixels of all sprites.
+             */
+            vector<u32> GetSprites() const override;
 
             /// @section APU
             /// @brief APU-related debugging methods; currenly unimplemented
@@ -150,13 +218,12 @@ namespace NS_NES {
             vector<u32> GetDMC();
 
             /// @section PAK
-            /// @section PAK-related debuggin methods; currently limited to just acquiring header-defined information
+            /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
             /**
              * @brief Acquires and formats the information defined within the Gamepak Header as a 2D array of strings
              * @return A vector of 2-string arrays, with one entry per Header-defined value
              */
             vector<array<string, 2>> GetPakHeader() const override;
-
-            vector<u32> GetSprites() const override;
+            vector<array<string, 2>> GetPakMapper() const override;
     };
 }

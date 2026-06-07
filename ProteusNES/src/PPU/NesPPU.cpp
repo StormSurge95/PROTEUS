@@ -134,6 +134,9 @@ u8 PPU::read(u16 addr, bool readonly) {
                     inVBlank(false);
                     w = false;
                     recompNMI();
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterRead("PPUSTATUS", 0x2000 | addr, ret);
+                    }
                 }
                 break;
             case 0x04: // read from OAMDATA
@@ -142,6 +145,9 @@ u8 PPU::read(u16 addr, bool readonly) {
                 if (readonly) return ret;
                 // update counters for bit decay
                 updateCounters(0xFF);
+                if (eventSink) {
+                    eventSink->OnPpuRegisterRead("OAMDATA", 0x2000 | addr, ret);
+                }
                 break;
             case 0x07: // read from PPUDATA
                 {
@@ -158,17 +164,19 @@ u8 PPU::read(u16 addr, bool readonly) {
                         dataBuffer = data;
                     }
                     v = (v + getVRAMIncrement()) & 0x3FFF;
-                    ppuBus = ret;
                     updateCounters(0xFF);
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterRead("PPUDATA", 0x2000 | addr, ret);
+                    }
                 }
                 break;
         }
+        // by this point, ppubus should have been updated using the requested value;
+        // so we can simply update and return ppubus at this point (also this prevents
+        // the "not all control paths return a value" issue within VS)
+        ppuBus = ret;
     }
-    // by this point, ppubus should have been updated using the requested value;
-    // so we can simply return ppubus at this point (also this prevents the
-    // "not all control paths return a value" issue within VS)
-    ppuBus = ret;
-    return ppuBus;
+    return ret;
 }
 
 void PPU::write(u16 addr, u8 data) {
@@ -179,7 +187,6 @@ void PPU::write(u16 addr, u8 data) {
         updateCounters(0xFF);
         // mask address for mirroring
         addr &= 0x0007;
-
         switch (addr) {
             case 0x00: // write to PPUCTRL
                 if (!ignoreEarlyCtrlWrites) {
@@ -188,17 +195,31 @@ void PPU::write(u16 addr, u8 data) {
                     // update t register bits 11 & 12 using bits 0 & 1 of new data
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
                     recompNMI();
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterWrite("PPUCTRL", 0x2000 | addr, data);
+                    }
                     return;
                 }
             case 0x01: // write to PPUMASK
-                if (!ignoreEarlyCtrlWrites) PPUMASK = data;
+                if (!ignoreEarlyCtrlWrites) {
+                    PPUMASK = data;
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterWrite("PPUMASK", 0x2000 | addr, data);
+                    }
+                }
                 return;
             case 0x03: // write to OAMADDR
                 OAMADDR = data;
+                if (eventSink) {
+                    eventSink->OnPpuRegisterWrite("OAMADDR", 0x2000 | addr, data);
+                }
                 return;
             case 0x04: // write to OAMDATA
                 writeOAMByte(OAMADDR, data); // update OAM
                 OAMADDR++; // increment address
+                if (eventSink) {
+                    eventSink->OnPpuRegisterWrite("OAMDATA", 0x2000 | addr, data);
+                }
                 return;
             case 0x05: // write to PPUSCROLL
                 if (!ignoreEarlyCtrlWrites) {
@@ -228,6 +249,9 @@ void PPU::write(u16 addr, u8 data) {
                         // clear write latch so that next write to register will work properly
                         w = false;
                     }
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterWrite("PPUSCROLL", 0x2000 | addr, data);
+                    }
                 }
                 return;
             case 0x06: // write to PPUADDR
@@ -252,12 +276,18 @@ void PPU::write(u16 addr, u8 data) {
                         // clear write latch so next write works properly
                         w = false;
                     }
+                    if (eventSink) {
+                        eventSink->OnPpuRegisterWrite("PPUADDR", 0x2000 | addr, data);
+                    }
                 }
                 return;
             case 0x07: // write to PPUDATA
                 PPUDATA = data; // update register
                 ppuWrite(v, PPUDATA); // update vram using value
                 v = (v + getVRAMIncrement()) & 0x3FFF; // increment vram address
+                if (eventSink) {
+                    eventSink->OnPpuRegisterWrite("PPUDATA", 0x2000 | addr, data);
+                }
                 return;
         }
     }
@@ -267,6 +297,10 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
     if (!readonly) ppuAddrBus = addr;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
     u8 ret = 0x00; // temp var for return value
+
+    if (!readonly && addr <= 0x3EFF) {
+        cart.lock()->mapper->observeAddressPPU(addr, totalDots);
+    }
     
     if (addr >= 0x0000 && addr <= 0x1FFF) {
         // if address is within CHR memory, read from gamepak/mapper
@@ -364,6 +398,10 @@ void PPU::ppuWrite(u16 addr, u8 data) {
     ppuAddrBus = addr;
     ppuBus = data;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
+
+    if (addr <= 0x3EFF)
+        cart.lock()->mapper->observeAddressPPU(addr, totalDots);
+    
     if (addr >= 0x0000 && addr <= 0x1FFF)
         // if address is within CHR memory, write to gamepak/mapper
         cart.lock()->mapper->ppuWrite(addr, data);
@@ -481,6 +519,7 @@ void PPU::clock() {
         if (scanline >= 262) { // if we have done all scanlines on this frame...
             scanline = 0; // ...reset scanline count...
             frameComplete = true; // ...mark frame as complete (so console can render it)...
+            eventSink->OnFrameComplete();
             oddFrame = !oddFrame; // ...alternate whether this frame # was odd or even
             // check our counters and update ppuBus based on the bit decay(s)
             for (int x = 0; x < 8; x++) {
@@ -489,6 +528,8 @@ void PPU::clock() {
             }
         }
     }
+
+    totalDots++;
 }
 
 void PPU::onPreRenderLine() {
@@ -535,7 +576,9 @@ void PPU::onPreRenderLine() {
         }
 
         // dummy nametable fetch on 337
+        // ppuRead((0x2000 | (v & 0x0FFF)), false);
         // dummy nametable fetch on 339
+        if (cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
     }
 }
 
@@ -649,6 +692,8 @@ void PPU::onVisibleLine() {
         if (cycle == 256) incrementFineY();
         // copy all horizontal bits after all rendering is complete so that we can get the correct horizontal scroll
         if (cycle == 257) copyHorizontalBits();
+
+        if (cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
     }
 }
 
@@ -743,8 +788,10 @@ void PPU::renderPixel() {
         finalAttr = bgAttr;
     } else {
         // handle sprite 0 hit
-        if (sprite0HitOnThisScanline && sprIndex == 0 && cycle != 256)
+        if (sprite0HitOnThisScanline && sprIndex == 0 && cycle != 256) {
             spriteZeroHit(true);
+            if (eventSink) eventSink->OnSpriteZeroHit();
+        }
 
         if (spriteAboveBackground(sprAttr)) {
             finalPixel = sprPixel;
@@ -843,6 +890,8 @@ u8 PPU::readSpriteAttr(SPRITE_ATTR which, u8 attr) {
 void PPU::recompNMI() {
     bool prevNMI = nmiOutput;
     nmiOutput = inVBlank() && getNMIEnabled();
-    if (!prevNMI && nmiOutput && !suppressNMI)
+    if (!prevNMI && nmiOutput && !suppressNMI) {
         nmiRequested = true;
+        if (eventSink) eventSink->OnInterrupt("NMI", "requested");
+    }
 }

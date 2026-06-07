@@ -424,36 +424,10 @@ void VideoManager::RenderDebug(float scale) {
 
     ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("OPTIONS")) {
-            static bool temp = false;;
-            if (ImGui::Checkbox("LOG TO FILE", &temp)) {
-                ImGui::OpenPopup("Filepath Select", ImPopupFlags);
-            }
-            ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
-            ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
-            ImGui::SetNextWindowFocus();
-            if (ImGui::BeginPopup("Filepath Select", ImPopupWindowFlags)) {
-                ImGui::TextWrapped("Enter the name of the log file to create:");
-                static char filepath[256] = "proteus_log.txt";
-                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-                ImGui::InputText("##Filepath", filepath, 256);
-                ImGui::PopItemWidth();
-                float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
-                if (ImGui::Button("Confirm", ImVec2(w, 0))) {
-                    ctx->GetLogger()->SetLogPath(filepath);
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Cancel", ImVec2(w, 0))) {
-                    temp = false;
-                    ctx->GetLogger()->DisableFileLogging();
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::EndPopup();
-            }
-            ImGui::EndMenu();
-        }
         if (ImGui::BeginMenu("VIEW")) {
+            if (ImGui::MenuItem("EVENTS", nullptr, &debugViews.at(DebugView::EVENT_VIEWER))) {
+                SetDebugView(DebugView::EVENT_VIEWER);
+            }
             if (ImGui::BeginMenu("CPU")) {
                 if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS))) {
                     SetDebugView(DebugView::CPU_REGS);
@@ -495,9 +469,42 @@ void VideoManager::RenderDebug(float scale) {
             }
             ImGui::EndMenu();
         }
+        if (ImGui::BeginMenu("OPTIONS")) {
+            static bool temp = false;;
+            if (ImGui::Checkbox("LOG TO FILE", &temp)) {
+                ImGui::OpenPopup("Filepath Select", ImPopupFlags);
+            }
+            ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
+            ImGui::SetNextWindowFocus();
+            if (ImGui::BeginPopup("Filepath Select", ImPopupWindowFlags)) {
+                ImGui::TextWrapped("Enter the name of the log file to create:");
+                static char filepath[256] = "proteus_log.txt";
+                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::InputText("##Filepath", filepath, 256);
+                ImGui::PopItemWidth();
+                float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
+                if (ImGui::Button("Confirm", ImVec2(w, 0))) {
+                    ctx->GetLogger()->SetLogPath(filepath);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(w, 0))) {
+                    temp = false;
+                    ctx->GetLogger()->DisableFileLogging();
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+            ImGui::EndMenu();
+        }
         ImGui::EndMenuBar();
     }
     switch (currentDebugView) {
+        case DebugView::EVENT_VIEWER:
+            RenderDebugEVT();
+            break;
+        default:
         case DebugView::CPU_REGS:
             // render current state of CPU registers
             RenderDebugCPU();
@@ -533,12 +540,206 @@ void VideoManager::RenderDebug(float scale) {
         case DebugView::PAK_HEADER:
             RenderDebugPAK();
             break;
-        default:
-            break;
     }
     ImGui::End();
 
     ImGui::PopFont();
+}
+
+void VideoManager::RenderDebugEVT() {
+    // ensure debugger exists
+    IDebugger* dbg = ctx->GetDebugger();
+    if (!dbg) {
+        ImGui::Text("No debugger available.");
+        return;
+    }
+
+    // get the current event viewer configuration
+    EventViewerConfig cfg = dbg->GetEventViewerConfig();
+
+    // refresh button allows immediate taking of new snapshot
+    if (ImGui::Button("Refresh")) {
+        dbg->TakeEventViewerSnapshot(false);
+    }
+
+    // if auto refresh, then we take a new snapshot anyways
+    if (cfg.autoRefresh) {
+        dbg->TakeEventViewerSnapshot(true);
+    }
+
+    // observer for whether we need to change the saved config
+    bool changed = false;
+
+    // add checkboxes that affect our observer
+    ImGui::SameLine();
+    changed |= ImGui::Checkbox("Auto-refresh", &cfg.autoRefresh);
+    ImGui::SameLine();
+    changed |= ImGui::Checkbox("Show previous frame", &cfg.showPreviousFrame);
+
+    // if config changed, update it within the debugger
+    if (changed) {
+        dbg->SetEventViewerConfig(cfg);
+    }
+    
+    // get current event viewer frame size
+    EventViewerDisplaySize evSize = dbg->GetEventViewerDisplaySize();
+    // ensure that returned size is valid
+    if (evSize.width == 0 || evSize.height == 0) {
+        ImGui::Text("Event viewer returned an empty surface.");
+        return;
+    }
+
+    // ensure texture used for ev frame is valid
+    if (evTexture && (evTexture->w != evSize.width || evTexture->h != evSize.height)) {
+        SDL_DestroyTexture(evTexture);
+    }
+    if (!evTexture) {
+        evTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, evSize.width, evSize.height);
+    }
+
+    // get the ev pixels constructed by the debugger
+    vector<u32> evPixels = dbg->GetEventViewerPixels();
+    // ensure that a first snapshot has been taken without forcing user interaction
+    if (evPixels.size() != size_t(evSize.width) * size_t(evSize.height)) {
+        dbg->TakeEventViewerSnapshot(false);
+        evPixels = dbg->GetEventViewerPixels();
+    }
+    // copy retrieved pixels into our ev texture
+    void* pixels;
+    int pitch;
+    SDL_LockTexture(evTexture, nullptr, &pixels, &pitch);
+    for (u32 y = 0; y < evSize.height; y++) {
+        memcpy(
+            reinterpret_cast<u8*>(pixels) + y * pitch,
+            reinterpret_cast<u8*>(evPixels.data()) + y * (evSize.width * sizeof(u32)),
+            evSize.width * sizeof(u32)
+        );
+    }
+    SDL_UnlockTexture(evTexture);
+
+    // calculate canvas size
+    float w = ImGui::GetContentRegionAvail().x;
+    float ratio = evSize.width / w;
+    ImVec2 canvas(w, evSize.height / ratio);
+
+    ImGui::InvisibleButton("EVENT_VIEWER_CANVAS", canvas);
+
+    ImVec2 canvasMin = ImGui::GetItemRectMin();
+    ImVec2 canvasMax = ImGui::GetItemRectMax();
+    bool hovered = ImGui::IsItemHovered();
+    bool clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left) && hovered;
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+
+    dl->AddRectFilled(canvasMin, canvasMax, 0xFF000000);
+
+    float scale = min(canvas.x / evSize.width, canvas.y / evSize.height);
+
+    ImVec2 gameRectMin(canvasMin.x, canvasMin.y);
+    ImVec2 gameRectMax(
+        canvasMin.x + (float(dispInfo.gameWidth) / float(evSize.width)) * canvas.x,
+        canvasMin.y + (float(dispInfo.gameHeight) / float(evSize.height)) * canvas.y
+    );
+
+    dl->AddImage(gameTexture, gameRectMin, gameRectMax);
+    dl->AddImage(evTexture, canvasMin, canvasMax);
+
+    // create render after-effect so that user knows exactly which event pixel they are hovering over
+    if (hovered) {
+        // hide cursor so that user can more easily see which pixel they are about to click
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
+        // get various position related values from ImGui
+        ImVec2 mousePos = ImGui::GetMousePos();
+        ImVec2 imgMin = ImGui::GetItemRectMin();
+        ImVec2 imgMax = ImGui::GetItemRectMax();
+
+        // calculate other position values based on collected values
+        ImVec2 localPos(mousePos.x - imgMin.x, mousePos.y - imgMin.y);
+        ImVec2 uvPos(std::clamp(localPos.x / canvas.x, 0.0f, 0.999999f), std::clamp(localPos.y / canvas.y, 0.0f, 0.999999f));
+
+        // calculate the appropriate cycle/scanline values for the pixel being hovered over
+        u32 cycle = u32(std::floor(uvPos.x * evSize.width));
+        u32 scanline = u32(std::floor(uvPos.y * evSize.height));
+
+        DebugEventRecord event = dbg->GetEventAt(scanline, cycle);
+
+        // determine the on-screen bounds of the in-emulator pixel
+        ImVec2 cellMin(
+            imgMin.x + (float(cycle) / float(evSize.width)) * canvas.x,
+            imgMin.y + (float(scanline) / float(evSize.height)) * canvas.y
+        );
+        ImVec2 cellMax(
+            imgMin.x + (float(cycle + 1) / float(evSize.width)) * canvas.x,
+            imgMin.y + (float(scanline + 1) / float(evSize.height)) * canvas.y
+        );
+
+        // draw crosshairs that form a square around the pixel in question
+        dl->AddLineH(imgMin.x, imgMax.x, cellMin.y, 0xFFFFFFFF);
+        dl->AddLineH(imgMin.x, imgMax.x, cellMax.y, 0xFFFFFFFF);
+        dl->AddLineV(cellMin.x, imgMin.y, imgMax.y, 0xFFFFFFFF);
+        dl->AddLineV(cellMax.x, imgMin.y, imgMax.y, 0xFFFFFFFF);
+
+        if (ImGui::BeginTooltip()) {
+            if (event.isNull()) {
+                ImGui::Text("%s", "NO EVENT");
+                ImGui::Text("(%d, %d)", cycle, scanline);
+                ImGui::Text("");
+                ImGui::Text("No event at this position");
+            } else {
+                ImGui::Text("%s", event.type.c_str());
+                ImGui::Text("(%d, %d)", cycle, scanline);
+                ImGui::Text("");
+                if (event.hasAddress()) ImGui::Text("Address: %04X", event.address);
+                if (event.hasValue()) ImGui::Text("Value: %02X", event.value);
+            }
+            ImGui::EndTooltip();
+        }
+
+        // manage click on event pixel
+        if (clicked) {
+            if (!event.isNull()) {
+                evSelectedScanline = scanline;
+                evSelectedCycle = cycle;
+            }
+        }
+    }
+
+    // render event list via table structure
+    vector<DebugEventRecord> evr = dbg->GetEventViewerEvents();
+    if (ImGui::BeginChild("EVENT TABLE", ImGui::GetContentRegionAvail())) {
+        if (ImGui::BeginTable("EVENT RECORDS", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+            ImGui::TableSetupColumn("Type");
+            ImGui::TableSetupColumn("Scanline");
+            ImGui::TableSetupColumn("Dot/Pixel");
+            ImGui::TableSetupColumn("Address");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableSetupColumn("Details");
+            ImGui::TableHeadersRow();
+            for (const DebugEventRecord& event : evr | std::views::reverse) {
+                ImGui::TableNextRow();
+                u32 color = LerpColor(WithAlpha(event.color, 96), WithAlpha(0xFFFFFFFF, 96), 0.25);
+                if (event.scanline == evSelectedScanline && event.cycle == evSelectedCycle) {
+                    color = Brighten(color, 0.5f); // TODO: figure out why this completely changes the color
+                }
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", event.type.c_str());
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.scanline);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.cycle);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%04X", event.address);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%02X", event.value);
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", event.details.c_str());
+            }
+            ImGui::EndTable();
+        }
+        ImGui::EndChild();
+    }
 }
 
 void VideoManager::RenderDebugCPU() {
@@ -813,18 +1014,34 @@ void VideoManager::SetDebugView(DebugView view) {
 }
 
 void VideoManager::RenderDebugPAK() {
-    size_t i = 0;
-    vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
     if (ImGui::BeginTable("GAMEPAK INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableHeader("Gamepak Data");
         ImGui::TableSetupColumn("Data");
         ImGui::TableSetupColumn("Value");
         ImGui::TableHeadersRow();
-        for (; i < pakData.size(); i++) {
+        vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
+        for (size_t i = 0; i < pakData.size(); i++) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
             ImGui::Text("%s", pakData[i][0].c_str());
             ImGui::TableNextColumn();
             ImGui::Text("%s", pakData[i][1].c_str());
+        }
+        ImGui::EndTable();
+    }
+    ImGui::Separator();
+    if (ImGui::BeginTable("MAPPER INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableHeader("Mapper Data");
+        ImGui::TableSetupColumn("Data");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableHeadersRow();
+        vector<array<string, 2>> mapData = ctx->GetDebugger()->GetPakMapper();
+        for (size_t i = 0; i < 0; i++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", mapData[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", mapData[i][1].c_str());
         }
         ImGui::EndTable();
     }

@@ -35,6 +35,7 @@ namespace NS_Proteus {
 
     enum class DebugView {
         NONE = -1,
+        EVENT_VIEWER,
         CPU_REGS,
         CPU_DISASM,
         CPU_MEMORY,

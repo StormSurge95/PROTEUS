@@ -288,4 +288,11 @@ void Gamepak::initMapper(u16 id) {
             printf("%s", msg.c_str());
             exit(EXIT_FAILURE);
     }
+
+    if (eventSink) mapper->connectEventSink(eventSink);
+}
+
+void Gamepak::connectEventSink(NesEventSink* sink) {
+    eventSink = sink;
+    if (mapper) mapper->connectEventSink(sink);
 }

@@ -6,6 +6,7 @@ using namespace NS_NES;
 
 NesDebugger::NesDebugger(NES* station) {
     nes = station;
+    nes->connectEventSink(this);
 }
 
 void NesDebugger::StepInstruction() {
@@ -47,6 +48,242 @@ void NesDebugger::Clear() {
     enabled = false;
     nes->reset();
     nes = nullptr;
+}
+
+EventViewerDisplaySize NesDebugger::GetEventViewerDisplaySize() const {
+    return { 341, 262 };
+}
+
+void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
+    evConfig = cfg;
+}
+
+EventViewerConfig NesDebugger::GetEventViewerConfig() const {
+    return evConfig;
+}
+
+/// @brief WIP
+vector<u32> NesDebugger::GetEventViewerPixels() const {
+    return evPixelsSnapshot;
+}
+
+/// @brief WIP
+vector<DebugEventRecord> NesDebugger::GetEventViewerEvents() const {
+    return evEventsSnapshot;
+}
+
+const DebugEventRecord& NesDebugger::GetEventAt(u16 scanline, u16 cycle) const {
+    for (const DebugEventRecord& event : evEventsSnapshot | std::views::reverse) {
+        if (event.scanline == scanline && event.cycle == cycle) return event;
+    }
+
+    return NullEvent;
+}
+
+void NesDebugger::TakeEventViewerSnapshot(bool forAutoRefresh) {
+    evPixelsSnapshot.assign(341 * 262, 0x00000000);
+    evEventsSnapshot.clear();
+
+    if (evConfig.showPreviousFrame) {
+        for (const DebugEventRecord& event : evrPrevFrame) {
+            DebugEventRecord ghost = event;
+            ghost.flags |= DebugEventFlags::PREVIOUS_FRAME;
+            ghost.color = Dim(ghost.color, 0.5f);
+            evEventsSnapshot.push_back(ghost);
+        }
+    }
+
+    evEventsSnapshot.insert(evEventsSnapshot.end(), evrLastFrame.begin(), evrLastFrame.end());
+
+    for (const DebugEventRecord& evr : evEventsSnapshot) {
+        if (evr.scanline < 262 && evr.cycle < 341)
+            evPixelsSnapshot[evr.scanline * 341 + evr.cycle] = evr.color;
+    }
+
+    evSnapshotValid = true;
+}
+
+u32 NesDebugger::GetEventColor(EventType type) {
+    return defaultEventColors.at(type);
+}
+
+void NesDebugger::OnPpuRegisterRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::PPU_READ),
+        .flags = DebugEvent_ReadVideo,
+        .type = "PPU REG READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnPpuRegisterWrite(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::PPU_WRITE),
+        .flags = DebugEvent_WriteVideo,
+        .type = "PPU REG WRITE",
+        .details = details
+    });
+}
+
+void NesDebugger::OnApuRegisterRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::APU_READ),
+        .flags = DebugEvent_ReadAudio,
+        .type = "APU REG READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnApuRegisterWrite(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::APU_WRITE),
+        .flags = DebugEvent_WriteAudio,
+        .type = "APU REG WRITE",
+        .details = details
+    });
+}
+
+void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::MAPPER_READ),
+        .flags = DebugEvent_ReadMapper,
+        .type = "MAPPER REG READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::MAPPER_WRITE),
+        .flags = DebugEvent_WriteMapper,
+        .type = "MAPPER REG WRITE",
+        .details = details
+    });
+}
+
+void NesDebugger::OnControllerRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::CONTROLLER_READ),
+        .flags = DebugEvent_ReadInput,
+        .type = "CONTROLLER READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnControllerWrite(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::CONTROLLER_WRITE),
+        .flags = DebugEvent_WriteInput,
+        .type = "CONTROLLER WRITE",
+        .details = details
+    });
+}
+
+void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::DMC_READ),
+        .flags = DebugEvent_ReadDma,
+        .type = "DMC DMA READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::OAM_READ),
+        .flags = DebugEvent_ReadDma,
+        .type = "OAM DMA READ"
+    });
+}
+
+void NesDebugger::OnOamDmaStart(u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = 0x4014,
+        .value = data,
+        .color = GetEventColor(EventType::OAM_START),
+        .flags = DebugEvent_WriteDma,
+        .type = "OAM DMA START"
+    });
+}
+
+void NesDebugger::OnInterrupt(string type, string details) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = nes->cpu->pc.value(),
+        .color = GetEventColor(type == "IRQ" ? EventType::INTERRUPT_IRQ : EventType::INTERRUPT_NMI),
+        .flags = DebugEvent_Interrupt,
+        .type = type,
+        .details = details
+    });
+}
+
+void NesDebugger::OnSpriteZeroHit() {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .color = GetEventColor(EventType::ZERO_HIT),
+        .flags = DebugEvent_SpriteZeroHit,
+        .type = "SPRITE ZERO HIT"
+    });
+}
+
+void NesDebugger::OnMarkedBreakpoint(string details) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .color = GetEventColor(EventType::BREAKPOINT),
+        .flags = DebugEvent_Breakpoint,
+        .type = "MARKED BREAKPOINT"
+    });
+}
+
+void NesDebugger::OnFrameComplete() {
+    evrPrevFrame.swap(evrLastFrame);
+    evrLastFrame.swap(evrActiveFrame);
+    evrActiveFrame.clear();
 }
 
 vector<array<string, 3>> NesDebugger::GetStateCPU() const {
@@ -505,6 +742,67 @@ vector<u32> NesDebugger::GetNameTable(int id) {
     return pixels;
 }
 
+vector<u32> NesDebugger::GetSprites() const {
+    const u8 sprW = 8;
+    const u8 sprH = nes->ppu->getSpriteHeight();
+    const u16 atlW = 8 * sprW;
+    const u16 atlH = 8 * sprH;
+
+    vector<u32> pixels(size_t(atlW) * atlH, 0x00000000);
+
+    for (u8 spr = 0; spr < 64; spr++) {
+        const array<u8, 4>& oam = nes->ppu->primaryOAM[spr];
+        const u8 tile = oam[1];
+        const u8 attr = oam[2];
+
+        const u16 dstBaseX = (spr % 8) * 8;
+        const u16 dstBaseY = (spr / 8) * sprH;
+
+        const bool flipX = nes->ppu->flipX(attr);
+        const bool flipY = nes->ppu->flipY(attr);
+        const u8 pal = nes->ppu->getSpritePalette(attr);
+
+        for (u8 row = 0; row < sprH; row++) {
+            u8 sampleY = flipY ? (sprH - 1 - row) : row;
+
+            u16 pattLo = 0;
+            if (sprH == 8) {
+                pattLo =
+                    nes->ppu->getSpritePatternTableAddr8x8() +
+                    (u16(tile) * 16) +
+                    sampleY;
+            } else {
+                u16 table = (tile & 0x01) ? 0x1000 : 0x0000;
+                u16 tileBase = tile & 0xFE;
+                if (sampleY >= 8) {
+                    tileBase += 1;
+                    sampleY -= 8;
+                }
+                pattLo = table + (tileBase * 16) + sampleY;
+            }
+
+            u8 p0 = nes->ppu->ppuRead(pattLo, true);
+            u8 p1 = nes->ppu->ppuRead(pattLo + 8, true);
+
+            for (u8 col = 0; col < 8; col++) {
+                const u8 bit = flipX ? col : (7 - col);
+                const u8 colorIndex = (((p1 >> bit) & 1) << 1) | ((p0 >> bit) & 1);
+
+                u32 color = 0x00000000;
+                if (colorIndex != 0) {
+                    const u16 palAddr = 0x3F10 + (pal * 4) + colorIndex;
+                    const u8 masterIndex = nes->ppu->ppuRead(palAddr, true) & 0x3F;
+                    color = nes->ppu->masterPalette[masterIndex];
+                }
+
+                pixels[(dstBaseY + row) * atlW + (dstBaseX + col)] = color;
+            }
+        }
+    }
+
+    return pixels;
+}
+
 vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     vector<array<string, 4>> lines;
 
@@ -715,7 +1013,6 @@ vector<u32> NesDebugger::GetDMC() {
 vector<array<string, 2>> NesDebugger::GetPakHeader() const {
     vector<array<string, 2>> values;
 
-    values.push_back({ "Header Data", "" });
     switch (nes->cart->hFormat) {
         case HeaderFormat::ANES:
             values.push_back({ "Header Format", "Archaic iNES or iNES 0.7" });
@@ -846,70 +1143,15 @@ vector<array<string, 2>> NesDebugger::GetPakHeader() const {
         values.push_back({ "Default Expansion (Input) Device", expDev });
     }
 
+    return values;
+}
+
+vector<array<string, 2>> NesDebugger::GetPakMapper() const {
+    vector<array<string, 2>> values;
+
     values.push_back({ "Mapper Data", "" });
     auto v = nes->cart->mapper->getDebugData();
     values.insert(values.end(), v.begin(), v.end());
 
     return values;
-}
-
-vector<u32> NesDebugger::GetSprites() const {
-    const u8 sprW = 8;
-    const u8 sprH = nes->ppu->getSpriteHeight();
-    const u16 atlW = 8 * sprW;
-    const u16 atlH = 8 * sprH;
-
-    vector<u32> pixels(size_t(atlW) * atlH, 0x00000000);
-
-    for (u8 spr = 0; spr < 64; spr++) {
-        const array<u8, 4>& oam = nes->ppu->primaryOAM[spr];
-        const u8 tile = oam[1];
-        const u8 attr = oam[2];
-
-        const u16 dstBaseX = (spr % 8) * 8;
-        const u16 dstBaseY = (spr / 8) * sprH;
-
-        const bool flipX = nes->ppu->flipX(attr);
-        const bool flipY = nes->ppu->flipY(attr);
-        const u8 pal = nes->ppu->getSpritePalette(attr);
-
-        for (u8 row = 0; row < sprH; row++) {
-            u8 sampleY = flipY ? (sprH - 1 - row) : row;
-
-            u16 pattLo = 0;
-            if (sprH == 8) {
-                pattLo =
-                    nes->ppu->getSpritePatternTableAddr8x8() +
-                    (u16(tile) * 16) +
-                    sampleY;
-            } else {
-                u16 table = (tile & 0x01) ? 0x1000 : 0x0000;
-                u16 tileBase = tile & 0xFE;
-                if (sampleY >= 8) {
-                    tileBase += 1;
-                    sampleY -= 8;
-                }
-                pattLo = table + (tileBase * 16) + sampleY;
-            }
-
-            u8 p0 = nes->ppu->ppuRead(pattLo, true);
-            u8 p1 = nes->ppu->ppuRead(pattLo + 8, true);
-
-            for (u8 col = 0; col < 8; col++) {
-                const u8 bit = flipX ? col : (7 - col);
-                const u8 colorIndex = (((p1 >> bit) & 1) << 1) | ((p0 >> bit) & 1);
-
-                u32 color = 0x00000000;
-                if (colorIndex != 0) {
-                    const u16 palAddr = 0x3F10 + (pal * 4) + colorIndex;
-                    const u8 masterIndex = nes->ppu->ppuRead(palAddr, true) & 0x3F;
-                    color = nes->ppu->masterPalette[masterIndex];
-                }
-
-                pixels[(dstBaseY + row) * atlW + (dstBaseX + col)] = color;
-            }
-        }
-    }
-
-    return pixels;
 }
