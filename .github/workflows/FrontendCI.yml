@@ -102,7 +102,8 @@ jobs:
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
       - name: Configure
-        run: >
+        run: |
+          rm -rf build-ci
           cmake -S . -B build-ci
           -DPROTEUS_BUILD_TESTS=ON
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
