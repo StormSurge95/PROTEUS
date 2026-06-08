@@ -102,6 +102,7 @@ jobs:
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
       - name: Configure
+        shell: bash
         run: |
           rm -rf build-ci
           cmake -S . -B build-ci
