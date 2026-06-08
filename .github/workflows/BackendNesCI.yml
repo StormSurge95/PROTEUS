@@ -1,0 +1,89 @@
+name: Backend NES CI
+
+on:
+  workflow_run:
+    workflows: ["Frontend CI"]
+    types: [completed]
+    branches:
+      - main
+      - ProteusNES
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+
+jobs:
+  detect-changes:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      nes: ${{ steps.filter.outputs.nes }}
+    steps:
+      - name: Checkout triggering ref
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+          fetch-depth: 0
+      
+      - name: Detect NES-relevant changes
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          base: main
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+          filters: |
+            nes:
+              - 'ProteusNES/src/**'
+              - 'Proteus/src/shared/**'
+              - 'CMakeLists.txt'
+              - 'CMakePresets.json'
+              - '.github/workflows/BackendNesCI.yml'
+              - '.github/scripts/RunBackendNesCI.ps1'
+
+  build-and-test:
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.nes == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        config: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.6'
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ github.workspace }}/vcpkg
+          vcpkgGitCommitId: d4424d012d982dc21529708ccc31fef27c55dcea
+
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v5
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-bincache
+            ${{ github.workspace }}/vcpkg/downloads
+            ${{ github.workspace }}/vcpkg/installed
+            ${{ github.workspace }}/vcpkg/packages
+            ${{ github.workspace }}/vcpkg/buildtrees
+          key: vcpkg-${{ runner.os }}-${{ matrix.config }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/BackendNesCI.yml', '.github/scripts/Run-BackendNesCI.ps1') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.config }}-
+            vcpkg-${{ runner.os }}-
+
+      - name: Run Backend NES CI Script
+        shell: pwsh
+        run: ./.github/scripts/RunBackendNesCI.ps1 -Config '${{ matrix.config }}'
