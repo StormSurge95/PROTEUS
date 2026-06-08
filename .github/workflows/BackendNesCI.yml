@@ -121,25 +121,24 @@ jobs:
       - name: Get SST Data
         shell: bash
         run: |
-          mkdir -p ${{ github.workspace }}/sst
-          cd ${{ github.workspace }}/sst
+          mkdir -p sst
           for i in $(seq 0 255); do
             hexU=$(printf "%02X" "$i")
             hexL=$(printf "%02x" "$i")
             curl -fL "https://raw.githubusercontent.com/SingleStepTests/65x02/refs/heads/main/nes6502/v1/${hexL}.json" \
-              -o "${GITHUB_WORKSPACE}/sst/${hexU}.json"
+              -o "sst/${hexU}.json"
           done
 
       - name: Get Test ROMs
         shell: bash
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/roms"
+          mkdir -p "roms"
           curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" \
-            -o ${GITHUB_WORKSPACE}/roms/cpu.nes
+            -o roms/cpu.nes
           curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" \
-            -o ${GITHUB_WORKSPACE}/roms/volumes.nes
+            -o roms/volumes.nes
           curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" \
-            -o ${GITHUB_WORKSPACE}/roms/litewall2.nes
+            -o roms/litewall2.nes
       
       - name: Configure
         shell: bash
@@ -150,10 +149,10 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
-            -DSSTROOT=${{ github.workspace }}/sst \
-            -DNES_DET_CPU=${{ github.workspace }}/roms/cpu.nes \
-            -DNES_DET_FRAME=${{ github.workspace }}/roms/litewall2.nes \
-            -DNES_DET_AUDIO=${{ github.workspace }}/roms/volumes.nes
+            -DSSTROOT="sst" \
+            -DNES_DET_CPU="roms/cpu.nes" \
+            -DNES_DET_FRAME="roms/litewall2.nes" \
+            -DNES_DET_AUDIO="roms/volumes.nes"
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
