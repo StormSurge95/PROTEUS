@@ -97,4 +97,4 @@ jobs:
         run: cmake --build build-ci --config ${{ matrix.config }}
 
       - name: Test (non-timing)
-        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin
+        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin --verbose
