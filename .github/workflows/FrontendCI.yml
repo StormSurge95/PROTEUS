@@ -5,28 +5,29 @@ on:
     branches: [ main ]
     paths:
       - 'Proteus/src/**'
-      - '**/CMakeLists.txt'
       - 'ProteusNES/src/**'
       - 'ProteusGBA/src/**'
+      - '**/CMakeLists.txt'
       - 'CMakePresets.json'
       - '.github/workflows/FrontendCI.yml'
-      - 'Proteus/src/tests/**'
+      - '.github/scripts/Run-FrontendCI.ps1'
   pull_request:
     branches: [ main ]
     paths:
       - 'Proteus/src/**'
+      - 'ProteusNES/src/**'
+      - 'ProteusGBA/src/**'
       - '**/CMakeLists.txt'
-      - 'ProteusNES/src/NES.*'
       - 'CMakePresets.json'
       - '.github/workflows/FrontendCI.yml'
-      - 'Proteus/src/tests/**'
+      - '.github/scripts/Run-FrontendCI.ps1'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
-    env:
-      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
-      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     strategy:
       fail-fast: false
       matrix:
@@ -35,50 +36,24 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.6'
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: ${{ env.VCPKG_ROOT }}
-          vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
-
-      - name: Select vcpkg triplet
-        id: triplet
-        shell: bash
-        run: |
-          os="${{ runner.os }}"
-          arch="${{ runner.arch }}"
-
-          if [ "$os" = "Windows" ]; then
-            if [ "$arch" = "ARM64" ]; then
-              echo "value=arm64-windows" >> "$GITHUB_OUTPUT"
-            else
-              echo "value=x64-windows" >> "$GITHUB_OUTPUT"
-            fi
-          elif [ "$os" = "Linux" ]; then
-            if [ "$arch" = "ARM64" ]; then
-              echo "value=arm64-linux" >> "$GITHUB_OUTPUT"
-            else
-              echo "value=x64-linux" >> "$GITHUB_OUTPUT"
-            fi
-          elif [ "$os" = "macOS" ]; then
-            if [ "$arch" = "ARM64" ]; then
-              echo "value=arm64-osx" >> "$GITHUB_OUTPUT"
-            else
-              echo "value=x64-osx" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "Unsupported runner.os='$os' runner.arch='$arch'" >&2
-            exit 1
-          fi
-
-          echo "Selected triplet: $(cat "$GITHUB_OUTPUT")"
+          vcpkgGitCommitId: d4424d012d982dc21529708ccc31fef27c55dcea
 
       - name: Cache vcpkg artifacts
         uses: actions/cache@v5
@@ -89,42 +64,11 @@ jobs:
             ${{ env.VCPKG_ROOT }}/installed
             ${{ env.VCPKG_ROOT }}/packages
             ${{ env.VCPKG_ROOT }}/buildtrees
-          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/FrontendCI.yml') }}
+          key: vcpkg-${{ runner.os }}-${{ matrix.config }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/FrontendCI.yml', '.github/scripts/Run-FrontendCI.ps1') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-
+            vcpkg-${{ runner.os }}-${{ matrix.config }}-
+            vcpkg-${{ runner.os }}-
 
-      - name: Install dependencies (vcpkg)
-        shell: bash
-        run: |
-          vcpkg install \
-            sdl3:${{ steps.triplet.outputs.value }} \
-            openssl:${{ steps.triplet.outputs.value }} \
-            nlohmann-json:${{ steps.triplet.outputs.value }}
-
-      - name: Configure (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          rm -rf build-ci
-          cmake -S . -B build-ci \
-            -DPROTEUS_BUILD_TESTS=ON \
-            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
-
-      - name: Configure (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          rm -rf build-ci
-          cmake -S . -B build-ci \
-            -DPROTEUS_BUILD_TESTS=ON \
-            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
-
-      - name: Build
-        run: cmake --build build-ci --config ${{ matrix.config }}
-
-      - name: Test (non-timing)
-        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin --verbose
+      - name: Run Frontend CI Script
+        shell: pwsh
+        run: ./.github/scripts/RunFrontendCI.ps1 -Config '${{ matrix.config }}'
