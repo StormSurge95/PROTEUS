@@ -1,0 +1,165 @@
+name: Backend NES CI
+
+on:
+  workflow_run:
+    workflows: ["Frontend CI"]
+    types: [completed]
+    branches:
+      - main
+      - ProteusNES
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  detect-changes:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: windows-latest
+    outputs:
+      nes: ${{ steps.filter.outputs.nes }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          base: main
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+          filters: |
+            nes:
+              - 'ProteusNES/src/**'
+              - 'Proteus/src/shard/**'
+              - 'CMakeLists.txt'
+              - 'CMakePresets.json'
+              - '.github/workflows/BackendNesCI.yml'
+
+  build-and-test:
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.nes == 'true'}}
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        config: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ env.VCPKG_ROOT }}
+          vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
+
+      - name: Select vcpkg triplet
+        id: triplet
+        shell: bash
+        run: |
+          os="${{ runner.os }}"
+          arch="${{ runner.arch }}"
+
+          if [ "$os" = "Windows" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-windows" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-windows" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "Linux" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-linux" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-linux" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "macOS" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-osx" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-osx" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "Unsupported runner.os='$os' runner.arch='$arch'" >&2
+            exit 1
+          fi
+
+          echo "Selected triplet: $(cat "$GITHUB_OUTPUT")"
+
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v5
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-bincache
+            ${{ env.VCPKG_ROOT }}/downloads
+            ${{ env.VCPKG_ROOT }}/installed
+            ${{ env.VCPKG_ROOT }}/packages
+            ${{ env.VCPKG_ROOT }}/buildtrees
+          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/BackendNesCI.yml') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-
+
+      - name: Install dependencies (vcpkg)
+        shell: bash
+        run: |
+          vcpkg install \
+            sdl3:${{ steps.triplet.outputs.value }} \
+            openssl:${{ steps.triplet.outputs.value }} \
+            nlohmann-json:${{ steps.triplet.outputs.value }}
+
+      - name: Get SST Data
+        shell: bash
+        run: |
+          mkdir -p ${{ github.workspace }}/sst
+          cd ${{ github.workspace }}/sst
+          for i in $(seq 0 255); do
+            hexU=$(printf "%02X" "$i")
+            hexL=$(printf "%02x" "$i")
+            curl -fL "https://raw.githubusercontent.com/SingleStepTests/65x02/refs/heads/main/nes6502/v1/${hexL}.json" \
+              -o "${GITHUB_WORKSPACE}/sst/${hexU}.json"
+          done
+
+      - name: Get Test ROMs
+        shell: bash
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/roms"
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/cpu.nes
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/volumes.nes
+          curl -fL "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" \
+            -o ${GITHUB_WORKSPACE}/roms/litewall2.nes
+      
+      - name: Configure
+        shell: bash
+        run: |
+          rm -rf build-ci
+          cmake -S . -B build-ci \
+            -DPROTEUS_NES_BUILD_TESTS=ON \
+            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DSSTROOT=${{ github.workspace }}/sst \
+            -DNES_DET_CPU=${{ github.workspace }}/roms/cpu.nes \
+            -DNES_DET_FRAME=${{ github.workspace }}/roms/litewall2.nes \
+            -DNES_DET_AUDIO=${{ github.workspace }}/roms/volumes.nes
+
+      - name: Build
+        run: cmake --build build-ci --config ${{ matrix.config }}
+
+      - name: Test
+        shell: bash
+        run: |
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure --verbose -L emulator:nes -L type:sst -L kind:cpu -j
+          ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure --verbose -L emulator:nes -L type:determinism

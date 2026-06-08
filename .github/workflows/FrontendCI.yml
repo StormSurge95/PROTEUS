@@ -3,7 +3,23 @@ name: Frontend CI
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'Proteus/src/**'
+      - '**/CMakeLists.txt'
+      - 'ProteusNES/src/**'
+      - 'ProteusGBA/src/**'
+      - 'CMakePresets.json'
+      - '.github/workflows/FrontendCI.yml'
+      - 'Proteus/src/tests/**'
   pull_request:
+    branches: [ main ]
+    paths:
+      - 'Proteus/src/**'
+      - '**/CMakeLists.txt'
+      - 'ProteusNES/src/NES.*'
+      - 'CMakePresets.json'
+      - '.github/workflows/FrontendCI.yml'
+      - 'Proteus/src/tests/**'
   workflow_dispatch:
 
 jobs:
@@ -21,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
@@ -73,7 +89,7 @@ jobs:
             ${{ env.VCPKG_ROOT }}/installed
             ${{ env.VCPKG_ROOT }}/packages
             ${{ env.VCPKG_ROOT }}/buildtrees
-          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/ci.yml') }}
+          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/FrontendCI.yml') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-
 
