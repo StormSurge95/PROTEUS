@@ -32,62 +32,71 @@ jobs:
     if: >
       github.event_name != 'pull_request' ||
       github.event.pull_request.draft == false
-    
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      SDL3_DIR: ""
+      OpenSSL_DIR: ""
+      nlohmann_json_DIR: ""
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
         config: [Debug, Release]
-        platform:
-          - runner: windows-2025
-            triplet: x64-windows
-            llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/LLVM-22.1.6-win64.exe
-            cc: clang-cl.exe
-            cxx: clang-cl.exe
-          - runner: ubuntu-24.04
-            triplet: x64-linux
-            llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/LLVM-22.1.6-Linux-X64.tar.xz
-            cc: clang
-            cxx: clang++
-          - runner: macos-15
-            triplet: arm64-osx
-            llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/LLVM-22.1.6-macOS-ARM64.tar.xz
-            cc: clang
-            cxx: clang++
 
-    runs-on: ${{ matrix.platform.runner }}
-
-    env:
-      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      
+
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
-      
-      - name: Setup Clang
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "22.1.6"
-          force-url: ${{ matrix.platform.llvm_url }}
-          directory: ${{ runner.temp }}/llvm
-
-      - name: Export compiler paths
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "CMAKE_C_COMPILER=${LLVM_PATH}/bin/${{ matrix.platform.cc }}" >> "$GITHUB_ENV"
-          echo "CMAKE_CXX_COMPILER=${LLVM_PATH}/bin/${{ matrix.platform.cxx }}" >> "$GITHUB_ENV"
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: ${{ env.VCPKG_ROOT }}
-          vcpkgGitCommitId: d4424d012d982dc21529708ccc31fef27c55dcea
+          vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
+
+      - name: Retrieve SST Data
+        shell: bash
+        run: |
+          SST_REPO_DIR="${GITHUB_WORKSPACE}/sst-65x02"
+          rm -rf "$SST_REPO_DIR"
+          git clone https://github.com/SingleStepTests/65x02.git "$SST_REPO_DIR"
+
+      - name: Select vcpkg triplet
+        id: triplet
+        shell: bash
+        run: |
+          os="${{ runner.os }}"
+          arch="${{ runner.arch }}"
+
+          if [ "$os" = "Windows" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-windows" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-windows" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "Linux" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-linux" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-linux" >> "$GITHUB_OUTPUT"
+            fi
+          elif [ "$os" = "macOS" ]; then
+            if [ "$arch" = "ARM64" ]; then
+              echo "value=arm64-osx" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=x64-osx" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "Unsupported runner.os='$os' runner.arch='$arch'" >&2
+            exit 1
+          fi
+
+          echo "Selected triplet: $(cat "$GITHUB_OUTPUT")"
 
       - name: Cache vcpkg artifacts
         uses: actions/cache@v5
@@ -98,59 +107,42 @@ jobs:
             ${{ env.VCPKG_ROOT }}/installed
             ${{ env.VCPKG_ROOT }}/packages
             ${{ env.VCPKG_ROOT }}/buildtrees
-          key: vcpkg-${{ matrix.platform.runner }}-${{ matrix.platform.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/ci.yml') }}
+          key: vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json', '.github/workflows/ci.yml') }}
           restore-keys: |
-            vcpkg-${{ matrix.platform.runner }}-${{ matrix.platform.triplet }}-
+            vcpkg-${{ runner.os }}-${{ steps.triplet.outputs.value }}-
 
       - name: Install dependencies (vcpkg)
         shell: bash
         run: |
-          set -euo pipefail
           vcpkg install \
-            sdl3:${{ matrix.platform.triplet }} \
-            openssl:${{ matrix.platform.triplet }} \
-            nlohmann-json:${{ matrix.platform.triplet }}
+            sdl3:${{ steps.triplet.outputs.value }} \
+            openssl:${{ steps.triplet.outputs.value }} \
+            nlohmann-json:${{ steps.triplet.outputs.value }}
 
-      - name: Retrieve SST Data
+      - name: Diagnostics (pre-configure)
         shell: bash
         run: |
-          set -euo pipefail
-          git clone --depth 1 https://github.com/SingleStepTests/65x02.git "${GITHUB_WORKSPACE}/sst-65x02"
-
-      - name: Get test ROMs
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "${GITHUB_WORKSPACE}/roms"
-          curl -fL --retry 3 --retry-all-errors \
-            https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes \
-            -o "${GITHUB_WORKSPACE}/roms/cpu.nes"
-          curl -fL --retry 3 --retry-all-errors \
-            https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes \
-            -o "${GITHUB_WORKSPACE}/roms/volumes.nes"
-          curl -fL --retry 3 --retry-all-errors \
-            https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes \
-            -o "${GITHUB_WORKSPACE}/roms/litewall2.nes"
+          echo "runner.os=${{ runner.os }}"
+          echo "runner.arch=${{ runner.arch }}"
+          echo "triplet=${{ steps.triplet.outputs.value }}"
+          echo "VCPKG_ROOT=${VCPKG_ROOT}"
+          echo "SSTROOT=${GITHUB_WORKSPACE}/sst-65x02/nes6502/v1"
+          cmake --version
+          vcpkg version
 
       - name: Configure
         shell: bash
         run: |
-          set -euo pipefail
           rm -rf build-ci
           cmake -S . -B build-ci \
-            -G "Ninja Multi-Config" \
-            -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" \
-            -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}" \
-            -DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}" \
-            -DVCPKG_TARGET_TRIPLET="${{ matrix.platform.triplet }}" \
-            -DPROTEUS_BUILD_TESTS=ON \
-            -DSSTROOT="${GITHUB_WORKSPACE}/sst-65x02/nes6502/v1" \
-            -DNES_DET_CPU="${GITHUB_WORKSPACE}/roms/cpu.nes" \
-            -DNES_DET_FRAME="${GITHUB_WORKSPACE}/roms/litewall2.nes" \
-            -DNES_DET_AUDIO="${GITHUB_WORKSPACE}/roms/volumes.nes"
+          -DPROTEUS_BUILD_TESTS=ON \
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
+          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+          -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
 
-      - name: Test
+      - name: Test (non-timing)
         run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
