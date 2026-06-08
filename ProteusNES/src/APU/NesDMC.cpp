@@ -116,6 +116,7 @@ void DMC_Channel::onByteFetch(u8 byte) {
             bytesRemaining = sampleLength;
         } else if (irqEnabled) {
             apu->cpu.lock()->setIrqLine_DMC(interrupt = true);
+            if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_DMC);
         }
     }
 }

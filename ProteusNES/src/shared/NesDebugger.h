@@ -30,22 +30,22 @@ namespace NS_NES {
                 CONTROLLER_WRITE, DMC_READ, OAM_READ, OAM_START,
                 INTERRUPT_IRQ, INTERRUPT_NMI, ZERO_HIT, BREAKPOINT
             };
-            map<EventType, u32> defaultEventColors = {
-                { EventType::PPU_READ,          0xFF00DFFF },
-                { EventType::PPU_WRITE,         0xFFFFA000 },
-                { EventType::APU_READ,          0xFF60E060 },
-                { EventType::APU_WRITE,         0xFF90FF40 },
-                { EventType::MAPPER_READ,       0xFF40A0FF },
-                { EventType::MAPPER_WRITE,      0xFF2080FF },
-                { EventType::CONTROLLER_READ,   0xFFFF40D0 },
-                { EventType::CONTROLLER_WRITE,  0xFFFF70F0 },
-                { EventType::DMC_READ,          0xFF40FF40 },
-                { EventType::OAM_READ,          0xFFE060A0 },
-                { EventType::OAM_START,         0xFFFF60C0 },
-                { EventType::INTERRUPT_IRQ,     0xFF4040FF },
-                { EventType::INTERRUPT_NMI,     0xFF6060FF },
-                { EventType::ZERO_HIT,          0xFFFFFFFF },
-                { EventType::BREAKPOINT,        0xFF00BFFF }
+            array<u32, 15> defaultEventColors = {
+                0xFF00DFFF,
+                0xFFFFA000,
+                0xFF60E060,
+                0xFF90FF40,
+                0xFF40A0FF,
+                0xFF2080FF,
+                0xFFFF40D0,
+                0xFFFF70F0,
+                0xFF40FF40,
+                0xFFE060A0,
+                0xFFFF60C0,
+                0xFF4040FF,
+                0xFF6060FF,
+                0xFFFFFFFF,
+                0xFF00BFFF
             };
 
             /**
@@ -85,50 +85,19 @@ namespace NS_NES {
             const vector<DebugEventRecord>& GetEventViewerEvents() const override;
             const DebugEventRecord& GetEventAt(u16, u16) const override;
             void TakeEventViewerSnapshot(bool forAutoRefresh) override;
-            const map<u16, string> PPU_REGS = {
-                { 0x2000, "PPUCTRL" },
-                { 0x2001, "PPUMASK" },
-                { 0x2002, "PPUSTATUS" },
-                { 0x2003, "OAMADDR" },
-                { 0x2004, "OAMDATA" },
-                { 0x2005, "PPUSCROLL" },
-                { 0x2006, "PPUADDR" },
-                { 0x2007, "PPUDATA" }
-            };
+
             void OnPpuRegisterRead(u16 addr, u8 data) override;
             void OnPpuRegisterWrite(u16 addr, u8 data) override;
-            const map<u16, string> APU_REGS = {
-                { 0x4000, "APU - Pulse 1 - control" },
-                { 0x4001, "APU - Pulse 1 - sweep" },
-                { 0x4002, "APU - Pulse 1 - timer low" },
-                { 0x4003, "APU - Pulse 1 - lcl/timer high" },
-                { 0x4004, "APU - Pulse 2 - control" },
-                { 0x4005, "APU - Pulse 2 - sweep" },
-                { 0x4006, "APU - Pulse 2 - timer low" },
-                { 0x4007, "APU - Pulse 2 - lcl/timer high" },
-                { 0x4008, "APU - Triangle - control" },
-                { 0x400A, "APU - Triangle - timer low" },
-                { 0x400B, "APU - Triangle - lcl/timer high" },
-                { 0x400C, "APU - Noise - control" },
-                { 0x400E, "APU - Noise - mode/period" },
-                { 0x400F, "APU - Noise - lcl" },
-                { 0x4010, "APU - DMC - irq/loop/frequency" },
-                { 0x4011, "APU - DMC - load counter" },
-                { 0x4012, "APU - DMC - sample address" },
-                { 0x4013, "APU - DMC - sample length" },
-                { 0x4015, "APU - control/status" },
-                { 0x4017, "APU - frame counter" }
-            };
             void OnApuRegisterRead(u16 addr, u8 data) override;
             void OnApuRegisterWrite(u16 addr, u8 data) override;
             void OnMapperRegisterRead(string details, u16 addr, u8 data) override;
             void OnMapperRegisterWrite(string details, u16 addr, u8 data) override;
-            void OnControllerRead(string details, u16 addr, u8 data) override;
-            void OnControllerWrite(string details, u16 addr, u8 data) override;
+            void OnControllerRead(u8 player, u16 addr, u8 data) override;
+            void OnControllerWrite(u8 player, u16 addr, u8 data) override;
             void OnDmcDmaRead(string details, u16 addr, u8 data) override;
             void OnOamDmaRead(u16 addr, u8 data) override;
             void OnOamDmaStart(u8 data) override;
-            void OnInterrupt(string type, string details) override;
+            void OnInterrupt(INTERRUPT_EVENT type) override;
             void OnSpriteZeroHit() override;
             void OnMarkedBreakpoint(string details) override;
             void OnFrameComplete() override;

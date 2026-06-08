@@ -34,7 +34,7 @@ namespace NS_NES {
              */
             ~APU() = default;
 
-            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+            void connectEventSink(NesEventSink* sink);
 
             /**
              * @brief Connects the bus to the APU.

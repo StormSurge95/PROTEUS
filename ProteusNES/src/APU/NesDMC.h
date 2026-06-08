@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
     class APU;
@@ -11,6 +12,7 @@ namespace NS_NES {
             // Allow Debugger class to access all private members of the DMC_Channel class
             friend class Debugger;
         private:
+            NesEventSink* eventSink = nullptr;
             /// @brief reference to the parent APU object
             APU* apu = nullptr;
             /// @brief irq enabled flag (DMC IRQ only)
@@ -63,6 +65,8 @@ namespace NS_NES {
             DMC_Channel(APU* p) : apu(p) {}
             /// @brief default destructor
             ~DMC_Channel() = default;
+
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
 
             /**
              * @brief Data write operation for the DMC channel register(s)

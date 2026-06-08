@@ -3,6 +3,11 @@
 
 using namespace NS_NES;
 
+void APU::connectEventSink(NesEventSink* sink) {
+    eventSink = sink;
+    if (dmc) dmc->connectEventSink(sink);
+}
+
 void APU::powerup(u32 s) {
     initPRNG(s);
 
@@ -234,7 +239,7 @@ void APU::clockFrameCounter() {
         case 29828: // irq trigger (only during 4-step with irq enabled)
             if (!use5step && !inhibitIRQ) {
                 irqRequested = true;
-                if (eventSink) eventSink->OnInterrupt("IRQ", "requested via frame counter");
+                if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
                 cpu.lock()->setIrqLine_APU(true);
             }
             break;

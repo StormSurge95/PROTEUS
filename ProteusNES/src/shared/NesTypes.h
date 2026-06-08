@@ -7,7 +7,7 @@ namespace NS_NES {
     class CPU;
 
     enum class INTERRUPT {
-        NONE, RST, NMI, IRQ, BRK
+        NONE, BRK, IRQ, NMI, RST
     };
 
     struct CPU_STATE {

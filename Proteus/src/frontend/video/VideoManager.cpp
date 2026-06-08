@@ -577,7 +577,7 @@ void VideoManager::RenderDebugEVT() {
     ImGui::SetNextWindowFocus();
     if (ImGui::BeginPopup("Filter Events", ImPopupWindowFlags)) {
         for (auto& [flag, filter] : cfg.eventFilters) {
-            changed |= ImGui::Checkbox(filter.label.c_str(), &filter.filter);
+            changed |= ImGui::Checkbox(filter.label, &filter.show);
         }
         ImGui::EndPopup();
     }

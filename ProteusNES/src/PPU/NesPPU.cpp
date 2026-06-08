@@ -892,6 +892,6 @@ void PPU::recompNMI() {
     nmiOutput = inVBlank() && getNMIEnabled();
     if (!prevNMI && nmiOutput && !suppressNMI) {
         nmiRequested = true;
-        if (eventSink) eventSink->OnInterrupt("NMI", "requested");
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_REQ);
     }
 }

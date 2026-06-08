@@ -495,7 +495,7 @@ namespace NS_NES {
                 }
                 if (irqCounter == 0 && irqEnabled) {
                     irqRequested = true;
-                    if (eventSink) eventSink->OnInterrupt("IRQ", "requested via MMC3/MMC6 mapper");
+                    if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_MAP);
                 }
             }
     };

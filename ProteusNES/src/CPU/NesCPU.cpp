@@ -145,12 +145,12 @@ u8 CPU::read(u16 addr, bool readonly) {
         // read Player 1 Controller
         ret = (cpuBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
         if (readonly) return ret;
-        else if (eventSink) eventSink->OnControllerRead("Player 1", 0x4016, ret);
+        else if (eventSink) eventSink->OnControllerRead(1, 0x4016, ret);
     } else if (addr == 0x4017) {
         // read Player 2 Controller
         ret = (cpuBus & 0xE0) | (player2.lock()->onRead() & 0x1F);
         if (readonly) return ret;
-        else if (eventSink) eventSink->OnControllerRead("Player 2", 0x4017, ret);
+        else if (eventSink) eventSink->OnControllerRead(2, 0x4017, ret);
     } else if (addr >= 0x6000 && addr <= 0xFFFF) {
         // read cartridge memory (including SRAM, if present)
         ret = cart.lock()->read(addr, readonly);
@@ -186,7 +186,7 @@ void CPU::write(u16 addr, u8 data) {
     } else if (addr == 0x4016) {
         // write to player1 controller
         player1.lock()->onWrite(data);
-        if (eventSink) eventSink->OnControllerWrite("Player 1", 0x4016, data);
+        if (eventSink) eventSink->OnControllerWrite(1, 0x4016, data);
     } else if (addr >= 0x4000 && addr <= 0x4017) {
         apu.lock()->write(addr, data);
     } else if (addr >= 0x5FFF && addr <= 0xFFFF) {
@@ -497,10 +497,10 @@ void CPU::pollInterrupts() {
     if (resetPending) {
         interruptSource = INTERRUPT::RST;
     } else if (nmiPending) {
-        if (eventSink) eventSink->OnInterrupt("NMI", "acknowledged");
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_ACK);
         interruptSource = INTERRUPT::NMI; // acknowledge NMI
     } else if (hasPendingIrq() && !interruptFlagViaPoll) {
-        if (eventSink) eventSink->OnInterrupt("IRQ", "acknowledged");
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_ACK);
         interruptSource = INTERRUPT::IRQ; // acknowlege IRQ
     }
 

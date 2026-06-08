@@ -22,8 +22,8 @@ struct EventViewerCategoryConfig {
 };
 
 struct EventFilter {
-    string label;
-    bool filter;
+    const char* label;
+    bool show;
 };
 
 namespace DebugEventFlags  {
@@ -53,6 +53,8 @@ namespace DebugEventFlags  {
         HAS_ADDRESS = 1 << 14,
         HAS_VALUE = 1 << 15,
         HAS_DETAILS = 1 << 16,
+
+        ALL = 0xFF'FF'FF'FF
     };
 }
 
@@ -60,16 +62,16 @@ struct EventViewerConfig {
     bool autoRefresh = false;
     bool showPreviousFrame = false;
     map<u32, EventFilter> eventFilters = {
-        { DebugEventFlags::READ, { "READ", true } },
-        { DebugEventFlags::WRITE, { "WRITE", true } },
-        { DebugEventFlags::MEMORY, { "MEMORY", true } },
-        { DebugEventFlags::MAPPER, { "MAPPER", true } },
-        { DebugEventFlags::VIDEO, { "VIDEO", true } },
-        { DebugEventFlags::AUDIO, { "AUDIO", true } },
-        { DebugEventFlags::INPUT, { "INPUT", true } },
-        { DebugEventFlags::DMA, { "DMA", true } },
-        { DebugEventFlags::INTERRUPT, { "INTERRUPT", true } },
-        { DebugEventFlags::SYNTHETIC, {"SYNTHETIC", true } }
+        { DebugEventFlags::READ, { "READ", false } },
+        { DebugEventFlags::WRITE, { "WRITE", false } },
+        { DebugEventFlags::MEMORY, { "MEMORY", false } },
+        { DebugEventFlags::MAPPER, { "MAPPER", false } },
+        { DebugEventFlags::VIDEO, { "VIDEO", false } },
+        { DebugEventFlags::AUDIO, { "AUDIO", false } },
+        { DebugEventFlags::INPUT, { "INPUT", false } },
+        { DebugEventFlags::DMA, { "DMA", false } },
+        { DebugEventFlags::INTERRUPT, { "INTERRUPT", false } },
+        { DebugEventFlags::SYNTHETIC, {"SYNTHETIC", false } }
     };
 };
 
