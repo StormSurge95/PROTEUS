@@ -1,6 +1,6 @@
 # ProteusNES\src\tests\CMakeLists.txt
 
-if (NOT PROTEUS_BUILD_TESTS)
+if (NOT PROTEUS_NES_BUILD_TESTS)
     return()
 endif()
 

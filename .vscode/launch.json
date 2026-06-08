@@ -9,6 +9,15 @@
             "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
             "console": "integratedTerminal",
             "stopAtEntry": false
+        },
+        {
+            "name": "Debug PluginTests",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-ninja/bin/Debug/tests/PluginTests.exe",
+            "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
         }
     ]
 }

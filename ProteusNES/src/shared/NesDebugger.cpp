@@ -49,12 +49,6 @@ void NesDebugger::StepCycle() {
         nes->clockMaster();
 }
 
-void NesDebugger::Clear() {
-    enabled = false;
-    nes->reset();
-    nes = nullptr;
-}
-
 EventViewerDisplaySize NesDebugger::GetEventViewerDisplaySize() const {
     return { 341, 262 };
 }

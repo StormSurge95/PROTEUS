@@ -76,7 +76,7 @@
       "configuration": "Debug",
       "output": { "outputOnFailure": true },
       "filter": {
-        "exclude": { "label": "timing" }
+        "include": { "label": "plugin" }
       }
     },
     {
@@ -94,7 +94,7 @@
       "configuration": "Release",
       "output": { "outputOnFailure": true },
       "filter": {
-        "exclude": { "label": "timing" }
+        "include": { "label": "plugin" }
       }
     },
     {

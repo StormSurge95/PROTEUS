@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(PROTEUS_BUILD_TESTS "Build Proteus test targets" OFF)
+option(PROTEUS_NES_BUILD_TESTS "Build ProteusNES test targets" OFF)
+option(PROTEUS_GBA_BUILD_TESTS "Build ProteusGBA test targets" OFF)
 include(CTest)
 
 # Temporary default until full install layout is added

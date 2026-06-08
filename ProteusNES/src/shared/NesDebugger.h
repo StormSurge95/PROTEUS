@@ -66,7 +66,7 @@ namespace NS_NES {
             /**
              * @brief explicit destructor; simply calls clear in order to detach the NES reference
              */
-            ~NesDebugger() { Clear(); }
+            ~NesDebugger() = default;
 
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;
@@ -74,8 +74,6 @@ namespace NS_NES {
             void StepCycle() override;
             /// @brief Getter for the enabled flag
             bool IsEnabled() const override { return enabled; }
-            /// @brief clears the NES station reference
-            void Clear();
 
             #pragma region EVENT /// @brief Event-Viewer-related debugging methods; WIP
             EventViewerDisplaySize GetEventViewerDisplaySize() const override;
