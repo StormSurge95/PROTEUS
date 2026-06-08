@@ -48,7 +48,6 @@ namespace NS_NES {
              * @return The data that was read; or zero if invalid address.
              */
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                // TODO: implement PRG-RAM
                 if (addr >= 0x8000) {
                     // mask address based on number of PRG-ROM banks
                     u16 mapped = addr & (prgBanks > 1 ? 0x7FFF : 0x3FFF);
@@ -58,7 +57,7 @@ namespace NS_NES {
                     return ret;
                 } else if (addr >= 0x6000 && prgRam != nullptr) {
                     u16 mapped = addr & 0x1FFF;
-                    u8 ret = prgRam->at(addr);
+                    u8 ret = prgRam->at(mapped);
                     if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
                     return ret;
                 }
@@ -77,7 +76,7 @@ namespace NS_NES {
                 if (addr >= 0x6000 && addr < 0x8000 && prgRam != nullptr) {
                     u16 mapped = addr & 0x1FFF;
                     if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
-                    prgRam->at(addr) = data;
+                    prgRam->at(mapped) = data;
                 }
             }
 

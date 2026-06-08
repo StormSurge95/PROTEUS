@@ -77,19 +77,50 @@ namespace NS_NES {
             /// @brief clears the NES station reference
             void Clear();
 
-            /// @section EVENT
-            /// @brief Event-Viewer-related debugging methods; WIP
+            #pragma region EVENT /// @brief Event-Viewer-related debugging methods; WIP
             EventViewerDisplaySize GetEventViewerDisplaySize() const override;
             void SetEventViewerConfig(const EventViewerConfig& cfg) override;
-            EventViewerConfig GetEventViewerConfig() const override;
-            vector<u32> GetEventViewerPixels() const override;
-            vector<DebugEventRecord> GetEventViewerEvents() const override;
+            const EventViewerConfig& GetEventViewerConfig() const override;
+            const vector<u32>& GetEventViewerPixels() const override;
+            const vector<DebugEventRecord>& GetEventViewerEvents() const override;
             const DebugEventRecord& GetEventAt(u16, u16) const override;
             void TakeEventViewerSnapshot(bool forAutoRefresh) override;
-            void OnPpuRegisterRead(string details, u16 addr, u8 data) override;
-            void OnPpuRegisterWrite(string details, u16 addr, u8 data) override;
-            void OnApuRegisterRead(string details, u16 addr, u8 data) override;
-            void OnApuRegisterWrite(string details, u16 addr, u8 data) override;
+            const map<u16, string> PPU_REGS = {
+                { 0x2000, "PPUCTRL" },
+                { 0x2001, "PPUMASK" },
+                { 0x2002, "PPUSTATUS" },
+                { 0x2003, "OAMADDR" },
+                { 0x2004, "OAMDATA" },
+                { 0x2005, "PPUSCROLL" },
+                { 0x2006, "PPUADDR" },
+                { 0x2007, "PPUDATA" }
+            };
+            void OnPpuRegisterRead(u16 addr, u8 data) override;
+            void OnPpuRegisterWrite(u16 addr, u8 data) override;
+            const map<u16, string> APU_REGS = {
+                { 0x4000, "APU - Pulse 1 - control" },
+                { 0x4001, "APU - Pulse 1 - sweep" },
+                { 0x4002, "APU - Pulse 1 - timer low" },
+                { 0x4003, "APU - Pulse 1 - lcl/timer high" },
+                { 0x4004, "APU - Pulse 2 - control" },
+                { 0x4005, "APU - Pulse 2 - sweep" },
+                { 0x4006, "APU - Pulse 2 - timer low" },
+                { 0x4007, "APU - Pulse 2 - lcl/timer high" },
+                { 0x4008, "APU - Triangle - control" },
+                { 0x400A, "APU - Triangle - timer low" },
+                { 0x400B, "APU - Triangle - lcl/timer high" },
+                { 0x400C, "APU - Noise - control" },
+                { 0x400E, "APU - Noise - mode/period" },
+                { 0x400F, "APU - Noise - lcl" },
+                { 0x4010, "APU - DMC - irq/loop/frequency" },
+                { 0x4011, "APU - DMC - load counter" },
+                { 0x4012, "APU - DMC - sample address" },
+                { 0x4013, "APU - DMC - sample length" },
+                { 0x4015, "APU - control/status" },
+                { 0x4017, "APU - frame counter" }
+            };
+            void OnApuRegisterRead(u16 addr, u8 data) override;
+            void OnApuRegisterWrite(u16 addr, u8 data) override;
             void OnMapperRegisterRead(string details, u16 addr, u8 data) override;
             void OnMapperRegisterWrite(string details, u16 addr, u8 data) override;
             void OnControllerRead(string details, u16 addr, u8 data) override;
@@ -101,11 +132,9 @@ namespace NS_NES {
             void OnSpriteZeroHit() override;
             void OnMarkedBreakpoint(string details) override;
             void OnFrameComplete() override;
-
             u32 GetEventColor(EventType type);
-
-            /// @section CPU
-            /// @brief CPU-related debugging methods; fully functional, but subject to change
+            #pragma endregion
+            #pragma region CPU /// @brief CPU-related debugging methods; fully functional, but subject to change
             /**
              * @brief Acquires and formats the current state of the CPU as a two-dimensional array of strings
              * @return A vector of 3-string arrays, with one entry per CPU register/value.
@@ -140,9 +169,8 @@ namespace NS_NES {
              * that way we don't have to disassemble 25 instructions EVERY frame during application playback.
              */
             vector<string> GetDisassembly() const override;
-
-            /// @section PPU
-            /// @brief PPU-related debugging methods; currently in progress and subject to change
+            #pragma endregion
+            #pragma region PPU /// @brief PPU-related debugging methods; currently in progress and subject to change
             /**
              * @brief Acquires and formats the current state of the PPU as a two-dimensional array of strings
              * @return A vector of 4-string arrays, with one entry per PPU register/value
@@ -183,9 +211,8 @@ namespace NS_NES {
              * @return A single vector containing the constructed pixels of all sprites.
              */
             vector<u32> GetSprites() const override;
-
-            /// @section APU
-            /// @brief APU-related debugging methods; currenly unimplemented
+            #pragma endregion
+            #pragma region APU /// @brief APU-related debugging methods; currenly unimplemented
             /**
              * @brief Acquires and formats the current state of the APU as a two-dimensional array of strings
              * @return A vector of 4-string arrays, with one entry per APU register/value
@@ -216,14 +243,14 @@ namespace NS_NES {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
-
-            /// @section PAK
-            /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
+            #pragma endregion
+            #pragma region GAMEPAK /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
             /**
              * @brief Acquires and formats the information defined within the Gamepak Header as a 2D array of strings
              * @return A vector of 2-string arrays, with one entry per Header-defined value
              */
             vector<array<string, 2>> GetPakHeader() const override;
             vector<array<string, 2>> GetPakMapper() const override;
+            #pragma endregion
     };
 }

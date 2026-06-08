@@ -135,7 +135,7 @@ u8 PPU::read(u16 addr, bool readonly) {
                     w = false;
                     recompNMI();
                     if (eventSink) {
-                        eventSink->OnPpuRegisterRead("PPUSTATUS", 0x2000 | addr, ret);
+                        eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
                     }
                 }
                 break;
@@ -146,7 +146,7 @@ u8 PPU::read(u16 addr, bool readonly) {
                 // update counters for bit decay
                 updateCounters(0xFF);
                 if (eventSink) {
-                    eventSink->OnPpuRegisterRead("OAMDATA", 0x2000 | addr, ret);
+                    eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
                 }
                 break;
             case 0x07: // read from PPUDATA
@@ -166,7 +166,7 @@ u8 PPU::read(u16 addr, bool readonly) {
                     v = (v + getVRAMIncrement()) & 0x3FFF;
                     updateCounters(0xFF);
                     if (eventSink) {
-                        eventSink->OnPpuRegisterRead("PPUDATA", 0x2000 | addr, ret);
+                        eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
                     }
                 }
                 break;
@@ -196,7 +196,7 @@ void PPU::write(u16 addr, u8 data) {
                     t = ((t & 0xF3FF) | ((u16)(data & 0x03) << 10));
                     recompNMI();
                     if (eventSink) {
-                        eventSink->OnPpuRegisterWrite("PPUCTRL", 0x2000 | addr, data);
+                        eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                     }
                     return;
                 }
@@ -204,21 +204,21 @@ void PPU::write(u16 addr, u8 data) {
                 if (!ignoreEarlyCtrlWrites) {
                     PPUMASK = data;
                     if (eventSink) {
-                        eventSink->OnPpuRegisterWrite("PPUMASK", 0x2000 | addr, data);
+                        eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                     }
                 }
                 return;
             case 0x03: // write to OAMADDR
                 OAMADDR = data;
                 if (eventSink) {
-                    eventSink->OnPpuRegisterWrite("OAMADDR", 0x2000 | addr, data);
+                    eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }
                 return;
             case 0x04: // write to OAMDATA
                 writeOAMByte(OAMADDR, data); // update OAM
                 OAMADDR++; // increment address
                 if (eventSink) {
-                    eventSink->OnPpuRegisterWrite("OAMDATA", 0x2000 | addr, data);
+                    eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }
                 return;
             case 0x05: // write to PPUSCROLL
@@ -250,7 +250,7 @@ void PPU::write(u16 addr, u8 data) {
                         w = false;
                     }
                     if (eventSink) {
-                        eventSink->OnPpuRegisterWrite("PPUSCROLL", 0x2000 | addr, data);
+                        eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                     }
                 }
                 return;
@@ -277,7 +277,7 @@ void PPU::write(u16 addr, u8 data) {
                         w = false;
                     }
                     if (eventSink) {
-                        eventSink->OnPpuRegisterWrite("PPUADDR", 0x2000 | addr, data);
+                        eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                     }
                 }
                 return;
@@ -286,7 +286,7 @@ void PPU::write(u16 addr, u8 data) {
                 ppuWrite(v, PPUDATA); // update vram using value
                 v = (v + getVRAMIncrement()) & 0x3FFF; // increment vram address
                 if (eventSink) {
-                    eventSink->OnPpuRegisterWrite("PPUDATA", 0x2000 | addr, data);
+                    eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }
                 return;
         }
@@ -299,7 +299,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
     u8 ret = 0x00; // temp var for return value
 
     if (!readonly && addr <= 0x3EFF) {
-        cart.lock()->mapper->observeAddressPPU(addr, totalDots);
+        cart.lock()->mapper->observeAddressPPU(addr);
     }
     
     if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -400,7 +400,7 @@ void PPU::ppuWrite(u16 addr, u8 data) {
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
 
     if (addr <= 0x3EFF)
-        cart.lock()->mapper->observeAddressPPU(addr, totalDots);
+        cart.lock()->mapper->observeAddressPPU(addr);
     
     if (addr >= 0x0000 && addr <= 0x1FFF)
         // if address is within CHR memory, write to gamepak/mapper

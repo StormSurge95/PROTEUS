@@ -21,9 +21,9 @@ struct EventViewerCategoryConfig {
     u32 color = 0xFFFFFFFF;
 };
 
-struct EventViewerConfig {
-    bool autoRefresh = false;
-    bool showPreviousFrame = false;
+struct EventFilter {
+    string label;
+    bool filter;
 };
 
 namespace DebugEventFlags  {
@@ -37,7 +37,7 @@ namespace DebugEventFlags  {
 
         // SUBSYSTEM & DOMAIN FLAGS
         MEMORY = 1 << 3,
-        IO = 1 << 4,
+        MAPPER = 1 << 4,
         VIDEO = 1 << 5,
         AUDIO = 1 << 6,
         INPUT = 1 << 7,
@@ -56,57 +56,68 @@ namespace DebugEventFlags  {
     };
 }
 
+struct EventViewerConfig {
+    bool autoRefresh = false;
+    bool showPreviousFrame = false;
+    map<u32, EventFilter> eventFilters = {
+        { DebugEventFlags::READ, { "READ", true } },
+        { DebugEventFlags::WRITE, { "WRITE", true } },
+        { DebugEventFlags::MEMORY, { "MEMORY", true } },
+        { DebugEventFlags::MAPPER, { "MAPPER", true } },
+        { DebugEventFlags::VIDEO, { "VIDEO", true } },
+        { DebugEventFlags::AUDIO, { "AUDIO", true } },
+        { DebugEventFlags::INPUT, { "INPUT", true } },
+        { DebugEventFlags::DMA, { "DMA", true } },
+        { DebugEventFlags::INTERRUPT, { "INTERRUPT", true } },
+        { DebugEventFlags::SYNTHETIC, {"SYNTHETIC", true } }
+    };
+};
+
 static const u32 DebugEvent_ReadVideo =
-    DebugEventFlags::IO |
     DebugEventFlags::READ |
     DebugEventFlags::VIDEO |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_WriteVideo =
-    DebugEventFlags::IO |
     DebugEventFlags::WRITE |
     DebugEventFlags::VIDEO |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_ReadAudio =
-    DebugEventFlags::IO |
     DebugEventFlags::READ |
     DebugEventFlags::AUDIO |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_WriteAudio =
-    DebugEventFlags::IO |
     DebugEventFlags::WRITE |
     DebugEventFlags::AUDIO |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_ReadMapper =
-    DebugEventFlags::IO |
+    DebugEventFlags::MAPPER |
     DebugEventFlags::READ |
     DebugEventFlags::MEMORY |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_WriteMapper =
-    DebugEventFlags::IO |
+    DebugEventFlags::MAPPER |
     DebugEventFlags::WRITE |
     DebugEventFlags::MEMORY |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_ReadInput =
-    DebugEventFlags::IO |
     DebugEventFlags::READ |
     DebugEventFlags::INPUT |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
 static const u32 DebugEvent_WriteInput =
-    DebugEventFlags::IO |
     DebugEventFlags::WRITE |
     DebugEventFlags::INPUT |
     DebugEventFlags::HAS_ADDRESS |
@@ -122,7 +133,6 @@ static const u32 DebugEvent_ReadDma =
 static const u32 DebugEvent_WriteDma =
     DebugEventFlags::DMA |
     DebugEventFlags::WRITE |
-    DebugEventFlags::IO |
     DebugEventFlags::HAS_ADDRESS |
     DebugEventFlags::HAS_VALUE |
     DebugEventFlags::HAS_DETAILS;
@@ -307,9 +317,9 @@ class IDebugger {
 
         virtual EventViewerDisplaySize GetEventViewerDisplaySize() const = 0;
         virtual void SetEventViewerConfig(const EventViewerConfig& cfg) = 0;
-        virtual EventViewerConfig GetEventViewerConfig() const = 0;
-        virtual vector<u32> GetEventViewerPixels() const = 0;
-        virtual vector<DebugEventRecord> GetEventViewerEvents() const = 0;
+        virtual const EventViewerConfig& GetEventViewerConfig() const = 0;
+        virtual const vector<u32>& GetEventViewerPixels() const = 0;
+        virtual const vector<DebugEventRecord>& GetEventViewerEvents() const = 0;
         virtual const DebugEventRecord& GetEventAt(u16 scanline, u16 cycle) const = 0;
         virtual void TakeEventViewerSnapshot(bool forAutoRefresh) = 0;
 };

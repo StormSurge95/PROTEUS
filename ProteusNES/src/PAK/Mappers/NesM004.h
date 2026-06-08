@@ -98,6 +98,7 @@ namespace NS_NES {
                     if (prgRam != nullptr) {
                         u8 ret = prgRam->at(mapped);
                         if (!readonly && eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
+                        return ret;
                     } else return 0x00; // TODO: make this return open bus
                 } else if (pMode) { // PRG-ROM bank mode 1
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // fixed to second-last bank
@@ -144,7 +145,10 @@ namespace NS_NES {
                         cMode = ((bankSelect >> 7) & 0x01);
                         details = "MMC3/MMC6 - set bank select and PRG/CHR modes";
                     } else { // Odd: Bank Data
-                        u8 cdiv = chrMem->size() / 0x0400;
+                        // printf("chrMem->size() = %llu\n", chrMem->size());
+                        // printf("size / 0x0400 = %llu\n", chrMem->size() / 0x0400);
+                        u16 cdiv = chrMem->size() / 0x0400;
+                        // printf("cdiv = %du\n\n", cdiv);
                         switch (bankSelect & 0x07) {
                             case 0:
                                 bankData.R0 = (data % cdiv) & ~1;
@@ -310,7 +314,9 @@ namespace NS_NES {
              * @brief Keeps track of current ppu cycle/scanline/frame and is used to record/trigger IRQ
              * @param counter 
              */
-            void ppuclock(u64 counter = 0x0000) override {}
+            void cpuclock(u64 counter = 0x0000) override {
+                cpuClock = counter;
+            }
 
             /**
              * @brief Keeps track of the PPU A12 line (bit 12 of address bus)
@@ -318,19 +324,18 @@ namespace NS_NES {
              * @param addr The address in question to be used for
              *          observation of the A12 line.
              */
-            void observeAddressPPU(u16 addr, u64 time) override {
+            void observeAddressPPU(u16 addr) override {
                 u16 currA12 = (addr & 0x1000);
 
                 if (currA12 == 0) {
                     if (a12high) {
-                        lowStart = time;
+                        lowStart = cpuClock;
                         a12high = false;
                     }
                     return;
                 } else {
                     if (!a12high) {
-                        u64 d = time - lowStart;
-                        if (d >= 6) {
+                        if (cpuClock - lowStart >= 3) {
                             clockIRQ();
                         }
                     }
@@ -472,6 +477,8 @@ namespace NS_NES {
 
             bool a12high = false;
             u64 lowStart = 0;
+
+            u64 cpuClock = 0xFF'FF'FF'FF'FF'FF'FF'FF;
 
             bool MMC6 = false;
 

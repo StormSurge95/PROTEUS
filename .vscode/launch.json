@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Proteus",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-ninja/bin/Debug/Proteus.exe",
+            "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        }
+    ]
+}

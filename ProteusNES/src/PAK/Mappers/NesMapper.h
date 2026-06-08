@@ -92,7 +92,7 @@ namespace NS_NES {
              * @brief Observer function for keeping track of the PPU's A12 line.
              * @param addr The address to be used for observation of the A12 line.
              */
-            virtual void observeAddressPPU(u16 addr, u64 time) {}
+            virtual void observeAddressPPU(u16 addr) {}
 
             virtual vector<array<string, 2>> getDebugData() = 0;
         protected:

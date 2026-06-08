@@ -85,20 +85,13 @@ void VideoManager::Init() {
     fonts.UI_Italic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_Italic_data, FontUI_Italic_size);
     fonts.UI_BoldItalic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_BoldItalic_data, FontUI_BoldItalic_size);
     fonts.Debug = io.Fonts->AddFontFromMemoryCompressedTTF(FontDebug_data, FontDebug_size);
-    //fonts.Nintendo = io.Fonts->AddFontFromMemoryCompressedTTF(NintendoFont_data, NintendoFont_size);
-    //fonts.Sony = io.Fonts->AddFontFromMemoryCompressedTTF(SonyFont_data, SonyFont_size);
-    //fonts.Microsoft = io.Fonts->AddFontFromMemoryCompressedTTF(MicrosoftFont_data, MicrosoftFont_size);
 }
 
 void VideoManager::Deinit() {
-
     // remove fonts from ImGui
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.Fonts->RemoveFont(fonts.UI);
     io.Fonts->RemoveFont(fonts.Debug);
-    //io.Fonts->RemoveFont(fonts.Nintendo);
-    //io.Fonts->RemoveFont(fonts.Sony);
-    //io.Fonts->RemoveFont(fonts.Microsoft);
 
     // Shutdown ImGui
     ImGui_ImplSDLRenderer3_Shutdown();
@@ -575,6 +568,19 @@ void VideoManager::RenderDebugEVT() {
     changed |= ImGui::Checkbox("Auto-refresh", &cfg.autoRefresh);
     ImGui::SameLine();
     changed |= ImGui::Checkbox("Show previous frame", &cfg.showPreviousFrame);
+    ImGui::SameLine();
+    if (ImGui::Button("Filter Events")) {
+        ImGui::OpenPopup("Filter Events", ImPopupFlags);
+    }
+    ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
+    ImGui::SetNextWindowFocus();
+    if (ImGui::BeginPopup("Filter Events", ImPopupWindowFlags)) {
+        for (auto& [flag, filter] : cfg.eventFilters) {
+            changed |= ImGui::Checkbox(filter.label.c_str(), &filter.filter);
+        }
+        ImGui::EndPopup();
+    }
 
     // if config changed, update it within the debugger
     if (changed) {
@@ -716,6 +722,33 @@ void VideoManager::RenderDebugEVT() {
             ImGui::TableSetupColumn("Value");
             ImGui::TableSetupColumn("Details");
             ImGui::TableHeadersRow();
+            // ImGuiListClipper clipper;
+            // clipper.Begin(evr.size());
+            // vector<DebugEventRecord>::reverse_iterator it = evr.rbegin();
+            // while (clipper.Step()) {
+            //     for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+            //         DebugEventRecord& event = *it;
+            //         ImGui::TableNextRow();
+            //         u32 color = LerpColor(WithAlpha(event.color, 96), WithAlpha(0xFFFFFFFF, 96), 0.25);
+            //         if (event.scanline == evSelectedScanline && event.cycle == evSelectedCycle) {
+            //             color = Brighten(color, 0.5f); // TODO: figure out why this completely changes the color
+            //         }
+            //         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+            //         ImGui::TableNextColumn();
+            //         ImGui::Text("%s", event.type.c_str());
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.scanline);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.cycle);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%04X", event.address);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%02X", event.value);
+            //         ImGui::TableNextColumn();
+            //         ImGui::Text("%s", event.details.c_str());
+            //         it++;
+            //     }
+            // }
             for (const DebugEventRecord& event : evr | std::views::reverse) {
                 ImGui::TableNextRow();
                 u32 color = LerpColor(WithAlpha(event.color, 96), WithAlpha(0xFFFFFFFF, 96), 0.25);

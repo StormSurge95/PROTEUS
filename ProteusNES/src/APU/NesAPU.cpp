@@ -66,7 +66,7 @@ APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.
 u8 APU::read(u16 addr, bool readonly) {
     if (addr == 0x4015) {
         apuBus = read4015();
-        if (eventSink) eventSink->OnApuRegisterRead("APUSTATUS", 0x4015, apuBus);
+        if (eventSink) eventSink->OnApuRegisterRead(0x4015, apuBus);
     }
     return apuBus;
 }
@@ -76,10 +76,10 @@ void APU::write(u16 addr, u8 data) {
     // pulse 1 channels
     if (addr >= 0x4000 && addr <= 0x4003) {
         if (eventSink) {
-            if (addr == 0x4000) eventSink->OnApuRegisterWrite("Pulse 1 - control", addr, data);
-            else if (addr == 0x4001) eventSink->OnApuRegisterWrite("Pulse 1 - sweep", addr, data);
-            else if (addr == 0x4002) eventSink->OnApuRegisterWrite("Pulse 1 - timer low", addr, data);
-            else if (addr == 0x4003) eventSink->OnApuRegisterWrite("Pulse 1 - lcl/timer high", addr, data);
+            if (addr == 0x4000) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4001) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4002) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4003) eventSink->OnApuRegisterWrite(addr, data);
         }
 
         return pulse1->write(addr, data);
@@ -87,10 +87,10 @@ void APU::write(u16 addr, u8 data) {
     // pulse 2 channels
     if (addr >= 0x4004 && addr <= 0x4007) {
         if (eventSink) {
-            if (addr == 0x4004) eventSink->OnApuRegisterWrite("Pulse 2 - control", addr, data);
-            else if (addr == 0x4005) eventSink->OnApuRegisterWrite("Pulse 2 - sweep", addr, data);
-            else if (addr == 0x4006) eventSink->OnApuRegisterWrite("Pulse 2 - timer low", addr, data);
-            else if (addr == 0x4007) eventSink->OnApuRegisterWrite("Pulse 2 - lcl/timer high", addr, data);
+            if (addr == 0x4004) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4005) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4006) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4007) eventSink->OnApuRegisterWrite(addr, data);
         }
 
         return pulse2->write(addr, data);
@@ -98,9 +98,9 @@ void APU::write(u16 addr, u8 data) {
     // triangle channels
     if (addr >= 0x4008 && addr <= 0x400B) {
         if (eventSink) {
-            if (addr == 0x4008) eventSink->OnApuRegisterWrite("Triangle - control", addr, data);
-            else if (addr == 0x400A) eventSink->OnApuRegisterWrite("Triangle - timer low", addr, data);
-            else if (addr == 0x400B) eventSink->OnApuRegisterWrite("Triangle - lcl/timer high", addr, data);
+            if (addr == 0x4008) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400A) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400B) eventSink->OnApuRegisterWrite(addr, data);
         }
 
         return triangle->write(addr, data);
@@ -108,9 +108,9 @@ void APU::write(u16 addr, u8 data) {
     // noise channels
     if (addr >= 0x400C && addr <= 0x400F) {
         if (eventSink) {
-            if (addr == 0x400C) eventSink->OnApuRegisterWrite("Noise - control", addr, data);
-            else if (addr == 0x400E) eventSink->OnApuRegisterWrite("Noise - mode/period", addr, data);
-            else if (addr == 0x400F) eventSink->OnApuRegisterWrite("Noise - lcl", addr, data);
+            if (addr == 0x400C) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400E) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400F) eventSink->OnApuRegisterWrite(addr, data);
         }
 
         return noise->write(addr, data);
@@ -118,23 +118,23 @@ void APU::write(u16 addr, u8 data) {
     // dmc channels
     if (addr >= 0x4010 && addr <= 0x4013) {
         if (eventSink) {
-            if (addr == 0x4010) eventSink->OnApuRegisterWrite("DMC - irq/loop/frequency", addr, data);
-            else if (addr == 0x4011) eventSink->OnApuRegisterWrite("DMC - load counter", addr, data);
-            else if (addr == 0x4012) eventSink->OnApuRegisterWrite("DMC - sample address", addr, data);
-            else if (addr == 0x4013) eventSink->OnApuRegisterWrite("DMC - sample length", addr, data);
+            if (addr == 0x4010) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4011) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4012) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4013) eventSink->OnApuRegisterWrite(addr, data);
         }
 
         return dmc->write(addr, data);
     }
     // control register
     if (addr == 0x4015) {
-        if (eventSink) eventSink->OnApuRegisterWrite("APU - control", addr, data);
+        if (eventSink) eventSink->OnApuRegisterWrite(addr, data);
 
         return write4015(data);
     }
     // frame counter register
     if (addr == 0x4017) {
-        if (eventSink) eventSink->OnApuRegisterWrite("APU - Frame Counter", addr, data);
+        if (eventSink) eventSink->OnApuRegisterWrite(addr, data);
 
         return write4017(data);
     }

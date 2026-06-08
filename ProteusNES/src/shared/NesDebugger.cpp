@@ -58,17 +58,15 @@ void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
     evConfig = cfg;
 }
 
-EventViewerConfig NesDebugger::GetEventViewerConfig() const {
+const EventViewerConfig& NesDebugger::GetEventViewerConfig() const {
     return evConfig;
 }
 
-/// @brief WIP
-vector<u32> NesDebugger::GetEventViewerPixels() const {
+const vector<u32>& NesDebugger::GetEventViewerPixels() const {
     return evPixelsSnapshot;
 }
 
-/// @brief WIP
-vector<DebugEventRecord> NesDebugger::GetEventViewerEvents() const {
+const vector<DebugEventRecord>& NesDebugger::GetEventViewerEvents() const {
     return evEventsSnapshot;
 }
 
@@ -86,14 +84,26 @@ void NesDebugger::TakeEventViewerSnapshot(bool forAutoRefresh) {
 
     if (evConfig.showPreviousFrame) {
         for (const DebugEventRecord& event : evrPrevFrame) {
-            DebugEventRecord ghost = event;
-            ghost.flags |= DebugEventFlags::PREVIOUS_FRAME;
-            ghost.color = Dim(ghost.color, 0.5f);
-            evEventsSnapshot.push_back(ghost);
+            for (const auto& [flag, filter] : evConfig.eventFilters) {
+                if ((event.flags & flag) != 0 && filter.filter) {
+                    DebugEventRecord ghost = event;
+                    ghost.flags |= DebugEventFlags::PREVIOUS_FRAME;
+                    ghost.color = Dim(ghost.color, 0.5f);
+                    evEventsSnapshot.push_back(ghost);
+                    break;
+                }
+            }
         }
     }
 
-    evEventsSnapshot.insert(evEventsSnapshot.end(), evrLastFrame.begin(), evrLastFrame.end());
+    for (const DebugEventRecord& event : evrLastFrame) {
+        for (const auto& [flag, filter] : evConfig.eventFilters) {
+            if ((event.flags & flag) != 0 && filter.filter) {
+                evEventsSnapshot.push_back(event);
+                break;
+            }
+        }
+    }
 
     for (const DebugEventRecord& evr : evEventsSnapshot) {
         if (evr.scanline < 262 && evr.cycle < 341)
@@ -107,7 +117,7 @@ u32 NesDebugger::GetEventColor(EventType type) {
     return defaultEventColors.at(type);
 }
 
-void NesDebugger::OnPpuRegisterRead(string details, u16 addr, u8 data) {
+void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
     evrActiveFrame.push_back({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -116,11 +126,11 @@ void NesDebugger::OnPpuRegisterRead(string details, u16 addr, u8 data) {
         .color = GetEventColor(EventType::PPU_READ),
         .flags = DebugEvent_ReadVideo,
         .type = "PPU REG READ",
-        .details = details
+        .details = PPU_REGS.at(addr)
     });
 }
 
-void NesDebugger::OnPpuRegisterWrite(string details, u16 addr, u8 data) {
+void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
     evrActiveFrame.push_back({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -129,11 +139,11 @@ void NesDebugger::OnPpuRegisterWrite(string details, u16 addr, u8 data) {
         .color = GetEventColor(EventType::PPU_WRITE),
         .flags = DebugEvent_WriteVideo,
         .type = "PPU REG WRITE",
-        .details = details
+        .details = PPU_REGS.at(addr)
     });
 }
 
-void NesDebugger::OnApuRegisterRead(string details, u16 addr, u8 data) {
+void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
     evrActiveFrame.push_back({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -142,11 +152,11 @@ void NesDebugger::OnApuRegisterRead(string details, u16 addr, u8 data) {
         .color = GetEventColor(EventType::APU_READ),
         .flags = DebugEvent_ReadAudio,
         .type = "APU REG READ",
-        .details = details
+        .details = APU_REGS.at(addr)
     });
 }
 
-void NesDebugger::OnApuRegisterWrite(string details, u16 addr, u8 data) {
+void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
     evrActiveFrame.push_back({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -155,7 +165,7 @@ void NesDebugger::OnApuRegisterWrite(string details, u16 addr, u8 data) {
         .color = GetEventColor(EventType::APU_WRITE),
         .flags = DebugEvent_WriteAudio,
         .type = "APU REG WRITE",
-        .details = details
+        .details = APU_REGS.at(addr)
     });
 }
 
@@ -276,7 +286,8 @@ void NesDebugger::OnMarkedBreakpoint(string details) {
         .cycle = nes->ppu->cycle,
         .color = GetEventColor(EventType::BREAKPOINT),
         .flags = DebugEvent_Breakpoint,
-        .type = "MARKED BREAKPOINT"
+        .type = "MARKED BREAKPOINT",
+        .details = details
     });
 }
 
