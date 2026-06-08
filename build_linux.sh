@@ -17,19 +17,19 @@ for arg in "$@"; do
     esac
 done
 
-if [[ "$CONFIG" == "debug" ]]; then
-    configPreset=$([[ "$TEST" == true ]] && echo "ninja-debug-tests-x64" || echo "ninja-debug-x64")
-    buildPreset=$([[ "$TEST" == true ]] && echo "ninja-build-debug-tests" || echo "ninja-build-debug")
-    testPreset="ninja-test-debug"
-else
-    configPreset=$([[ "$TEST" == true ]] && echo "ninja-release-tests-x64" || echo "ninja-release-x64")
-    buildPreset=$([[ "$TEST" == true ]] && echo "ninja-build-release-tests" || echo "ninja-build-release")
-    testPreset="ninja-test-release"
-fi
+# if [[ "$CONFIG" == "debug" ]]; then
+#     configPreset=$([[ "$TEST" == true ]] && echo "ninja-debug-tests-x64" || echo "ninja-debug-x64")
+#     buildPreset=$([[ "$TEST" == true ]] && echo "ninja-build-debug-tests" || echo "ninja-build-debug")
+#     testPreset="ninja-test-debug"
+# else
+#     configPreset=$([[ "$TEST" == true ]] && echo "ninja-release-tests-x64" || echo "ninja-release-x64")
+#     buildPreset=$([[ "$TEST" == true ]] && echo "ninja-build-release-tests" || echo "ninja-build-release")
+#     testPreset="ninja-test-release"
+# fi
 
-cmake --preset "$configPreset"
-cmake --build --preset "$buildPreset"
+# cmake --preset "$configPreset"
+# cmake --build --preset "$buildPreset"
 
-if [[ "$TEST" == true ]]; then
-    ctest --preset "$testPreset"
-fi
+# if [[ "$TEST" == true ]]; then
+#     ctest --preset "$testPreset"
+# fi

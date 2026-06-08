@@ -16,13 +16,13 @@ if ($dbg -and $rls) {
 $config = if ($rls) { "release" } else { "debug" }
 
 if ($config -eq "debug") {
-    $configPreset = if ($tst) { "ninja-debug-tests-x64" } else { "ninja-debug-x64" }
-    $buildPreset = if ($tst) { "ninja-build-debug-tests" } else { "ninja-build-debug" }
-    $testPreset = "ninja-test-debug"
+    $configPreset = if ($tst) { "windows-x64-debug-tests" } else { "windows-x64-debug" }
+    $buildPreset = if ($tst) { "build-windows-debug-tests" } else { "build-windows-debug" }
+    $testPreset = "test-windows-debug"
 } else {
-    $configPreset = if ($tst) { "ninja-release-tests-x64" } else { "ninja-release-x64" }
-    $buildPreset = if ($tst) { "ninja-build-release-tests" } else { "ninja-build-release" }
-    $testPreset = "ninja-test-release"
+    $configPreset = if ($tst) { "windows-x64-release-tests" } else { "windows-x64-release" }
+    $buildPreset = if ($tst) { "build-windows-release-tests" } else { "build-windows-release" }
+    $testPreset = "test-windows-release"
 }
 
 cmake --preset $configPreset
