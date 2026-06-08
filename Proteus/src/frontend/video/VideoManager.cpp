@@ -690,12 +690,12 @@ void VideoManager::RenderDebugEVT() {
             if (event.isNull()) {
                 ImGui::Text("%s", "NO EVENT");
                 ImGui::Text("(%d, %d)", cycle, scanline);
-                ImGui::Text("");
+                ImGui::Spacing();
                 ImGui::Text("No event at this position");
             } else {
                 ImGui::Text("%s", event.type.c_str());
                 ImGui::Text("(%d, %d)", cycle, scanline);
-                ImGui::Text("");
+                ImGui::Spacing();
                 if (event.hasAddress()) ImGui::Text("Address: %04X", event.address);
                 if (event.hasValue()) ImGui::Text("Value: %02X", event.value);
             }
