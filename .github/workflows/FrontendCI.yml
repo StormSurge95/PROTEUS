@@ -105,11 +105,11 @@ jobs:
         shell: bash
         run: |
           rm -rf build-ci
-          cmake -S . -B build-ci
-          -DPROTEUS_BUILD_TESTS=ON
-          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
-          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          cmake -S . -B build-ci \
+            -DPROTEUS_BUILD_TESTS=ON \
+            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
