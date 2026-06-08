@@ -46,7 +46,7 @@ function Invoke-Checked {
     }
 }
 
-function Download-File {
+function Get-File {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Url,
@@ -101,12 +101,12 @@ for ($i = 0; $i -le 255; $i++) {
     $hexLower = "{0:x2}" -f $i
     $url = "https://raw.githubusercontent.com/SingleStepTests/65x02/main/nes6502/v1/$hexLower.json"
     $outFile = Join-Path $sstDir "$hexUpper.json"
-    Download-File -Url $url -OutFile $outFile
+    Get-File -Url $url -OutFile $outFile
 }
 
-Download-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" -OutFile $detCpu
-Download-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" -OutFile $detAudio
-Download-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" -OutFile $detFrame
+Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" -OutFile $detCpu
+Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" -OutFile $detAudio
+Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" -OutFile $detFrame
 
 Invoke-Checked -FilePath "cmake" -Arguments @(
     "-S", $workspace,
