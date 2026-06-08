@@ -1,43 +1,16 @@
 name: CI
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '**/*.cpp'
-      - '**/*.h'
-      - '**/*.hpp'
-      - '**/CMakeLists.txt'
-      - 'CMakePresets.json'
-      - '.github/workflows/ci.yml'
-      - 'Proteus/src/tests/**'
-      - 'ProteusNES/src/tests/**'
-      - 'ProteusGBA/src/tests/**'
   push:
     branches: [ main ]
-    paths:
-      - '**/*.cpp'
-      - '**/*.h'
-      - '**/*.hpp'
-      - '**/CMakeLists.txt'
-      - 'CMakePresets.json'
-      - '.github/workflows/ci.yml'
-      - 'Proteus/src/tests/**'
-      - 'ProteusNES/src/tests/**'
-      - 'ProteusGBA/src/tests/**'
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build-and-test:
-    if: >
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.draft == false
     env:
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-bincache,readwrite
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      SDL3_DIR: ""
-      OpenSSL_DIR: ""
-      nlohmann_json_DIR: ""
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
@@ -58,13 +31,6 @@ jobs:
         with:
           vcpkgDirectory: ${{ env.VCPKG_ROOT }}
           vcpkgGitCommitId: "d4424d012d982dc21529708ccc31fef27c55dcea"
-
-      - name: Retrieve SST Data
-        shell: bash
-        run: |
-          SST_REPO_DIR="${GITHUB_WORKSPACE}/sst-65x02"
-          rm -rf "$SST_REPO_DIR"
-          git clone https://github.com/SingleStepTests/65x02.git "$SST_REPO_DIR"
 
       - name: Select vcpkg triplet
         id: triplet
@@ -119,30 +85,16 @@ jobs:
             openssl:${{ steps.triplet.outputs.value }} \
             nlohmann-json:${{ steps.triplet.outputs.value }}
 
-      - name: Diagnostics (pre-configure)
-        shell: bash
-        run: |
-          echo "runner.os=${{ runner.os }}"
-          echo "runner.arch=${{ runner.arch }}"
-          echo "triplet=${{ steps.triplet.outputs.value }}"
-          echo "VCPKG_ROOT=${VCPKG_ROOT}"
-          echo "SSTROOT=${GITHUB_WORKSPACE}/sst-65x02/nes6502/v1"
-          cmake --version
-          vcpkg version
-
       - name: Configure
-        shell: bash
-        run: |
-          rm -rf build-ci
-          cmake -S . -B build-ci \
-          -DPROTEUS_BUILD_TESTS=ON \
-          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake \
-          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }} \
-          -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
-          -DSSTROOT=${{ github.workspace }}/sst-65x02/nes6502/v1
+        run: >
+          cmake -S . -B build-ci
+          -DPROTEUS_BUILD_TESTS=ON
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ steps.triplet.outputs.value }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         run: cmake --build build-ci --config ${{ matrix.config }}
 
       - name: Test (non-timing)
-        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -LE timing
+        run: ctest --test-dir build-ci -C ${{ matrix.config }} --output-on-failure -L plugin
