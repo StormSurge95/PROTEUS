@@ -31,8 +31,21 @@ namespace NS_NES {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak.
              */
-            M002(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M002(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+
+            }
+
+            void reset() override {
+
+            }
+
+            void powerdown() override {
+                
+            }
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -41,17 +54,19 @@ namespace NS_NES {
              * @return The data that was read; or zero if invalid address.
              */
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                if (addr < 0x8000) return 0x00;
+                if (addr >= 0x8000) {
+                    size_t mapped = (addr & 0x3FFF);
+                    if (addr <= 0xBFFF) {
+                        mapped += static_cast<size_t>(prgBank) * 0x4000; // 16KB bank
+                    } else {
+                        mapped += static_cast<size_t>(prgBanks - 1) * 0x4000;  // fixed last bank
+                    }
 
-                if (addr >= 0x8000 && addr <= 0xBFFF) { // map to switchable bank
-                    addr &= 0x3FFF;
-                    addr += ((u16)PRGBankSelect << 15);
-                } else if (addr >= 0xC000) { // map to fixed last bank
-                    addr &= 0x3FFF;
-                    addr += ((u16)(prgBanks - 1) << 15);
+                    u8 ret = prgRom->at(mapped);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mapped), addr, ret);
+                    return ret;
                 }
-
-                return prgRom->at(addr);
+                return 0x00;
             }
 
             /**
@@ -61,7 +76,17 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void cpuWrite(u16 addr, u8 data) override {
-                if (addr >= 0x8000) PRGBankSelect = data & (prgBanks - 1);
+                if (addr >= 0x8000) {
+                    if (prgBanks == 0) prgBank = 0;
+                    else {
+                        prgBank = data % ((prgBanks > 1) ? (prgBanks - 1) : 1);
+                    }
+                    if (eventSink) eventSink->OnMapperRegisterWrite("UxROM - PRG Bank", addr, data);
+                } else if (addr >= 0x6000 && prgRam != nullptr) {
+                    u16 mapped = addr & 0x1FFF;
+                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    prgRam->at(mapped) = data;
+                }
             }
 
             /**
@@ -72,7 +97,9 @@ namespace NS_NES {
              */
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
-                    return chrMem->at(addr);
+                    u8 ret = chrMem->at(addr);
+                    if (eventSink) eventSink->OnMapperRegisterRead(chrBanks == 0 ? "CHR-RAM" : "CHR-ROM", addr, ret);
+                    return ret;
                 }
                 return 0x00;
             }
@@ -84,14 +111,18 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (addr < 0x2000)
+                if (addr < 0x2000 && chrBanks == 0) {
                     chrMem->at(addr) = data;
+                    if (eventSink) eventSink->OnMapperRegisterWrite("CHR-RAM", addr, data);
+                }
             }
+
+            vector<array<string, 2>> getDebugData() override { return {}; }
 
         private:
             /**
              * @brief The current bank of PRG-ROM to use for reading
              */
-            u8 PRGBankSelect = 0;
+            u8 prgBank = 0;
     };
 }

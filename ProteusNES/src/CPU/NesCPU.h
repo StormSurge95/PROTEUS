@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
     class PPU;
@@ -26,9 +27,11 @@ namespace NS_NES {
              */
             friend class NesDebugger;
         private:
+            NesEventSink* eventSink = nullptr;
+
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST
-            array<u8, 0xFFFF> ram; /// @brief CPU ram container for SSTs
+            array<u8, 65536> ram; /// @brief CPU ram container for SSTs
             #else
             array<u8, 2048> ram; /// @brief CPU ram container for general use
             #endif
@@ -41,13 +44,8 @@ namespace NS_NES {
             u8 oamPage = 0x00; /// @brief Helper variable for OAMDMA; refers to the page of WRAM to read OAM data from.
             u8 oamAddr = 0x00; /// @brief Helper variable for OAMDMA; refers to the OAM address to write the WRAM data to.
             u8 oamData = 0x00; /// @brief Helper variable for OAMDMA; refers to the OAM data to be written after it is read from WRAM.
-            u8 dmcData = 0x00;
             u16 lastReadAddr = 0x0000; /// @brief Helper variable meant to be used for when the CPU is stalled via DMA dummy-read cycles.
             bool debugEnabled = false; /// @brief debug flag
-            bool pendingIRQ = false; /// @brief irq flag
-            bool pendingNMI = false; /// @brief nmi flag
-            bool pendingRST = false; /// @brief reset flag
-            bool delayInterrupt = false; /// @brief interrupt delay flag
             deque<u16> prevInstAddrs = {}; /// @brief container for the most recent instructions; allows Debugger to provide disassembly
             ADDR pc; /// @brief Current program counter
             u8 a = 0; /// @brief Current accumulator register
@@ -65,7 +63,20 @@ namespace NS_NES {
             bool paged = false; /// @brief flag to determine page boundary crossings
             bool branch = false; /// @brief flag to determine when to take branches
             vector<INST> lookup; /// @brief instruction lookup table
-            bool pollScheduled = false; /// @brief flag to poll interrupts
+            u16 addrBus = 0x0000; /// @brief observer variable for debugger usage
+            bool interruptFlagViaPoll = false;  // I flag as seen by pollInterrupts()
+            bool pendingSyncIFVP = false;       // whether to sync I flag after next poll
+            bool pendingValueIFVP = false;      // value to apply to I on next sync.
+
+            inline void deferIFVP() {
+                pendingSyncIFVP = true;
+                pendingValueIFVP = getFlag(FLAGS::I) != 0;
+            }
+
+            inline void syncIFVP() {
+                interruptFlagViaPoll = getFlag(FLAGS::I) != 0;
+                pendingSyncIFVP = false;
+            }
 
             /**
              * @brief Helper function to determine page boundary crossings
@@ -105,11 +116,6 @@ namespace NS_NES {
              * @brief  Poll the interrupt lines to determine if the next instruction should be an interrupt.
              */
             void pollInterrupts();
-            
-            /**
-             * @brief Set flag to poll interrupts at beginning of next cycle
-             */
-            inline void schedulePoll() { pollInterrupts(); }
 
             /**
              * @brief Helper function to obtain the value of a specific status flag
@@ -203,9 +209,6 @@ namespace NS_NES {
             #pragma endregion
 
             #pragma region Interrupts
-            enum class INTERRUPT {
-                NONE, RST, NMI, IRQ, BRK
-            };
             INTERRUPT interruptSource = INTERRUPT::NONE;
             map<INTERRUPT, u16> interruptVector{
                 { INTERRUPT::RST, 0xFFFC },
@@ -224,34 +227,45 @@ namespace NS_NES {
             void JAM();
             #pragma endregion
         public:
-            /// @brief irq flag
-            bool irqTrigger = false;
-            /// @brief nmi flag
-            bool nmiTrigger = false;
+            /// @brief reset flag
+            bool resetPending = false;
+            /// @brief device-specific IRQ flags
+            bool irqLine_APU = false;
+            bool irqLine_DMC = false;
+            bool irqLine_Mapper = false;
+            /// @brief NMI flag
+            bool nmiPending = false;
             /// @brief total cycles completed by CPU
             u64 totalCycles = 0;
             /// @brief cycle tracker for instruction operation
             u8 cycles = 0;
 
-            /// @brief Delay flat for the DMA operations
+            /// @brief Delay flag for the DMA operations
             bool delayDMA = false;
+            /// @brief Halted flag to stop regular CPU ops during DMA
             bool halted = false;
             /// @brief Flag for OAMDMA
             bool oamActive = false;
-            /// @brief Flag for DMCDMA
+            /// @brief Helper flag for running OAMDMA with accurate cycle counts
+            bool oamDummy = true;
+
+            bool dmcPending = false;
             bool dmcActive = false;
-            /// @brief Helper flag for running DMA with accurate cycle counts
-            bool dmaDummy = true;
+            bool dmcDummy = false;
+            bool dmcAlignment = false;
+            bool dmcLoad = false;
+            u16 dmcAddr = 0x0000;
+            u8 dmcData = 0x00;
 
             /// @brief Explicit Constructor
             CPU();
             /// @brief Default Destructor
             ~CPU() = default;
 
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+
             void init(SingleStateTest::State state);
             bool check(SingleStateTest::State state, string& result);
-
-            bool RDY() const { return oamData != 0x00 || true || true; }
 
             /**
              * @brief Data read request.
@@ -299,10 +313,24 @@ namespace NS_NES {
             void clockDMC();
 
             /// @brief 'power on' function
-            void start();
+            void powerup(u32 seed) override;
             /// @brief 'reset' function
-            void reset();
+            void reset() override;
+            /// @brief 'power off' function
+            void powerdown() override;
+            /// @brief 'reset' flag setter
+            void requestReset() { resetPending = true; }
             /// @brief 'clock' function
             void clock();/// @brief WRAM of the console/cartridge.
+
+            const CPU_STATE GetState() const;
+
+            void requestDmcDma(u16 addr, bool load);
+            void setIrqLine_APU(bool state) { irqLine_APU = state; }
+            void setIrqLine_DMC(bool state) { irqLine_DMC = state; }
+            void setIrqLine_Mapper(bool state) { irqLine_Mapper = state; }
+            bool serviceDMA();
+            bool hasPendingIrq() const { return irqLine_APU || irqLine_DMC || irqLine_Mapper; }
+            bool isGetCycle() const { return (totalCycles & 0x01) == 0; }
     };
 }

@@ -50,19 +50,39 @@ namespace NS_NES {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M001(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+                shiftReg = 0x10;
+                lastWriteCycle = UINT64_MAX;
+                cpuCycle = 0;
+
+                control = 0x0C;
+                chrBank0 = 0;
+                chrBank1 = 0;
+                prgBank = 0;
+
+                disablePrgRam = false;
+            }
 
             /**
              * @brief Resets the mapper to a known state
              */
-            void reset() {
+            void reset() override {
                 shiftReg = 0x10;
-                control = 0x0C;
+                lastWriteCycle = UINT64_MAX;
+                cpuCycle = 0;
+            }
 
+            void powerdown() override {
+                reset();
+                control = 0;
                 chrBank0 = 0;
                 chrBank1 = 0;
-                PRGBank = 0;
+                prgBank = 0;
+                disablePrgRam = false;
             }
 
             /**
@@ -75,12 +95,17 @@ namespace NS_NES {
                 if (addr >= 0x8000) { // return PRG-ROM for addresses over $7FFF
                     u32 mappedAddr = mapPRG(addr); // properly map/mask the address
                     size_t size = prgRom->size();
-                    if ((size & (size - 1)) == 0)
-                        return prgRom->at(mappedAddr & (size - 1));
-                    else
-                        return prgRom->at(mappedAddr % size);
+                    if ((size & (size - 1)) == 0) mappedAddr &= (size - 1);
+                    else mappedAddr %= size;
+
+                    u8 ret = prgRom->at(mappedAddr);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mappedAddr), addr, ret);
+                    return ret;
                 } else if (addr >= 0x6000 && hasPrgRam && !disablePrgRam) { // return PRG-RAM for addresses over $5FFF
-                    return prgRam->at(addr & 0x1FFF); // properly mask the address
+                    u16 mapped = addr & 0x1FFF;
+                    u8 ret = prgRam->at(mapped);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
+                    return ret; // properly mask the address
                 }
                 // return 0 for invalid addresses
                 return 0x00;
@@ -95,7 +120,9 @@ namespace NS_NES {
                 if (addr < 0x8000) {
                     // Only perform writes on PRG-RAM if the RAM is not disabled.
                     if (disablePrgRam || !hasPrgRam) return;
-                    prgRam->at(addr & 0x1FFF) = data; // properly mask address
+                    u16 mapped = addr & 0x1FFF;
+                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    prgRam->at(mapped) = data; // properly mask address
                     return;
                 }
 
@@ -128,6 +155,8 @@ namespace NS_NES {
                 // write the new bit
                 shiftReg |= (data & 0x01) << 4;
 
+                if (eventSink) eventSink->OnMapperRegisterWrite("MMC1 - shift register", addr, data);
+
                 // handle completion of 5-bit value
                 if (complete) {
                     // obtain the value to be written
@@ -151,7 +180,9 @@ namespace NS_NES {
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
                     u32 mappedAddr = mapCHR(addr); // properly map/mask the address
-                    return chrMem->at(mappedAddr);
+                    u8 ret = chrMem->at(mappedAddr);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("CHR-{}: {:04X}", (chrBanks == 0 ? "RAM" : "ROM"), mappedAddr), addr, ret);
+                    return ret;
                 }
                 return 0x00;
             }
@@ -166,6 +197,7 @@ namespace NS_NES {
             void ppuWrite(u16 addr, u8 data) override {
                 if (addr < 0x2000 && chrBanks == 0) {
                     u32 mappedAddr = mapCHR(addr); // properly map/mask address
+                    if (eventSink) eventSink->OnMapperRegisterWrite(format("CHR-RAM: {:04X}", mappedAddr), addr, data);
                     chrMem->at(mappedAddr) = data;
                 }
             }
@@ -192,6 +224,43 @@ namespace NS_NES {
                 }
             }
 
+            vector<array<string, 2>> getDebugData() override {
+                vector<array<string, 2>> v;
+                v.push_back({ "Mapper ID", "1 (MMC1)" });
+                v.push_back({ "Submapper ID", to_string(subMapperID) });
+                v.push_back({ "Shift Register", bin(shiftReg) });
+                v.push_back({ "Control", bin(control) });
+                v.push_back({ "Total CHR Banks", to_string(chrBanks) });
+                v.push_back({ "CHR Bank Mode", ((control & 0x10) == 0 ? "Switch One 8KB Bank" : "Switch Two 4KB Banks")});
+                v.push_back({ "CHR Bank 0", to_string(chrBank0) });
+                v.push_back({ "CHR Bank 1", to_string(chrBank1) });
+                v.push_back({ "Total PRG Banks", to_string(prgBanks) });
+                string s;
+                switch ((control >> 2) & 0x03) {
+                    case 0:
+                    case 1:
+                        s = "Switch One 32KB Bank";
+                        break;
+                    case 2:
+                        s = "Fix First Bank at $8000;\nSwitch 16KB Bank at $C000";
+                        break;
+                    case 3:
+                        s = "Fix Last Bank at $C000;\nSwitch 16KB Bank at $8000";
+                        break;
+                }
+                v.push_back({ "PRG Bank Mode", s });
+                v.push_back({ "PRG Bank", to_string(prgBank) });
+                v.push_back({ "Disable RAM", disablePrgRam ? "true" : "false" });
+                switch (control & 0x03) {
+                    case 0: s = "One-Screen - Lower Bank"; break;
+                    case 1: s = "One-Screen - Upper Bank"; break;
+                    case 2: s = "Horizontal Arrangment (Vertical Mirroring)"; break;
+                    case 3: s = "Vertical Arrangment (Horizontal Mirroring)"; break;
+                }
+                v.push_back({ "Nametable Layout", s });
+                return v;
+            }
+
         private:
             /**
              * @brief Holds data to be written to various internal registers; loaded via Load Register
@@ -206,7 +275,7 @@ namespace NS_NES {
              *      CPPMM
              *      |||||
              *      |||++-- Nametable arrangement
-             *      |||     - 00: one-screen, loawer bank
+             *      |||     - 00: one-screen, lower bank
              *      |||     - 01: one-screen, upper bank
              *      |||     - 10: horizontal arrangment ("vertical mirroring", PPU A10)
              *      |||     - 11: vertical arrangment ("horizontal mirroring", PPU A11)
@@ -256,7 +325,7 @@ namespace NS_NES {
              *              - 0: PRG-RAM enabled
              *              - 1: PRG-RAM disabled
              */
-            u8 PRGBank = 0;
+            u8 prgBank = 0;
             bool disablePrgRam = false; /// flag for disabling PRG-RAM
             std::vector<u8> PRGRam; // TODO: move this to base Mapper class
 
@@ -270,12 +339,22 @@ namespace NS_NES {
              */
             void writeRegister(u16 addr, u8 val) {
                 switch ((addr >> 13) & 0x03) {
-                    case 0: control = val; break;
-                    case 1: chrBank0 = val; break;
-                    case 2: chrBank1 = val; break;
+                    case 0:
+                        control = val;
+                        if (eventSink) eventSink->OnMapperRegisterWrite("MMC1 - control", addr, val);
+                        break;
+                    case 1:
+                        chrBank0 = val;
+                        if (eventSink) eventSink->OnMapperRegisterWrite("MMC1 - CHR Bank 0", addr, val);
+                        break;
+                    case 2:
+                        chrBank1 = val;
+                        if (eventSink) eventSink->OnMapperRegisterWrite("MMC1 - CHR Bank 1", addr, val);
+                        break;
                     case 3:
                         disablePrgRam = !!(val & 0x10);
-                        PRGBank = val % prgBanks;
+                        prgBank = val % prgBanks;
+                        if (eventSink) eventSink->OnMapperRegisterWrite("MMC1 - PRG Bank", addr, val);
                         break;
                 }
             }
@@ -299,18 +378,18 @@ namespace NS_NES {
                 switch (mode) {
                     case 0:
                     case 1: // switch 32 KB at $8000, ignoring low bit of bank number
-                        bank = ((PRGBank & 0x0E) >> 1) % b32c;
+                        bank = ((prgBank & 0x0E) >> 1) % b32c;
                         return (bank * 0x8000) + (addr & 0x7FFF);
                     case 2: // fix first bank at $8000 and switch 16 KB bank at $C000
                         if (addr < 0xC000) return (addr & 0x3FFF);
                         else {
-                            bank = (PRGBank & 0x0F) % b16c;
+                            bank = (prgBank & 0x0F) % b16c;
                             return (bank * 0x4000) + offset;
                         }
                     default:
                     case 3: // fix last bank at $C000 and switch 16 KB bank at $8000
                         if (addr < 0xC000) {
-                            bank = (PRGBank & 0x0F) % b16c;
+                            bank = (prgBank & 0x0F) % b16c;
                             return (bank * 0x4000) + offset;
                         } else
                             return ((prgBanks - 1) * 0x4000) + offset;
@@ -324,12 +403,12 @@ namespace NS_NES {
              */
             u32 mapCHR(u16 addr) {
                 // mask address to ensure we only access [$0000-$2000)
-                u16 a = addr & 0x1FFF;
+                u32 a = addr & 0x1FFF;
                 // determine if we are in 8KB mode or dual-4KB mode
                 bool switch8 = ((control >> 4) & 0x01) == 0x00;
 
-                u16 bank;   // variable to hold bank value
-                u16 mapped; // variable to hold mapped address value
+                u32 bank;   // variable to hold bank value
+                u32 mapped; // variable to hold mapped address value
 
                 if (switch8) {
                     // ignore chrBank1 and high bit of chrBank0

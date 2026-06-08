@@ -1,56 +1,102 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
+    class APU;
+
+    /// @class DMC_Channel DMC_Channel.h "./DMC_Channel.h"
+    /// @brief Class representing the Delta Modulated Channel of the NES APU
     class DMC_Channel {
             // Allow Debugger class to access all private members of the DMC_Channel class
-            friend class NesDebugger;
+            friend class Debugger;
         private:
-            bool irq_enable = false;
-            bool loop_flag = true;
-            bool enabled = false;
-            //u8 rate_index = 0;
-            u8 outputLevel = 0;
-            u16 sampleAddrReload = 0x0000;
-            u16 sampleLengthReload = 0x0000;
-            u16 currentAddr = 0x0000;
-            u16 bytesRemaining = 0;
+            NesEventSink* eventSink = nullptr;
+            /// @brief reference to the parent APU object
+            APU* apu = nullptr;
+            /// @brief irq enabled flag (DMC IRQ only)
+            bool irqEnabled = false;
+            /// @brief silent flag; used to determine whether the output pin sends a value or silence
+            bool silent = false;
+            /// @brief no sample flag; used to determine whether a dmc reload is necessary
+            bool noSample = false;
+            /// @brief loop flag; if set, we will simply restart from the beginning of the sample rather than request a reload
+            bool loop = false;
 
-            u16 timerPeriod = 0x0000;
-            u16 timerCounter = 0x0000;
+            /// @brief starting address of current sample being played back
+            u16 sampleAddr = 0x0000;
+            /// @brief address of current byte of current sample
+            u16 currAddr = 0x0000;
+            /// @brief total number of bytes in current sample
+            u16 sampleLength = 0x0000;
+            /// @brief unplayed bytes left in current sample
+            u16 bytesRemaining = 0x0000;
 
-            u8 shiftReg = 0x00;
-            u8 bitsRemaining = 8;
-
+            /// @brief register to hold the next sample byte to be used for playback
             u8 sampleBuffer = 0x00;
-            bool sampleBufferFull = false;
-            bool silence = true;
+            /// @brief shift register holding the current byte being processed
+            u8 shifter = 0x00;
+            /// @brief number of bits left before shift register is "empty"
+            u8 bitsRemaining = 0x00;
 
-            void clockShiftRegister();
+            /// @brief reload value of channel timer
+            u16 period = 1;
+            /// @brief current value of channel timer
+            u16 timer = 0x0000;
 
+            /// @brief current sound volume to output on sample request
+            u8 outputLevel = 0x00;
+
+            /// @brief clocks the shift register
+            void clockShifter();
+            /// @brief starts a new byte within the shift register and clears `silence` flag if necessary
+            void newOutputCycle();
         public:
-            bool pending_irq = false;
-            bool bufferNeeded = false;
+            /// @brief enabled flag
+            bool enabled = false;
+            /// @brief interrupt flag (DMC IRQ interrupt only)
+            bool interrupt = false;
 
-            DMC_Channel() = default;
+            /**
+             * @brief Explicit constructor
+             * @param p Reference to the parent APU object
+             */
+            DMC_Channel(APU* p) : apu(p) {}
+            /// @brief default destructor
             ~DMC_Channel() = default;
 
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+
+            /**
+             * @brief Data write operation for the DMC channel register(s)
+             * @param addr Address to be written to.
+             * @param data Data to be written.
+             */
             void write(u16 addr, u8 data);
 
-            void enable();
-            void disable();
-
+            /// @brief Clocks the timer of the channel and performs necessary operations based on result
             void clockTimer();
 
+            /**
+             * @brief Provides an output sample
+             * @return current `outputLevel` value, or zero if `silent` flag is set
+             */
+            inline u8 output() const { return silent ? 0x00 : outputLevel; }
+
+            /**
+             * @brief Getter for DMC channel status
+             * @return whether or not there are unplayed bytes remaining within the sample
+             */
+            inline bool status() const { return bytesRemaining > 0; }
+
+            void enable();
+
+            void disable();
+
+            void init();
+            void reset();
+
             void onByteFetch(u8 byte);
-
-            inline bool needsByteFetch() const { return !sampleBufferFull && bytesRemaining > 0; }
-
-            inline u16 getCurrentAddr() const { return currentAddr; }
-
-            inline u8 status() const { return bytesRemaining > 0 ? 1 : 0; }
-
-            inline u8 output() const { return outputLevel; }
     };
 }

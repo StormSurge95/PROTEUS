@@ -2,39 +2,22 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ProteusNESCore VERSION 1.0.0 LANGUAGES CXX)
 
-# Build as shared library (plugin)
-add_library(ProteusNES SHARED
-	# core contract info
-	NesCoreExports.cpp
-
-	### emulator implementation(s) ###
-
-	# core
-	NES.cpp
-	NesController.cpp
-
-	# APU
-	APU/NesAPU.cpp
-	APU/NesDMC.cpp
-	APU/NesNoise.cpp
-	APU/NesPulse.cpp
-	APU/NesTriangle.cpp
-
-	# CPU
-	CPU/NesCPU.cpp
-	CPU/NesCPU_AddressModes.cpp
-	CPU/NesCPU_Instructions.cpp
-
-	# PAK
-	PAK/NesGamepak.cpp
-
-	# PPU
-	PPU/NesPPU.cpp
-	PPU/NesPPU_BG.cpp
-	PPU/NesPPU_Sprites.cpp
-
-	# shared
-	shared/NesDebugger.cpp
+set(NES_CORE_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/NES.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/NesController.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesAPU.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesDMC.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesNoise.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesPulse.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesTriangle.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_AddressModes.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_Instructions.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/PAK/NesGamepak.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_BG.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_Sprites.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/shared/NesDebugger.cpp
 )
 
 # locate shared headers
@@ -48,10 +31,21 @@ else()
 	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
 endif()
 
+if(PROTEUS_BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
+
+# Build as shared library (plugin)
+add_library(ProteusNES SHARED
+	# core contract info
+	NesCoreExports.cpp
+	### emulator implementation(s) ###
+	${NES_CORE_SOURCES}
+)
+
 # Include directories
 target_include_directories(ProteusNES PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${PROTEUS_SRC_DIR}
 	${PROTEUS_SRC_DIR}/shared
 	${PROTEUS_SRC_DIR}/shared/plugin_utils

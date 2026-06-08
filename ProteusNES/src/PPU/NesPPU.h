@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 #include "../PAK/NesGamepak.h"
 #include "../CPU/NesCPU.h"
@@ -14,12 +15,14 @@ namespace NS_NES {
             u16 scanline = 0;
             // current dot/pixel of current scanline
             u16 cycle = 0;
+            u64 totalDots = 0;
             // public nmi flag as produced by ppu
             bool nmiRequested = false;
             // frame complete flag
             bool frameComplete = false;
             // suppress nmi flag
             bool suppressNMI = false;
+            u16 ppuAddrBus = 0x0000;
 
             // default constructor
             PPU() = default;
@@ -33,12 +36,26 @@ namespace NS_NES {
             */
             void clock();
 
-            /*
-                Reset function of the PPU.
-                Handles and performs any operations/changes necessary to
-                reset the PPU to a known and predetermined state.
-            */
-            void reset();
+            /**
+             * @brief Power On function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          initialize the PPU to it's "power on" state.
+             */
+            void powerup(u32 seed) override;
+
+            /**
+             * @brief Reset function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          reset the PPU to a known and predetermined state.
+             */
+            void reset() override;
+
+            /**
+             * @brief Power Down function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          shut down the PPU and cease all internal operations.
+             */
+            void powerdown() override;
 
             /*
                 Performs intra-device read operations on the various
@@ -79,6 +96,8 @@ namespace NS_NES {
             void connectCART(sptr<Gamepak>& c) { cart = c; }
             // connects the cpu to the ppu
             void connectCPU(sptr<CPU>& c) { cpu = c; }
+            // connects the event sink instance to the PPU
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
         private:
             // current nmi output value
             bool nmiOutput = false;
@@ -86,6 +105,12 @@ namespace NS_NES {
             bool oddFrame = false;
             // suppress vbl flag
             bool suppressVBL = false;
+            // flag for init completion
+            bool ignoreEarlyCtrlWrites = true;
+
+            NesEventSink* eventSink = nullptr;
+
+            void clearPipelines();
 
             /*
                 Performs read operations by reading from VRAM on

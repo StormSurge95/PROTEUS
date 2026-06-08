@@ -9,18 +9,18 @@ namespace NS_NES {
      * @details
      * Nintendo MMC3 is a mapper ASIC used in Nintendo's TxROM Game Pak boards.
      * 
-     * BANKS:
-     * - CPU $6000-$7FFF: 8KB PRG-RAM bank (optional)
-     * - CPU $8000-$9FFF OR $C000-$DFFF: 8KB switchable PRG-ROM bank
-     * - CPU $A000-$BFFF: 8KB switchable PRG-ROM bank
-     * - CPU $C000-$DFFF OR $8000-$9FFF: 8KB switchable PRG-ROM bank
-     * - CPU $E000-$FFFF: 8KB PRG-ROM bank, fixed to the last bank
-     * - PPU $0000-$07FF OR $1000-$17FF: 2KB switchable CHR bank
-     * - PPU $0800-$0FFF OR $1800-$1FFF: 2KB switchable CHR bank
-     * - PPU $1000-$13FF OR $0000-$03FF: 1KB switchable CHR bank
-     * - PPU $1400-$17FF OR $0400-$07FF: 1KB switchable CHR bank
-     * - PPU $1800-$1BFF OR $0800-$0BFF: 1KB switchable CHR bank
-     * - PPU $1C00-$1FFF OR $0C00-$0FFF: 1KB switchable CHR bank
+     * - BANKS:
+     *   - CPU $6000-$7FFF: 8KB PRG-RAM bank (optional)
+     *   - CPU $8000-$9FFF OR $C000-$DFFF: 8KB switchable PRG-ROM bank
+     *   - CPU $A000-$BFFF: 8KB switchable PRG-ROM bank
+     *   - CPU $C000-$DFFF OR $8000-$9FFF: 8KB switchable PRG-ROM bank
+     *   - CPU $E000-$FFFF: 8KB PRG-ROM bank, fixed to the last bank
+     *   - PPU $0000-$07FF OR $1000-$17FF: 2KB switchable CHR bank
+     *   - PPU $0800-$0FFF OR $1800-$1FFF: 2KB switchable CHR bank
+     *   - PPU $1000-$13FF OR $0000-$03FF: 1KB switchable CHR bank
+     *   - PPU $1400-$17FF OR $0400-$07FF: 1KB switchable CHR bank
+     *   - PPU $1800-$1BFF OR $0800-$0BFF: 1KB switchable CHR bank
+     *   - PPU $1C00-$1FFF OR $0C00-$0FFF: 1KB switchable CHR bank
      * 
      * MMC3 has 4 pairs of registers at $8000-$9FFF, $A000-$BFFF, $C000-$DFFF, and $E000-$FFFF
      * Within each pair of registers:
@@ -30,23 +30,55 @@ namespace NS_NES {
      *      memory mapping ($8000-$9FFF & $A000-$BFFF)
      *      scanline counting ($C000-$DFFF & $E000-$FFFF)
      * 
-     * REGISTERS:
-     * - Bank Select ($8000-$9FFE, even)            \
-     * - Bank Data ($8001-$9FFF, odd)                \
-     *                                                |-->memory mapping
-     * - Nametable Arrangement ($A000-$BFFE, even)   /
-     * - PRG-RAM Protect ($A001-$BFFF, odd)         /
+     * - REGISTERS:
+     *   - Bank Select ($8000-$9FFE, even)            \
+     *   - Bank Data ($8001-$9FFF, odd)                \
+     *                                                  |-->memory mapping
+     *   - Nametable Arrangement ($A000-$BFFE, even)   /
+     *   - PRG-RAM Protect ($A001-$BFFF, odd)         /
      * 
-     * - IRQ Latch ($C000-$DFFE, even)      \
-     * - IRQ Reload ($C001-$DFFF, odd)       \
-     *                                        |-->scanline counting
-     * - IRQ Disable ($E000-$FFFE, even)     /
-     * - IRQ Enable ($E001-$FFFF, odd)      /
+     *   - IRQ Latch ($C000-$DFFE, even)      \
+     *   - IRQ Reload ($C001-$DFFF, odd)       \
+     *                                          |-->scanline counting
+     *   - IRQ Disable ($E000-$FFFE, even)     /
+     *   - IRQ Enable ($E001-$FFFF, odd)      /
      */
     class M004 : public Mapper {
         public:
-            M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M004(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk << 1, pMem, cBnk << 3, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+                MMC6 = subMapperID == 1;
+
+                bankSelect = 0;
+                pMode = false;
+                cMode = false;
+
+                bankData = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+                nametableArrangement = MIRROR::HORIZONTAL;
+
+                ramProtect = { false, false, false, false, false, false };
+
+                irqCounter = 0;
+                irqReload = 0;
+                irqEnabled = false;
+                irqRequested = false;
+                reloadPending = false;
+
+                a12high = true;
+                lowStart = 0;
+            }
+
+            void reset() override {
+                powerup();
+            }
+
+            void powerdown() override {
+                powerup();
+            }
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -57,41 +89,38 @@ namespace NS_NES {
              * @return The data that was read; or zero if invalid address.
              */
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                u16 mapped = addr & 0x1FFF;
+                u32 mapped = addr & 0x1FFF;
+                u8 bank;
                 if (addr >= 0xE000 && addr <= 0xFFFF) {
                     // fixed to last bank
-                    mapped += (((u16)prgBanks - 1) << 15);
-                    return prgRom->at(mapped);
-                }
-                if (bankData.pMode) { // PRG-ROM bank mode 1
+                    bank = prgBanks - 1;
+                } else if (addr >= 0x6000 && addr <= 0x7FFF) { // TODO: make this respect RAM protect
+                    if (prgRam != nullptr) {
+                        u8 ret = prgRam->at(mapped);
+                        if (!readonly && eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
+                        return ret;
+                    } else return 0x00; // TODO: make this return open bus
+                } else if (pMode) { // PRG-ROM bank mode 1
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // fixed to second-last bank
-                        mapped += (((u16)prgBanks - 2) << 15);
-                        return prgRom->at(mapped);
-                    }
-                    if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
-                        mapped += ((u16)bankData.R7 << 15);
-                        return prgRom->at(mapped);
-                    }
-                    if (addr >= 0xC000 && addr <= 0xDFFF) { // R6
-                        mapped += ((u16)bankData.R6 << 15);
-                        return prgRom->at(mapped);
+                        bank = prgBanks - 2;
+                    } else if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
+                        bank = bankData.R7;
+                    } else if (addr >= 0xC000 && addr <= 0xDFFF) { // R6
+                        bank = bankData.R6;
                     }
                 } else { // PRG-ROM bank mode 0
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // R6
-                        mapped += ((u16)bankData.R6 << 15);
-                        return prgRom->at(mapped);
-                    }
-                    if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
-                        mapped += ((u16)bankData.R7 << 15);
-                        return prgRom->at(mapped);
-                    }
-                    if (addr >= 0xC000 && addr <= 0xDFFF) { // second-last
-                        mapped += (((u16)prgBanks - 2) << 15);
-                        return prgRom->at(mapped);
+                        bank = bankData.R6;
+                    } else if (addr >= 0xA000 && addr <= 0xBFFF) { // R7
+                        bank = bankData.R7;
+                    } else if (addr >= 0xC000 && addr <= 0xDFFF) { // second-last
+                        bank = prgBanks - 2;
                     }
                 }
-
-                return 0x00;
+                mapped += u16(bank) << 13;
+                u8 ret = prgRom->at(mapped);
+                if (!readonly && eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mapped), addr, ret);
+                return ret;
             }
 
             /**
@@ -102,28 +131,65 @@ namespace NS_NES {
              */
             void cpuWrite(u16 addr, u8 data) override {
                 bool even = (addr & 0x01) == 0;
+                if (addr >= 0x6000 && addr <= 0x7FFF && prgRam != nullptr) { // TODO: make this respect RAM protect
+                    u16 mapped = addr & 0x1FFF;
+                    prgRam->at(mapped) = data;
+                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    return;
+                }
+                string details = "";
                 if (addr >= 0x8000 && addr <= 0x9FFF) { // Bank Select & Bank Data
                     if (even) { // Even: Bank Select
                         bankSelect = data;
+                        pMode = ((bankSelect >> 6) & 0x01);
+                        cMode = ((bankSelect >> 7) & 0x01);
+                        details = "MMC3/MMC6 - set bank select and PRG/CHR modes";
                     } else { // Odd: Bank Data
+                        // printf("chrMem->size() = %llu\n", chrMem->size());
+                        // printf("size / 0x0400 = %llu\n", chrMem->size() / 0x0400);
+                        u16 cdiv = chrMem->size() / 0x0400;
+                        // printf("cdiv = %du\n\n", cdiv);
                         switch (bankSelect & 0x07) {
-                            case 0: bankData.R0 = data; break;
-                            case 1: bankData.R1 = data; break;
-                            case 2: bankData.R2 = data; break;
-                            case 3: bankData.R3 = data; break;
-                            case 4: bankData.R4 = data; break;
-                            case 5: bankData.R5 = data; break;
-                            case 6: bankData.R6 = data; break;
-                            case 7: bankData.R7 = data; break;
+                            case 0:
+                                bankData.R0 = (data % cdiv) & ~1;
+                                details = "MMC3/MMC6 - set bank R0";
+                                break;
+                            case 1:
+                                bankData.R1 = (data % cdiv) & ~1;
+                                details = "MMC3/MMC6 - set bank R1";
+                                break;
+                            case 2:
+                                bankData.R2 = data % cdiv;
+                                details = "MMC3/MMC6 - set bank R2";
+                                break;
+                            case 3:
+                                bankData.R3 = data % cdiv;
+                                details = "MMC3/MMC6 - set bank R3";
+                                break;
+                            case 4:
+                                bankData.R4 = data % cdiv;
+                                details = "MMC3/MMC6 - set bank R4";
+                                break;
+                            case 5:
+                                bankData.R5 = data % cdiv;
+                                details = "MMC3/MMC6 - set bank R5";
+                                break;
+                            case 6:
+                                bankData.R6 = data % prgBanks;
+                                details = "MMC3/MMC6 - set bank R6";
+                                break;
+                            case 7:
+                                bankData.R7 = data % prgBanks;
+                                details = "MMC3/MMC6 - set bank R7";
+                                break;
                         }
-                        bankData.pMode = ((bankSelect >> 6) & 0x01);
-                        bankData.cMode = ((bankSelect >> 7) & 0x01);
                     }
                 }
                 if (addr >= 0xA000 && addr <= 0xBFFF) { // Nametable Arrangment & PRG-RAM protect
                     if (even) { // Even: Nametable Arrangement
                         // TODO: this does nothing if hardware mirror is four screen
-                        nametableArrangement = (data & 0x01) == 0 ? MIRROR::HORIZONTAL : MIRROR::VERTICAL;
+                        nametableArrangement = (data & 0x01) == 0 ? MIRROR::VERTICAL : MIRROR::HORIZONTAL;
+                        details = "MMC3/MMC6 - set nametable arrangement";
                     } else { // Odd: PRG-RAM protect
                         if (MMC6) {
                             ramProtect.write_70_71 = ((data >> 4) & 0x01);
@@ -134,24 +200,33 @@ namespace NS_NES {
                             ramProtect.allowWrites = ((data >> 6) & 0x01);
                             ramProtect.chipEnable = ((data >> 7) & 0x01);
                         }
+                        details = "MMC3/MMC6 - set RAM protect";
                     }
                 }
                 if (addr >= 0xC000 && addr <= 0xDFFF) { // IRQ Latch & IRQ Reload
-                    if (even) // Even: latch
-                        irqLatch.irqReload = data;
-                    else { // Odd: Reload
+                    if (even) { // Even: latch
+                        irqReload = data;
+                        details = "MMC3/MMC6 - set IRQ counter reload value";
+                    } else { // Odd: Reload
                         // writing any value to this register clears the MMC3 IRQ counter immediately
                         // then reloads it at the NEXT rising edge of the PPU address
                         // presumably at PPU cycle 260 of the current scanline
-                        irqLatch.irqCounter = 0x00;
+                        irqCounter = 0x00;
+                        reloadPending = true;
+                        details = "MMC3/MMC6 - clear & reload IRQ counter";
                     }
                 }
                 if (addr >= 0xE000 && addr <= 0xFFFF) { // IRQ Enable & IRQ Disable
-                    if (even) // Even: disable
-                        irqEnabled = false;
-                    else // Odd: Enable
+                    if (even) { // Even: disable
+                        irqEnabled = irqRequested = false;
+                        details = "MMC3/MMC6 - disable IRQ";
+                    } else { // Odd: Enable
                         irqEnabled = true;
+                        details = "MMC3/MMC6 - enable IRQ";
+                    }
                 }
+
+                if (eventSink) eventSink->OnMapperRegisterWrite(details, addr, data);
             }
 
             /**
@@ -161,48 +236,38 @@ namespace NS_NES {
              * @return The data that was read; or zero if invalid address.
              */
             u8 ppuRead(u16 addr, bool readonly = false) override {
-                if (addr <= 0x1FFF) {
-                    u16 mapped = addr;
-                    if (bankData.cMode) { // CHR A12 Inversion 1
-                        if (addr <= 0x0FFF) { // four 1KB banks
-                            mapped &= 0x03FF;
-                            if (addr <= 0x03FF) // R2
-                                mapped += ((u16)bankData.R2 << 15);
-                            else if (addr <= 0x07FF) // R3
-                                mapped += ((u16)bankData.R3 << 15);
-                            else if (addr <= 0x0BFF) // R4
-                                mapped += ((u16)bankData.R4 << 15);
-                            else if (addr <= 0x0FFF) // R5
-                                mapped += ((u16)bankData.R5 << 15);
-                        } else { // two 2KB banks
-                            mapped &= 0x07FF;
-                            if (addr <= 0x17FF) // R0
-                                mapped += ((u16)bankData.R0 << 15);
-                            else if (addr <= 0x1FFF) // R1
-                                mapped += ((u16)bankData.R1 << 15);
-                        }
-                    } else { // CHR A12 Inversion 0
-                        if (addr <= 0x0FFF) { // two 2KB banks
-                            mapped &= 0x07FF;
-                            if (addr <= 0x07FF) // R0
-                                mapped += ((u16)bankData.R0 << 15);
-                            else // R1
-                                mapped += ((u16)bankData.R1 << 15);
-                        } else { // four 1KB banks
-                            mapped &= 0x03FF;
-                            if (addr <= 0x13FF) // R2
-                                mapped += ((u16)bankData.R2 << 15);
-                            else if (addr <= 0x17FF) // R3
-                                mapped += ((u16)bankData.R3 << 15);
-                            else if (addr <= 0x1BFF) // R4
-                                mapped += ((u16)bankData.R4 << 15);
-                            else // R5
-                                mapped += ((u16)bankData.R5 << 15);
-                        }
+                addr &= 0x1FFF;
+                u32 mapped = addr & 0x1FFF;
+                u8 bank;
+                if (cMode) { // CHR A12 Inversion 1
+                    if (addr <= 0x0FFF) { // four 1KB banks
+                        mapped &= 0x03FF;
+                        if (addr <= 0x03FF) bank = bankData.R2;
+                        else if (addr <= 0x07FF) bank = bankData.R3;
+                        else if (addr <= 0x0BFF) bank = bankData.R4;
+                        else if (addr <= 0x0FFF) bank = bankData.R5;
+                    } else { // two 2KB banks
+                        mapped &= 0x07FF;
+                        if (addr <= 0x17FF) bank = bankData.R0;
+                        else if (addr <= 0x1FFF) bank = bankData.R1;
                     }
-                    return chrMem->at(mapped);
+                } else { // CHR A12 Inversion 0
+                    if (addr <= 0x0FFF) { // two 2KB banks
+                        mapped &= 0x07FF;
+                        if (addr <= 0x07FF) bank = bankData.R0;
+                        else bank = bankData.R1;
+                    } else { // four 1KB banks
+                        mapped &= 0x03FF;
+                        if (addr <= 0x13FF) bank = bankData.R2;
+                        else if (addr <= 0x17FF) bank = bankData.R3;
+                        else if (addr <= 0x1BFF) bank = bankData.R4;
+                        else bank = bankData.R5;
+                    }
                 }
-                return 0x00;
+                mapped += u16(bank) << 10;
+                u8 ret = chrMem->at(mapped);
+                if (eventSink) eventSink->OnMapperRegisterRead(format("CHR-{}: {:04X}", chrBanks == 0 ? "RAM" : "ROM", mapped), addr, ret);
+                return ret;
             }
 
             /**
@@ -212,16 +277,70 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (chrBanks != 0) return;
-                // TODO: implement writing to CHR-RAM
+                if (chrBanks != 0 || addr >= 0x2000) return;
+                u32 mapped = addr;
+                u8 bank;
+                if (cMode) { // CHR A12 Inversion 1
+                    if (addr <= 0x0FFF) { // four 1KB banks
+                        mapped &= 0x03FF;
+                        if (addr <= 0x03FF) bank = bankData.R2;
+                        else if (addr <= 0x07FF) bank = bankData.R3;
+                        else if (addr <= 0x0BFF) bank = bankData.R4;
+                        else if (addr <= 0x0FFF) bank = bankData.R5;
+                    } else { // two 2KB banks
+                        mapped &= 0x07FF;
+                        if (addr <= 0x17FF) bank = bankData.R0;
+                        else if (addr <= 0x1FFF) bank = bankData.R1;
+                    }
+                } else { // CHR A12 Inversion 0
+                    if (addr <= 0x0FFF) { // two 2KB banks
+                        mapped &= 0x07FF;
+                        if (addr <= 0x07FF) bank = bankData.R0;
+                        else bank = bankData.R1;
+                    } else { // four 1KB banks
+                        mapped &= 0x03FF;
+                        if (addr <= 0x13FF) bank = bankData.R2;
+                        else if (addr <= 0x17FF) bank = bankData.R3;
+                        else if (addr <= 0x1BFF) bank = bankData.R4;
+                        else bank = bankData.R5;
+                    }
+                }
+                mapped += u16(bank) << 10;
+                chrMem->at(mapped) = data;
+                if (eventSink) eventSink->OnMapperRegisterWrite(format("CHR-RAM: {:04X}", mapped), addr, data);
             }
 
             /**
              * @brief Keeps track of current ppu cycle/scanline/frame and is used to record/trigger IRQ
              * @param counter 
              */
-            void ppuclock(u64 counter = 0x00) override {
-                // TODO
+            void cpuclock(u64 counter = 0x0000) override {
+                cpuClock = counter;
+            }
+
+            /**
+             * @brief Keeps track of the PPU A12 line (bit 12 of address bus)
+             *      and is used to clock the IRQ counter
+             * @param addr The address in question to be used for
+             *          observation of the A12 line.
+             */
+            void observeAddressPPU(u16 addr) override {
+                u16 currA12 = (addr & 0x1000);
+
+                if (currA12 == 0) {
+                    if (a12high) {
+                        lowStart = cpuClock;
+                        a12high = false;
+                    }
+                    return;
+                } else {
+                    if (!a12high) {
+                        if (cpuClock - lowStart >= 3) {
+                            clockIRQ();
+                        }
+                    }
+                    a12high = true;
+                }
             }
 
             /**
@@ -234,6 +353,36 @@ namespace NS_NES {
                 return nametableArrangement;
             }
 
+            bool irqRequestActive() const override { return irqRequested; }
+
+            vector<array<string, 2>> getDebugData() override {
+                vector<array<string, 2>> data;
+
+                data.push_back({ "Mapper ID", "4 (MMC3/MMC6)" });
+                data.push_back({ "Submapper ID", to_string(subMapperID) });
+                data.push_back({ "Bank Select", to_string(bankSelect) });
+                data.push_back({ "Bank Register R0", to_string(bankData.R0) });
+                data.push_back({ "Bank Register R1", to_string(bankData.R1) });
+                data.push_back({ "Bank Register R2", to_string(bankData.R2) });
+                data.push_back({ "Bank Register R3", to_string(bankData.R3) });
+                data.push_back({ "Bank Register R4", to_string(bankData.R4) });
+                data.push_back({ "Bank Register R5", to_string(bankData.R5) });
+                data.push_back({ "Bank Register R6", to_string(bankData.R6) });
+                data.push_back({ "Bank Register R7", to_string(bankData.R7) });
+                data.push_back({ "PRG Mode", pMode ? "$C000-$DFFF swappable\n$8000-$9FFF fixed to second-last bank" : "$8000-$9FFF swappable\n$C000-$DFFF fixed to second-last bank" });
+                data.push_back({ "CHR Mode", cMode ? "Two 2KB banks at $1000-$1FFF\nFour 1KB banks at $0000-$0FFF" : "Two 2KB banks at $0000-$0FFF\nFour 1KB banks at $1000-$1FFF" });
+                string nts;
+                switch (nametableArrangement) {
+                    case MIRROR::HORIZONTAL: nts = "Horizontal Mirroring"; break;
+                    case MIRROR::VERTICAL: nts = "Vertical Mirroring"; break;
+                    default: nts = ""; break;
+                }
+                data.push_back({ "Nametable Arrangement", nts });
+                data.push_back({ "IRQ Counter", to_string(irqCounter) });
+
+                return data;
+            }
+
         private:
             struct BANK_DATA {
                 u8 R0 = 0;
@@ -244,9 +393,10 @@ namespace NS_NES {
                 u8 R5 = 0;
                 u8 R6 = 0;
                 u8 R7 = 0;
-                bool pMode = false;
-                bool cMode = false;
             } bankData;
+
+            bool pMode = false;
+            bool cMode = false;
 
             /**
              * @details
@@ -318,13 +468,35 @@ namespace NS_NES {
                 bool read_72_73 = false;
             } ramProtect;
 
-            struct {
-                u8 irqCounter = 0;
-                u8 irqReload = 0;
-            } irqLatch;
+            u8 irqCounter = 0;
+            u8 irqReload = 0;
 
             bool irqEnabled = false;
+            bool irqRequested = false;
+            bool reloadPending = false;
+
+            bool a12high = false;
+            u64 lowStart = 0;
+
+            u64 cpuClock = 0xFF'FF'FF'FF'FF'FF'FF'FF;
 
             bool MMC6 = false;
+
+            /**
+             * @brief Clocks the IRQ counter value and triggers
+             *      an IRQ within the CPU when counter reaches zero.
+             */
+            void clockIRQ() {
+                if (irqCounter == 0 || reloadPending) {
+                    irqCounter = irqReload;
+                    reloadPending = false;
+                } else {
+                    irqCounter--;
+                }
+                if (irqCounter == 0 && irqEnabled) {
+                    irqRequested = true;
+                    if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_MAP);
+                }
+            }
     };
 }

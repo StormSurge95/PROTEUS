@@ -56,6 +56,7 @@ add_test(NAME PluginPerfTests COMMAND PluginPerfTests)
 
 set_tests_properties(PluginTests PROPERTIES
 	WORKING_DIRECTORY "$<TARGET_FILE_DIR:Proteus>"
+	LABLES "plugin"
 )
 set_tests_properties(PluginPerfTests PROPERTIES
 	WORKING_DIRECTORY "$<TARGET_FILE_DIR:Proteus>"

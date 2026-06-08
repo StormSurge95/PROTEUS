@@ -19,6 +19,35 @@ class IDevice {
         virtual DataSize read(AddressSize, bool = false) = 0;
         /// @brief required for the data write operations
         virtual void write(AddressSize, DataSize) = 0;
+
+        virtual void powerup(u32) {};
+        virtual void reset() {};
+        virtual void powerdown() {};
+    protected:
+        u32 seed = 0;
+        u32 bufferedWord = 0;
+        u8 bytesAvail = 0;
+        void initPRNG(u32 s) {
+            seed = s;
+            bufferedWord = bytesAvail = 0;
+        }
+        u32 nextWord() {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            return seed;
+        }
+        u8 nextByte() {
+            if (bytesAvail == 0) {
+                bufferedWord = nextWord();
+                bytesAvail = 4;
+            }
+
+            u8 out = bufferedWord & 0xFF;
+            bufferedWord >>= 8;
+            bytesAvail--;
+            return out;
+        }
 };
 
 /**

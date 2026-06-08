@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesEventSink.h"
 
 namespace NS_NES {
     class Mapper;
@@ -13,7 +14,7 @@ namespace NS_NES {
      * Implements IDevice interface with `u8` data size and `u16` address size
      * Contains and maintains all data within the opened ROM file.
      */
-    class Gamepak : IDevice<u8, u16> {
+    class Gamepak : public IDevice<u8, u16> {
             // Allow Debugger class to access all private members of the Gamepak class
             friend class NesDebugger;
         public:
@@ -29,7 +30,13 @@ namespace NS_NES {
              */
             Gamepak(const string& path);
             /// @brief Default destructor
-            ~Gamepak() { if (prgRamNonVolatile.size() > 0) SaveRAM(); }
+            ~Gamepak() { powerdown(); }
+            
+            void connectEventSink(NesEventSink* sink);
+
+            void powerup(u32 seed) override;
+            void reset() override;
+            void powerdown() override;
 
             /// @brief Getter for ROM validity
             inline bool isValid() const { return valid; }
@@ -85,6 +92,8 @@ namespace NS_NES {
 
             ExpansionDevice expDev = ExpansionDevice::UNSPECIFIED;
 
+            NesEventSink* eventSink = nullptr;
+
             /// @brief validity flag for ROM data
             bool valid = false;
             /// @brief flag to show whether this rom has the 512B trainer section
@@ -100,11 +109,11 @@ namespace NS_NES {
             /// @brief Hardware (i.e. Cartridge; not Mapper) mirroring arrangement for this ROM
             MIRROR mirror = MIRROR::HORIZONTAL;
 
-            /// @brief Vector containing all PRG-ROM memory data
+            /// @brief Vectors containing all PRG memory data
             vector<u8> prgMemory = {};
             vector<u8> prgRamVolatile = {};
             vector<u8> prgRamNonVolatile = {};
-            /// @brief Vector containing all CHR-MEM memory data
+            /// @brief Vectors containing all CHR memory data
             vector<u8> chrMemory = {};
             vector<u8> chrRamVolatile = {};
             vector<u8> chrRamNonVolatile = {};

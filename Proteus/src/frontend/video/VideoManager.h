@@ -69,14 +69,17 @@ namespace NS_Proteus {
         private:
             bool debugActive = false;
             map<DebugView, bool> debugViews = {
+                { DebugView::EVENT_VIEWER, false },
                 { DebugView::CPU_REGS, true },
                 { DebugView::CPU_DISASM, false },
                 { DebugView::CPU_MEMORY, false },
                 { DebugView::PPU_REGS, false },
                 { DebugView::PPU_PATTERNTABLES, false },
                 { DebugView::PPU_NAMETABLES, false },
+                { DebugView::PPU_SPRITES, false },
                 { DebugView::APU_REGISTERS, false },
-                { DebugView::APU_CHANNELS, false }
+                { DebugView::APU_CHANNELS, false },
+                { DebugView::PAK_HEADER, false }
             };
             DebugView currentDebugView = DebugView::CPU_REGS;
             bool overlayActive = false;
@@ -109,18 +112,40 @@ namespace NS_Proteus {
 
             MenuSelection selectedItem;
 
+            u8 selectedPalette = 0;
             u8 ramPage = 0x00;
 
             void RenderConsoleSelection();
             void RenderGameSelection(ConsoleID console);
             void RenderGameView(bool debug);
             void RenderDebug(float scale);
+            void RenderDebugEVT();
             void RenderDebugCPU();
             void RenderDebugDIS();
             void RenderDebugRAM();
             void RenderDebugPPU();
+            void RenderDebugPTB();
+            void RenderDebugNTB();
+            void RenderDebugSPR();
             void RenderDebugAPU();
+            void RenderDebugPAK();
             void RenderOverlay();
+
+            // pattern table/nametable persistent state variables
+            void RenderPaletteSelector(const vector<u32>& colors, int paletteIndex, float itemWidth, u8 colorsPerPalette);
+            SDL_Texture* patternTableTextures[2] = { nullptr, nullptr };
+            bool patternTablesDirty = true;
+            SDL_Texture* nametableTextures[4] = { nullptr, nullptr, nullptr, nullptr };
+            SDL_Texture* sprTexture = nullptr;
+            u16 sprTextureHeight = 0;
+
+            // event viewer persistent state variables
+            SDL_Texture* evTexture = nullptr;
+            u32 evWidth = 0;
+            u32 evHeight = 0;
+            bool evHasSelection = false;
+            u32 evSelectedScanline = 0;
+            u32 evSelectedCycle = 0;
 
             void PrepViewport(ImGuiViewport* vp);
             void PrepUI(ImGuiViewport* vp, MenuType type);
@@ -143,7 +168,8 @@ namespace NS_Proteus {
                 ImGuiWindowFlags_MenuBar                // Has a menu-bar
                 | ImGuiWindowFlags_NoNav                // make sure that gamepad inputs only effect gameplay
                 | ImGuiWindowFlags_NoMove
-                | ImGuiWindowFlags_NoResize;
+                | ImGuiWindowFlags_NoResize
+                | ImGuiWindowFlags_NoCollapse;
 
             const ImGuiPopupFlags ImPopupFlags = ImGuiPopupFlags_NoReopen;
 

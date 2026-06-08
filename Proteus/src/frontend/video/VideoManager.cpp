@@ -85,20 +85,13 @@ void VideoManager::Init() {
     fonts.UI_Italic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_Italic_data, FontUI_Italic_size);
     fonts.UI_BoldItalic = io.Fonts->AddFontFromMemoryCompressedTTF(FontUI_BoldItalic_data, FontUI_BoldItalic_size);
     fonts.Debug = io.Fonts->AddFontFromMemoryCompressedTTF(FontDebug_data, FontDebug_size);
-    //fonts.Nintendo = io.Fonts->AddFontFromMemoryCompressedTTF(NintendoFont_data, NintendoFont_size);
-    //fonts.Sony = io.Fonts->AddFontFromMemoryCompressedTTF(SonyFont_data, SonyFont_size);
-    //fonts.Microsoft = io.Fonts->AddFontFromMemoryCompressedTTF(MicrosoftFont_data, MicrosoftFont_size);
 }
 
 void VideoManager::Deinit() {
-
     // remove fonts from ImGui
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.Fonts->RemoveFont(fonts.UI);
     io.Fonts->RemoveFont(fonts.Debug);
-    //io.Fonts->RemoveFont(fonts.Nintendo);
-    //io.Fonts->RemoveFont(fonts.Sony);
-    //io.Fonts->RemoveFont(fonts.Microsoft);
 
     // Shutdown ImGui
     ImGui_ImplSDLRenderer3_Shutdown();
@@ -424,6 +417,51 @@ void VideoManager::RenderDebug(float scale) {
 
     ImGui::Begin("DEBUG_MENU", &debugActive, ImDebugFlags);
     if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("VIEW")) {
+            if (ImGui::MenuItem("EVENTS", nullptr, &debugViews.at(DebugView::EVENT_VIEWER))) {
+                SetDebugView(DebugView::EVENT_VIEWER);
+            }
+            if (ImGui::BeginMenu("CPU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS))) {
+                    SetDebugView(DebugView::CPU_REGS);
+                }
+                if (ImGui::MenuItem("DISASSEMBLY", nullptr, &debugViews.at(DebugView::CPU_DISASM))) {
+                    SetDebugView(DebugView::CPU_DISASM);
+                }
+                if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
+                    SetDebugView(DebugView::CPU_MEMORY);
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("PPU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::PPU_REGS))) {
+                    SetDebugView(DebugView::PPU_REGS);
+                }
+                if (ImGui::MenuItem("PATTERN TABLES", nullptr, &debugViews.at(DebugView::PPU_PATTERNTABLES))) {
+                    SetDebugView(DebugView::PPU_PATTERNTABLES);
+                }
+                if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
+                    SetDebugView(DebugView::PPU_NAMETABLES);
+                }
+                if (ImGui::MenuItem("SPRITES", nullptr, &debugViews.at(DebugView::PPU_SPRITES))) {
+                    SetDebugView(DebugView::PPU_SPRITES);
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("APU")) {
+                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::APU_REGISTERS))) {
+                    SetDebugView(DebugView::APU_REGISTERS);
+                }
+                if (ImGui::MenuItem("CHANNELS", nullptr, &debugViews.at(DebugView::APU_CHANNELS))) {
+                    SetDebugView(DebugView::APU_CHANNELS);
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("PAK", nullptr, &debugViews.at(DebugView::PAK_HEADER))) {
+                SetDebugView(DebugView::PAK_HEADER);
+            }
+            ImGui::EndMenu();
+        }
         if (ImGui::BeginMenu("OPTIONS")) {
             static bool temp = false;;
             if (ImGui::Checkbox("LOG TO FILE", &temp)) {
@@ -453,45 +491,13 @@ void VideoManager::RenderDebug(float scale) {
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("VIEW")) {
-            if (ImGui::BeginMenu("CPU")) {
-                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::CPU_REGS))) {
-                    SetDebugView(DebugView::CPU_REGS);
-                }
-                if (ImGui::MenuItem("DISASSEMBLY", nullptr, &debugViews.at(DebugView::CPU_DISASM))) {
-                    SetDebugView(DebugView::CPU_DISASM);
-                }
-                if (ImGui::MenuItem("MEMORY", nullptr, &debugViews.at(DebugView::CPU_MEMORY))) {
-                    SetDebugView(DebugView::CPU_MEMORY);
-                }
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("PPU")) {
-                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::PPU_REGS))) {
-                    SetDebugView(DebugView::PPU_REGS);
-                }
-                if (ImGui::MenuItem("PATTERN TABLES", nullptr, &debugViews.at(DebugView::PPU_PATTERNTABLES))) {
-                    SetDebugView(DebugView::PPU_PATTERNTABLES);
-                }
-                if (ImGui::MenuItem("NAMETABLES", nullptr, &debugViews.at(DebugView::PPU_NAMETABLES))) {
-                    SetDebugView(DebugView::PPU_NAMETABLES);
-                }
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("APU")) {
-                if (ImGui::MenuItem("REGISTERS", nullptr, &debugViews.at(DebugView::APU_REGISTERS))) {
-                    SetDebugView(DebugView::APU_REGISTERS);
-                }
-                if (ImGui::MenuItem("CHANNELS", nullptr, &debugViews.at(DebugView::APU_CHANNELS))) {
-                    SetDebugView(DebugView::APU_CHANNELS);
-                }
-                ImGui::EndMenu();
-            }
-            ImGui::EndMenu();
-        }
         ImGui::EndMenuBar();
     }
     switch (currentDebugView) {
+        case DebugView::EVENT_VIEWER:
+            RenderDebugEVT();
+            break;
+        default:
         case DebugView::CPU_REGS:
             // render current state of CPU registers
             RenderDebugCPU();
@@ -509,10 +515,13 @@ void VideoManager::RenderDebug(float scale) {
             RenderDebugPPU();
             break;
         case DebugView::PPU_PATTERNTABLES:
-            // TODO: Add display with SELECTABLE palette entries and render pattern tables using whatever palette entry is selected
+            RenderDebugPTB();
             break;
         case DebugView::PPU_NAMETABLES:
-            // TODO: Add current PPU nametables display
+            RenderDebugNTB();
+            break;
+        case DebugView::PPU_SPRITES:
+            RenderDebugSPR();
             break;
         case DebugView::APU_REGISTERS:
             // render current state of APU registers
@@ -521,12 +530,249 @@ void VideoManager::RenderDebug(float scale) {
         case DebugView::APU_CHANNELS:
             // TODO: Add APU channel display with toggles for (de)activating various channels and waveform graphs for display
             break;
-        default:
+        case DebugView::PAK_HEADER:
+            RenderDebugPAK();
             break;
     }
     ImGui::End();
 
     ImGui::PopFont();
+}
+
+void VideoManager::RenderDebugEVT() {
+    // ensure debugger exists
+    IDebugger* dbg = ctx->GetDebugger();
+    if (!dbg) {
+        ImGui::Text("No debugger available.");
+        return;
+    }
+
+    // get the current event viewer configuration
+    EventViewerConfig cfg = dbg->GetEventViewerConfig();
+
+    // refresh button allows immediate taking of new snapshot
+    if (ImGui::Button("Refresh")) {
+        dbg->TakeEventViewerSnapshot(false);
+    }
+
+    // if auto refresh, then we take a new snapshot anyways
+    if (cfg.autoRefresh) {
+        dbg->TakeEventViewerSnapshot(true);
+    }
+
+    // observer for whether we need to change the saved config
+    bool changed = false;
+
+    // add checkboxes that affect our observer
+    ImGui::SameLine();
+    changed |= ImGui::Checkbox("Auto-refresh", &cfg.autoRefresh);
+    ImGui::SameLine();
+    changed |= ImGui::Checkbox("Show previous frame", &cfg.showPreviousFrame);
+    ImGui::SameLine();
+    if (ImGui::Button("Filter Events")) {
+        ImGui::OpenPopup("Filter Events", ImPopupFlags);
+    }
+    ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
+    ImGui::SetNextWindowFocus();
+    if (ImGui::BeginPopup("Filter Events", ImPopupWindowFlags)) {
+        for (auto& [flag, filter] : cfg.eventFilters) {
+            changed |= ImGui::Checkbox(filter.label, &filter.show);
+        }
+        ImGui::EndPopup();
+    }
+
+    // if config changed, update it within the debugger
+    if (changed) {
+        dbg->SetEventViewerConfig(cfg);
+    }
+    
+    // get current event viewer frame size
+    EventViewerDisplaySize evSize = dbg->GetEventViewerDisplaySize();
+    // ensure that returned size is valid
+    if (evSize.width == 0 || evSize.height == 0) {
+        ImGui::Text("Event viewer returned an empty surface.");
+        return;
+    }
+
+    // ensure texture used for ev frame is valid
+    if (evTexture && (evTexture->w != evSize.width || evTexture->h != evSize.height)) {
+        SDL_DestroyTexture(evTexture);
+    }
+    if (!evTexture) {
+        evTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, evSize.width, evSize.height);
+    }
+
+    // get the ev pixels constructed by the debugger
+    vector<u32> evPixels = dbg->GetEventViewerPixels();
+    // ensure that a first snapshot has been taken without forcing user interaction
+    if (evPixels.size() != size_t(evSize.width) * size_t(evSize.height)) {
+        dbg->TakeEventViewerSnapshot(false);
+        evPixels = dbg->GetEventViewerPixels();
+    }
+    // copy retrieved pixels into our ev texture
+    void* pixels;
+    int pitch;
+    SDL_LockTexture(evTexture, nullptr, &pixels, &pitch);
+    for (u32 y = 0; y < evSize.height; y++) {
+        memcpy(
+            reinterpret_cast<u8*>(pixels) + y * pitch,
+            reinterpret_cast<u8*>(evPixels.data()) + y * (evSize.width * sizeof(u32)),
+            evSize.width * sizeof(u32)
+        );
+    }
+    SDL_UnlockTexture(evTexture);
+
+    // calculate canvas size
+    float w = ImGui::GetContentRegionAvail().x;
+    float ratio = evSize.width / w;
+    ImVec2 canvas(w, evSize.height / ratio);
+
+    ImGui::InvisibleButton("EVENT_VIEWER_CANVAS", canvas);
+
+    ImVec2 canvasMin = ImGui::GetItemRectMin();
+    ImVec2 canvasMax = ImGui::GetItemRectMax();
+    bool hovered = ImGui::IsItemHovered();
+    bool clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left) && hovered;
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+
+    dl->AddRectFilled(canvasMin, canvasMax, 0xFF000000);
+
+    float scale = min(canvas.x / evSize.width, canvas.y / evSize.height);
+
+    ImVec2 gameRectMin(canvasMin.x, canvasMin.y);
+    ImVec2 gameRectMax(
+        canvasMin.x + (float(dispInfo.gameWidth) / float(evSize.width)) * canvas.x,
+        canvasMin.y + (float(dispInfo.gameHeight) / float(evSize.height)) * canvas.y
+    );
+
+    dl->AddImage(gameTexture, gameRectMin, gameRectMax);
+    dl->AddImage(evTexture, canvasMin, canvasMax);
+
+    // create render after-effect so that user knows exactly which event pixel they are hovering over
+    if (hovered) {
+        // hide cursor so that user can more easily see which pixel they are about to click
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
+        // get various position related values from ImGui
+        ImVec2 mousePos = ImGui::GetMousePos();
+        ImVec2 imgMin = ImGui::GetItemRectMin();
+        ImVec2 imgMax = ImGui::GetItemRectMax();
+
+        // calculate other position values based on collected values
+        ImVec2 localPos(mousePos.x - imgMin.x, mousePos.y - imgMin.y);
+        ImVec2 uvPos(std::clamp(localPos.x / canvas.x, 0.0f, 0.999999f), std::clamp(localPos.y / canvas.y, 0.0f, 0.999999f));
+
+        // calculate the appropriate cycle/scanline values for the pixel being hovered over
+        u32 cycle = u32(std::floor(uvPos.x * evSize.width));
+        u32 scanline = u32(std::floor(uvPos.y * evSize.height));
+
+        DebugEventRecord event = dbg->GetEventAt(scanline, cycle);
+
+        // determine the on-screen bounds of the in-emulator pixel
+        ImVec2 cellMin(
+            imgMin.x + (float(cycle) / float(evSize.width)) * canvas.x,
+            imgMin.y + (float(scanline) / float(evSize.height)) * canvas.y
+        );
+        ImVec2 cellMax(
+            imgMin.x + (float(cycle + 1) / float(evSize.width)) * canvas.x,
+            imgMin.y + (float(scanline + 1) / float(evSize.height)) * canvas.y
+        );
+
+        // draw crosshairs that form a square around the pixel in question
+        dl->AddLineH(imgMin.x, imgMax.x, cellMin.y, 0xFFFFFFFF);
+        dl->AddLineH(imgMin.x, imgMax.x, cellMax.y, 0xFFFFFFFF);
+        dl->AddLineV(cellMin.x, imgMin.y, imgMax.y, 0xFFFFFFFF);
+        dl->AddLineV(cellMax.x, imgMin.y, imgMax.y, 0xFFFFFFFF);
+
+        if (ImGui::BeginTooltip()) {
+            if (event.isNull()) {
+                ImGui::Text("%s", "NO EVENT");
+                ImGui::Text("(%d, %d)", cycle, scanline);
+                ImGui::Text("");
+                ImGui::Text("No event at this position");
+            } else {
+                ImGui::Text("%s", event.type.c_str());
+                ImGui::Text("(%d, %d)", cycle, scanline);
+                ImGui::Text("");
+                if (event.hasAddress()) ImGui::Text("Address: %04X", event.address);
+                if (event.hasValue()) ImGui::Text("Value: %02X", event.value);
+            }
+            ImGui::EndTooltip();
+        }
+
+        // manage click on event pixel
+        if (clicked) {
+            if (!event.isNull()) {
+                evSelectedScanline = scanline;
+                evSelectedCycle = cycle;
+            }
+        }
+    }
+
+    // render event list via table structure
+    vector<DebugEventRecord> evr = dbg->GetEventViewerEvents();
+    if (ImGui::BeginChild("EVENT TABLE", ImGui::GetContentRegionAvail())) {
+        if (ImGui::BeginTable("EVENT RECORDS", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+            ImGui::TableSetupColumn("Type");
+            ImGui::TableSetupColumn("Scanline");
+            ImGui::TableSetupColumn("Dot/Pixel");
+            ImGui::TableSetupColumn("Address");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableSetupColumn("Details");
+            ImGui::TableHeadersRow();
+            // ImGuiListClipper clipper;
+            // clipper.Begin(evr.size());
+            // vector<DebugEventRecord>::reverse_iterator it = evr.rbegin();
+            // while (clipper.Step()) {
+            //     for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+            //         DebugEventRecord& event = *it;
+            //         ImGui::TableNextRow();
+            //         u32 color = LerpColor(WithAlpha(event.color, 96), WithAlpha(0xFFFFFFFF, 96), 0.25);
+            //         if (event.scanline == evSelectedScanline && event.cycle == evSelectedCycle) {
+            //             color = Brighten(color, 0.5f); // TODO: figure out why this completely changes the color
+            //         }
+            //         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+            //         ImGui::TableNextColumn();
+            //         ImGui::Text("%s", event.type.c_str());
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.scanline);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.cycle);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%04X", event.address);
+            //         ImGui::TableNextColumn();
+            //         ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%02X", event.value);
+            //         ImGui::TableNextColumn();
+            //         ImGui::Text("%s", event.details.c_str());
+            //         it++;
+            //     }
+            // }
+            for (const DebugEventRecord& event : evr | std::views::reverse) {
+                ImGui::TableNextRow();
+                u32 color = LerpColor(WithAlpha(event.color, 96), WithAlpha(0xFFFFFFFF, 96), 0.25);
+                if (event.scanline == evSelectedScanline && event.cycle == evSelectedCycle) {
+                    color = Brighten(color, 0.5f); // TODO: figure out why this completely changes the color
+                }
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, color);
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", event.type.c_str());
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.scanline);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%d", event.cycle);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%04X", event.address);
+                ImGui::TableNextColumn();
+                ImGui::TextAligned(0.5f, ImGui::GetColumnWidth(), "%02X", event.value);
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", event.details.c_str());
+            }
+            ImGui::EndTable();
+        }
+        ImGui::EndChild();
+    }
 }
 
 void VideoManager::RenderDebugCPU() {
@@ -599,6 +845,157 @@ void VideoManager::RenderDebugPPU() {
     }
 }
 
+void VideoManager::RenderPaletteSelector(const vector<u32>& colors, int paletteIndex, float itemWidth, u8 colorsPerPalette) {
+    constexpr float aspect = 86.0f / 26.0f;
+
+    float itemHeight = itemWidth / aspect;
+    
+    float padding = itemHeight * (4.0f / 26.0f);
+    float gap = itemWidth * (2.0f / 86.0f);
+    if (gap < 1.0f) gap = 1.0f;
+    
+    ImVec2 swatchSize(
+        (itemWidth - (padding * 2.0f) - (gap * 3.0f)) / 4.0f,
+        itemHeight - (padding * 2.0f)
+    );
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    bool changed = false;
+
+    ImGui::PushID(paletteIndex);
+
+    ImVec2 itemMin = ImGui::GetCursorScreenPos();
+    ImVec2 itemSize(itemWidth, itemHeight);
+
+    if (ImGui::InvisibleButton("palette", itemSize)) {
+        if (selectedPalette != paletteIndex) {
+            selectedPalette = paletteIndex;
+            patternTablesDirty = true;
+        }
+    }
+
+    bool hovered = ImGui::IsItemHovered();
+    bool selected = (selectedPalette == paletteIndex);
+
+    ImVec2 itemMax(itemMin.x + itemWidth, itemMin.y + itemHeight);
+
+    if (hovered) dl->AddRectFilled(itemMin, itemMax, IM_COL32(255, 255, 255, 12), 3.0f);
+
+    int base = paletteIndex * colorsPerPalette;
+
+    float x = itemMin.x + padding;
+    float y = itemMin.y + padding;
+
+    for (int i = 0; i < colorsPerPalette; i++) {
+        ImVec2 swatchMin(x, y);
+        ImVec2 swatchMax(x + swatchSize.x, y + swatchSize.y);
+
+        dl->AddRectFilled(swatchMin, swatchMax, colors[base + i]);
+        dl->AddRect(swatchMin, swatchMax, IM_COL32(0, 0, 0, 255), 0.0f, 0, 1.0f);
+
+        x += swatchSize.x + gap;
+    }
+
+    ImVec2 groupMin(itemMin.x + padding, itemMin.y + padding);
+    ImVec2 groupMax(itemMax.x - padding, itemMax.y - padding);
+
+    if (selected) {
+        dl->AddRect(groupMin, groupMax, IM_COL32(255, 220, 80, 255), 3.0f, 0, 2.0f);
+    } else if (hovered) {
+        dl->AddRect(groupMin, groupMax, IM_COL32(200, 200, 200, 100), 3.0f, 0, 1.0f);
+    }
+
+    ImGui::PopID();
+}
+
+void VideoManager::RenderDebugPTB() {
+    // get palette data
+    PaletteData pal = ctx->GetDebugger()->GetPaletteData();
+
+    float w = ImGui::GetContentRegionAvail().x / 4.0f;
+
+    // render the selectable palette entries
+    for (u8 i = 0; i < pal.paletteCount; i++) {
+        RenderPaletteSelector(pal.colors, i, w, pal.colorsPerPalette);
+        if (i % 4 != 3) ImGui::SameLine(0.0f, 0.0f);
+    }
+
+    if (patternTablesDirty) {
+        for (u8 i = 0; i < 2; i++) {
+            vector<u32> pixels = ctx->GetDebugger()->GetPatternTable(i, selectedPalette);
+
+            if (patternTableTextures[i] == nullptr) {
+                patternTableTextures[i] = SDL_CreateTexture(
+                    renderer, SDL_PIXELFORMAT_ABGR8888,
+                    SDL_TEXTUREACCESS_STREAMING, 128, 128
+                );
+            }
+
+            void* dots;
+            int pitch;
+            SDL_LockTexture(patternTableTextures[i], nullptr, &dots, &pitch);
+            for (u32 y = 0; y < 128; y++) {
+                memcpy(
+                    reinterpret_cast<u8*>(dots) + y * pitch,
+                    reinterpret_cast<u8*>(pixels.data()) + y * (128 * sizeof(u32)),
+                    128 * sizeof(u32)
+                );
+            }
+            SDL_UnlockTexture(patternTableTextures[i]);
+        }
+        patternTablesDirty = false;
+    }
+
+    float availH = ImGui::GetContentRegionAvail().y;
+    float space = ImGui::GetStyle().ItemSpacing.y;
+    float imgHeight = (availH - space) / 2.0f;
+    float imgWidth = imgHeight;
+
+    ImGui::Image(patternTableTextures[0], ImVec2(imgWidth, imgHeight));
+    ImGui::Image(patternTableTextures[1], ImVec2(imgWidth, imgHeight));
+}
+
+void VideoManager::RenderDebugNTB() {
+    // update our nametable textures
+    for (u8 i = 0; i < 4; i++) {
+        vector<u32> pixels = ctx->GetDebugger()->GetNameTable(i);
+
+        if (nametableTextures[i] == nullptr) {
+            nametableTextures[i] = SDL_CreateTexture(
+                renderer, SDL_PIXELFORMAT_ABGR8888,
+                SDL_TEXTUREACCESS_STREAMING, 256, 240
+            );
+        }
+
+        void* dots;
+        int pitch;
+        SDL_LockTexture(nametableTextures[i], nullptr, &dots, &pitch);
+        for (u32 y = 0; y < 240; y++) {
+            memcpy(
+                reinterpret_cast<u8*>(dots) + y * pitch,
+                reinterpret_cast<u8*>(pixels.data()) + y * (256 * sizeof(u32)),
+                256 * sizeof(u32)
+            );
+        }
+        SDL_UnlockTexture(nametableTextures[i]);
+    }
+
+    float aspect = 256.0f / 240.0f;
+
+    float space = ImGui::GetStyle().ItemSpacing.x;
+    
+    // this allows us to have a total of four nametables visible
+    float imgWidth = (ImGui::GetContentRegionAvail().x - space) / 2.0f;
+    float imgHeight = imgWidth / aspect;
+
+    ImGui::Image(nametableTextures[0], ImVec2(imgWidth, imgHeight));
+    ImGui::SameLine(0.0f, space);
+    ImGui::Image(nametableTextures[1], ImVec2(imgWidth, imgHeight));
+    ImGui::Image(nametableTextures[2], ImVec2(imgWidth, imgHeight));
+    ImGui::SameLine(0.0f, space);
+    ImGui::Image(nametableTextures[3], ImVec2(imgWidth, imgHeight));
+}
+
 void VideoManager::RenderDebugAPU() {
     if (ImGui::BeginTable("APU STATE", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
         ImGui::TableSetupColumn("Address");
@@ -646,5 +1043,94 @@ void VideoManager::SetDebugView(DebugView view) {
     currentDebugView = view;
     for (const pair<DebugView, bool>& p : debugViews) {
         debugViews.at(p.first) = p.first == view;
+    }
+}
+
+void VideoManager::RenderDebugPAK() {
+    if (ImGui::BeginTable("GAMEPAK INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableHeader("Gamepak Data");
+        ImGui::TableSetupColumn("Data");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableHeadersRow();
+        vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
+        for (size_t i = 0; i < pakData.size(); i++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", pakData[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", pakData[i][1].c_str());
+        }
+        ImGui::EndTable();
+    }
+    ImGui::Separator();
+    if (ImGui::BeginTable("MAPPER INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+        ImGui::TableHeader("Mapper Data");
+        ImGui::TableSetupColumn("Data");
+        ImGui::TableSetupColumn("Value");
+        ImGui::TableHeadersRow();
+        vector<array<string, 2>> mapData = ctx->GetDebugger()->GetPakMapper();
+        for (size_t i = 0; i < 0; i++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", mapData[i][0].c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", mapData[i][1].c_str());
+        }
+        ImGui::EndTable();
+    }
+}
+
+void VideoManager::RenderDebugSPR() {
+    const vector<u32> pixels = ctx->GetDebugger()->GetSprites();
+
+    const int atlW = 64;
+    const int atlH = int(pixels.size() / atlW);
+    if (atlH <= 0) return;
+
+    if (sprTexture == nullptr || sprTextureHeight != atlH) {
+        if (sprTexture) {
+            SDL_DestroyTexture(sprTexture);
+            sprTexture = nullptr;
+        }
+
+        sprTexture = SDL_CreateTexture(
+            renderer, SDL_PIXELFORMAT_ABGR8888,
+            SDL_TEXTUREACCESS_STREAMING, atlW, atlH
+        );
+        sprTextureHeight = (u16)atlH;
+    }
+
+    void* texels = nullptr;
+    int pitch = 0;
+    SDL_LockTexture(sprTexture, nullptr, &texels, &pitch);
+    for (int y = 0; y < atlH; y++) {
+        memcpy(
+            reinterpret_cast<u8*>(texels) + y * pitch,
+            reinterpret_cast<const u8*>(pixels.data()) + y * atlW * sizeof(u32),
+            atlW * sizeof(u32)
+        );
+    }
+    SDL_UnlockTexture(sprTexture);
+
+    const ImVec2 avail = ImGui::GetContentRegionAvail();
+    float scale = floorf(min(avail.x / float(atlW), avail.y / float(atlH)));
+    if (scale < 1.0f) scale = 1.0f;
+
+    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    ImVec2 itemMin(topLeft.x, topLeft.y);
+    int sW = 8 * scale;
+    int sH = (atlH / 8) * scale;
+
+    ImGui::Image(sprTexture, ImVec2(atlW * scale, atlH * scale));
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    for (int i = 0; i < 64; i++) {
+        ImVec2 itemMax(itemMin.x + sW, itemMin.y + sH);
+        dl->AddRect(itemMin, itemMax, IM_COL32(255, 255, 255, 255));
+        dl->AddText(itemMin, IM_COL32(255, 255, 255, 255), to_string(i).c_str());
+        if (i % 8 == 7) {
+            itemMin.x = topLeft.x;
+            itemMin.y += sH;
+        } else itemMin.x += sW;
     }
 }

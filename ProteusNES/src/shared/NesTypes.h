@@ -6,6 +6,23 @@
 namespace NS_NES {
     class CPU;
 
+    enum class INTERRUPT {
+        NONE, BRK, IRQ, NMI, RST
+    };
+
+    struct CPU_STATE {
+        u16 pc;
+        u8 a;
+        u8 x;
+        u8 y;
+        u8 sp;
+        u8 status;
+        u64 cycle;
+        bool irqLatch;
+        bool nmiLatch;
+        INTERRUPT interrupt;
+    };
+
     /**
      * @brief Enumeration of the various Mirroring arrangements within NES ROMs
      */
@@ -536,10 +553,11 @@ namespace NS_NES {
         u8 patternHi = 0x00;
         u8 attr = 0x00;
         u8 xCounter = 0x00;
+        u8 index = 0x00;
 
         ActiveSprite() = default;
-        ActiveSprite(u8 pl, u8 ph, u8 a, u8 x) :
-            patternLo(pl), patternHi(ph), attr(a), xCounter(x) {}
+        ActiveSprite(u8 pl, u8 ph, u8 a, u8 x, u8 i) :
+            patternLo(pl), patternHi(ph), attr(a), xCounter(x), index(i) {}
     };
 
     /**
@@ -549,6 +567,11 @@ namespace NS_NES {
         bool halt = false;      /// @brief Halt flag
         u8 counter = 0x00;      /// @brief Current value of the length counter.
         u8 reloadVal = 0x00;    /// @brief Value to reload length counter with upon reaching zero.
+
+        void reset() {
+            halt = false;
+            counter = reloadVal = 0x00;
+        }
     };
 
     /**
@@ -561,6 +584,12 @@ namespace NS_NES {
         u8 divider = 0x00;      /// @brief Current envelope counter value.
         u8 period = 0x00;       /// @brief Value to reload counter to upon reaching zero.
         u8 decay = 0x0F;        /// @brief Current Decay Level value.
+
+        void reset() {
+            loop = start = constVol = false;
+            divider = period = 0x00;
+            decay = 0x0F;
+        }
     };
 
     /**
@@ -573,6 +602,11 @@ namespace NS_NES {
         u8 divider = 0x00;      /// @brief Current sweep unit divider value.
         u8 period = 0x00;       /// @brief Divider reload value
         u8 shift = 0x00;        /// @brief Sweep Unit's shift amount
+
+        void reset() {
+            enabled = negate = reload = false;
+            divider = period = shift = 0x00;
+        }
     };
 
     struct HighPassFilter {

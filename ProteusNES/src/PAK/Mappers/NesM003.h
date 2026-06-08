@@ -32,8 +32,21 @@ namespace NS_NES {
              * @param cBnk Number of CHR-ROM banks
              * @param cMem Reference to CHR memory on gamepak
              */
-            M003(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                Mapper(pBnk, pMem, cBnk, cMem, pRam) {}
+            M003(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 id2 = 0) :
+                Mapper(pBnk, pMem, cBnk, cMem, pRam, id2) {
+            }
+
+            void powerup() override {
+
+            }
+
+            void reset() override {
+
+            }
+
+            void powerdown() override {
+                
+            }
 
             /**
              * @brief Data read request from CPU for PRG memory.
@@ -42,8 +55,17 @@ namespace NS_NES {
              * @return The data that was read; or zero if invalid address.
              */
             u8 cpuRead(u16 addr, bool readonly = false) override {
-                if (addr >= 0x8000 && addr <= 0xFFFF)
-                    return prgRom->at(addr & (prgBanks == 1 ? 0x3FFF : 0x7FFF));
+                if (addr >= 0x8000 && addr <= 0xFFFF) {
+                    u16 mapped = addr & (prgBanks == 1 ? 0x3FFF : 0x7FFF);
+                    u8 ret = prgRom->at(mapped);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mapped), addr, ret);
+                    return ret;
+                } else if (addr >= 0x6000 && prgRam != nullptr) {
+                    u16 mapped = addr & 0x1FFF;
+                    u8 ret = prgRam->at(mapped);
+                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
+                    return ret;
+                }
 
                 return 0x00;
             }
@@ -77,6 +99,12 @@ namespace NS_NES {
                         bankSelect = latched & (chrBanks - 1);
                     else // otherwise; we have to use modulus
                         bankSelect = latched % chrBanks;
+
+                    if (eventSink) eventSink->OnMapperRegisterWrite("CNROM - bank select", addr, data);
+                } else if (addr >= 0x6000 && prgRam != nullptr) {
+                    u16 mapped = addr & 0x1FFF;
+                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    prgRam->at(mapped) = data;
                 }
             }
 
@@ -88,12 +116,17 @@ namespace NS_NES {
              */
             u8 ppuRead(u16 addr, bool readonly = false) override {
                 if (addr < 0x2000) {
-                    if (chrBanks == 0)
-                        return chrMem->at(addr);
+                    if (chrBanks == 0) {
+                        u8 ret = chrMem->at(addr);
+                        if (eventSink) eventSink->OnMapperRegisterRead("CHR-RAM", addr, ret);
+                        return ret;
+                    } else {
+                        u16 mapped = addr + ((u16)bankSelect << 13);
 
-                    addr += ((u16)bankSelect << 13);
-
-                    return chrMem->at(addr);
+                        u8 ret = chrMem->at(mapped);
+                        if (eventSink) eventSink->OnMapperRegisterRead(format("CHR-ROM: {:04X}", mapped), addr, ret);
+                        return ret;
+                    }
                 }
 
                 return 0x00;
@@ -106,9 +139,13 @@ namespace NS_NES {
              * @param data Data to be written.
              */
             void ppuWrite(u16 addr, u8 data) override {
-                if (addr < 0x2000 && chrBanks == 0)
+                if (addr < 0x2000 && chrBanks == 0) {
+                    if (eventSink) eventSink->OnMapperRegisterWrite("CHR-RAM", addr, data);
                     chrMem->at(addr) = data;
+                }
             }
+
+            vector<array<string, 2>> getDebugData() override { return {}; }
 
         private:
             // keeps track of which CHR bank to use

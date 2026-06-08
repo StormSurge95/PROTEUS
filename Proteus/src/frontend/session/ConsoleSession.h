@@ -42,6 +42,8 @@ namespace NS_Proteus {
             SessionResult PlayPause();
 
             bool IsActive() const;
+            bool IsPaused() const { return currentState == ConsoleSessionState::PAUSED; }
+            bool IsRunning() const { return currentState == ConsoleSessionState::RUNNING; }
             const ConsoleID CurrentConsoleID() const { return currentConsole; }
             const ConsoleSessionState GetState() const { return currentState; }
             const sptr<IConsole>& GetConsole() const { return station; }

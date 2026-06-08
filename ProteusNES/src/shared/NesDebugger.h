@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./NesPCH.h"
+#include "./NesEventSink.h"
 #include "../NES.h"
 
 namespace NS_NES {
@@ -9,12 +10,43 @@ namespace NS_NES {
      * @implements INesDebugger
      * @brief This is meant to be the main debugging tool of the NES emulator.
      */
-    class NesDebugger : public IDebugger {
+    class NesDebugger : public IDebugger, public NesEventSink {
         private:
             /// @brief enabled flag
             bool enabled = false;
             /// @brief reference to the station
             NES* nes = nullptr;
+
+            EventViewerConfig evConfig = {};
+            vector<u32> evPixelsSnapshot = {};
+            vector<DebugEventRecord> evEventsSnapshot = {};
+            vector<DebugEventRecord> evrActiveFrame = {};
+            vector<DebugEventRecord> evrLastFrame = {};
+            vector<DebugEventRecord> evrPrevFrame = {};
+            bool evSnapshotValid = false;
+            enum class EventType {
+                PPU_READ, PPU_WRITE, APU_READ, APU_WRITE,
+                MAPPER_READ, MAPPER_WRITE, CONTROLLER_READ,
+                CONTROLLER_WRITE, DMC_READ, OAM_READ, OAM_START,
+                INTERRUPT_IRQ, INTERRUPT_NMI, ZERO_HIT, BREAKPOINT
+            };
+            array<u32, 15> defaultEventColors = {
+                0xFF00DFFF,
+                0xFFFFA000,
+                0xFF60E060,
+                0xFF90FF40,
+                0xFF40A0FF,
+                0xFF2080FF,
+                0xFFFF40D0,
+                0xFFFF70F0,
+                0xFF40FF40,
+                0xFFE060A0,
+                0xFFFF60C0,
+                0xFF4040FF,
+                0xFF6060FF,
+                0xFFFFFFFF,
+                0xFF00BFFF
+            };
 
             /**
              * @brief Helper function for decoding instructions
@@ -45,13 +77,36 @@ namespace NS_NES {
             /// @brief clears the NES station reference
             void Clear();
 
-            /// @section CPU
-            /// @brief CPU-related debugging methods; fully functional, but subject to change
+            #pragma region EVENT /// @brief Event-Viewer-related debugging methods; WIP
+            EventViewerDisplaySize GetEventViewerDisplaySize() const override;
+            void SetEventViewerConfig(const EventViewerConfig& cfg) override;
+            const EventViewerConfig& GetEventViewerConfig() const override;
+            const vector<u32>& GetEventViewerPixels() const override;
+            const vector<DebugEventRecord>& GetEventViewerEvents() const override;
+            const DebugEventRecord& GetEventAt(u16, u16) const override;
+            void TakeEventViewerSnapshot(bool forAutoRefresh) override;
+
+            void OnPpuRegisterRead(u16 addr, u8 data) override;
+            void OnPpuRegisterWrite(u16 addr, u8 data) override;
+            void OnApuRegisterRead(u16 addr, u8 data) override;
+            void OnApuRegisterWrite(u16 addr, u8 data) override;
+            void OnMapperRegisterRead(string details, u16 addr, u8 data) override;
+            void OnMapperRegisterWrite(string details, u16 addr, u8 data) override;
+            void OnControllerRead(u8 player, u16 addr, u8 data) override;
+            void OnControllerWrite(u8 player, u16 addr, u8 data) override;
+            void OnDmcDmaRead(string details, u16 addr, u8 data) override;
+            void OnOamDmaRead(u16 addr, u8 data) override;
+            void OnOamDmaStart(u8 data) override;
+            void OnInterrupt(INTERRUPT_EVENT type) override;
+            void OnSpriteZeroHit() override;
+            void OnMarkedBreakpoint(string details) override;
+            void OnFrameComplete() override;
+            u32 GetEventColor(EventType type);
+            #pragma endregion
+            #pragma region CPU /// @brief CPU-related debugging methods; fully functional, but subject to change
             /**
              * @brief Acquires and formats the current state of the CPU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PC","0x0123"],["A","0x45"],["X","0x67],["Y","0x89"],["STATUS","0xAB"],["SP","0xCD"]]`
+             * @return A vector of 3-string arrays, with one entry per CPU register/value.
              */
             vector<array<string, 3>> GetStateCPU() const override;
             /**
@@ -83,41 +138,53 @@ namespace NS_NES {
              * that way we don't have to disassemble 25 instructions EVERY frame during application playback.
              */
             vector<string> GetDisassembly() const override;
-
-            /// @section PPU
-            /// @brief PPU-related debugging methods; currently in progress and subject to change
+            #pragma endregion
+            #pragma region PPU /// @brief PPU-related debugging methods; currently in progress and subject to change
             /**
              * @brief Acquires and formats the current state of the PPU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return a dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PPUCTRL (0x2000)","0x01"],["PPUMASK (0x2001)","0x23"]]`
+             * @return A vector of 4-string arrays, with one entry per PPU register/value
              */
             vector<array<string, 4>> GetStatePPU() const override;
             /**
-             * @brief Acquires the various palette colors used by the ROM
+             * @brief Acquires the list of palette colors used by the ROM
              * @return A vector of the palette colors for easy processing/rendering
              */
-            vector<u32> GetPaletteColors() override;
+            vector<u32> GetPaletteColors(const vector<u8>& indices) const override;
+            /**
+             * @brief Acquires the list of indices within palette RAM that relate to the corresponding colors within `GetPaletteColor`
+             * @return A vector of index values.
+             */
+            vector<u8> GetPaletteIndices() const override;
+            /**
+             * 
+             */
+            const PaletteData GetPaletteData() const override;
             /**
              * @brief Acquires a pattern table used by the ROM to render backgrounds/sprites
              * @param id The id number of the pattern table
              * @return A vector containing pixel data for the full pattern table referred to by `id`
              */
-            vector<u32> GetPatternTable(int id) override;
+            vector<u32> GetPatternTable(int tableID, int paletteID) override;
             /**
              * @brief Acquires a specified nametable currently in use for displaying ROM background(s)
              * @param id The id number of the nametable to get
              * @return A vector containing the constructed pixel data of the requested nametable
              */
             vector<u32> GetNameTable(int id) override;
-
-            /// @section APU
-            /// @brief APU-related debugging methods; currenly unimplemented
+            /**
+             * @brief Acquires the set of sprites defined within the primary OAM of PPU memory.
+             * @details Collects the data within `PPU::primaryOAM` and then uses it to construct each sprite.
+             *          Upon constructing a sprite, copies the constructed pixels into a pre-sized vector such
+             *          that the contents of the vector resemble a single frame consisting of an 8x8 grid of
+             *          all constructed sprites.
+             * @return A single vector containing the constructed pixels of all sprites.
+             */
+            vector<u32> GetSprites() const override;
+            #pragma endregion
+            #pragma region APU /// @brief APU-related debugging methods; currenly unimplemented
             /**
              * @brief Acquires and formats the current state of the APU as a two-dimensional array of strings
-             * @param [out] numRegs Reference to a `u8` variable to contain the number of registers being returned as strings
-             * @return A dynamically allocated pointer to an array of string pointers; which in turn point to dynamically allocated arrays of strings containing the register names and values
-             * Example return value: `[["PULSE1CTRL (0x4000)", "0x01"]<...>["NOISECTRL (0x400C)","0x3F"]<...>["FRAMECOUNTERCTRL (0x4017)","0xC0"]]`
+             * @return A vector of 4-string arrays, with one entry per APU register/value
              */
             vector<array<string, 4>> GetStateAPU() const override;
             /**
@@ -145,5 +212,14 @@ namespace NS_NES {
              * @return A vector of `u32` entries relating to the various samples produced by the channel
              */
             vector<u32> GetDMC();
+            #pragma endregion
+            #pragma region GAMEPAK /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
+            /**
+             * @brief Acquires and formats the information defined within the Gamepak Header as a 2D array of strings
+             * @return A vector of 2-string arrays, with one entry per Header-defined value
+             */
+            vector<array<string, 2>> GetPakHeader() const override;
+            vector<array<string, 2>> GetPakMapper() const override;
+            #pragma endregion
     };
 }

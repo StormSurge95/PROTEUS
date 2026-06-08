@@ -147,33 +147,6 @@ void Proteus::PhaseAudio(FrameContext& ctx) {
         logger->EmitPhaseHook(ctx, AppPhaseName::AUDIO, AppPhaseStatus::SKIPPED, "Audio phase disabled this frame");
 }
 
-void Proteus::RunSST() {
-    session->CreateSession(ConsoleID::NES);
-    for (u16 i = 0; i <= 0xFF; i++) {
-        printf("Instruction 0x%02x...", i);
-        // get sst data from json file
-        ifstream f(format("C:\\devenv\\SSTs\\NES\\{}.json", hex(i, 2)));
-        json data = json::parse(f);
-        f.close();
-        // convert json object data into a format more usable by our program
-        vector<SingleStateTest> SST;
-        for (int i = 0; i < data.size(); i++)
-            SST.push_back(SingleStateTest(data[i]));
-        // run our tests
-        for (const SingleStateTest& test : SST) {
-            session->GetConsole()->initSST(test.initState);
-            session->GetConsole()->runSST();
-            string result;
-            bool pass = session->GetConsole()->checkSST(test.finalState, result);
-            if (!pass) {
-                printf("FAIL\n%s\n", result.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        printf("PASS\n");
-    }
-}
-
 void Proteus::SetMetadata() {
     SDL_SetAppMetadata(
         "PROTEUS",
@@ -306,9 +279,23 @@ bool Proteus::ProcessButtonInput(u8 button) {
 }
 
 void Proteus::ToggleOverlay() {
-    // TODO: make closing of overlay consume input used to close it rather than allow it to effect game being played
-
-    session->PlayPause();
+    if (!videoManager->OverlayActive()) { // upon OPENING overlay...
+        if (session->IsRunning()) {
+            session->Pause();
+            pausedByOverlay = true;
+        } else {
+            // if session is already paused, then we don't need
+            // to do anything other than ensure our flag is clear
+            pausedByOverlay = false;
+        }
+    } else { // upon CLOSING overlay...
+        // if we paused execution by opening the overlay, then we
+        // need to ensure that we resume execution upon close
+        if (pausedByOverlay)
+            session->Start();
+        // otherwise, all we need to do is update the flag
+        pausedByOverlay = false;
+    }
     videoManager->ToggleOverlay();
 }
 
@@ -353,8 +340,8 @@ const u32* Proteus::GetFrameBuffer() const {
 
 void Proteus::ResetConsole() {
     SessionResult r = session->Reset();
-    if (r.success) session->Start();
     // TODO: handle failure
+    if (!r.success) {};
 }
 
 void Proteus::ShutdownConsole() {
@@ -365,6 +352,8 @@ void Proteus::ShutdownConsole() {
 }
 
 void Proteus::Resume() {
-    if (session->GetState() == ConsoleSessionState::PAUSED)
+    if (session->IsPaused() && pausedByOverlay) {
         session->Start();
+        pausedByOverlay = false;
+    }
 }

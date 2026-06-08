@@ -52,3 +52,22 @@ u8 TriangleChannel::output() const {
     // instead, it will always output it's current volume
     return LINEAR_SEQUENCE[step];
 }
+
+void TriangleChannel::init() {
+    enabled = linearReload = false;
+    timer = period = 0x0000;
+    lengthCounter.reset();
+    linearCounter = linearPeriod = step = 0x00;
+}
+
+void TriangleChannel::reset() {
+    enabled = false;
+    timer = 0;
+    step = 0;
+
+    lengthCounter.counter = 0;
+    lengthCounter.halt = false;
+
+    linearCounter = 0;
+    linearReload = false;
+}

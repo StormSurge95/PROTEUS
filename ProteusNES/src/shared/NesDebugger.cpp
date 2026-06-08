@@ -6,6 +6,12 @@ using namespace NS_NES;
 
 NesDebugger::NesDebugger(NES* station) {
     nes = station;
+    nes->connectEventSink(this);
+    evrPrevFrame.reserve(4096);
+    evrLastFrame.reserve(4096);
+    evrActiveFrame.reserve(4096);
+    evEventsSnapshot.reserve(8192);
+    evPixelsSnapshot.reserve(341 * 262);
 }
 
 void NesDebugger::StepInstruction() {
@@ -28,17 +34,289 @@ void NesDebugger::StepInstruction() {
 }
 
 void NesDebugger::StepCycle() {
-    // StepCycle() should mean to step one MASTER cycle rather than cpu/ppu/apu
+    // StepCycle() should mean to step one CPU cycle (12 master cycles for NTSC/15 for PAL)
 
     // validate state
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    nes->clockMaster();
+    u8 div = 1;
+    switch (nes->cart->region) {
+        default:
+        case ConsoleRegion::NTSC: div = 12; break;
+        case ConsoleRegion::PAL: div = 16; break;
+        case ConsoleRegion::DENDY: div = 15; break;
+    }
+    for (u8 i = 0; i < div; i++)
+        nes->clockMaster();
 }
 
 void NesDebugger::Clear() {
     enabled = false;
     nes->reset();
     nes = nullptr;
+}
+
+EventViewerDisplaySize NesDebugger::GetEventViewerDisplaySize() const {
+    return { 341, 262 };
+}
+
+void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
+    evConfig = cfg;
+}
+
+const EventViewerConfig& NesDebugger::GetEventViewerConfig() const {
+    return evConfig;
+}
+
+const vector<u32>& NesDebugger::GetEventViewerPixels() const {
+    return evPixelsSnapshot;
+}
+
+const vector<DebugEventRecord>& NesDebugger::GetEventViewerEvents() const {
+    return evEventsSnapshot;
+}
+
+const DebugEventRecord& NesDebugger::GetEventAt(u16 scanline, u16 cycle) const {
+    for (const DebugEventRecord& event : evEventsSnapshot | std::views::reverse) {
+        if (event.scanline == scanline && event.cycle == cycle) return event;
+    }
+
+    return NullEvent;
+}
+
+void NesDebugger::TakeEventViewerSnapshot(bool forAutoRefresh) {
+    std::fill(evPixelsSnapshot.begin(), evPixelsSnapshot.end(), 0x00000000);
+    evEventsSnapshot.clear();
+
+    if (evConfig.showPreviousFrame) {
+        for (const DebugEventRecord& event : evrPrevFrame) {
+            for (const auto& [flag, filter] : evConfig.eventFilters) {
+                if ((event.flags & flag) != 0 && filter.show) {
+                    DebugEventRecord ghost = event;
+                    ghost.flags |= DebugEventFlags::PREVIOUS_FRAME;
+                    ghost.color = Dim(ghost.color, 0.5f);
+                    evEventsSnapshot.push_back(ghost);
+                    break;
+                }
+            }
+        }
+    }
+
+    for (const DebugEventRecord& event : evrLastFrame) {
+        for (const auto& [flag, filter] : evConfig.eventFilters) {
+            if ((event.flags & flag) != 0 && filter.show) {
+                evEventsSnapshot.push_back(event);
+                break;
+            }
+        }
+    }
+
+    for (const DebugEventRecord& evr : evEventsSnapshot) {
+        if (evr.scanline < 262 && evr.cycle < 341)
+            evPixelsSnapshot[evr.scanline * 341 + evr.cycle] = evr.color;
+    }
+
+    evSnapshotValid = true;
+}
+
+u32 NesDebugger::GetEventColor(EventType type) {
+    return defaultEventColors[u8(type)];
+}
+
+void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::PPU_READ),
+        .flags = DebugEvent_ReadVideo,
+        .type = "PPU REG READ",
+        .details = PPU_REGS[addr & 8]
+    });
+}
+
+void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::PPU_WRITE),
+        .flags = DebugEvent_WriteVideo,
+        .type = "PPU REG WRITE",
+        .details = PPU_REGS[addr & 8]
+    });
+}
+
+void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::APU_READ),
+        .flags = DebugEvent_ReadAudio,
+        .type = "APU REG READ",
+        .details = APU_REGS[addr & 24]
+    });
+}
+
+void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::APU_WRITE),
+        .flags = DebugEvent_WriteAudio,
+        .type = "APU REG WRITE",
+        .details = APU_REGS[addr & 24]
+    });
+}
+
+void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::MAPPER_READ),
+        .flags = DebugEvent_ReadMapper,
+        .type = "MAPPER REG READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::MAPPER_WRITE),
+        .flags = DebugEvent_WriteMapper,
+        .type = "MAPPER REG WRITE",
+        .details = details
+    });
+}
+
+void NesDebugger::OnControllerRead(u8 player, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::CONTROLLER_READ),
+        .flags = DebugEvent_ReadInput,
+        .type = "CONTROLLER READ",
+        .details = "Player " + to_string(player)
+    });
+}
+
+void NesDebugger::OnControllerWrite(u8 player, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::CONTROLLER_WRITE),
+        .flags = DebugEvent_WriteInput,
+        .type = "CONTROLLER WRITE",
+        .details = "Player " + to_string(player)
+    });
+}
+
+void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::DMC_READ),
+        .flags = DebugEvent_ReadDma,
+        .type = "DMC DMA READ",
+        .details = details
+    });
+}
+
+void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = addr,
+        .value = data,
+        .color = GetEventColor(EventType::OAM_READ),
+        .flags = DebugEvent_ReadDma,
+        .type = "OAM DMA READ"
+    });
+}
+
+void NesDebugger::OnOamDmaStart(u8 data) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = 0x4014,
+        .value = data,
+        .color = GetEventColor(EventType::OAM_START),
+        .flags = DebugEvent_WriteDma,
+        .type = "OAM DMA START"
+    });
+}
+
+void NesDebugger::OnInterrupt(INTERRUPT_EVENT type) {
+    const char* label;
+    const char* details = INTERRUPT_DETAILS[u8(type)];
+    u32 color;
+    switch (type) {
+        case INTERRUPT_EVENT::NMI_REQ:
+        case INTERRUPT_EVENT::NMI_ACK:
+            color = GetEventColor(EventType::INTERRUPT_NMI);
+            label = "NMI";
+            break;
+        case INTERRUPT_EVENT::IRQ_REQ_DMC:
+        case INTERRUPT_EVENT::IRQ_REQ_APU:
+        case INTERRUPT_EVENT::IRQ_REQ_MAP:
+        case INTERRUPT_EVENT::IRQ_ACK:
+            color = GetEventColor(EventType::INTERRUPT_IRQ);
+            label = "IRQ";
+            break;
+    }
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .address = nes->cpu->pc.value(),
+        .color = color,
+        .flags = DebugEvent_Interrupt,
+        .type = label,
+        .details = details
+    });
+}
+
+void NesDebugger::OnSpriteZeroHit() {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .color = GetEventColor(EventType::ZERO_HIT),
+        .flags = DebugEvent_SpriteZeroHit,
+        .type = "SPRITE ZERO HIT"
+    });
+}
+
+void NesDebugger::OnMarkedBreakpoint(string details) {
+    evrActiveFrame.push_back({
+        .scanline = nes->ppu->scanline,
+        .cycle = nes->ppu->cycle,
+        .color = GetEventColor(EventType::BREAKPOINT),
+        .flags = DebugEvent_Breakpoint,
+        .type = "MARKED BREAKPOINT",
+        .details = details
+    });
+}
+
+void NesDebugger::OnFrameComplete() {
+    evrPrevFrame.swap(evrLastFrame);
+    evrLastFrame.swap(evrActiveFrame);
+    evrActiveFrame.clear();
 }
 
 vector<array<string, 3>> NesDebugger::GetStateCPU() const {
@@ -58,6 +336,10 @@ vector<array<string, 3>> NesDebugger::GetStateCPU() const {
     lines.push_back({ "Y Register", to_string(temp), hex(temp, 2) });
     temp = nes->cpu->sp;
     lines.push_back({ "Stack Pointer", hex(0x0100 + temp, 4), hex(temp, 2) });
+    temp = nes->cpu->addrBus;
+    lines.push_back({ "Address Bus", to_string(temp), hex(temp, 4) });
+    temp = nes->cpu->cpuBus;
+    lines.push_back({ "Data Bus", to_string(temp), hex(temp, 2) });
     lines.push_back({ "", "STATUS", "" });
     temp = nes->cpu->getFlag(FLAGS::C);
     lines.push_back({ "Carry", temp ? "Set" : "Clear", "" });
@@ -139,9 +421,10 @@ vector<array<string, 4>> NesDebugger::GetStatePPU() const {
 
 vector<string> NesDebugger::GetStateRAM() const {
     // for NES; there will be 112 lines of RAM; each having 16 bytes
-    vector<string> lines(112);
+    vector<string> lines;
+    lines.reserve(112);
 
-    // for each line...
+    // WRAM window
     for (u8 l = 0; l < 112; l++) {
         // calculate start address (0x0010, 0x0010, 0x0020, etc)
         u16 start = (u16)l << 4;
@@ -164,6 +447,26 @@ vector<string> NesDebugger::GetStateRAM() const {
         // put the start address first
         ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
         // put the created string into our `lines` array
+        lines.push_back(ss.str());
+    }
+
+    // ROM window
+    for (u8 l = 0; l < 16; l++) {
+        u16 start = 0xFF00 + (l * 0x10);
+        stringstream bytes;
+        stringstream chars;
+        for (u8 i = 0x00; i < 0x10; i++) {
+            u16 addr = start + i;
+            u8 byte = nes->cpu->read(addr, true);
+            bytes << hex(byte, 2);
+            chars << (char)byte;
+            if (i < 0x0F) {
+                bytes << ' ';
+                chars << ' ';
+            }
+        }
+        stringstream ss;
+        ss << hex(start, 4) << ": " << bytes.str() << "     " << chars.str();
         lines.push_back(ss.str());
     }
 
@@ -346,20 +649,35 @@ vector<string> NesDebugger::GetDisassembly() const {
     return lines;
 }
 
-vector<u32> NesDebugger::GetPaletteColors() {
+vector<u8> NesDebugger::GetPaletteIndices() const {
+    vector<u8> indices;
+    for (u8 i = 0; i < 32; i++)
+        indices.push_back(nes->ppu->ppuRead(0x3F00 + i, true) & 0x3F);
+    return indices;
+}
+
+vector<u32> NesDebugger::GetPaletteColors(const vector<u8>& indices) const {
     vector<u32> colors;
-    for (int i = 0; i < 16; ++i) {
-        u8 paletteIndex = nes->ppu->ppuRead(0x3F00 + i, true);
-        colors.push_back(nes->ppu->masterPalette[paletteIndex]);
-    }
+    for (const u8& index : indices)
+        colors.push_back(nes->ppu->masterPalette[index]);
     return colors;
 }
 
-vector<u32> NesDebugger::GetPatternTable(int index) {
+const PaletteData NesDebugger::GetPaletteData() const {
+    vector<u8> indices = GetPaletteIndices();
+    vector<u32> colors = GetPaletteColors(indices);
+
+    return { colors, indices, 4, 8, 4, 4 };
+}
+
+vector<u32> NesDebugger::GetPatternTable(int tableID, int paletteID) {
     vector<u32> pixels(16384, 0xFF000000);
 
-    // TODO: Get Pattern Table pixel data from PPU
-    u16 baseAddr = index * 0x1000;
+    u16 baseAddr = tableID * 0x1000;
+
+    // get the current color palette based on the provided index
+    u16 paletteOffset = (paletteID < 4) ?
+            paletteID * 4 : 0x10 + (paletteID - 4) * 4;
 
     for (u16 tileIndex = 0; tileIndex < 256; tileIndex++) {
         u8 tileX = (tileIndex % 16);
@@ -375,7 +693,9 @@ vector<u32> NesDebugger::GetPatternTable(int index) {
 
                 u8 colorIndex = (b1 << 1) | b0;
 
-                u32 color = debugPalette[colorIndex];
+                u16 paletteAddr = 0x3F00 + paletteOffset + colorIndex;
+                u8 paletteEntry = nes->ppu->ppuRead(paletteAddr, true) & 0x3F;
+                u32 color = nes->ppu->masterPalette[paletteEntry];
 
                 u16 pixelX = tileX * 8 + col;
                 u16 pixelY = tileY * 8 + row;
@@ -402,7 +722,118 @@ string NesDebugger::GetFlags(int status) const {
 }
 
 vector<u32> NesDebugger::GetNameTable(int id) {
-    return vector<u32>();
+    vector<u32> pixels(256 * 240, 0xFF000000);
+
+    u16 ntBase = 0x2000 + (id * 0x0400);
+    u16 bgPatternBase = nes->ppu->getBackgroundPatternTableAddr();
+
+    for (size_t tileY = 0; tileY < 30; tileY++) {
+        for (size_t tileX = 0; tileX < 32; tileX++) {
+            u16 ntOffset = tileY * 32 + tileX;
+            u8 tileIndex = nes->ppu->ppuRead(ntBase + ntOffset, true);
+
+            u16 attrAddr =
+                ntBase + 0x03C0 +
+                ((tileY / 4) * 8) +
+                (tileX / 4);
+
+            u8 attrByte = nes->ppu->ppuRead(attrAddr, true);
+
+            u8 shift =
+                ((tileY & 0x02) ? 4 : 0) +
+                ((tileX & 0x02) ? 2 : 0);
+
+            u8 paletteIndex = (attrByte >> shift) & 0x03;
+            u8 paletteBase = paletteIndex * 4;
+
+            u16 tileAddr = bgPatternBase + (tileIndex * 16);
+
+            for (u8 row = 0; row < 8; row++) {
+                u8 p0 = nes->ppu->ppuRead(tileAddr + row, true);
+                u8 p1 = nes->ppu->ppuRead(tileAddr + row + 8, true);
+
+                for (u8 col = 0; col < 8; col++) {
+                    u8 b0 = (p0 >> (7 - col)) & 1;
+                    u8 b1 = (p1 >> (7 - col)) & 1;
+                    u8 colorIndex = (b1 << 1) | b0;
+
+                    u16 paletteAddr = 0x3F00;
+                    if (colorIndex != 0)
+                        paletteAddr += paletteBase + colorIndex;
+
+                    u8 masterIndex = nes->ppu->ppuRead(paletteAddr, true) & 0x3F;
+                    u32 color = nes->ppu->masterPalette[masterIndex];
+
+                    u16 pixelX = tileX * 8 + col;
+                    u16 pixelY = tileY * 8 + row;
+                    pixels[pixelY * 256 + pixelX] = color;
+                }
+            }
+        }
+    }
+
+    return pixels;
+}
+
+vector<u32> NesDebugger::GetSprites() const {
+    const u8 sprW = 8;
+    const u8 sprH = nes->ppu->getSpriteHeight();
+    const u16 atlW = 8 * sprW;
+    const u16 atlH = 8 * sprH;
+
+    vector<u32> pixels(size_t(atlW) * atlH, 0x00000000);
+
+    for (u8 spr = 0; spr < 64; spr++) {
+        const array<u8, 4>& oam = nes->ppu->primaryOAM[spr];
+        const u8 tile = oam[1];
+        const u8 attr = oam[2];
+
+        const u16 dstBaseX = (spr % 8) * 8;
+        const u16 dstBaseY = (spr / 8) * sprH;
+
+        const bool flipX = nes->ppu->flipX(attr);
+        const bool flipY = nes->ppu->flipY(attr);
+        const u8 pal = nes->ppu->getSpritePalette(attr);
+
+        for (u8 row = 0; row < sprH; row++) {
+            u8 sampleY = flipY ? (sprH - 1 - row) : row;
+
+            u16 pattLo = 0;
+            if (sprH == 8) {
+                pattLo =
+                    nes->ppu->getSpritePatternTableAddr8x8() +
+                    (u16(tile) * 16) +
+                    sampleY;
+            } else {
+                u16 table = (tile & 0x01) ? 0x1000 : 0x0000;
+                u16 tileBase = tile & 0xFE;
+                if (sampleY >= 8) {
+                    tileBase += 1;
+                    sampleY -= 8;
+                }
+                pattLo = table + (tileBase * 16) + sampleY;
+            }
+
+            u8 p0 = nes->ppu->ppuRead(pattLo, true);
+            u8 p1 = nes->ppu->ppuRead(pattLo + 8, true);
+
+            for (u8 col = 0; col < 8; col++) {
+                const u8 bit = flipX ? col : (7 - col);
+                const u8 colorIndex = (((p1 >> bit) & 1) << 1) | ((p0 >> bit) & 1);
+
+                u32 color = 0x00000000;
+                if (colorIndex != 0) {
+                    const u16 palAddr = 0x3F10 + (pal * 4) + colorIndex;
+                    const u8 masterIndex = nes->ppu->ppuRead(palAddr, true) & 0x3F;
+                    color = nes->ppu->masterPalette[masterIndex];
+                }
+
+                pixels[(dstBaseY + row) * atlW + (dstBaseX + col)] = color;
+            }
+        }
+    }
+
+    return pixels;
 }
 
 vector<array<string, 4>> NesDebugger::GetStateAPU() const {
@@ -610,4 +1041,150 @@ vector<u32> NesDebugger::GetNoise() {
 // TODO debug DMC channel
 vector<u32> NesDebugger::GetDMC() {
     return vector<u32>();
+}
+
+vector<array<string, 2>> NesDebugger::GetPakHeader() const {
+    vector<array<string, 2>> values;
+
+    switch (nes->cart->hFormat) {
+        case HeaderFormat::ANES:
+            values.push_back({ "Header Format", "Archaic iNES or iNES 0.7" });
+            break;
+        case HeaderFormat::INES:
+            values.push_back({ "Header Format", "iNES 1.0" });
+            break;
+        case HeaderFormat::NES2:
+            values.push_back({ "Header Format", "iNES 2.0" });
+            break;
+        default:
+            values.push_back({ "Header Format", "Unknown Format" });
+            break;
+    }
+    switch (nes->cart->cType) {
+        case ConsoleType::NES_FAMICOM:
+            values.push_back({ "Console Type", "NES/Famicom" });
+            break;
+        case ConsoleType::VS_SYSTEM:
+            values.push_back({ "Console Type", "Nintendo Vs. System" });
+            break;
+        case ConsoleType::PLAYCHOICE_10:
+            values.push_back({ "Console Type", "Playchoise 10" });
+            break;
+        case ConsoleType::FAMICLONE_DECIMAL:
+            values.push_back({ "Console Type", "Regular Famiclone (CPU supports Decimal Mode)" });
+            break;
+        case ConsoleType::NES_EPSM:
+            values.push_back({ "Console Type", "Regular NES/Famicom (EPSM module or plug-through cartridge)" });
+            break;
+        case ConsoleType::VR_VT01:
+            values.push_back({ "Console Type", "V.R. Technology VT01" });
+            break;
+        case ConsoleType::VR_VT02:
+            values.push_back({ "Console Type", "V.R. Technology VT02" });
+            break;
+        case ConsoleType::VR_VT03:
+            values.push_back({ "Console Type", "V.R. Technology VT03" });
+            break;
+        case ConsoleType::VR_VT09:
+            values.push_back({ "Console Type", "V.R. Technology VT09" });
+            break;
+        case ConsoleType::VR_VT32:
+            values.push_back({ "Console Type", "V.R. Technology VT32" });
+            break;
+        case ConsoleType::VR_VT369:
+            values.push_back({ "Console Type", "V.R. Technology VT369" });
+            break;
+        case ConsoleType::UMC_UM6578:
+            values.push_back({ "Console Type", "UMC UM6578" });
+            break;
+        case ConsoleType::FNS:
+            values.push_back({ "Console Type", "Famicom Network System" });
+            break;
+        default:
+            values.push_back({ "Console Type", "UNIMPLEMENTED TYPE" });
+            break;
+    }
+    switch (nes->cart->region) {
+        case ConsoleRegion::NTSC:
+            values.push_back({ "Console Region", "NTSC (US/JP)" });
+            break;
+        case ConsoleRegion::PAL:
+            values.push_back({ "Console Region", "PAL (EU)" });
+            break;
+        case ConsoleRegion::MULTI:
+            values.push_back({ "Console Region", "MULTI (WORLD)" });
+            break;
+        case ConsoleRegion::DENDY:
+            values.push_back({ "Console Region", "DENDY (RU)" });
+            break;
+        default:
+            values.push_back({ "Console Region", "UNKNOWN REGION (?\?)" });
+            break;
+    }
+    values.push_back({ "512B Trainer Present", nes->cart->hasTrainer ? "true" : "false" });
+    if (nes->cart->prgMemory.size() > 0)
+        values.push_back({ "PRG-ROM Size", to_string(nes->cart->prgMemory.size()) });
+    if (nes->cart->prgRamNonVolatile.size() > 0)
+        values.push_back({ "PRG-RAM (Non-Volatile) Size", to_string(nes->cart->prgRamNonVolatile.size()) });
+    if (nes->cart->prgRamVolatile.size() > 0)
+        values.push_back({ "PRG-RAM (Volatile) Size", to_string(nes->cart->prgRamVolatile.size()) });
+    if (nes->cart->chrMemory.size() > 0)
+        values.push_back({ "CHR-ROM Size", to_string(nes->cart->chrMemory.size()) });
+    if (nes->cart->chrRamNonVolatile.size() > 0)
+        values.push_back({ "CHR-RAM (Non-Volatile) Size", to_string(nes->cart->chrRamNonVolatile.size()) });
+    if (nes->cart->chrRamVolatile.size() > 0)
+        values.push_back({ "CHR-RAM (Volatile) Size", to_string(nes->cart->chrRamVolatile.size()) });
+    switch (nes->cart->mirror) {
+        case MIRROR::HORIZONTAL:
+            values.push_back({ "Hardware Mirror", "Horizontal" });
+            break;
+        case MIRROR::VERTICAL:
+            values.push_back({ "Hardware Mirror", "Vertical" });
+            break;
+        case MIRROR::FOUR_SCREEN:
+            values.push_back({ "Hardware Mirror", "Four-Screen (or mapper controlled)" });
+            break;
+        default:
+            values.push_back({ "Hardware Mirror", "Unknown Mirror Type" });
+            break;
+    }
+    if (nes->cart->hFormat == HeaderFormat::NES2) {
+        if (nes->cart->cType == ConsoleType::VS_SYSTEM) {
+            string ppuType = "Unknown Vs. System PPU Type";
+            switch (nes->cart->vsPPU) {
+                case VsPPU::PPU2C0X: ppuType = "Any RP2C02/RC2C03 Variant"; break;
+                case VsPPU::PPU2C04A: ppuType = "RP2C04-0001"; break;
+                case VsPPU::PPU2C04B: ppuType = "RP2C04-0002"; break;
+                case VsPPU::PPU2C04C: ppuType = "RP2C04-0003"; break;
+                case VsPPU::PPU2C04D: ppuType = "RP2C04-0004"; break;
+                case VsPPU::PPU2C05A: ppuType = "RC2C05-01 (signature unknown)"; break;
+                case VsPPU::PPU2C05B: ppuType = "RC2C05-02 ($2002 AND $3F = $3D)"; break;
+                case VsPPU::PPU2C05C: ppuType = "RC2C05-03 ($2002 AND $1F = $1C)"; break;
+                case VsPPU::PPU2C05D: ppuType = "RC2C05-04 ($2002 AND $1F = $1B)"; break;
+            }
+            values.push_back({ "Vs. System PPU Type", ppuType });
+        }
+        string expDev = "Unspecified Default Expansion Device";
+        switch (nes->cart->expDev) {
+            case ExpansionDevice::STANDARD_CONTROLLERS:
+                expDev = "Standard NES/Famicom Controllers";
+                break;
+            default:
+                expDev = "Displayable Values Still In Prgress";
+                break;
+        }
+        values.push_back({ "Default Expansion (Input) Device", expDev });
+    }
+
+    return values;
+}
+
+vector<array<string, 2>> NesDebugger::GetPakMapper() const {
+    vector<array<string, 2>> values;
+
+    values.push_back({ "Mapper Data", "" });
+    auto v = nes->cart->mapper->getDebugData();
+    values.insert(values.end(), v.begin(), v.end());
+
+    return values;
 }

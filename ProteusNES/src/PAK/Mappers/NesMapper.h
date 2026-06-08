@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../shared/NesPCH.h"
+#include "../../shared/NesEventSink.h"
 
 namespace NS_NES {
     /// @interface Mapper Mapper.h "./Mapper.h"
@@ -8,8 +9,6 @@ namespace NS_NES {
             // Allow Debugger class to access all private members of the Mapper class
             friend class NesDebugger;
         public:
-            /// @brief default constructor
-            Mapper() = default;
             /**
              * @brief Explicit constructor
              * @param pBnk Number of PRG-ROM banks
@@ -18,13 +17,19 @@ namespace NS_NES {
              * @param cMem Reference to CHR-MEM memory
              * @param hasRam Whether or not the ROM in question has PRG-RAM
              */
-            Mapper(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr) :
-                prgBanks(pBnk), prgRom(pMem), chrBanks(cBnk), chrMem(cMem), prgRam(pRam) {
+            Mapper(u16 pBnk, vector<u8>* pMem, u16 cBnk, vector<u8>* cMem, vector<u8>* pRam = nullptr, u8 subMapper = 0) :
+                prgBanks(pBnk), prgRom(pMem), chrBanks(cBnk), chrMem(cMem), prgRam(pRam), subMapperID(subMapper) {
                 hasPrgRam = prgRam != nullptr;
                 hasChrRam = chrBanks == 0;
             }
             /// @brief default destructor
             virtual ~Mapper() = default;
+            
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+
+            virtual void powerup() = 0;
+            virtual void reset() = 0;
+            virtual void powerdown() = 0;
 
             /**
              * @brief Read memory operation originating from CPU.
@@ -77,7 +82,23 @@ namespace NS_NES {
              * says; otherwise, we return whatever mirroring the mapper says to use.
              */
             virtual MIRROR getMirrorMode() const { return MIRROR::HARDWARE; }
+            /**
+             * @brief Getter function for the Mapper's IRQ flag, if it has one.
+             * @return If the mapper does not produce IRQs, then we simply return
+             *      false; otherwise, we return the current state of the IRQ flag.
+             */
+            virtual bool irqRequestActive() const { return false; }
+            /**
+             * @brief Observer function for keeping track of the PPU's A12 line.
+             * @param addr The address to be used for observation of the A12 line.
+             */
+            virtual void observeAddressPPU(u16 addr) {}
+
+            virtual vector<array<string, 2>> getDebugData() = 0;
         protected:
+            NesEventSink* eventSink = nullptr;
+            /// @brief submapper version to use for operations
+            u8 subMapperID = 0;
             /// @brief total number of PRG-ROM banks
             u16 prgBanks = 0;
             /**

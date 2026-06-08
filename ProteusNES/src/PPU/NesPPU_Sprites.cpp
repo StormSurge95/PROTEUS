@@ -1,4 +1,5 @@
 #include "NesPPU.h"
+#include "../PAK/Mappers/NesMapper.h"
 
 using namespace NS_NES;
 
@@ -66,13 +67,15 @@ void PPU::writeOAMByte(u8 i, u8 b) {
 }
 
 void PPU::initSecondaryOAM() {
-    if (cycle % 2 == 0) { // 2, 4, 6, 8, ... 60, 62, 64
-        u8 index = cycle / 2; // 1, 2, 3, 4, ... 30, 31, 32
-        u8 sprite = (index - 1) / 4; // 0, 1, 2, 3, 4, 5, 6, 7
-        u8 byte = (index - 1) % 4; // 0, 1, 2, 3
-
-        secondaryOAM[sprite][byte] = 0xFF;
-    }
+    // called from cycle 1 to 64 (inclusive)
+    // cycle - 1 gives us indexes 0-63 (inclusive)
+    // index / 8 gives us sprites 0-7
+    // rather than doing one byte per cycle and missing one byte from
+    // each sprite, this allows us to 'clear' the index byte as well
+    u8 index = (cycle - 1);
+    u8 sprite = index / 8;
+    if (index % 8 == 0)
+        secondaryOAM[sprite].fill(0xFF);
 }
 
 void PPU::spriteEval() {
@@ -94,8 +97,8 @@ void PPU::spriteEval() {
     else {
         // check if we're in range
         u8 h = getSpriteHeight();
-        u8 tgt = scanline + 1;
-        u8 top = oamLatch + 1;
+        u16 tgt = scanline + 1;
+        u16 top = u16(oamLatch) + 1;
 
         if (tgt >= top && tgt < (top + h)) {
             if (spriteIndex == 0) sprite0HitOnNextScanline = true;
@@ -117,23 +120,22 @@ void PPU::spriteEval() {
 }
 
 void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
-    u16 sprFineY = (scanline + 1) - y - 1;
+    u16 sprFineY = scanline - y;
 
     if (getSpriteHeight() == 8) {
         if (flipY(secondaryOAM[index][2]))
             sprFineY = 7 - sprFineY;
 
-        spritePatternAddr = (
+        spritePatternAddr =
             getSpritePatternTableAddr8x8() +
-            ((u16)id * 16) +
-            sprFineY
-            );
+            (u16(id) * 16) +
+            sprFineY;
     } else {
         if (flipY(secondaryOAM[index][2]))
             sprFineY = 15 - sprFineY;
 
-        u16 table = ((u16)id & 1) * 0x1000;
-        u16 tileIndex = (u16)id & 0xFE;
+        u16 table = (id & 0x01) * 0x1000;
+        u16 tileIndex = id & 0xFE;
 
         if (sprFineY >= 8) {
             tileIndex += 1;
@@ -148,6 +150,10 @@ void PPU::spriteFetch() {
 
     u8 step = (cycle - 257) % 8;
     switch (step) {
+        case 0:
+        case 1:
+            ppuRead((0x2000 | (v & 0x0FFF)), false);
+            break;
         case 2:
             sprTileIndex = secondaryOAM[sprite][1];
             break;
@@ -158,14 +164,22 @@ void PPU::spriteFetch() {
             sprXPosition = secondaryOAM[sprite][3];
             break;
         case 5:
-            calcSPRPatternAddr(sprite, sprTileIndex, secondaryOAM[sprite][0]);
+            if (secondaryOAM[sprite][4] == 0xFF) {
+                if (getSpriteHeight() == 8) {
+                    spritePatternAddr = getSpritePatternTableAddr8x8() + (0xFF * 16);
+                } else {
+                    spritePatternAddr = (((0xFF & 1) ? 0x1000 : 0x0000) | ((0xFF & ~1) << 4));
+                }
+            } else {
+                calcSPRPatternAddr(sprite, sprTileIndex, secondaryOAM[sprite][0]);
+            }
             sprPatternLo = ppuRead(spritePatternAddr, false);
             break;
         case 6:
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:
-            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition);
+            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition, secondaryOAM[sprite][4]);
             break;
 
     }

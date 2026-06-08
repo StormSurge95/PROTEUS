@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./shared/NesPCH.h"
+#include "./shared/NesEventSink.h"
 #include "./PPU/NesPPU.h"
 #include "./PAK/Mappers/NesMapper.h"
 
@@ -17,21 +18,37 @@ namespace NS_NES {
             // master clock counter for the console
             u64 masterClock = 0x00;
 
+            NesEventSink* eventSink = nullptr;
+
             // explicit constructor
             NES();
             // default destructor
             ~NES() = default;
 
+            void connectEventSink(NesEventSink* sink);
+
             void initSST(SingleStateTest::State s) override;
             void runSST() override;
             bool checkSST(SingleStateTest::State s, string& o) override;
 
+            // console "init" function
+            bool poweron() override;
+            // console shutdown function
+            bool shutdown() override;
             // console reset function
             // fun fact: up until starting the development of this project, I thought that the
             // reset buttons on consoles literally just power-cycled them.
             void reset() override;
             // clock function of the console; controls the clocking of the inner pieces
             void clock() override;
+            // helper function for clocking an entire frame's-worth of cycles
+            void clockFrame();
+            // helper function for clocking a single cpu cycle
+            void clockCycleCPU();
+            // helper function for clocking a single ppu cycle
+            void clockCyclePPU();
+            // helper function for putting the other "clockXXX" functions together to clock a single master cycle
+            void clockMaster();
 
             // loads a rom (i.e. gamepak) into the console.
             bool loadROM(const string&) override;
@@ -51,6 +68,8 @@ namespace NS_NES {
             // allows frontend to pass input data back to the backend
             void update(u8, const bool*) override;
 
+            const CPU_STATE GetSnapshotCPU() const;
+
         private:
             sptr<CPU> cpu;              // shared pointer reference to the cpu
             sptr<Gamepak> cart;         // shared pointer reference to the cartridge/gamepak/rom
@@ -58,14 +77,6 @@ namespace NS_NES {
             sptr<APU> apu;              // shared pointer reference to the apu
             sptr<Controller> player1;   // shared pointer reference to p1 controller
             sptr<Controller> player2;   // shared pointer refernece to p2 contorller
-
-            // helper function for clocking an entire frame's-worth of cycles
-            void clockFrame();
-            // helper function for clocking a single cpu cycle
-            void clockCycleCPU();
-            // helper function for clocking a single ppu cycle
-            void clockCyclePPU();
-            // helper function for putting the other "clockXXX" functions together to clock a single master cycle
-            void clockMaster();
+            bool powered = false;
     };
 }

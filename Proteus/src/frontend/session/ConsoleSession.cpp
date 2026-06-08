@@ -93,6 +93,7 @@ SessionResult ConsoleSession::LoadROM(path p, string n) {
     } else if (currentState != ConsoleSessionState::CREATED) {
         result = Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, "Invalid SessionState for LoadROM()");
     } else {
+        // success is determined by ROM validation and successfully powering on the console
         bool success = station->loadROM(p.string());
 
         if (!success) {
@@ -162,7 +163,7 @@ SessionResult ConsoleSession::Reset() {
         case ConsoleSessionState::PAUSED:
         case ConsoleSessionState::ROM_LOADED:
             station->reset();
-            return Success(ConsoleSessionState::ROM_LOADED, "ROM Reset Successfully");
+            return Success(currentState, "ROM Reset Successfully");
         default:
             return Failure(ConsoleSessionErrorCode::INVALID_TRANSITION, currentState, lastError);
     }

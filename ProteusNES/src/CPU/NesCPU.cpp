@@ -43,7 +43,6 @@ CPU::CPU() {
         //0xF0                            0xF1                            0xF2                            0xF3                            0xF4                            0xF5                            0xF6                            0xF7                            0xF8                            0xF9                            0xFA                            0xFB                            0xFC                            0xFD                            0xFE                            0xFF
         {"BEQ",2,&CPU::REL_B,&CPU::BEQ},{"SBC",2,&CPU::IZY_R,&CPU::SBC},{"JAM",1,&CPU::IMP_A,&CPU::JAM},{"ISC",2,&CPU::IZY_M,&CPU::ISC},{"NOP",2,&CPU::ZPX_R,&CPU::NOP},{"SBC",2,&CPU::ZPX_R,&CPU::SBC},{"INC",2,&CPU::ZPX_M,&CPU::INC},{"ISC",2,&CPU::ZPX_M,&CPU::ISC},{"SED",1,&CPU::IMP_A,&CPU::SED},{"SBC",3,&CPU::ABY_R,&CPU::SBC},{"NOP",1,&CPU::IMP_A,&CPU::NOP},{"ISC",3,&CPU::ABY_M,&CPU::ISC},{"NOP",3,&CPU::ABX_R,&CPU::NOP},{"SBC",3,&CPU::ABX_R,&CPU::SBC},{"INC",3,&CPU::ABX_M,&CPU::INC},{"ISC",3,&CPU::ABX_M,&CPU::ISC}
     };
-    ram.fill(0x00);
 }
 
 void CPU::init(SingleStateTest::State state) {
@@ -122,7 +121,7 @@ u8 CPU::read(u16 addr, bool readonly) {
     return ram[addr];
     #else
     // update last read address for use during dummy dma reads.
-    lastReadAddr = addr;
+    lastReadAddr = addrBus = addr;
     // create helper variable to prevent updating open bus when readonly is set
     u8 ret = cpuBus;
     // all reads directly update the open bus in some way, sometimes only partially.
@@ -141,15 +140,17 @@ u8 CPU::read(u16 addr, bool readonly) {
     } else if (addr == 0x4015) {
         // read APU status
         ret = (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
-        return ret;
+        if (readonly) return ret;
     } else if (addr == 0x4016) {
         // read Player 1 Controller
         ret = (cpuBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
         if (readonly) return ret;
+        else if (eventSink) eventSink->OnControllerRead(1, 0x4016, ret);
     } else if (addr == 0x4017) {
         // read Player 2 Controller
         ret = (cpuBus & 0xE0) | (player2.lock()->onRead() & 0x1F);
         if (readonly) return ret;
+        else if (eventSink) eventSink->OnControllerRead(2, 0x4017, ret);
     } else if (addr >= 0x6000 && addr <= 0xFFFF) {
         // read cartridge memory (including SRAM, if present)
         ret = cart.lock()->read(addr, readonly);
@@ -167,6 +168,7 @@ void CPU::write(u16 addr, u8 data) {
     ram[addr] = data;
     #else
     delayDMA = true;
+    addrBus = addr;
     // all writes fully update open bus
     cpuBus = data;
     if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -180,17 +182,12 @@ void CPU::write(u16 addr, u8 data) {
         oamPage = data;
         oamAddr = 0x00;
         oamActive = true;
-        dmaDummy = true;
+        oamDummy = true;
     } else if (addr == 0x4016) {
         // write to player1 controller
         player1.lock()->onWrite(data);
+        if (eventSink) eventSink->OnControllerWrite(1, 0x4016, data);
     } else if (addr >= 0x4000 && addr <= 0x4017) {
-        // write to APU registers
-        if (addr == 0x4015 && ((data >> 4) & 0x01) > 0) {
-            // enabling DMC channel immediately triggers DMCDMA
-            dmcActive = true;
-            dmaDummy = true;
-        }
         apu.lock()->write(addr, data);
     } else if (addr >= 0x5FFF && addr <= 0xFFFF) {
         // write to Cartridge memory (including SRAM, if present)
@@ -228,6 +225,37 @@ void CPU::halt() {
     }
 }
 
+bool CPU::serviceDMA() {
+    if (dmcActive) {
+        clockDMC();
+        return true;
+    }
+
+    if (dmcPending) {
+        if (delayDMA) return false;
+
+        if (dmcLoad && !isGetCycle()) return false;
+
+        if (!dmcLoad && isGetCycle()) return false;
+
+        dmcPending = false;
+        dmcActive = true;
+        dmcDummy = true;
+        dmcAlignment = false;
+        clockDMC();
+        return true;
+    }
+
+    if (oamActive) {
+        if (delayDMA) return false;
+
+        clockOAM();
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * via https://nesdev.org/wiki/DMA#OAM_DMA:
  * OAM DMA copies 256 bytes from a CPU page to PPU OAM via the OAMDATA ($2004) register.
@@ -242,12 +270,11 @@ void CPU::halt() {
  * OAM DMA has a lower priority than DMC DMA. If a DMC DMA get occurs during OAM DMA, OAM DMA is briefly paused.
  */
 void CPU::clockOAM() {
-    if (delayDMA) return;
     halt();
-    bool put = (totalCycles & 0x01) > 0; // determine first cycle; odd = put, !odd = get
-    if (dmaDummy) { // initial halt cycle
+    bool put = !isGetCycle(); // determine first cycle; odd = put, !odd = get
+    if (oamDummy) { // initial halt cycle
         if (put) // no alignment needed
-            dmaDummy = false;
+            oamDummy = false;
         else // alignment cycle (dummy read) needed
             read(lastReadAddr);
     } else {
@@ -272,73 +299,168 @@ void CPU::clockOAM() {
 }
 
 void CPU::clockDMC() {
-    if (delayDMA) return;
     halt();
-    /**
-     * via https://nesdev.org/wiki/DMA#DMC_DMA:
-     * DMC DMA copies a single byte to the DMC unit's sample buffer. This occurs automatically after the DMC
-     * enable bit, bit 4, of the sound channel enable register ($4015) is set to 1, which starts DPCM sample
-     * playback using the current DMC settings in registers $4010-$4013. DMC DMA is scheduled when all of DPCM
-     * playback is enabled, there are bytes left in the sample, and the sample buffer is empty. In the common
-     * cases, DMC DMA performs a halt cycle, a dummy cycle, an optional alignment cycle, and a get.
-     *
-     * The exact timing depends on the type of DMC DMA. There are two types: load and reload. Load DMAs occur
-     * after $4015 D4 is set, but only if the sample buffer is empty. They are scheduled to halt the CPU on
-     * a get cycle during the 2nd APU cycle after the write (that is, the 3rd or 4th CPU cycle). Reload DMAs
-     * occur in response to the sample buffer being emptied. Unlike load DMAs, they are scheduled to halt
-     * the CPU on a put cycle.
-     *
-     * After the halt, DMC DMA always performs a dummy cycle where no work is done. If the next cycle is not
-     * a get cycle, then a cycle will be spent on alignment. Then the DMA read is performed.
-     *
-     * DMC DMA normally takes 3 or 4 cycles, depending on whether alignment is needed. Because load and reload
-     * DMAs schedule on different cycle types, load DMAs take 3 cycles and reload DMAs take 4 unless the halt
-     * is delayed by an odd number of cycles. However, bugs can cause additional cycles.
-     */
-    bool put = (totalCycles & 0x01) > 0; // determine first cycle; odd = put, !odd = get
-    if (dmaDummy) {
-        if (put)
-            dmaDummy = false;
-        else
-            read(lastReadAddr);
-    } else {
-        if (put) {
-            u16 addr = apu.lock()->getDmcCurrentAddr();
-            dmcData = read(addr);
-        } else {
-            apu.lock()->dmcOnByteFetched(dmcData);
-            halted = false;
-            dmcActive = false;
-        }
-        halted = false;
+    if (dmcDummy) {
+        dmcDummy = false;
+        return;
     }
+
+    if (!isGetCycle()) {
+        dmcAlignment = true;
+        return;
+    }
+
+    dmcData = read(dmcAddr);
+    apu.lock()->dmcOnByteFetched(dmcData);
+
+    dmcActive = false;
+    dmcDummy = false;
+    dmcAlignment = false;
+    halted = false;
 }
 
-void CPU::start() {
-    // During power on, we simply have to read the first pc value from the reset vector of the cartridge
-    pc.lo = read(0xFFFC);
-    pc.hi = read(0xFFFD);
+void CPU::powerup(u32 s) {
+    initPRNG(s);
+
+    // initialize WRAM with random values
+    for (u8& byte : ram) byte = nextByte();
+
+    // clear instruction/decode scratch state
+    magic = paged = branch = false;
+    absAddr = relAddr = indAddr = fetched = opcode = offset = 0;
+    currInst = nullptr;
+    prevInstAddrs.clear();
+
+    // clear cpu bus/open bus helpers
+    lastReadAddr = addrBus = cpuBus = 0;
+
+    // clear DMA state
+    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcDummy = dmcAlignment = dmcLoad = false;
+    oamDummy = true;
+    dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
+
+    // clear interrupt and poll bookkeeping
+    interruptSource = INTERRUPT::NONE;
+    resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = nmiPending = false;
+    interruptFlagViaPoll = pendingSyncIFVP = pendingValueIFVP = false;
+
+    // reset execution counter
+    totalCycles = cycles = 0;
+
+    // initialize visible data registers
+    a = nextByte();
+    x = nextByte();
+    y = nextByte();
+
+    // initialize stack pointer so that reset sequence can set it properly
+    sp = 0x00;
+
+    // `U` flag should always be set; `I` flag will be set by the reset sequence
+    status = (u8)FLAGS::U;
+    dStatus = status;
+    updateStatus = false;
+
+    // PC is not yet valid; reset sequence will handle setting it properly
+    pc = 0x0000;
+
+    // request actual reset sequence
+    requestReset();
 }
 
 void CPU::reset() {
-    // During reset, we set the state of the CPU to a known value by clearing everything
-    // and then triggering our reset function
-    fetched = 0x00;
-    absAddr = 0x0000;
-    relAddr = 0x0000;
-    indAddr = 0x0000;
-    offset = 0x00;
-    paged = false;
+    // request the real reset sequence
+    resetPending = true;
+
+    // abort current instruction context so next CPU step starts from interrupt polling
     cycles = 0;
-    opcode = 0x00;
-    interruptSource = INTERRUPT::RST;
+    interruptSource = INTERRUPT::NONE;
+    currInst = nullptr;
+    opcode = fetched = 0;
+    absAddr = relAddr = indAddr = 0;
+    offset = 0;
+    paged = branch = magic = false;
+
+    // cancle cpu-side dma/halt state so reset is not delayed by interops
+    halted = false;
+    delayDMA = false;
+    oamActive = false;
+    oamDummy = true;
+    oamPage = oamAddr = oamData = 0;
+    dmcPending = dmcActive = dmcDummy = dmcAlignment = dmcLoad = false;
+    dmcAddr = 0;
+    dmcData = 0;
+
+    // clear cpu-owned pending edge/latch state
+    nmiPending = false;
+    interruptFlagViaPoll = false;
+    pendingSyncIFVP = pendingValueIFVP = false;
+}
+
+void CPU::powerdown() {
+    // stop active execution state
+    halted = false;
+    cycles = 0;
+    interruptSource = INTERRUPT::NONE;
+
+    // cancel pending reset/interrupt activity
+    resetPending = false;
+    nmiPending = false;
+    irqLine_APU = false;
+    irqLine_DMC = false;
+    irqLine_Mapper = false;
+    interruptFlagViaPoll = false;
+    pendingSyncIFVP = false;
+    pendingValueIFVP = false;
+    
+    // cancel DMA state completely
+    delayDMA = false;
+    oamActive = false;
+    oamDummy = true;
+    oamPage = 0;
+    oamAddr = 0;
+    oamData = 0;
+    dmcPending = false;
+    dmcActive = false;
+    dmcDummy = false;
+    dmcAlignment = false;
+    dmcLoad = false;
+    dmcAddr = 0;
+    dmcData = 0;
+
+    // clear transient decode/bus helper state
+    magic = false;
+    fetched = 0;
+    opcode = 0;
+    currInst = nullptr;
+    absAddr = 0;
+    relAddr = 0;
+    indAddr = 0;
+    offset = 0;
+    paged = false;
+    branch = false;
+    prevInstAddrs.clear();
+    cpuBus = 0;
+    addrBus = 0;
+    lastReadAddr = 0;
+
+    // invalidate CPU state
+    pc = 0;
+    a = 0;
+    x = 0;
+    y = 0;
+    sp = 0;
+    status = 0;
+    dStatus = 0;
+    updateStatus = false;
+
+    // clear lifecycle state
+    totalCycles = 0;
 }
 
 void CPU::clock() {
-    if (oamActive)
-        clockOAM();
-    
-    clockInstruction();
+    if (!serviceDMA()) {
+        clockInstruction();
+    }
     // increment total cycles
     totalCycles++;
 }
@@ -372,15 +494,34 @@ void CPU::clockInstruction() {
 }
 
 void CPU::pollInterrupts() {
-    if (nmiTrigger) {
-        // acknowledge NMI
-        interruptSource = INTERRUPT::NMI;
-    } else if (irqTrigger && getFlag(FLAGS::I) == 0) {
-        if (!delayInterrupt) {
-            // acknowlege IRQ
-            interruptSource = INTERRUPT::IRQ;
-        }
+    if (resetPending) {
+        interruptSource = INTERRUPT::RST;
+    } else if (nmiPending) {
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_ACK);
+        interruptSource = INTERRUPT::NMI; // acknowledge NMI
+    } else if (hasPendingIrq() && !interruptFlagViaPoll) {
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_ACK);
+        interruptSource = INTERRUPT::IRQ; // acknowlege IRQ
     }
-    delayInterrupt = false;
-    pollScheduled = false;
+
+    if (pendingSyncIFVP) {
+        interruptFlagViaPoll = pendingValueIFVP;
+        pendingSyncIFVP = false;
+    }
+}
+
+const CPU_STATE CPU::GetState() const {
+    return {
+        pc.value(), a, x, y, sp, status, totalCycles, hasPendingIrq(), nmiPending
+    };
+}
+
+void CPU::requestDmcDma(u16 addr, bool load) {
+    if (dmcPending || dmcActive) return;
+
+    dmcPending = true;
+    dmcLoad = load;
+    dmcAddr = addr;
+    dmcDummy = false;
+    dmcAlignment = false;
 }

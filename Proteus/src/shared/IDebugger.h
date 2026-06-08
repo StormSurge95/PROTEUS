@@ -2,6 +2,181 @@
 
 #include "./SharedPCH.h"
 
+struct PaletteData {
+    vector<u32> colors = {};
+    vector<u8> indices = {};
+    u8 colorsPerPalette = 4;
+    u8 paletteCount = 8;
+    u8 bgPaletteCount = 4;
+    u8 spritePaletteOffset = 4;
+};
+
+struct EventViewerDisplaySize {
+    u32 width = 0;
+    u32 height = 0;
+};
+
+struct EventViewerCategoryConfig {
+    bool visible = true;
+    u32 color = 0xFFFFFFFF;
+};
+
+struct EventFilter {
+    const char* label;
+    bool show;
+};
+
+namespace DebugEventFlags  {
+    enum : u32 {
+        NONE = 0,
+
+        // ACCESS FLAGS
+        READ = 1 << 0,
+        WRITE = 1 << 1,
+        EXECUTE = 1 << 2,
+
+        // SUBSYSTEM & DOMAIN FLAGS
+        MEMORY = 1 << 3,
+        MAPPER = 1 << 4,
+        VIDEO = 1 << 5,
+        AUDIO = 1 << 6,
+        INPUT = 1 << 7,
+        DMA = 1 << 8,
+        INTERRUPT = 1 << 9,
+
+        // VIEWER & UI STATE FLAGS
+        PREVIOUS_FRAME = 1 << 10,
+        SYNTHETIC = 1 << 11,
+        HIGHLIGHTED = 1 << 12,
+        ERROR = 1 << 13,
+
+        HAS_ADDRESS = 1 << 14,
+        HAS_VALUE = 1 << 15,
+        HAS_DETAILS = 1 << 16,
+
+        ALL = 0xFF'FF'FF'FF
+    };
+}
+
+struct EventViewerConfig {
+    bool autoRefresh = false;
+    bool showPreviousFrame = false;
+    map<u32, EventFilter> eventFilters = {
+        { DebugEventFlags::READ, { "READ", false } },
+        { DebugEventFlags::WRITE, { "WRITE", false } },
+        { DebugEventFlags::MEMORY, { "MEMORY", false } },
+        { DebugEventFlags::MAPPER, { "MAPPER", false } },
+        { DebugEventFlags::VIDEO, { "VIDEO", false } },
+        { DebugEventFlags::AUDIO, { "AUDIO", false } },
+        { DebugEventFlags::INPUT, { "INPUT", false } },
+        { DebugEventFlags::DMA, { "DMA", false } },
+        { DebugEventFlags::INTERRUPT, { "INTERRUPT", false } },
+        { DebugEventFlags::SYNTHETIC, {"SYNTHETIC", false } }
+    };
+};
+
+static const u32 DebugEvent_ReadVideo =
+    DebugEventFlags::READ |
+    DebugEventFlags::VIDEO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteVideo =
+    DebugEventFlags::WRITE |
+    DebugEventFlags::VIDEO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadAudio =
+    DebugEventFlags::READ |
+    DebugEventFlags::AUDIO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteAudio =
+    DebugEventFlags::WRITE |
+    DebugEventFlags::AUDIO |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadMapper =
+    DebugEventFlags::MAPPER |
+    DebugEventFlags::READ |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteMapper =
+    DebugEventFlags::MAPPER |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadInput =
+    DebugEventFlags::READ |
+    DebugEventFlags::INPUT |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteInput =
+    DebugEventFlags::WRITE |
+    DebugEventFlags::INPUT |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_ReadDma =
+    DebugEventFlags::DMA |
+    DebugEventFlags::READ |
+    DebugEventFlags::MEMORY |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_WriteDma =
+    DebugEventFlags::DMA |
+    DebugEventFlags::WRITE |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_VALUE |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_Interrupt =
+    DebugEventFlags::INTERRUPT |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_Breakpoint =
+    DebugEventFlags::EXECUTE |
+    DebugEventFlags::SYNTHETIC |
+    DebugEventFlags::HAS_ADDRESS |
+    DebugEventFlags::HAS_DETAILS;
+static const u32 DebugEvent_SpriteZeroHit = DebugEventFlags::VIDEO;
+
+struct DebugEventRecord {
+    u16 scanline = 0;
+    u16 cycle = 0;
+    u32 address = 0;
+    u32 value = 0;
+    u32 color = 0xFFFFFFFF;
+    u32 flags = 0;
+    string type = "";
+    string details = "";
+
+
+    bool hasAddress() const {
+        return (flags & DebugEventFlags::HAS_ADDRESS) != 0;
+    }
+    bool hasValue() const {
+        return (flags & DebugEventFlags::HAS_VALUE) != 0;
+    }
+    bool hasDetails() const {
+        return (flags & DebugEventFlags::HAS_DETAILS) != 0;
+    }
+    bool isNull() const {
+        return flags == DebugEventFlags::NONE;
+    }
+};
+
+const static DebugEventRecord NullEvent = {
+    .flags = DebugEventFlags::NONE
+};
+
 /**
  * @interface IDebugger
  * @brief Debugging interface for console cores
@@ -75,11 +250,19 @@ class IDebugger {
          */
         virtual vector<array<string, 4>> GetStatePPU() const = 0;
 
+        virtual const PaletteData GetPaletteData() const = 0;
+
+        /**
+         * @brief Get the list of indices for the currently loaded palette colors within PPU VRAM
+         * @return A vector list of indices in the range 0-63 (inclusive); one for each color 
+         */
+        virtual vector<u8> GetPaletteIndices() const = 0;
+
         /**
          * @brief Get the list of currently loaded palette colors within PPU VRAM
          * @return A vector list containing the currently loaded palette colors as unsigned integers
          */
-        virtual vector<u32> GetPaletteColors() = 0;
+        virtual vector<u32> GetPaletteColors(const vector<u8>& indices) const = 0;
 
         /**
          * @brief Get a specified Pattern Table from ROM memory
@@ -87,7 +270,7 @@ class IDebugger {
          * @return A vector list containing each of the pixels for the requested pattern table
          * @todo should there be another parameter to hold the "pitch" of the returned pattern table?
          */
-        virtual vector<u32> GetPatternTable(int) = 0;
+        virtual vector<u32> GetPatternTable(int, int) = 0;
 
         /**
          * @brief Get a specified Nametable from ROM memory
@@ -120,6 +303,27 @@ class IDebugger {
          * @return true of a breakpoint is set
          */
         virtual bool IsBreakpointSet() const { return false; }
+
+        virtual vector<u32> GetSprites() const = 0;
+
+        /**
+         * @brief Get the values of various header-defined portions of the gamepak
+         * @return A vector of string arrays in the format `{ <data name>, <data value> }`
+         */
+        virtual vector<array<string, 2>> GetPakHeader() const = 0;
+        /**
+         * @brief Get the values of various mapper-defined portions of the gamepak
+         * @return a vector of string arrays in the format `{ "<data name>", "<data value>" }`
+         */
+        virtual vector<array<string, 2>> GetPakMapper() const = 0;
+
+        virtual EventViewerDisplaySize GetEventViewerDisplaySize() const = 0;
+        virtual void SetEventViewerConfig(const EventViewerConfig& cfg) = 0;
+        virtual const EventViewerConfig& GetEventViewerConfig() const = 0;
+        virtual const vector<u32>& GetEventViewerPixels() const = 0;
+        virtual const vector<DebugEventRecord>& GetEventViewerEvents() const = 0;
+        virtual const DebugEventRecord& GetEventAt(u16 scanline, u16 cycle) const = 0;
+        virtual void TakeEventViewerSnapshot(bool forAutoRefresh) = 0;
 };
 
 #define IDEBUGGER_CONTRACT_VERSION 1

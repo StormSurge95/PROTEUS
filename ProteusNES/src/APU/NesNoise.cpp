@@ -78,3 +78,24 @@ u8 NoiseChannel::output() const {
     // otherwise, return current volume
     return volume();
 }
+
+void NoiseChannel::init() {
+    enabled = mode = false;
+    timer = period = 0x0000;
+    shiftRegister = 0x01;
+    lengthCounter.reset();
+    envelope.reset();
+}
+
+void NoiseChannel::reset() {
+    enabled = false;
+    timer = 0;
+    shiftRegister = 0x01;
+
+    lengthCounter.counter = 0;
+    lengthCounter.halt = false;
+
+    envelope.start = false;
+    envelope.divider = 0;
+    envelope.decay = 0x0F;
+}

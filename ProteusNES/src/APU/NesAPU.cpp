@@ -1,18 +1,77 @@
 #include "./NesAPU.h"
+#include "../CPU/NesCPU.h"
 
 using namespace NS_NES;
+
+void APU::connectEventSink(NesEventSink* sink) {
+    eventSink = sink;
+    if (dmc) dmc->connectEventSink(sink);
+}
+
+void APU::powerup(u32 s) {
+    initPRNG(s);
+
+    clearRuntimeState();
+    clearAudioOutputState();
+    resetFilters();
+
+    pulse1->init();
+    pulse2->init();
+    triangle->init();
+    noise->init();
+    dmc->init();
+
+    deassertIrqLines();
+}
+
+void APU::reset() {
+    masterCycle = cycle = resetAt = 0;
+    pendingReset = false;
+
+    irqRequested = false;
+    deassertIrqLines();
+
+    use5step = false;
+    inhibitIRQ = false;
+
+    apuBus = 0;
+    cycleAccumulator = 0.0;
+    sampleBuffer.clear();
+    resetFilters();
+
+    pulse1->reset();
+    pulse2->reset();
+    triangle->reset();
+    noise->reset();
+    dmc->reset();
+}
+
+void APU::powerdown() {
+    clearRuntimeState();
+    clearAudioOutputState();
+    resetFilters();
+
+    pulse1->init();
+    pulse2->init();
+    triangle->init();
+    noise->init();
+    dmc->init();
+
+    deassertIrqLines();
+}
 
 APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.0f) {
     pulse1 = make_unique<PulseChannel>(true);
     pulse2 = make_unique<PulseChannel>(false);
     triangle = make_unique<TriangleChannel>();
     noise = make_unique<NoiseChannel>();
-    dmc = make_unique<DMC_Channel>(/*this*/);
+    dmc = make_unique<DMC_Channel>(this);
 }
 
 u8 APU::read(u16 addr, bool readonly) {
     if (addr == 0x4015) {
         apuBus = read4015();
+        if (eventSink) eventSink->OnApuRegisterRead(0x4015, apuBus);
     }
     return apuBus;
 }
@@ -20,19 +79,70 @@ u8 APU::read(u16 addr, bool readonly) {
 void APU::write(u16 addr, u8 data) {
     apuBus = data;
     // pulse 1 channels
-    if (addr >= 0x4000 && addr <= 0x4003) return pulse1->write(addr, data);
+    if (addr >= 0x4000 && addr <= 0x4003) {
+        if (eventSink) {
+            if (addr == 0x4000) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4001) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4002) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4003) eventSink->OnApuRegisterWrite(addr, data);
+        }
+
+        return pulse1->write(addr, data);
+    }
     // pulse 2 channels
-    if (addr >= 0x4004 && addr <= 0x4007) return pulse2->write(addr, data);
+    if (addr >= 0x4004 && addr <= 0x4007) {
+        if (eventSink) {
+            if (addr == 0x4004) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4005) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4006) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4007) eventSink->OnApuRegisterWrite(addr, data);
+        }
+
+        return pulse2->write(addr, data);
+    }
     // triangle channels
-    if (addr >= 0x4008 && addr <= 0x400B) return triangle->write(addr, data);
+    if (addr >= 0x4008 && addr <= 0x400B) {
+        if (eventSink) {
+            if (addr == 0x4008) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400A) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400B) eventSink->OnApuRegisterWrite(addr, data);
+        }
+
+        return triangle->write(addr, data);
+    }
     // noise channels
-    if (addr >= 0x400C && addr <= 0x400F) return noise->write(addr, data);
+    if (addr >= 0x400C && addr <= 0x400F) {
+        if (eventSink) {
+            if (addr == 0x400C) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400E) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x400F) eventSink->OnApuRegisterWrite(addr, data);
+        }
+
+        return noise->write(addr, data);
+    }
     // dmc channels
-    if (addr >= 0x4010 && addr <= 0x4013) return dmc->write(addr, data);
+    if (addr >= 0x4010 && addr <= 0x4013) {
+        if (eventSink) {
+            if (addr == 0x4010) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4011) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4012) eventSink->OnApuRegisterWrite(addr, data);
+            else if (addr == 0x4013) eventSink->OnApuRegisterWrite(addr, data);
+        }
+
+        return dmc->write(addr, data);
+    }
     // control register
-    if (addr == 0x4015) return write4015(data);
+    if (addr == 0x4015) {
+        if (eventSink) eventSink->OnApuRegisterWrite(addr, data);
+
+        return write4015(data);
+    }
     // frame counter register
-    if (addr == 0x4017) return write4017(data);
+    if (addr == 0x4017) {
+        if (eventSink) eventSink->OnApuRegisterWrite(addr, data);
+
+        return write4017(data);
+    }
 }
 
 void APU::clock() {
@@ -50,9 +160,6 @@ void APU::clock() {
     triangle->clockTimer();
     noise->clockTimer();
     dmc->clockTimer();
-
-    if (dmc->needsByteFetch() && dmc->bufferNeeded)
-        dmc->onByteFetch(0b00110011);
 
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
@@ -75,8 +182,9 @@ u8 APU::read4015() {
     u8 f = (irqRequested ? 0x40 : 0x00);
     // reading the frame counter interrupt flag clears it
     irqRequested = false;
+    cpu.lock()->setIrqLine_APU(false);
     // reading the dmc interrupt flag DOES NOT clear it
-    u8 i = dmc->pending_irq << 7;
+    u8 i = dmc->interrupt << 7;
     return p1 | p2 | t | n | d | u | f | i;
 }
 
@@ -96,6 +204,7 @@ void APU::write4017(u8 data) {
     // clear IRQ flag if IRQ is inhibited
     if (inhibitIRQ) {
         irqRequested = false;
+        cpu.lock()->setIrqLine_APU(false);
     }
     // writing to 4017 triggers a delayed FrameCounter reset
     if ((masterCycle & 0x01) == 1) {
@@ -128,8 +237,11 @@ void APU::clockFrameCounter() {
             halfFrame();
             break;
         case 29828: // irq trigger (only during 4-step with irq enabled)
-            if (!use5step && !inhibitIRQ)
+            if (!use5step && !inhibitIRQ) {
                 irqRequested = true;
+                if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
+                cpu.lock()->setIrqLine_APU(true);
+            }
             break;
         case 29829: // end frame (4-step)
             if (!use5step) {
@@ -205,4 +317,32 @@ float APU::mixSamples(u8 p1, u8 p2, u8 t, u8 n, u8 d) {
     LPF.process(sample);
 
     return sample;
+}
+
+void APU::clearRuntimeState() {
+    masterCycle = cycle = 0;
+    resetAt = 0;
+    apuBus = 0;
+    pendingReset = false;
+    use5step = false;
+    inhibitIRQ = false;
+    irqRequested = false;
+}
+
+void APU::clearAudioOutputState() {
+    cycleAccumulator = 0.0;
+    sampleBuffer.clear();
+}
+
+void APU::resetFilters() {
+    HPF1.prevInput = 0;
+    HPF1.prevOutput = 0;
+    HPF2.prevInput = 0;
+    HPF2.prevOutput = 0;
+    LPF.prevOutput = 0;
+}
+
+void APU::deassertIrqLines() {
+    cpu.lock()->setIrqLine_APU(false);
+    cpu.lock()->setIrqLine_DMC(false);
 }

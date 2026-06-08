@@ -60,5 +60,8 @@ namespace NS_NES {
             inline u8 status() const { return lengthCounter.counter > 0 ? 0x01 : 0x00; }
             // helper function to handle (dis)enabling of the channel and related side effects
             inline void enable(bool set) { enabled = set; if (!enabled) lengthCounter.counter = 0x00; }
+
+            void init();
+            void reset();
     };
 }

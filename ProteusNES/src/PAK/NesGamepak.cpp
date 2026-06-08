@@ -5,13 +5,8 @@
 #include "./Mappers/NesM004.h"
 #include "./NesGamepak.h"
 
-/* TODO:
- * Figure out how to implement the functionalities
- * of the various forms of RAM that may or may not
- * be available in any given rom.
- */
-
 using namespace NS_NES;
+
 Gamepak::Gamepak(const string& path) {
     filePath = path;
     // open rom file
@@ -62,6 +57,33 @@ Gamepak::Gamepak(const string& path) {
     file.close();
 }
 
+void Gamepak::powerup(u32 s) {
+    initPRNG(s);
+
+    // tell mapper to power up
+    if (mapper) mapper->powerup();
+
+    // initialize volatile PRG-RAM (if present)
+    if (prgRamVolatile.size() > 0) {
+        for (u8& byte : prgRamVolatile) byte = nextByte();
+    }
+
+    // initialize volatile CHR-RAM (if present)
+    if (chrRamVolatile.size() > 0) {
+        for (u8& byte : chrRamVolatile) byte = nextByte();
+    }
+}
+
+void Gamepak::reset() {
+    if (mapper) mapper->reset();
+}
+
+void Gamepak::powerdown() {
+    if (mapper) mapper->powerdown();
+    if (prgRamNonVolatile.size() > 0)
+        SaveRAM();
+}
+
 path Gamepak::GetSavePath() {
     path p = "C:/ROMS/SAVES/NES"; // base path here is SAVES/NES; TODO: Change "C:/ROMS/" to an install directory for release mode
     p /= filePath.filename(); // get the filename for the rom and use it to name our save file
@@ -88,11 +110,9 @@ void Gamepak::LoadRAM() {
     ifstream file(GetSavePath(), ifstream::binary);
 
     if (file.is_open()) { // can't load a save unless a save exists
-        printf("save file found\n");
         // copy data from save file into our non-volatile ram array
         file.read(reinterpret_cast<char*>(prgRamNonVolatile.data()), prgRamNonVolatile.size());
-    } else
-        printf("no save file found\n");
+    }
 
     // close the file
     file.close();
@@ -148,7 +168,7 @@ bool Gamepak::readHeaderINES(const Header& h) {
     mapperID = (h.byte7 & 0xF0) | (h.byte6 >> 4);
 
     // byte 8
-    u16 ramSize = h.byte8;
+    u16 ramSize = h.byte8 * 8192;
     if (ramSize == 0) ramSize = 8192;
     if (hasBattery)
         memory.prg.nvramSize = ramSize;
@@ -211,7 +231,6 @@ bool Gamepak::readHeaderNES2(const Header& h) {
     region = (ConsoleRegion)(h.byteC & 0x03);
 
     // byte 13 - vs-system/extended-console info
-
     if (cType == ConsoleType::VS_SYSTEM) {
         // vs system
         vsPPU = VsPPU(h.byteD & 0x0F);
@@ -257,11 +276,11 @@ void Gamepak::initMapper(u16 id) {
     vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
     vector<u8>* pRam = hasPrgRam() ? (prgRamNonVolatile.size() > 0 ? &prgRamNonVolatile : &prgRamVolatile) : nullptr;
     switch (id) {
-        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
-        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam); break;
+        case 0: mapper = make_shared<M000>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 1: mapper = make_shared<M001>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);
@@ -269,4 +288,11 @@ void Gamepak::initMapper(u16 id) {
             printf("%s", msg.c_str());
             exit(EXIT_FAILURE);
     }
+
+    if (eventSink) mapper->connectEventSink(eventSink);
+}
+
+void Gamepak::connectEventSink(NesEventSink* sink) {
+    eventSink = sink;
+    if (mapper) mapper->connectEventSink(sink);
 }
