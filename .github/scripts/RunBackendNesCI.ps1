@@ -105,8 +105,8 @@ for ($i = 0; $i -le 255; $i++) {
 }
 
 Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_nes_cpu_test5/cpu.nes" -OutFile $detCpu
-Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" -OutFile $detAudio
-Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" -OutFile $detFrame
+Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/volume_tests/volumes.nes" -OutFile $detSnd
+Get-File -Url "https://raw.githubusercontent.com/christopherpow/nes-test-roms/master/blargg_litewall/litewall2.nes" -OutFile $detVid
 
 Invoke-Checked -FilePath "cmake" -Arguments @(
     "-S", $workspace,
