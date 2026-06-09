@@ -15,7 +15,8 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang-cl",
         "VCPKG_TARGET_TRIPLET": "x64-windows",
-        "PROTEUS_BUILD_TESTS": "OFF"
+        "PROTEUS_BUILD_TESTS": "OFF",
+        "PROTEUS_NES_BUILD_TESTS": "OFF"
       }
     },
     {
@@ -23,7 +24,8 @@
       "displayName": "Ninja Debug x64 (Tests ON)",
       "inherits": "windows-x64-debug",
       "cacheVariables": {
-        "PROTEUS_BUILD_TESTS": "ON"
+        "PROTEUS_BUILD_TESTS": "ON",
+        "PROTEUS_NES_BUILD_TESTS": "ON"
       }
     },
     {
@@ -35,7 +37,8 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang-cl",
         "VCPKG_TARGET_TRIPLET": "x64-windows",
-        "PROTEUS_BUILD_TESTS": "OFF"
+        "PROTEUS_BUILD_TESTS": "OFF",
+        "PROTEUS_NES_BUILD_TESTS": "OFF"
       }
     },
     {
@@ -43,7 +46,8 @@
       "displayName": "Ninja Release x64 (Tests ON)",
       "inherits": "windows-x64-release",
       "cacheVariables": {
-        "PROTEUS_BUILD_TESTS": "ON"
+        "PROTEUS_BUILD_TESTS": "ON",
+        "PROTEUS_NES_BUILD_TESTS": "ON"
       }
     }
   ],

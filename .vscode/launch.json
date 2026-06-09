@@ -18,6 +18,45 @@
             "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
             "console": "integratedTerminal",
             "stopAtEntry": false
+        },
+        {
+            "name": "Debug NesDeterminismTests - CPU",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-ninja/bin/Debug/tests/NesDeterminismTests.exe",
+            "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "args": [
+                "cpu",
+                "C:/ROMS/NES/blargg_nes_cpu_test5-cpu.nes"
+            ]
+        },
+        {
+            "name": "Debug NesDeterminismTests - VIDEO",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-ninja/bin/Debug/tests/NesDeterminismTests.exe",
+            "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "args": [
+                "frame",
+                "C:/ROMS/NES/litewall2.nes"
+            ]
+        },
+        {
+            "name": "Debug NesDeterminismTests - AUDIO",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-ninja/bin/Debug/tests/NesDeterminismTests.exe",
+            "cwd": "${workspaceFolder}/build-ninja/bin/Debug",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "args": [
+                "audio",
+                "C:/ROMS/NES/volumes.nes"
+            ]
         }
     ]
 }
