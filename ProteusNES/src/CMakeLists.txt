@@ -31,7 +31,7 @@ else()
 	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
 endif()
 
-if(PROTEUS_BUILD_TESTS)
+if(PROTEUS_NES_BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
 
