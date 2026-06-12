@@ -82,14 +82,18 @@ namespace {
         if (id == ConsoleID::NES) {
             if (rom == "volumes") {
                 // this input sequence causes `volumes.nes` to perfome a deterministic audio playback
-                events.push_back({ 120, 0, ResolveButtonIndex(id, "A"), true });
-                events.push_back({ 121, 0, ResolveButtonIndex(id, "A"), false });
+                Headless::InputEvent ev1{ 120, 0, ResolveButtonIndex(id, "A"), true };
+                Headless::InputEvent ev2{ 121, 0, ResolveButtonIndex(id, "A"), true };
+                events.push_back(ev1);
+                events.push_back(ev2);
             }
             if (rom == "accuracycoin") {
                 // upon starting `AccuracyCoin.nes`, user cursor is at the title of page one
                 // we press 'start' to cause the entire suite of tests to run
-                events.push_back({ 120, 0, ResolveButtonIndex(id, "start"), true });
-                events.push_back({ 121, 0, ResolveButtonIndex(id, "start"), false });
+                Headless::InputEvent ev1{ 120, 0, ResolveButtonIndex(id, "start"), true };
+                Headless::InputEvent ev2{ 121, 0, ResolveButtonIndex(id, "start"), false };
+                events.push_back(ev1);
+                events.push_back(ev2);
             }
         }
 

@@ -61,7 +61,7 @@ int main() {
     printf("Timing Results:\n");
     for (const TimingEntry& t : results) {
         int len = strlen(filler) - t.name.size();
-        printf("%s %.*s> min: %lluns\tmax: %lluns\tavg: %lluns\n", t.name.c_str(), len, filler, t.min, t.max, t.avg);
+        printf("%s %.*s> min: %luns\tmax: %luns\tavg: %luns\n", t.name.c_str(), len, filler, t.min, t.max, t.avg);
     }
 
     return 0;
