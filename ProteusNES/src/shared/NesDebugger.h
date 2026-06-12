@@ -48,15 +48,18 @@ namespace NS_NES {
                 0xFF00BFFF
             };
 
+            DebugTraceConfig traceCfg = {};
+            vector<TraceRecord> traceRecords = {};
+            string traceTextBuffer = {};
+            ofstream traceFile;
+            u64 traceFrame = 0;
+
             /**
              * @brief Helper function for decoding instructions
              * @param addr The address of the instruction opcode
              * @return String representation of the instruction
              */
             string DisassembleInstruction(u16 addr) const;
-
-            /// @brief Palette of debug colors for rendering the ROM pattern table(s)
-            u32 debugPalette[4] = { 0xFF000000, 0xFF323232, 0xFF646464, 0xFFFFFFFF };
         public:
             /**
              * @brief explicit constructor
@@ -75,6 +78,18 @@ namespace NS_NES {
             /// @brief Getter for the enabled flag
             bool IsEnabled() const override { return enabled; }
 
+            #pragma region TRACE /// @brief Trace-Logging-related debugging methods; WIP
+            bool TraceEnabled() const override { return traceCfg.enabled; }
+            void PushTraceRecord(const TraceRecord& rec);
+            void AppendFormattedTraceLine(string& out, const TraceRecord& rec) const;
+            u16 ResolveEventDetailID(const DebugEventRecord& ev) const;
+            void SetTraceConfig(const DebugTraceConfig& cfg) override { traceCfg = cfg; traceCfg.enabled = false; }
+            const DebugTraceConfig& GetTraceConfig() const override { return traceCfg; }
+            bool BeginTrace() override;
+            void EndTrace() override;
+            void FlushTrace() override;
+            void OnInstructionExecute(u16 pc, u8 oc, u8 a, u8 x, u8 y, u8 sp, u8 status, u64 cycle) override;
+            #pragma endregion
             #pragma region EVENT /// @brief Event-Viewer-related debugging methods; WIP
             EventViewerDisplaySize GetEventViewerDisplaySize() const override;
             void SetEventViewerConfig(const EventViewerConfig& cfg) override;
@@ -83,7 +98,7 @@ namespace NS_NES {
             const vector<DebugEventRecord>& GetEventViewerEvents() const override;
             const DebugEventRecord& GetEventAt(u16, u16) const override;
             void TakeEventViewerSnapshot(bool forAutoRefresh) override;
-
+            void PushEventRecord(DebugEventRecord ev);
             void OnPpuRegisterRead(u16 addr, u8 data) override;
             void OnPpuRegisterWrite(u16 addr, u8 data) override;
             void OnApuRegisterRead(u16 addr, u8 data) override;
@@ -137,7 +152,7 @@ namespace NS_NES {
              */
             vector<string> GetDisassembly() const override;
             #pragma endregion
-            #pragma region PPU /// @brief PPU-related debugging methods; currently in progress and subject to change
+            #pragma region PPU /// @brief PPU-related debugging methods; fully functional, but subject to change
             /**
              * @brief Acquires and formats the current state of the PPU as a two-dimensional array of strings
              * @return A vector of 4-string arrays, with one entry per PPU register/value
@@ -179,7 +194,7 @@ namespace NS_NES {
              */
             vector<u32> GetSprites() const override;
             #pragma endregion
-            #pragma region APU /// @brief APU-related debugging methods; currenly unimplemented
+            #pragma region APU /// @brief APU-related debugging methods; currenly mostly unimplemented
             /**
              * @brief Acquires and formats the current state of the APU as a two-dimensional array of strings
              * @return A vector of 4-string arrays, with one entry per APU register/value
@@ -211,7 +226,7 @@ namespace NS_NES {
              */
             vector<u32> GetDMC();
             #pragma endregion
-            #pragma region GAMEPAK /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
+            #pragma region PAK /// @brief PAK-related debugging methods; currently limited to just acquiring header-defined information
             /**
              * @brief Acquires and formats the information defined within the Gamepak Header as a 2D array of strings
              * @return A vector of 2-string arrays, with one entry per Header-defined value

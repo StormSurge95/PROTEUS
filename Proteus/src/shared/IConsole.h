@@ -41,6 +41,9 @@ class IConsole {
         /// @brief required for frontend to progress emulation
         virtual void clock() = 0;
 
+        /// @brief required as part of clock and to allow for headless emulation
+        virtual void clockFrame() = 0;
+
         /**
          * @brief Get the current framebuffer
          * @return Non-ownding pointer managed by the core;

@@ -31,7 +31,6 @@ namespace NS_Proteus {
             void Deinit();
 
             void Run();
-            void RunSST();
 
             // overrides for IManagerContext
             ConsoleSessionState GetSessionState() const override { return session->GetState(); }

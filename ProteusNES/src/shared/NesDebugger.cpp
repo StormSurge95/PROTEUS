@@ -12,6 +12,8 @@ NesDebugger::NesDebugger(NES* station) {
     evrActiveFrame.reserve(4096);
     evEventsSnapshot.reserve(8192);
     evPixelsSnapshot.reserve(341 * 262);
+    traceRecords.reserve(16384);
+    traceTextBuffer.reserve(1 << 20);
 }
 
 void NesDebugger::StepInstruction() {
@@ -117,7 +119,7 @@ u32 NesDebugger::GetEventColor(EventType type) {
 }
 
 void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -125,12 +127,12 @@ void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
         .color = GetEventColor(EventType::PPU_READ),
         .flags = DebugEvent_ReadVideo,
         .type = "PPU REG READ",
-        .details = PPU_REGS[addr & 8]
+        .details = PPU_REGS[addr & 7]
     });
 }
 
 void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -138,12 +140,12 @@ void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
         .color = GetEventColor(EventType::PPU_WRITE),
         .flags = DebugEvent_WriteVideo,
         .type = "PPU REG WRITE",
-        .details = PPU_REGS[addr & 8]
+        .details = PPU_REGS[addr & 7]
     });
 }
 
 void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -151,12 +153,12 @@ void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
         .color = GetEventColor(EventType::APU_READ),
         .flags = DebugEvent_ReadAudio,
         .type = "APU REG READ",
-        .details = APU_REGS[addr & 24]
+        .details = APU_REGS[addr % 24]
     });
 }
 
 void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -164,12 +166,12 @@ void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
         .color = GetEventColor(EventType::APU_WRITE),
         .flags = DebugEvent_WriteAudio,
         .type = "APU REG WRITE",
-        .details = APU_REGS[addr & 24]
+        .details = APU_REGS[addr % 24]
     });
 }
 
 void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -182,7 +184,7 @@ void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -195,7 +197,7 @@ void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnControllerRead(u8 player, u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -208,7 +210,7 @@ void NesDebugger::OnControllerRead(u8 player, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnControllerWrite(u8 player, u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -221,7 +223,7 @@ void NesDebugger::OnControllerWrite(u8 player, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -234,7 +236,7 @@ void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = addr,
@@ -246,7 +248,7 @@ void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnOamDmaStart(u8 data) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = 0x4014,
@@ -275,7 +277,7 @@ void NesDebugger::OnInterrupt(INTERRUPT_EVENT type) {
             label = "IRQ";
             break;
     }
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .address = nes->cpu->pc.value(),
@@ -287,7 +289,7 @@ void NesDebugger::OnInterrupt(INTERRUPT_EVENT type) {
 }
 
 void NesDebugger::OnSpriteZeroHit() {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .color = GetEventColor(EventType::ZERO_HIT),
@@ -297,7 +299,7 @@ void NesDebugger::OnSpriteZeroHit() {
 }
 
 void NesDebugger::OnMarkedBreakpoint(string details) {
-    evrActiveFrame.push_back({
+    PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
         .color = GetEventColor(EventType::BREAKPOINT),
@@ -311,6 +313,10 @@ void NesDebugger::OnFrameComplete() {
     evrPrevFrame.swap(evrLastFrame);
     evrLastFrame.swap(evrActiveFrame);
     evrActiveFrame.clear();
+    traceFrame++;
+
+    if (traceCfg.flushEveryFrame)
+        FlushTrace();
 }
 
 vector<array<string, 3>> NesDebugger::GetStateCPU() const {
@@ -583,7 +589,7 @@ string NesDebugger::DisassembleInstruction(u16 addr) const {
             addr16.lo = nes->cpu->read(val++, true);
             addr16.hi = nes->cpu->read(val++, true);
             ss << " = " << hex(addr16.value(), 4); // print the absolute address
-            val = nes->cpu->read(addr16.value());
+            val = nes->cpu->read(addr16.value(), true);
             ss << " = " << hex(val, 2); // print the value at that address
             break;
         case 0x11: case 0x13: case 0x31: case 0x33:
@@ -1181,4 +1187,107 @@ vector<array<string, 2>> NesDebugger::GetPakMapper() const {
     values.insert(values.end(), v.begin(), v.end());
 
     return values;
+}
+
+bool NesDebugger::BeginTrace() {
+    if (traceFile.is_open()) traceFile.close();
+    if (traceCfg.filePath.empty()) return false;
+
+    auto mode = traceCfg.append ? (ios::out | ios::app) : ios::out;
+    traceFile.open(traceCfg.filePath, mode);
+    if (!traceFile.is_open()) return false;
+
+    traceFrame = 0;
+    traceRecords.clear();
+    traceTextBuffer.clear();
+    traceCfg.enabled = true;
+    return true;
+}
+
+void NesDebugger::EndTrace() {
+    FlushTrace();
+    if (traceFile.is_open()) traceFile.close();
+}
+
+void NesDebugger::PushTraceRecord(const TraceRecord& rec) {
+    if (!traceFile.is_open()) return;
+    traceRecords.push_back(rec);
+
+    if (traceRecords.size() >= traceCfg.flushThresholdRecords)
+        FlushTrace();
+}
+
+void NesDebugger::FlushTrace() {
+    if (!traceFile.is_open() || traceRecords.empty()) return;
+
+    traceTextBuffer.clear();
+    for (const TraceRecord& rec : traceRecords)
+        AppendFormattedTraceLine(traceTextBuffer, rec);
+
+    traceFile.write(traceTextBuffer.data(), static_cast<std::streamsize>(traceTextBuffer.size()));
+    traceRecords.clear();
+}
+
+void NesDebugger::AppendFormattedTraceLine(string& out, const TraceRecord& rec) const {
+    out += "F=" + to_string(rec.frame);
+    out += " CPUC=" + to_string(rec.cpuCycle);
+    out += " PPU=" + to_string(rec.scanline) + "," + to_string(rec.dot);
+
+    if (rec.kind == TraceKind::Instruction) {
+        out += " PC=$" + hex(rec.pc, 4);
+        out += " OP=$" + hex(rec.opcode, 2);
+        out += " :: " + DisassembleInstruction(rec.pc);
+        out += " | A:" + hex(rec.a, 2);
+        out += " X:" + hex(rec.x, 2);
+        out += " Y:" + hex(rec.y, 2);
+        out += " SP:" + hex(rec.sp, 2);
+        out += " P:" + hex(rec.status, 2);
+    } else {
+        out += " EVT flags=" + to_string(rec.flags);
+        out += " A=$" + hex(rec.address, 4);
+        out += " V=$" + hex(rec.value, 2);
+        out += " D=" + to_string(rec.detailID);
+    }
+    out += "\n";
+}
+
+void NesDebugger::OnInstructionExecute(u16 pc, u8 oc, u8 a, u8 x, u8 y, u8 sp, u8 status, u64 cycle) {
+    if (!HasTraceMode(traceCfg.mode, DebugTraceMode::INSTRUCTIONS)) return;
+
+    PushTraceRecord({
+        .kind = TraceKind::Instruction,
+        .frame = traceFrame,
+        .cpuCycle = cycle,
+        .scanline = nes->ppu->scanline,
+        .dot = nes->ppu->cycle,
+        .pc = pc,
+        .opcode = oc,
+        .a = a,
+        .x = x,
+        .y = y,
+        .sp = sp,
+        .status = status
+    });
+}
+
+void NesDebugger::PushEventRecord(DebugEventRecord ev) {
+    evrActiveFrame.push_back(ev);
+
+    if (HasTraceMode(traceCfg.mode, DebugTraceMode::EVENTS)) {
+        PushTraceRecord({
+            .kind = TraceKind::Event,
+            .frame = traceFrame,
+            .cpuCycle = nes->cpu->totalCycles,
+            .scanline = ev.scanline,
+            .dot = ev.cycle,
+            .address = static_cast<u16>(ev.address),
+            .value = static_cast<u8>(ev.value),
+            .flags = ev.flags,
+            .detailID = ResolveEventDetailID(ev)
+        });
+    }
+}
+
+u16 NesDebugger::ResolveEventDetailID(const DebugEventRecord& ev) const {
+    return 0x0000;
 }

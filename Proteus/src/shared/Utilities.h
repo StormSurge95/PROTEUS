@@ -35,6 +35,8 @@ static string bin(u8 n) {
     return ss.str();
 }
 
+#undef max
+
 /**
  * @brief Returns the higher of two numbers
  * @param n1 
@@ -50,6 +52,8 @@ static int max(const int& n1, const int& n2) {
     if (n1 > n2) return n1;
     else return n2;
 }
+
+#undef min
 
 static double min(const double& n1, const double& n2) {
     if (n1 < n2) return n1;
@@ -193,6 +197,15 @@ static ConsoleID GetIDFromName(string name) {
     }
 
     return ConsoleID::NONE;
+}
+
+static string GetNameFromID(ConsoleID id) {
+    for (map<ConsoleID, string>::const_iterator it = ConsoleNamesShort.begin();
+        it != ConsoleNamesShort.end(); it++) {
+        if (it->first == id) return it->second;
+    }
+
+    return "";
 }
 
 static u32 LerpColor(u32 c1, u32 c2, float t) {

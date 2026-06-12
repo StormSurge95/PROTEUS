@@ -135,7 +135,6 @@ Invoke-Checked -FilePath "ctest" -Arguments @(
     "--verbose",
     "-L", "emulator:nes",
     "-L", "type:sst",
-    "-L", "kind:cpu",
     "-j"
 )
 

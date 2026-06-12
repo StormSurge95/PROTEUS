@@ -472,6 +472,7 @@ void CPU::clockInstruction() {
     delayDMA = false;
     if (cycles == 1) {
         pollInterrupts();
+        u16 instPC = pc.value();
         /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
         if (interruptSource != INTERRUPT::NONE) {
             // interrupts force BRK into opcode slot
@@ -483,6 +484,7 @@ void CPU::clockInstruction() {
             opcode = read(pc++);
             if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
         }
+        if (eventSink) eventSink->OnInstructionExecute(instPC, opcode, a, x, y, sp, status, totalCycles);
         // set current instruction based on opcode value
         currInst = &lookup[opcode];
     } else {

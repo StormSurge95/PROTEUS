@@ -67,5 +67,7 @@ namespace NS_NES {
         virtual void OnSpriteZeroHit() = 0;
         virtual void OnMarkedBreakpoint(string details) = 0;
         virtual void OnFrameComplete() = 0;
+
+        virtual void OnInstructionExecute(u16 pc, u8 oc, u8 a, u8 x, u8 y, u8 sp, u8 status, u64 cycle) = 0;
     };
 }

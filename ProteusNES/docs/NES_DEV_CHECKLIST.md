@@ -82,11 +82,11 @@ Deliver `ProteusNES` as a Windows-first plugin that integrates cleanly with the 
     - [x] Boot/Load Smoke ---------- Arkanoid
     - [x] Core Functionality ------- Gradius
     - [x] Edge Behavior ------------ Adventure Island
-  - [ ] MMC3/MMC6 (4)
-    - [ ] Boot/Load Smoke ---------- Batman
-    - [ ] Core Functionality ------- Batman Returns
-    - [ ] Edge Behavior ------------ Alien3
-  - [ ] AOROM (7)
+  - [x] MMC3/MMC6 (4)
+    - [x] Boot/Load Smoke ---------- Batman
+    - [x] Core Functionality ------- Batman Returns
+    - [x] Edge Behavior ------------ Alien3
+  - [ ] AxROM (7)
     - [ ] Boot/Load Smoke ---------- Marble Madness
     - [ ] Core Functionality ------- Battletoads
     - [ ] Edge Behavior ------------ Solar Jetman

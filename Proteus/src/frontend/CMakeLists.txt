@@ -1,5 +1,6 @@
 set(PROTEUS_FRONTEND_SOURCES
 	app/Proteus.cpp
+	app/Headless.cpp
 	audio/AudioManager.cpp
 	input/Gamepad.cpp
 	input/InputManager.cpp

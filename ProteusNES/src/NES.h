@@ -42,7 +42,7 @@ namespace NS_NES {
             // clock function of the console; controls the clocking of the inner pieces
             void clock() override;
             // helper function for clocking an entire frame's-worth of cycles
-            void clockFrame();
+            void clockFrame() override;
             // helper function for clocking a single cpu cycle
             void clockCycleCPU();
             // helper function for clocking a single ppu cycle

@@ -478,7 +478,16 @@ void VideoManager::RenderDebug(float scale) {
                 ImGui::PopItemWidth();
                 float w = ((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
                 if (ImGui::Button("Confirm", ImVec2(w, 0))) {
-                    ctx->GetLogger()->SetLogPath(filepath);
+                    // ctx->GetLogger()->SetLogPath(filepath);
+                    ctx->GetDebugger()->SetTraceConfig({
+                        .enabled = true,
+                        .append = false,
+                        .flushEveryFrame = true,
+                        .flushThresholdRecords = 8192,
+                        .mode = DebugTraceMode::ALL,
+                        .filePath = filepath
+                    });
+                    ctx->GetDebugger()->BeginTrace();
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
