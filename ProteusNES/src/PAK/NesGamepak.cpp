@@ -1,8 +1,4 @@
-#include "./Mappers/NesM000.h"
-#include "./Mappers/NesM001.h"
-#include "./Mappers/NesM002.h"
-#include "./Mappers/NesM003.h"
-#include "./Mappers/NesM004.h"
+#include "./NesMappers.h"
 #include "./NesGamepak.h"
 
 using namespace NS_NES;
@@ -257,19 +253,23 @@ MIRROR Gamepak::getMirror() const {
 }
 
 u8 Gamepak::read(u16 addr, bool readonly) {
-    return mapper->cpuRead(addr, readonly);
+    u8 tmp;
+    mapper->cpuRead(addr, tmp, readonly);
+    return tmp;
 }
 
 void Gamepak::write(u16 addr, u8 data) {
-    return mapper->cpuWrite(addr, data);
+    mapper->cpuWrite(addr, data);
 }
 
 u8 Gamepak::ppuRead(u16 addr, bool readonly) const {
-    return mapper->ppuRead(addr, readonly);
+    u8 tmp;
+    mapper->ppuRead(addr, tmp, readonly);
+    return tmp;
 }
 
 void Gamepak::ppuWrite(u16 addr, u8 data) const {
-    return mapper->ppuWrite(addr, data);
+    mapper->ppuWrite(addr, data);
 }
 
 void Gamepak::initMapper(u16 id) {
@@ -281,6 +281,7 @@ void Gamepak::initMapper(u16 id) {
         case 2: mapper = make_shared<M002>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
         case 3: mapper = make_shared<M003>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
         case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
+        case 7: mapper = make_shared<M007>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, nullptr, subMapperID); break;
         default:
             // TODO: render this as a message box and return to GAME_LIST view
             string num = to_string(id);

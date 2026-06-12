@@ -2,6 +2,7 @@
 #include "../PPU/NesPPU.h"
 #include "../APU/NesAPU.h"
 #include "../PAK/NesGamepak.h"
+#include "../PAK/Mappers/NesMapper.h"
 #include "../NesController.h"
 
 using namespace NS_NES;
@@ -107,7 +108,7 @@ bool CPU::check(SingleStateTest::State state, string& result) {
         u8 ex = (u8)e[1];
         u8 ac = ram[addr];
         if (ac != ex) {
-            result = format("INSTRUCTION {} FAIL! RAM[0x{}] was wrong; expected: {}, actual: {}\n", lookup[opcode].name, hex(addr, 4), hex(ex), hex(ac));
+            result = string("INSTRUCTION ") + lookup[opcode].name + " FAIL! RAM[0x" + hex(addr, 4) + "] was wrong; expected: " + hex(ex) + ", actual: " + hex(ac) + "\n";
             pass = false;
         }
         ss << "RAM[" << hex(addr, 4) << "]:         " << hex(ex) << " | " << hex(ac) << endl;
@@ -153,7 +154,7 @@ u8 CPU::read(u16 addr, bool readonly) {
         else if (eventSink) eventSink->OnControllerRead(2, 0x4017, ret);
     } else if (addr >= 0x6000 && addr <= 0xFFFF) {
         // read cartridge memory (including SRAM, if present)
-        ret = cart.lock()->read(addr, readonly);
+        if (!cart.lock()->mapper->cpuRead(addr, ret, readonly)) ret = cpuBus;
         if (readonly) return ret;
     }
     // TODO: Handle PRG-RAM open bus stuff
@@ -191,7 +192,7 @@ void CPU::write(u16 addr, u8 data) {
         apu.lock()->write(addr, data);
     } else if (addr >= 0x5FFF && addr <= 0xFFFF) {
         // write to Cartridge memory (including SRAM, if present)
-        cart.lock()->write(addr, data);
+        cart.lock()->mapper->cpuWrite(addr, data);
     }
     #endif
 }

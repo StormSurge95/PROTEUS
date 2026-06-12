@@ -9,6 +9,7 @@
 using std::cout;
 using std::stoi;
 using std::runtime_error;
+using std::to_string;
 
 using namespace NS_NES;
 
@@ -23,7 +24,7 @@ using namespace NS_NES;
 static string Mismatch(string reg, u16 first, u16 now, u8 len = 2) {
     string f = hex(first, len);
     string n = hex(now, len);
-    return format("Register {} mismatch! first: {}; now: {}", reg, f, n);
+    return string("Register ") + reg + " mismatch! first: " + f + "; now: " + n;
 }
 
 /// @brief Helper function to get string representation of the various interrupt types.
@@ -69,7 +70,7 @@ static void ExpectEqual(const CPU_STATE& now, const CPU_STATE& first) {
     if (now.interrupt != first.interrupt) {
         string f = to_string(first.interrupt);
         string n = to_string(now.interrupt);
-        string e = format("Interrupt mismatch! first: {}; now: {}", f, n);
+        string e = string("Interrupt mismatch! first: ") + f + "; now: " + n;
         throw runtime_error(e);
     }
 }

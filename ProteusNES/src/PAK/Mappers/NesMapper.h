@@ -37,7 +37,7 @@ namespace NS_NES {
              * @param readonly Flag to block unwanted side-effects.
              * @return The byte of data read from memory.
              */
-            virtual u8 cpuRead(u16 addr, bool readonly = false) { return 0x00; }
+            virtual bool cpuRead(u16 addr, u8& data, bool readonly = false) { return false; }
             /**
              * @brief Write memory operation originating from CPU
              * @param addr The address to be written to.
@@ -51,7 +51,7 @@ namespace NS_NES {
              * @param readonly Flag to block unwanted side-effects.
              * @return The byte of data read from memory.
              */
-            virtual u8 ppuRead(u16 addr, bool readonly = false) { return 0x00; }
+            virtual bool ppuRead(u16 addr, u8& data, bool readonly = false) { return false; }
             /**
              * @brief Write memory operation originating from PPU.
              * @param addr The address to be written to.

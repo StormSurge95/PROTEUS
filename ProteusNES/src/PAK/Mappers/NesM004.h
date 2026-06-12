@@ -88,7 +88,7 @@ namespace NS_NES {
              * @param readonly Flag to block side-effects.
              * @return The data that was read; or zero if invalid address.
              */
-            u8 cpuRead(u16 addr, bool readonly = false) override {
+            bool cpuRead(u16 addr, u8& data, bool readonly = false) override {
                 u32 mapped = addr & 0x1FFF;
                 u8 bank;
                 if (addr >= 0xE000 && addr <= 0xFFFF) {
@@ -96,10 +96,10 @@ namespace NS_NES {
                     bank = prgBanks - 1;
                 } else if (addr >= 0x6000 && addr <= 0x7FFF) { // TODO: make this respect RAM protect
                     if (prgRam != nullptr) {
-                        u8 ret = prgRam->at(mapped);
-                        if (!readonly && eventSink) eventSink->OnMapperRegisterRead(format("PRG-RAM: {:04X}", mapped), addr, ret);
-                        return ret;
-                    } else return 0x00; // TODO: make this return open bus
+                        data = prgRam->at(mapped);
+                        if (!readonly && eventSink) eventSink->OnMapperRegisterRead(string("PRG-RAM: ") + hex(mapped, 4), addr, data);
+                        return true;
+                    } else return false; // TODO: make this return open bus
                 } else if (pMode) { // PRG-ROM bank mode 1
                     if (addr >= 0x8000 && addr <= 0x9FFF) { // fixed to second-last bank
                         bank = prgBanks - 2;
@@ -118,9 +118,9 @@ namespace NS_NES {
                     }
                 }
                 mapped += u16(bank) << 13;
-                u8 ret = prgRom->at(mapped);
-                if (!readonly && eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mapped), addr, ret);
-                return ret;
+                data = prgRom->at(mapped);
+                if (!readonly && eventSink) eventSink->OnMapperRegisterRead(string("PRG-ROM: ") + hex(mapped, 4), addr, data);
+                return true;
             }
 
             /**
@@ -134,7 +134,7 @@ namespace NS_NES {
                 if (addr >= 0x6000 && addr <= 0x7FFF && prgRam != nullptr) { // TODO: make this respect RAM protect
                     u16 mapped = addr & 0x1FFF;
                     prgRam->at(mapped) = data;
-                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    if (eventSink) eventSink->OnMapperRegisterWrite(string("PRG-RAM: ") + hex(mapped, 4), addr, data);
                     return;
                 }
                 string details = "";
@@ -235,9 +235,9 @@ namespace NS_NES {
              * @param readonly Flag to block side-effects.
              * @return The data that was read; or zero if invalid address.
              */
-            u8 ppuRead(u16 addr, bool readonly = false) override {
-                addr &= 0x1FFF;
-                u32 mapped = addr & 0x1FFF;
+            bool ppuRead(u16 addr, u8& data, bool readonly = false) override {
+                if (addr >= 0x2000) return false;
+                u32 mapped = addr;
                 u8 bank;
                 if (cMode) { // CHR A12 Inversion 1
                     if (addr <= 0x0FFF) { // four 1KB banks
@@ -265,9 +265,9 @@ namespace NS_NES {
                     }
                 }
                 mapped += u16(bank) << 10;
-                u8 ret = chrMem->at(mapped);
-                if (eventSink) eventSink->OnMapperRegisterRead(format("CHR-{}: {:04X}", chrBanks == 0 ? "RAM" : "ROM", mapped), addr, ret);
-                return ret;
+                data = chrMem->at(mapped);
+                if (eventSink) eventSink->OnMapperRegisterRead(string(chrBanks == 0 ? "CHR-RAM: " : "CHR-ROM: ") + hex(mapped, 4), addr, data);
+                return true;
             }
 
             /**
@@ -307,7 +307,7 @@ namespace NS_NES {
                 }
                 mapped += u16(bank) << 10;
                 chrMem->at(mapped) = data;
-                if (eventSink) eventSink->OnMapperRegisterWrite(format("CHR-RAM: {:04X}", mapped), addr, data);
+                if (eventSink) eventSink->OnMapperRegisterWrite(string("CHR-RAM: ") + hex(mapped, 4), addr, data);
             }
 
             /**

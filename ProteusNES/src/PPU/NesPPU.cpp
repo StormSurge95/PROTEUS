@@ -304,7 +304,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
     
     if (addr >= 0x0000 && addr <= 0x1FFF) {
         // if address is within CHR memory, read from gamepak/mapper
-        ret = cart.lock()->mapper->ppuRead(addr, readonly);
+        if (!cart.lock()->mapper->ppuRead(addr, ret, readonly)) ret = ppuBus;
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // if address is within nametable memory, get nametable byte
         addr &= 0x0FFF; // mask address for use as array index

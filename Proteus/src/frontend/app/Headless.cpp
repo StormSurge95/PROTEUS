@@ -1,9 +1,9 @@
-#include <conio.h>
-// #include <consoleapi.h>
+#include <csignal>
 
 #include "./Headless.h"
 
 using namespace NS_Proteus;
+using std::signal;
 
 namespace {
     struct InputBuffers {
@@ -147,14 +147,11 @@ namespace {
         }
     }
 
-    static bool PollEscape() {
-        if (!_kbhit()) return false;
+    static volatile std::sig_atomic_t gQuit = 0;
 
-        int ch = _getch();
-        return ch == 27;
+    static void OnSigInt(int) {
+        gQuit = 1;
     }
-
-    static std::atomic<bool> gQuit = false;
 }
 
 void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
@@ -163,6 +160,8 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
 
     uptr<IConsole> core = nullptr;
     uptr<IDebugger> dbg = nullptr;
+
+    _crt_signal_t previousSigInt = signal(SIGINT, OnSigInt);
     
     try {
         if (!PluginManager::IsConsoleAvailable(id))
@@ -193,13 +192,7 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
             dbg->BeginTrace();
         }
 
-        bool quit = false;
-        while (!quit && !gQuit) {
-            if (PollEscape()) {
-                quit = true;
-                continue;
-            }
-
+        while (!gQuit) {
             ApplyFrameEvents(schedule, nextEvent, frameCount, btns);
 
             core->update(0, btns.p1.get());
@@ -217,6 +210,9 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
         PluginManager::Shutdown();
     } catch (...) {
         PluginManager::Shutdown();
+        signal(SIGINT, previousSigInt);
         throw;
     }
+
+    signal(SIGINT, previousSigInt);
 }

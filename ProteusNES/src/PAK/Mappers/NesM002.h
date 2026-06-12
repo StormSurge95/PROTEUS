@@ -53,7 +53,7 @@ namespace NS_NES {
              * @param readonly Flag to block side-effects.
              * @return The data that was read; or zero if invalid address.
              */
-            u8 cpuRead(u16 addr, bool readonly = false) override {
+            bool cpuRead(u16 addr, u8& data, bool readonly = false) override {
                 if (addr >= 0x8000) {
                     size_t mapped = (addr & 0x3FFF);
                     if (addr <= 0xBFFF) {
@@ -62,11 +62,11 @@ namespace NS_NES {
                         mapped += static_cast<size_t>(prgBanks - 1) * 0x4000;  // fixed last bank
                     }
 
-                    u8 ret = prgRom->at(mapped);
-                    if (eventSink) eventSink->OnMapperRegisterRead(format("PRG-ROM: {:04X}", mapped), addr, ret);
-                    return ret;
+                    data = prgRom->at(mapped);
+                    if (eventSink) eventSink->OnMapperRegisterRead(string("PRG-ROM: ") + hex(mapped, 4), addr, data);
+                    return true;
                 }
-                return 0x00;
+                return false;
             }
 
             /**
@@ -84,7 +84,7 @@ namespace NS_NES {
                     if (eventSink) eventSink->OnMapperRegisterWrite("UxROM - PRG Bank", addr, data);
                 } else if (addr >= 0x6000 && prgRam != nullptr) {
                     u16 mapped = addr & 0x1FFF;
-                    if (eventSink) eventSink->OnMapperRegisterWrite(format("PRG-RAM: {:04X}", mapped), addr, data);
+                    if (eventSink) eventSink->OnMapperRegisterWrite(string("PRG-RAM: ") + hex(mapped, 4), addr, data);
                     prgRam->at(mapped) = data;
                 }
             }
@@ -95,13 +95,13 @@ namespace NS_NES {
              * @param readonly Flag to block side-effects.
              * @return The data that was read; or zero if invalid address.
              */
-            u8 ppuRead(u16 addr, bool readonly = false) override {
+            bool ppuRead(u16 addr, u8& data, bool readonly = false) override {
                 if (addr < 0x2000) {
-                    u8 ret = chrMem->at(addr);
-                    if (eventSink) eventSink->OnMapperRegisterRead(chrBanks == 0 ? "CHR-RAM" : "CHR-ROM", addr, ret);
-                    return ret;
+                    data = chrMem->at(addr);
+                    if (eventSink) eventSink->OnMapperRegisterRead(chrBanks == 0 ? "CHR-RAM" : "CHR-ROM", addr, data);
+                    return true;
                 }
-                return 0x00;
+                return false;
             }
 
             /**
@@ -117,7 +117,13 @@ namespace NS_NES {
                 }
             }
 
-            vector<array<string, 2>> getDebugData() override { return {}; }
+            vector<array<string, 2>> getDebugData() override {
+                return {
+                    { "Mapper ID", "2 (UxROM)"},
+                    { "Submapper ID", to_string(subMapperID) },
+                    { "Bank Select", to_string(prgBank) }
+                };
+            }
 
         private:
             /**

@@ -866,7 +866,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     temp = nes->apu->pulse1->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
     temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
-    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->pulse1->dutyStep;
     lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
     temp = nes->apu->pulse1->lengthCounter.counter;
@@ -905,7 +905,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     temp = nes->apu->pulse2->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
     temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
-    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->pulse2->dutyStep;
     lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
     temp = nes->apu->pulse2->lengthCounter.counter;
@@ -932,7 +932,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     temp = nes->apu->triangle->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
     temp = CLOCK_RATE_NTSC / (32 * (temp + 1));
-    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->triangle->step;
     lines.push_back({ "--", "Sequence Position", to_string(temp), hex(temp, 2) });
     temp = nes->apu->triangle->lengthCounter.counter;
@@ -963,7 +963,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     temp = nes->apu->noise->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
     temp = CLOCK_RATE_NTSC / nes->apu->noise->period;
-    lines.push_back({ "--", "Frequency", format("{} Hz", temp), "" });
+    lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->noise->shiftRegister;
     lines.push_back({ "--", "Shift Register", to_string(temp), hex(temp, 4) });
     temp = nes->apu->noise->envelope.period;
@@ -996,7 +996,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     //temp = nes->apu->dmc->timer;
     //lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
     //temp = CLOCK_RATE_NTSC / nes->apu->dmc->period;
-    //lines.push_back({ "--", "Frequency", format("{} Hz", temp), ""});
+    //lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", ""});
 
     // FRAME COUNTER
     lines.push_back({ "", "Frame Counter", "", "" });
