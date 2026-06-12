@@ -161,7 +161,7 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
     uptr<IConsole> core = nullptr;
     uptr<IDebugger> dbg = nullptr;
 
-    _crt_signal_t previousSigInt = signal(SIGINT, OnSigInt);
+    auto previousSigInt = signal(SIGINT, OnSigInt);
     
     try {
         if (!PluginManager::IsConsoleAvailable(id))
