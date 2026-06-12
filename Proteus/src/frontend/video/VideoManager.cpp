@@ -1056,36 +1056,40 @@ void VideoManager::SetDebugView(DebugView view) {
 }
 
 void VideoManager::RenderDebugPAK() {
-    if (ImGui::BeginTable("GAMEPAK INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
-        ImGui::TableHeader("Gamepak Data");
-        ImGui::TableSetupColumn("Data");
-        ImGui::TableSetupColumn("Value");
-        ImGui::TableHeadersRow();
-        vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
-        for (size_t i = 0; i < pakData.size(); i++) {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", pakData[i][0].c_str());
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", pakData[i][1].c_str());
+    if (ImGui::CollapsingHeader("GAMEPAK INFO")) {
+        if (ImGui::BeginTable("GAMEPAK INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+            ImGui::TableHeader("Gamepak Data");
+            ImGui::TableSetupColumn("Data");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+            vector<array<string, 2>> pakData = ctx->GetDebugger()->GetPakHeader();
+            for (size_t i = 0; i < pakData.size(); i++) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", pakData[i][0].c_str());
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", pakData[i][1].c_str());
+            }
+            ImGui::EndTable();
         }
-        ImGui::EndTable();
     }
     ImGui::Separator();
-    if (ImGui::BeginTable("MAPPER INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
-        ImGui::TableHeader("Mapper Data");
-        ImGui::TableSetupColumn("Data");
-        ImGui::TableSetupColumn("Value");
-        ImGui::TableHeadersRow();
-        vector<array<string, 2>> mapData = ctx->GetDebugger()->GetPakMapper();
-        for (size_t i = 0; i < 0; i++) {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", mapData[i][0].c_str());
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", mapData[i][1].c_str());
+    if (ImGui::CollapsingHeader("MAPPER INFO")) {
+        if (ImGui::BeginTable("MAPPER INFO", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+            ImGui::TableHeader("Mapper Data");
+            ImGui::TableSetupColumn("Data");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+            vector<array<string, 2>> mapData = ctx->GetDebugger()->GetPakMapper();
+            for (size_t i = 0; i < mapData.size(); i++) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", mapData[i][0].c_str());
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", mapData[i][1].c_str());
+            }
+            ImGui::EndTable();
         }
-        ImGui::EndTable();
     }
 }
 

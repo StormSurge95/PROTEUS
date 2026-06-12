@@ -63,6 +63,7 @@ namespace NS_NES {
             vector<array<string, 2>> getDebugData() override {
                 return {
                     { "Mapper ID", "7 (AxROM)" },
+                    { "Submapper ID", to_string(subMapperID) },
                     { "PRG 32KB Banks", to_string(prg32kBanks) },
                     { "Selected PRG Bank", to_string(prgBank) },
                     { "Nametable Mode", mirrorMode == MIRROR::ONE_SCREEN_HI ? "One-screen high" : "One-screen low" },

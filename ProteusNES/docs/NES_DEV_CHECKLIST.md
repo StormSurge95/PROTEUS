@@ -87,9 +87,9 @@ Deliver `ProteusNES` as a Windows-first plugin that integrates cleanly with the 
     - [x] Core Functionality ------- Batman Returns
     - [x] Edge Behavior ------------ Alien3
   - [ ] AxROM (7)
-    - [ ] Boot/Load Smoke ---------- Marble Madness
+    - [x] Boot/Load Smoke ---------- Marble Madness
     - [ ] Core Functionality ------- Battletoads
-    - [ ] Edge Behavior ------------ Solar Jetman
+    - [x] Edge Behavior ------------ Solar Jetman
   - [ ] MMC2 (9)
     - [ ] Boot/Load Smoke ---------- Mike Tyson's Punch-Out!!
     - [ ] Core Functionality ------- Punch Out!!

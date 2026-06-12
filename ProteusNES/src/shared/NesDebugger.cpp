@@ -1180,13 +1180,7 @@ vector<array<string, 2>> NesDebugger::GetPakHeader() const {
 }
 
 vector<array<string, 2>> NesDebugger::GetPakMapper() const {
-    vector<array<string, 2>> values;
-
-    values.push_back({ "Mapper Data", "" });
-    auto v = nes->cart->mapper->getDebugData();
-    values.insert(values.end(), v.begin(), v.end());
-
-    return values;
+    return nes->cart->mapper->getDebugData();
 }
 
 bool NesDebugger::BeginTrace() {

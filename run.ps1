@@ -1,10 +1,13 @@
 param(
-    [Alias("c")]
+    [Alias("cfg")]
     [ValidateSet("d", "debug", "r", "release")]
     [string]$config = "debug",
 
     [Alias("b")]
     [switch]$buildFirst,
+
+    [Alias("c")]
+    [switch]$clean,
 
     [Alias("h")]
     [switch]$headless,
@@ -33,7 +36,13 @@ $buildDir = Join-Path $repoRoot "build-ninja"
 $buildScript = Join-Path $repoRoot "./build.ps1"
 
 if ($buildFirst -or -not (Test-Path $buildDir)) {
-    & $buildScript -cfg $Config.ToLowerInvariant()
+    $buildArgs = @{
+        cfg = $Config.ToLowerInvariant()
+    }
+    if ($clean) { $buildArgs.Add("clean", $true) }
+
+    & $buildScript @buildArgs
+    
     if ($LASTEXITCODE -ne 0) {
         throw "build.ps1 failed with exit code $LASTEXITCODE"
     }
