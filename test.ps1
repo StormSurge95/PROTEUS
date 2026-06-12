@@ -18,7 +18,8 @@ param(
         "frontend", # label to run any frontend tests (currently this limits to "plugin lifecycle" tests)
         "nes",      # label to run all NES console tests (SST and determinism)
         "nes:det",  # label to run only NES determinism tests
-        "nes:sst"   # label to run only NES SST tests
+        "nes:sst",  # label to run only NES SST tests
+        "time"      # label to run specifically timing/performance related tests
     )]
     [string]$Label = "all"
 )
@@ -59,34 +60,40 @@ $ctestArgs.Add($Config)
 $ctestArgs.Add("--output-on-failure")   # make ctest share the output of the ran test upon failure
 $ctestArgs.Add("--verbose")             # make ctest output verbose
 
-$labels = [System.Collections.Generic.List[string]]::new()
-
-if ($Label -eq "all") {
-    $labels.Add("plugin")
-    $labels.Add("nes:sst")
-    $labels.Add("nes:det")
-} elseif ($Label -eq "frontend") {
-    $labels.Add("plugin")
-} elseif ($Label -eq "nes") {
-    $labels.Add("nes:sst")
-    $labels.Add("nes:det")
+if ($Label -eq "time") {
+    ctest @ctestArgs -L timing
+    
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } else {
-    $labels.Add($Label)
-}
+    $labels = [System.Collections.Generic.List[string]]::new()
 
-if ($labels.Contains("plugin")) {
-    ctest @ctestArgs -L plugin
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-}
+    if ($Label -eq "all") {
+        $labels.Add("plugin")
+        $labels.Add("nes:sst")
+        $labels.Add("nes:det")
+    } elseif ($Label -eq "frontend") {
+        $labels.Add("plugin")
+    } elseif ($Label -eq "nes") {
+        $labels.Add("nes:sst")
+        $labels.Add("nes:det")
+    } else {
+        $labels.Add($Label)
+    }
 
-if ($labels.Contains("nes:sst")) {
-    ctest @ctestArgs -L emulator:nes -L type:sst -j
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-}
+    if ($labels.Contains("plugin")) {
+        ctest @ctestArgs -L plugin
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
 
-if ($labels.Contains("nes:det")) {
-    ctest @ctestArgs -L emulator:nes -L type:determinism
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if ($labels.Contains("nes:sst")) {
+        ctest @ctestArgs -L emulator:nes -L type:sst -j
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+
+    if ($labels.Contains("nes:det")) {
+        ctest @ctestArgs -L emulator:nes -L type:determinism
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
 }
 
 Write-Host "All tests successfully passed" -ForegroundColor Green

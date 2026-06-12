@@ -1,5 +1,6 @@
 #include "../shared/plugin_utils/PluginRegistry.h"
 #include "../shared/IConsole.h"
+#include "../shared/Utilities.h"
 
 #include <functional>
 
@@ -61,7 +62,10 @@ int main() {
     printf("Timing Results:\n");
     for (const TimingEntry& t : results) {
         int len = strlen(filler) - t.name.size();
-        printf("%s %.*s> min: %luns\tmax: %luns\tavg: %luns\n", t.name.c_str(), len, filler, t.min, t.max, t.avg);
+        string tmin = FormatNum(t.min);
+        string tmax = FormatNum(t.max);
+        string tavg = FormatNum(t.avg);
+        printf("%s %.*s> min: %sns\tmax: %sns\tavg: %sns\n", t.name.c_str(), len, filler, tmin.c_str(), tmax.c_str(), tavg.c_str());
     }
 
     return 0;

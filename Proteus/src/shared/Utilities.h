@@ -274,4 +274,12 @@ static u32 Dim(u32 color, float factor) {
     return ret;
 }
 
+template<class T>
+static string FormatNum(T value) {
+    stringstream ss;
+    ss.imbue(std::locale(""));
+    ss << std::fixed << value;
+    return ss.str();
+}
+
 #pragma warning(pop)
