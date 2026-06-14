@@ -95,7 +95,7 @@ void PPU::clearPipelines() {
     bgPatternAddr = patternShiftLo = patternShiftHi = attributeShiftLo = attributeShiftHi = 0;
 
     // clear sprite pipeline state
-    spriteIndex = n = m = oamLatch = spritesOnScanline = oamIndex = byteIndex = 0;
+    n = m = oamLatch = spritesOnScanline = byteIndex = 0;
     sprTileIndex = sprAttributes = sprXPosition = sprPatternLo = sprPatternHi = 0;
     spritePatternAddr = 0;
     sprite0HitOnNextScanline = sprite0HitOnThisScanline = false;
@@ -493,15 +493,11 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 }
 
 void PPU::clock() {
-    // via https://www.nesdev.org/wiki/PPU_rendering#Line-by-line_timing
     if (scanline == (GetScanlinesPerFrame(*region) - 1)) { // Pre-render scanline (-1 or 261)
         onPreRenderLine();
-        // "This scanline varies in length, depending on whether an even or an odd frame is beig rendered.
-        // For odd frames, the cycle at the end of the scanline is skipped (this is done internally by
-        // jumping directly from (339,261) to (0,0), replacing the idle tick at the beginning of the first
-        // visible scanline with the last tick of the last dummy nametable fetch)."
-        // TODO: Maybe instead of skipping (340,261) we should skip (0,0)?
-        if (AllowOddFrameSkip(*region) && oddFrame && renderingEnabled() && cycle == 339) {
+        // Scanline 261 belongs to the NEXT frame (effectively scanline -1), while oddFrame represents
+        // the CURRENT frame; as such, we check using !oddFrame instead.
+        if (AllowOddFrameSkip(*region) && !oddFrame && renderingEnabled() && cycle == 339) {
             cycle++;
         }
     } else if (scanline <= 239) { // Visible scanlines (0-239)
@@ -789,7 +785,7 @@ void PPU::renderPixel() {
         finalAttr = bgAttr;
     } else {
         // handle sprite 0 hit
-        if (sprite0HitOnThisScanline && sprIndex == 0 && cycle != 256) {
+        if (!spriteZeroHit() && sprite0HitOnThisScanline && sprIndex == 0 && cycle > 1 && cycle < 256) {
             spriteZeroHit(true);
             if (eventSink) eventSink->OnSpriteZeroHit();
         }

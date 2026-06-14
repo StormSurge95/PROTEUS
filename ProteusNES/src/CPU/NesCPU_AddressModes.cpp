@@ -41,22 +41,19 @@ void CPU::REL_B() {
         case 2:
             offset = read(pc++);
             (this->*currInst->operate)();
-            if (!branch) {
-                cycles = 0;
-            } else spage(offset);
+            if (!branch) cycles = 0;
+            else spage(offset);
             break;
         case 3:
-        case 4:
             read(pc);
-            if (paged) {
-                if (((offset >> 7) & 0x01) == 0) { // page forward
-                    pc.hi++;
-                } else { // page backward
-                    pc.hi--;
-                }
-                paged = false;
-                break;
-            }
+            if (!paged) cycles = 0;
+            break;
+        case 4:
+            pollInterrupts();
+            if (((offset >> 7) & 0x01) == 0) // page forward
+                pc.hi++;
+            else // page backward
+                pc.hi--;
             cycles = 0;
             break;
     }

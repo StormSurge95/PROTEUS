@@ -21,11 +21,14 @@ class IDebugger {
 
         virtual void Init() { initialized = true; };
 
-        /// @brief enables the debugger
+        /// @brief force enable the debugger
         void Enable() { enabled = true; }
 
-        /// @brief disabled the debugger
+        /// @brief force disable the debugger
         void Disable() { enabled = false; }
+
+        /// @brief enables/disables debugger via toggle
+        void Toggle() { enabled = !enabled; }
 
         /// @brief returns the current enabled state of the debugger
         virtual bool IsEnabled() const { return enabled; }

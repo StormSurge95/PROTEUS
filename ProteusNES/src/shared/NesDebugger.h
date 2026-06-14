@@ -12,8 +12,6 @@ namespace NS_NES {
      */
     class NesDebugger : public IDebugger, public NesEventSink {
         private:
-            /// @brief enabled flag
-            bool enabled = false;
             /// @brief reference to the station
             NES* nes = nullptr;
 

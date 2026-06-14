@@ -15,7 +15,10 @@ void NesDebugger::Init() {
     evrLastFrame.reserve(4096);
     evrActiveFrame.reserve(4096);
     evEventsSnapshot.reserve(8192);
-    evPixelsSnapshot.reserve(GetDotsPerScanline() * GetScanlinesPerFrame(nes->cart->region));
+
+    const size_t pixelCount = size_t(GetDotsPerScanline()) * size_t(GetScanlinesPerFrame(nes->cart->region));
+    evPixelsSnapshot.resize(pixelCount, 0x00000000);
+
     traceRecords.reserve(16384);
     traceTextBuffer.reserve(1 << 20);
     IDebugger::Init();
@@ -64,17 +67,14 @@ void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
 }
 
 const EventViewerConfig& NesDebugger::GetEventViewerConfig() const {
-    if (!enabled || !initialized) return {};
     return evConfig;
 }
 
 const vector<u32>& NesDebugger::GetEventViewerPixels() const {
-    if (!enabled || !initialized) return {};
     return evPixelsSnapshot;
 }
 
 const vector<DebugEventRecord>& NesDebugger::GetEventViewerEvents() const {
-    if (!enabled || !initialized) return {};
     return evEventsSnapshot;
 }
 

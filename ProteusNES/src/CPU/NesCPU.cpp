@@ -140,8 +140,7 @@ u8 CPU::read(u16 addr, bool readonly) {
         if (readonly) return ret;
     } else if (addr == 0x4015) {
         // read APU status
-        ret = (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
-        if (readonly) return ret;
+        return (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
     } else if (addr == 0x4016) {
         // read Player 1 Controller
         ret = (cpuBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
@@ -341,7 +340,7 @@ void CPU::powerup(u32 s) {
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
 
     // clear interrupt and poll bookkeeping
-    interruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
     resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = nmiPending = false;
     interruptFlagViaPoll = pendingSyncIFVP = pendingValueIFVP = false;
 
@@ -374,7 +373,7 @@ void CPU::reset() {
 
     // abort current instruction context so next CPU step starts from interrupt polling
     cycles = 0;
-    interruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
     currInst = nullptr;
     opcode = fetched = 0;
     absAddr = relAddr = indAddr = 0;
@@ -401,7 +400,7 @@ void CPU::powerdown() {
     // stop active execution state
     halted = false;
     cycles = 0;
-    interruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
 
     // cancel pending reset/interrupt activity
     resetPending = false;
@@ -472,9 +471,29 @@ void CPU::clockInstruction() {
     cycles++;
     delayDMA = false;
     if (cycles == 1) {
+        // reset helper variables and process delayed I-flag
+        newInstruction();
+
+        // carry mid-instruction poll results forward
+        interruptSource = pendingInterruptSource;
+        pendingInterruptSource = INTERRUPT::NONE;
+
+        // perform default cycle-1 interrupt polling
         pollInterrupts();
+
+        // emit acknowledgement events only after interrupt is actually selected for this instruction
+        if (eventSink) {
+            if (interruptSource == INTERRUPT::NMI) {
+                eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_ACK);
+            } else if (interruptSource == INTERRUPT::IRQ) {
+                eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_ACK);
+            }
+        }
+
+        // save current pc for use in event emit(s)
         u16 instPC = pc.value();
-        /// On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
+
+        // On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
         if (interruptSource != INTERRUPT::NONE) {
             // interrupts force BRK into opcode slot
             opcode = 0x00;
@@ -485,7 +504,10 @@ void CPU::clockInstruction() {
             opcode = read(pc++);
             if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
         }
+
+        // emit instruction event
         if (eventSink) eventSink->OnInstructionExecute(instPC, opcode, a, x, y, sp, status, totalCycles);
+
         // set current instruction based on opcode value
         currInst = &lookup[opcode];
     } else {
@@ -497,20 +519,38 @@ void CPU::clockInstruction() {
 }
 
 void CPU::pollInterrupts() {
-    if (resetPending) {
-        interruptSource = INTERRUPT::RST;
-    } else if (nmiPending) {
-        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_ACK);
-        interruptSource = INTERRUPT::NMI; // acknowledge NMI
-    } else if (hasPendingIrq() && !interruptFlagViaPoll) {
-        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_ACK);
-        interruptSource = INTERRUPT::IRQ; // acknowlege IRQ
-    }
+    auto rank = [](INTERRUPT src) -> int {
+        switch (src) {
+            case INTERRUPT::NONE: return 0;
+            case INTERRUPT::BRK:  return 1;
+            case INTERRUPT::IRQ:  return 2;
+            case INTERRUPT::NMI:  return 3;
+            case INTERRUPT::RST:  return 4;
+        }
+        return 0;
+    };
 
-    if (pendingSyncIFVP) {
-        interruptFlagViaPoll = pendingValueIFVP;
-        pendingSyncIFVP = false;
-    }
+    auto latchHigherPriority = [&](INTERRUPT& dst, INTERRUPT src) {
+        if (rank(src) > rank(dst)) {
+            dst = src;
+        }
+    };
+
+    INTERRUPT sampled = INTERRUPT::NONE;
+
+    if (resetPending)
+        sampled = INTERRUPT::RST;
+    else if (nmiPending)
+        sampled = INTERRUPT::NMI; // acknowledge NMI
+    else if (hasPendingIrq() && !interruptFlagViaPoll)
+        sampled = INTERRUPT::IRQ; // acknowlege IRQ
+
+    if (sampled == INTERRUPT::NONE) return;
+
+    if (cycles == 1)
+        latchHigherPriority(interruptSource, sampled);
+    else
+        latchHigherPriority(pendingInterruptSource, sampled);
 }
 
 const CPU_STATE CPU::GetState() const {

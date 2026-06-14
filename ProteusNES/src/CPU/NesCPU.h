@@ -62,17 +62,39 @@ namespace NS_NES {
             INST* currInst = nullptr; /// @brief operation information of current instruction sequence
             ADDR absAddr, relAddr, indAddr; /// @brief helper variables for address operations
             u8 offset = 0x00; /// @brief helper variable for zero page and branch instructions
-            bool paged = false; /// @brief flag to determine page boundary crossings
-            bool branch = false; /// @brief flag to determine when to take branches
+            bool paged = false; /// @brief helper flag to determine page boundary crossings
+            bool branch = false; /// @brief helper flag to determine when to take branches
             vector<INST> lookup; /// @brief instruction lookup table
             u16 addrBus = 0x0000; /// @brief observer variable for debugger usage
+            struct {
+                bool pending = false;
+                bool value = false;
+                bool armed = false;
+
+                void set(bool val) {
+                    pending = true;
+                    value = val;
+                    armed = false;
+                }
+            } IFVP;
+
             bool interruptFlagViaPoll = false;  // I flag as seen by pollInterrupts()
             bool pendingSyncIFVP = false;       // whether to sync I flag after next poll
             bool pendingValueIFVP = false;      // value to apply to I on next sync.
 
             inline void deferIFVP() {
-                pendingSyncIFVP = true;
-                pendingValueIFVP = getFlag(FLAGS::I) != 0;
+                IFVP.set(getFlag(FLAGS::I));
+            }
+
+            inline void newInstruction() {
+                if (IFVP.pending) {
+                    if (IFVP.armed) {
+                        interruptFlagViaPoll = IFVP.value;
+                        IFVP.pending = false;
+                    } else IFVP.armed = true;
+                }
+                absAddr = relAddr = indAddr = offset = fetched = 0;
+                paged = branch = false;
             }
 
             inline void syncIFVP() {
@@ -212,6 +234,7 @@ namespace NS_NES {
 
             #pragma region Interrupts
             INTERRUPT interruptSource = INTERRUPT::NONE;
+            INTERRUPT pendingInterruptSource = INTERRUPT::NONE;
             map<INTERRUPT, u16> interruptVector{
                 { INTERRUPT::RST, 0xFFFC },
                 { INTERRUPT::NMI, 0xFFFA },

@@ -172,8 +172,10 @@ void Proteus::SetMetadata() {
 }
 
 void Proteus::ToggleDebug() {
-    if (session->DebuggerExists())
+    if (session->DebuggerExists()) {
+        session->GetDebugger()->Toggle();
         videoManager->ToggleDebug();
+    }
 }
 
 bool Proteus::ProcessQuitEvent(FrameContext& ctx) {

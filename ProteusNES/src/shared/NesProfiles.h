@@ -51,6 +51,7 @@ namespace NS_NES {
         const u8 cpuDiv;
         const u8 ppuDiv;
 
+        const double millisPerFrame;
         const u16 scanlinesPerFrame;
         const bool oddFrameSkip;
 
@@ -69,6 +70,7 @@ namespace NS_NES {
         .ppuClockHz = 5369318,
         .cpuDiv = 12,
         .ppuDiv = 4,
+        .millisPerFrame = 1.0 / 60.0988,
         .scanlinesPerFrame = 262,
         .oddFrameSkip = true,
         .cyclesPerSample = 1789773.0 / 44100.0,
@@ -84,6 +86,7 @@ namespace NS_NES {
         .ppuClockHz = 5320342,
         .cpuDiv = 16,
         .ppuDiv = 5,
+        .millisPerFrame = 1.0 / 50.0070,
         .scanlinesPerFrame = 312,
         .oddFrameSkip = false,
         .cyclesPerSample = 1662607.0 / 44100.0,
@@ -99,6 +102,7 @@ namespace NS_NES {
         .ppuClockHz = 5320342,
         .cpuDiv = 15,
         .ppuDiv = 5,
+        .millisPerFrame = 1.0 / 50.0070,
         .scanlinesPerFrame = 312,
         .oddFrameSkip = false,
         .cyclesPerSample = 1773448.0 / 44100.0,
@@ -156,6 +160,10 @@ namespace NS_NES {
 
     static u32 GetScanlinesPerFrame(ConsoleRegion region) {
         return GetTimingProfile(region).scanlinesPerFrame;
+    }
+
+    static double GetMillisPerFrame(ConsoleRegion region) {
+        return GetTimingProfile(region).millisPerFrame;
     }
 
     static bool AllowOddFrameSkip(ConsoleRegion region) {

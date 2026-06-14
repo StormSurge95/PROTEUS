@@ -1,4 +1,5 @@
 param(
+    [Parameter(Mandatory = $true)]
     [Alias("cfg")]
     [ValidateSet("d", "debug", "r", "release")]
     [string]$config = "debug",

@@ -27,8 +27,8 @@ namespace NS_Proteus {
 
         float PopupX() const { return dispWidth * 0.5f; }
         float PopupY() const { return dispHeight * 0.5f; }
-        float PopupW() const { return dispWidth * 0.2f; }
-        float PopupH() const { return dispHeight * 0.2f; }
+        float PopupW(float w = 1.0f) const { return dispWidth * (0.2f * w); }
+        float PopupH(float h = 1.0f) const { return dispHeight * (0.2f * h); }
     };
 
     typedef map<ConsoleID, u16> PageCounts;

@@ -393,12 +393,13 @@ namespace NS_NES {
                 we set the corresponding byte in secondaryOAM to 0xFF.
             */
             void initSecondaryOAM();
-
-            /*
-                priority index of a sprite
-                index of zero would cause 'sprite zero hit'
-            */
-            u8 spriteIndex = 0;
+            
+            enum class EvalMode {
+                SearchY,        // normal phase: checking OAM[n][0]
+                CopyBytes,      // normal phase: copying bytes 1..3
+                OverflowScan,   // bugged diagonal scan after 8 sprites
+                Done            // no more meaningful eval work this scanline
+            } evalMode = EvalMode::SearchY;
             // helper variable for sprite evaluation
             u8 n = 0x00;
             // helper variable for sprite evaluation
@@ -410,8 +411,6 @@ namespace NS_NES {
             // flags to properly emulate sprite 0 hit
             bool sprite0HitOnNextScanline = false;
             bool sprite0HitOnThisScanline = false;
-            // index into oam of the SPRITE being processed
-            u8 oamIndex = 0x00;
             // index into the SPRITE being processed; i.e. y-pos/tile-index/attr/x-pos
             u8 byteIndex = 0x00;
             // address of the sprite's pattern tile
@@ -430,6 +429,14 @@ namespace NS_NES {
 
             // container for the sprites to be placed on the CURRENT scanline
             array<ActiveSprite, 8> activeSprites;
+
+            // sprite eval helper funcs
+            void beginSpriteEval();
+            void spriteEvalRead();
+            void spriteEvalWrite();
+            bool spriteInRange(u8 y) const;
+            void advanceOverflowMiss();
+            void advanceOverflowHit();
 
             /*
                 Evaluates one sprite each cycle during cycles 65-256

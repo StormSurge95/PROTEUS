@@ -3,7 +3,7 @@ param(
     [Alias("cfg")]
     [ValidateSet("d", "debug", "r", "release")]
     [string]$Config,
-    [Parameter(Mandatory = $false)]
+    
     [Alias("c")]
     [switch]$clean
 )

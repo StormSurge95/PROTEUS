@@ -584,7 +584,7 @@ void VideoManager::RenderDebugEVT() {
         ImGui::OpenPopup("Filter Events", ImPopupFlags);
     }
     ImGui::SetNextWindowPos(ImVec2(dispInfo.PopupX(), dispInfo.PopupY()), 0, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH()));
+    ImGui::SetNextWindowSize(ImVec2(dispInfo.PopupW(), dispInfo.PopupH(1.5f)));
     ImGui::SetNextWindowFocus();
     if (ImGui::BeginPopup("Filter Events", ImPopupWindowFlags)) {
         for (auto& [flag, filter] : cfg.eventFilters) {
@@ -609,6 +609,7 @@ void VideoManager::RenderDebugEVT() {
     // ensure texture used for ev frame is valid
     if (evTexture && (evTexture->w != evSize.width || evTexture->h != evSize.height)) {
         SDL_DestroyTexture(evTexture);
+        evTexture = nullptr;
     }
     if (!evTexture) {
         evTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, evSize.width, evSize.height);

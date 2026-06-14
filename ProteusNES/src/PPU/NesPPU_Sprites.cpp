@@ -78,45 +78,102 @@ void PPU::initSecondaryOAM() {
         secondaryOAM[sprite].fill(0xFF);
 }
 
-void PPU::spriteEval() {
-    if (cycle == 65) {
-        spriteIndex = 0;
-        byteIndex = 0;
-        spritesOnScanline = 0;
-        spritesOverflowed(false);
-    }
+void PPU::beginSpriteEval() {
+    n = 0;
+    m = 0;
+    byteIndex = 0;
+    spritesOnScanline = 0;
+    evalMode = EvalMode::SearchY;
+    spritesOverflowed(false);
+}
 
-    if (spriteIndex >= 64 || spritesOverflowed()) return;
+bool PPU::spriteInRange(u8 y) const {
+    u16 tgt = scanline + 1;
+    u16 top = u16(y) + 1;
+    return (tgt >= top && tgt < (top + getSpriteHeight()));
+}
+
+void PPU::spriteEvalRead() {
+    switch (evalMode) {
+        case EvalMode::SearchY:
+            oamLatch = primaryOAM[n][0];
+            break;
+        case EvalMode::CopyBytes:
+            oamLatch = primaryOAM[n][byteIndex];
+            break;
+        case EvalMode::OverflowScan:
+            oamLatch = primaryOAM[n][m];
+        case EvalMode::Done:
+        default: return;
+    }
+}
+
+void PPU::advanceOverflowMiss() {
+    n++;
+    m = (m + 1) & 3;
+}
+
+void PPU::advanceOverflowHit() {
+    m++;
+    if (m >= 4) {
+        m = 0;
+        n++;
+    }
+}
+
+void PPU::spriteEvalWrite() {
+    switch (evalMode) {
+        case EvalMode::SearchY:
+            if (spriteInRange(oamLatch)) {
+                secondaryOAM[spritesOnScanline][0] = oamLatch;
+                if (n == 0) sprite0HitOnNextScanline = true;
+                byteIndex = 1;
+                evalMode = EvalMode::CopyBytes;
+            } else {
+                n++;
+                if (n >= 64) evalMode = EvalMode::Done;
+            }
+            break;
+        case EvalMode::CopyBytes:
+            secondaryOAM[spritesOnScanline][byteIndex] = oamLatch;
+            if (byteIndex < 3) byteIndex++;
+            else {
+                secondaryOAM[spritesOnScanline][4] = n;
+                spritesOnScanline++;
+                n++;
+                byteIndex = 0;
+            }
+            if (n >= 64) evalMode = EvalMode::Done;
+            else if (spritesOnScanline < 8) evalMode = EvalMode::SearchY;
+            else {
+                m = 0;
+                evalMode = EvalMode::OverflowScan;
+            }
+            break;
+        case EvalMode::OverflowScan:
+            if (spriteInRange(oamLatch)) {
+                spritesOverflowed(true);
+                advanceOverflowHit();
+            } else {
+                advanceOverflowMiss();
+            }
+            if (n >= 64) evalMode = EvalMode::Done;
+            break;
+        case EvalMode::Done:
+        default: return;
+    }
+}
+
+void PPU::spriteEval() {
+    if (cycle == 65) beginSpriteEval();
+
+    if (evalMode == EvalMode::Done) return;
 
     bool oddCycle = cycle & 0x01;
-
-    // if odd cycle, read byte from primary OAM
-    if (oddCycle) {
-        oamLatch = primaryOAM[spriteIndex][0];
-    } // if even cycle, evalute sprite via previously read byte
-    else {
-        // check if we're in range
-        u8 h = getSpriteHeight();
-        u16 tgt = scanline + 1;
-        u16 top = u16(oamLatch) + 1;
-
-        if (tgt >= top && tgt < (top + h)) {
-            if (spriteIndex == 0) sprite0HitOnNextScanline = true;
-            // sprite is in range; if we have room, copy data to sOAM
-            if (spritesOnScanline < 8) {
-                secondaryOAM[spritesOnScanline][0] = primaryOAM[spriteIndex][0];
-                secondaryOAM[spritesOnScanline][1] = primaryOAM[spriteIndex][1];
-                secondaryOAM[spritesOnScanline][2] = primaryOAM[spriteIndex][2];
-                secondaryOAM[spritesOnScanline][3] = primaryOAM[spriteIndex][3];
-                secondaryOAM[spritesOnScanline][4] = spriteIndex;
-                spritesOnScanline++;
-            } else {
-                spritesOverflowed(true);
-            }
-        }
-
-        spriteIndex++;
-    }
+    if (oddCycle)
+        spriteEvalRead();
+    else
+        spriteEvalWrite();
 }
 
 void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
