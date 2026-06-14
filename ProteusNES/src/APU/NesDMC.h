@@ -13,6 +13,7 @@ namespace NS_NES {
             friend class Debugger;
         private:
             NesEventSink* eventSink = nullptr;
+            ConsoleRegion* region = nullptr;
             /// @brief reference to the parent APU object
             APU* apu = nullptr;
             /// @brief irq enabled flag (DMC IRQ only)
@@ -94,8 +95,9 @@ namespace NS_NES {
 
             void disable();
 
-            void init();
+            void init(ConsoleRegion* r);
             void reset();
+            void shutdown() { init(nullptr); }
 
             void onByteFetch(u8 byte);
     };

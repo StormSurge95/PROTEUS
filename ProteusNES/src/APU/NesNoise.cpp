@@ -26,7 +26,7 @@ void NoiseChannel::write(u16 addr, u8 data) {
         case 0x400E: // mode & period control
             mode = ((data >> 7) & 0x01) > 0;
             // TODO: get period value based on region
-            period = GetRateNoise(ConsoleRegion::NTSC, data & 0x0F);
+            period = GetNoiseRate(*region, data & 0x0F);
             break;
         case 0x400F: // length counter load
             if (enabled) lengthCounter.counter = LENGTH_TABLE[data >> 3];
@@ -79,7 +79,8 @@ u8 NoiseChannel::output() const {
     return volume();
 }
 
-void NoiseChannel::init() {
+void NoiseChannel::init(ConsoleRegion* r) {
+    region = r;
     enabled = mode = false;
     timer = period = 0x0000;
     shiftRegister = 0x01;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../FrontendPCH.h"
+#include "../plugin/PluginManager.h"
 
 namespace NS_Proteus {
     enum class ConsoleSessionState {
@@ -51,4 +52,19 @@ namespace NS_Proteus {
         ConsoleSessionErrorCode code;
         string message;
     };
+
+    struct ConsoleDeleter {
+        void operator()(IConsole* p) const {
+            if (p) PluginManager::DestroyConsole(p);
+        }
+    };
+
+    struct DebuggerDeleter {
+        void operator()(IDebugger* p) const {
+            if (p) PluginManager::DestroyDebugger(p);
+        }
+    };
+
+    using ConsoleHandle = std::unique_ptr<IConsole, ConsoleDeleter>;
+    using DebuggerHandle = std::unique_ptr<IDebugger, DebuggerDeleter>;
 }

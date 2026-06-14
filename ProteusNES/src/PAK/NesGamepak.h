@@ -21,6 +21,8 @@ namespace NS_NES {
             /// @brief reference to the mapper contained within this ROM
             sptr<Mapper> mapper = nullptr;
 
+            ConsoleRegion region;
+
             /**
              * @brief Explicit constructor
              * @param [in] path The full path to the ROM file to be opened for attempted gameplay
@@ -82,9 +84,9 @@ namespace NS_NES {
         private:
             path filePath;
 
-            HeaderFormat hFormat = HeaderFormat::UNKNOWN;
+            ConsoleRegion romRegion = ConsoleRegion::NTSC;
 
-            ConsoleRegion region = ConsoleRegion::NTSC;
+            HeaderFormat hFormat = HeaderFormat::UNKNOWN;
             ConsoleType cType = ConsoleType::NES_FAMICOM;
 
             VsPPU vsPPU = VsPPU::PPU2C0X;

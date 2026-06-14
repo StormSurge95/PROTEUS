@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shared/NesPCH.h"
+#include "../shared/NesProfiles.h"
 
 namespace NS_NES {
     class NoiseChannel {
@@ -12,10 +13,12 @@ namespace NS_NES {
             /// @brief mode flag
             bool mode = false;
 
+            ConsoleRegion* region;
+
             /// @brief current value of the timer
             u16 timer = 0x0000;
             /// @brief reload value of the timer
-            u16 period = GetRateNoise(ConsoleRegion::NTSC, 0);
+            u16 period = GetNoiseRate(ConsoleRegion::NTSC, 0);
 
             /// @brief linear feedback shift register
             u16 shiftRegister = 0x01;
@@ -55,7 +58,8 @@ namespace NS_NES {
             /// @brief enabled flag setter; if not enabled, length counter is halted at zero
             inline void enable(bool set) { enabled = set; if (!enabled) lengthCounter.counter = 0x00; }
 
-            void init();
+            void init(ConsoleRegion* r);
             void reset();
+            void shutdown() { init(nullptr); }
     };
 }

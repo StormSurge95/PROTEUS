@@ -67,7 +67,7 @@ bool NES::shutdown() {
     ppu->powerdown();
     apu->powerdown();
     cpu->powerdown();
-    cart->powerdown();
+    if (cart) cart->powerdown();
     masterClock = 0;
     powered = false;
     return true;
@@ -85,6 +85,10 @@ bool NES::loadROM(const string& path) {
 
         // calculate the PRNG seed based on the current rom
         deriveSeed("NES", path);
+
+        cpu->setRegion(&cart->region);
+        ppu->setRegion(&cart->region);
+        apu->setRegion(&cart->region);
 
         // return result of `poweron` sequence
         return poweron();
@@ -109,8 +113,8 @@ void NES::clockCycleCPU() {
 }
 
 void NES::clockMaster() {
-    if ((masterClock & 3) == 0) clockCyclePPU();
-    if ((masterClock % 12) == 2) clockCycleCPU();
+    if ((masterClock % GetPpuClockDiv(cart->region)) == 0) clockCyclePPU();
+    if ((masterClock % GetCpuClockDiv(cart->region)) == 2) clockCycleCPU();
     masterClock++;
 }
 

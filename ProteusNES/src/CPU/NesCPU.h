@@ -29,6 +29,8 @@ namespace NS_NES {
         private:
             NesEventSink* eventSink = nullptr;
 
+            ConsoleRegion* region = nullptr;
+
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST
             array<u8, 65536> ram; /// @brief CPU ram container for SSTs
@@ -332,5 +334,7 @@ namespace NS_NES {
             bool serviceDMA();
             bool hasPendingIrq() const { return irqLine_APU || irqLine_DMC || irqLine_Mapper; }
             bool isGetCycle() const { return (totalCycles & 0x01) == 0; }
+
+            void setRegion(ConsoleRegion* r) { region = r; }
     };
 }

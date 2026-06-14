@@ -185,6 +185,8 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
         u64 frameCount = 0;
         
         if (dbg) {
+            dbg->Enable();
+            dbg->Init();
             dbg->SetTraceConfig({
                 .enabled = true,
                 .append = false,
@@ -206,6 +208,7 @@ void Headless::Run(ConsoleID id, const path& rom, const string& inputSpec) {
             frameCount++;
         }
         if (dbg) {
+            dbg->Disable();
             dbg->EndTrace();
             PluginManager::DestroyDebugger(dbg);
         }

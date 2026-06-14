@@ -98,6 +98,8 @@ namespace NS_NES {
             void connectCPU(sptr<CPU>& c) { cpu = c; }
             // connects the event sink instance to the PPU
             void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+
+            void setRegion(ConsoleRegion* r) { region = r; }
         private:
             // current nmi output value
             bool nmiOutput = false;
@@ -107,6 +109,8 @@ namespace NS_NES {
             bool suppressVBL = false;
             // flag for init completion
             bool ignoreEarlyCtrlWrites = true;
+
+            ConsoleRegion* region = nullptr;
 
             NesEventSink* eventSink = nullptr;
 

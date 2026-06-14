@@ -45,17 +45,17 @@ SessionResult ConsoleSession::CreateSession(ConsoleID console) {
             result = Failure(ConsoleSessionErrorCode::CONSOLE_CREATE_FAILED, ConsoleSessionState::ERROR, "Console Creation Failed");
         } else {
             // try to create debugger
-            debugger = DebuggerFactory::Create(console, station);
+            debugger = DebuggerFactory::Create(console, station.get());
             if (!debugger) {
-                // handle debugger creation failure
-                station.reset();
-                result = Failure(ConsoleSessionErrorCode::DEBUGGER_CREATE_FAILED, ConsoleSessionState::ERROR, "Debugger Creation Failed");
+                // debugger implementation is optional
+                dbgAvail = false;
+                result = Success(ConsoleSessionState::CREATED, "Session Created; No Debugger Available");
             } else {
-                // all steps successful; apply `currentConsole`
-                currentConsole = console;
+                dbgAvail = true;
                 // session creation successful
                 result = Success(ConsoleSessionState::CREATED, "Session Created");
             }
+            currentConsole = console;
         }
     }
 
@@ -171,10 +171,9 @@ SessionResult ConsoleSession::Reset() {
 
 SessionResult ConsoleSession::Shutdown() {
     currentConsole = ConsoleID::NONE;
+    dbgAvail = false;
     debugger.reset();
-    debugger = nullptr;
     station.reset();
-    station = nullptr;
     resumeCount = 0;
     loadedRomName = "";
     loadedRomPath = path();

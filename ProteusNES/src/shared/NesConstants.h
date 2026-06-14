@@ -5,16 +5,6 @@
 // TODO: COLLECT OTHER NECESSARY CONSTANTS FOR VARIOUS NES SYSTEMS
 
 namespace NS_NES {
-    /// @brief CPU clock rate for North American/Japanese NES consoles
-    static constexpr u32 CLOCK_RATE_NTSC = 1789773;
-    /// @brief CPU clock rate for European NES consoles
-    static constexpr u32 CLOCK_RATE_PAL = 1662607;
-    /// @brief CPU clock rate for Russian bootleg NES consoles
-    static constexpr u32 CLOCK_RATE_DENDY = 1773448;
-
-    /// @brief Total PPU cycles per scanline
-    static constexpr u32 CYCLES_PER_LINE = 341;
-
     /// @brief NTSC Screen Width
     static constexpr u32 SCREEN_WIDTH = 256;
     /// @brief NTSC Screen Height
@@ -53,16 +43,6 @@ namespace NS_NES {
         4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708,  944, 1890, 3778
     };
 
-    static u16 GetRateNoise(ConsoleRegion system, u8 index) {
-        switch (system) {
-            default:
-            case ConsoleRegion::NTSC:
-                return NOISE_RATES_NTSC[index];
-            case ConsoleRegion::PAL:
-                return NOISE_RATES_PAL[index];
-        }
-    }
-
     /// @brief DMC Channel Rate lookup table
     static const u16 DMC_RATES_NTSC[16] = {
         428, 380, 340, 320,
@@ -76,37 +56,4 @@ namespace NS_NES {
         176, 148, 132, 118,
          98,  78,  66,  50
     };
-
-    static u16 GetRateDMC(ConsoleRegion system, u8 index) {
-        switch (system) {
-            default:
-            case ConsoleRegion::NTSC:
-                return DMC_RATES_NTSC[index];
-            case ConsoleRegion::PAL:
-                return DMC_RATES_PAL[index];
-        }
-    }
-
-    /**
-     * @brief Helper function to get CPU clock rate based on console region.
-     * @param system The region to get the clock rate for.
-     * @return The region-specific clock rate
-     */
-    static u32 GetClockRate(ConsoleRegion system) {
-        switch (system) {
-            default:
-            case ConsoleRegion::NTSC: return CLOCK_RATE_NTSC;
-            case ConsoleRegion::PAL: return CLOCK_RATE_PAL;
-            case ConsoleRegion::DENDY: return CLOCK_RATE_DENDY;
-        }
-    }
-
-    /**
-     * @brief Helper function to get audio sample rate for emulation based on console region.
-     * @param system The region to get the audio sample rate for.
-     * @return The region-specific audio sample rate.
-     */
-    static double GetAudioRate(ConsoleRegion system) {
-        return GetClockRate(system) / 44100.0;
-    }
 }

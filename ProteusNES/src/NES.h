@@ -4,6 +4,7 @@
 #include "./shared/NesEventSink.h"
 #include "./PPU/NesPPU.h"
 #include "./PAK/Mappers/NesMapper.h"
+#include "./shared/NesProfiles.h"
 
 namespace NS_NES {
     /**

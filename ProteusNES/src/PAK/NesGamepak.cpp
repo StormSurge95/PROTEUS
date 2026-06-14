@@ -1,5 +1,6 @@
 #include "./NesMappers.h"
 #include "./NesGamepak.h"
+#include "../shared/NesProfiles.h"
 
 using namespace NS_NES;
 
@@ -24,6 +25,8 @@ Gamepak::Gamepak(const string& path) {
         prgMemory.resize(memory.prg.romSize);
         file.read(reinterpret_cast<char*>(prgMemory.data()), prgMemory.size());
 
+        // resolve region to what will actually be used by the emulator
+        region = ResolveConsoleRegion(romRegion);
         
         if (memory.prg.nvramSize > 0) // initialize prg-nvram
             prgRamNonVolatile.resize(memory.prg.nvramSize, 0x00);
@@ -224,7 +227,7 @@ bool Gamepak::readHeaderNES2(const Header& h) {
     else memory.chr.nvramSize = (64 << nvshift);
 
     // byte 12 - region
-    region = (ConsoleRegion)(h.byteC & 0x03);
+    romRegion = (ConsoleRegion)(h.byteC & 0x03); // read rom-specified region from header
 
     // byte 13 - vs-system/extended-console info
     if (cType == ConsoleType::VS_SYSTEM) {

@@ -1,5 +1,6 @@
 #include "./NesAPU.h"
 #include "../CPU/NesCPU.h"
+#include "../shared/NesProfiles.h"
 
 using namespace NS_NES;
 
@@ -18,8 +19,8 @@ void APU::powerup(u32 s) {
     pulse1->init();
     pulse2->init();
     triangle->init();
-    noise->init();
-    dmc->init();
+    noise->init(region);
+    dmc->init(region);
 
     deassertIrqLines();
 }
@@ -51,11 +52,11 @@ void APU::powerdown() {
     clearAudioOutputState();
     resetFilters();
 
-    pulse1->init();
-    pulse2->init();
-    triangle->init();
-    noise->init();
-    dmc->init();
+    pulse1->shutdown();
+    pulse2->shutdown();
+    triangle->shutdown();
+    noise->shutdown();
+    dmc->shutdown();
 
     deassertIrqLines();
 }
@@ -227,35 +228,50 @@ void APU::clockFrameCounter() {
     masterCycle++;
     cycle++;
 
-    switch (cycle) {
-        case 7457:
-        case 22371: // quarter frames
-            quarterFrame();
-            break;
-        case 14913: // half frame
-            quarterFrame();
-            halfFrame();
-            break;
-        case 29828: // irq trigger (only during 4-step with irq enabled)
-            if (!use5step && !inhibitIRQ) {
-                irqRequested = true;
-                if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
-                cpu.lock()->setIrqLine_APU(true);
-            }
-            break;
-        case 29829: // end frame (4-step)
-            if (!use5step) {
-                quarterFrame();
-                halfFrame();
-                cycle = 0;
-            }
-            break;
-        case 37281: // end frame (5-step)
-            quarterFrame();
-            halfFrame();
-            cycle = 0;
-            break;
+    if (IsQuarterFrame(*region, cycle, !use5step))
+        quarterFrame();
+
+    if (IsHalfFrame(*region, cycle, !use5step))
+        halfFrame();
+
+    if (!use5step && !inhibitIRQ && (cycle == GetIrqSetA(*region) || cycle == GetIrqSetB(*region))) {
+        irqRequested = true;
+        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
+        cpu.lock()->setIrqLine_APU(true);
     }
+
+    if (IsResetFrame(*region, cycle, !use5step))
+        cycle = 0;
+
+    // switch (cycle) {
+    //     case 7457:
+    //     case 22371: // quarter frames
+    //         quarterFrame();
+    //         break;
+    //     case 14913: // half frame
+    //         quarterFrame();
+    //         halfFrame();
+    //         break;
+    //     case 29828: // irq trigger (only during 4-step with irq enabled)
+    //         if (!use5step && !inhibitIRQ) {
+    //             irqRequested = true;
+    //             if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
+    //             cpu.lock()->setIrqLine_APU(true);
+    //         }
+    //         break;
+    //     case 29829: // end frame (4-step)
+    //         if (!use5step) {
+    //             quarterFrame();
+    //             halfFrame();
+    //             cycle = 0;
+    //         }
+    //         break;
+    //     case 37281: // end frame (5-step)
+    //         quarterFrame();
+    //         halfFrame();
+    //         cycle = 0;
+    //         break;
+    // }
 }
 
 void APU::quarterFrame() {
@@ -280,9 +296,9 @@ void APU::halfFrame() {
 
 void APU::generateSample() {
     cycleAccumulator += 1.0;
-
-    if (cycleAccumulator >= CYCLES_PER_SAMPLE) {
-        cycleAccumulator -= CYCLES_PER_SAMPLE;
+    double rate = GetAudioRate(*region);
+    if (cycleAccumulator >= rate) {
+        cycleAccumulator -= rate;
 
         u8 p1 = pulse1->output();
         u8 p2 = pulse2->output();

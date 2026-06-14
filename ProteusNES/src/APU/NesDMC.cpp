@@ -2,6 +2,7 @@
 #include "../CPU/NesCPU.h"
 #include "./NesAPU.h"
 #include "./NesDMC.h"
+#include "../shared/NesProfiles.h"
 
 using namespace NS_NES;
 
@@ -24,7 +25,7 @@ void DMC_Channel::write(u16 addr, u8 data) {
             loop = ((data >> 6) & 0x01) > 0;
             // set new pariod
             // TODO: determine period based on region
-            period = GetRateDMC(ConsoleRegion::NTSC, data & 0x0F);
+            period = GetDmcRate(*region, data & 0x0F);
             return;
         case 0x4011:
             /*
@@ -139,7 +140,8 @@ void DMC_Channel::disable() {
     apu->cpu.lock()->setIrqLine_DMC(interrupt = false);
 }
 
-void DMC_Channel::init() {
+void DMC_Channel::init(ConsoleRegion* r) {
+    region = r;
     irqEnabled = silent = loop = enabled = interrupt = false;
     noSample = true;
     sampleAddr = currAddr = sampleLength = bytesRemaining = timer = 0x0000;

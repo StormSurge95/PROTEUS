@@ -58,8 +58,8 @@ void AudioManager::Deinit() {
     }
 }
 
-void AudioManager::Update(const sptr<IConsole>& station) {
-    if (station == nullptr) return;
+void AudioManager::Update(IConsole* station) {
+    if (!station) return;
     std::vector<float> samples;
     station->collectAudio(samples);
     if (!samples.empty())

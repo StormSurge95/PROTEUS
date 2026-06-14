@@ -20,7 +20,7 @@ namespace NS_Proteus {
             void Init();
             void Deinit();
 
-            void Update(const sptr<IConsole>& station);
+            void Update(IConsole* station);
         private:
             const IAudioContext* ctx;
 

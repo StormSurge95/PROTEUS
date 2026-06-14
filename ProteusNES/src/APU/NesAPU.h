@@ -97,8 +97,12 @@ namespace NS_NES {
 
             void dmcOnByteFetched(u8 byte) { dmc->onByteFetch(byte); }
 
+            void setRegion(ConsoleRegion* r) { region = r; }
+
         private:
             NesEventSink* eventSink = nullptr;
+
+            ConsoleRegion* region = nullptr;
 
             /// @brief Used to keep track of when to reset FrameCounter.
             u64 masterCycle = 0x0000000000000000;
@@ -116,9 +120,6 @@ namespace NS_NES {
             /// @brief Flag for inhibiting IRQ
             bool inhibitIRQ = false;
 
-            /// @brief The audio sample rate of the APU
-            /// @todo Implement some way of making the audio dynamic based on the console region.
-            const double CYCLES_PER_SAMPLE = 1789773.0 / 44100.0;
             /// @brief Accumulator variable for producing audio samples.
             double cycleAccumulator = 0.0;
             /// @brief Buffer to hold produced audio samples

@@ -13,8 +13,9 @@ namespace NS_Proteus {
         private:
             ConsoleID currentConsole = ConsoleID::NONE;
             ConsoleSessionState currentState = ConsoleSessionState::EMPTY;
-            sptr<IConsole> station = nullptr;
-            sptr<IDebugger> debugger = nullptr;
+            ConsoleHandle station = nullptr;
+            DebuggerHandle debugger = nullptr;
+            bool dbgAvail = false;
             Logger* logger = nullptr;
             ConsoleSessionErrorCode lastErrorCode = ConsoleSessionErrorCode::NONE;
             string lastError;
@@ -44,10 +45,11 @@ namespace NS_Proteus {
             bool IsActive() const;
             bool IsPaused() const { return currentState == ConsoleSessionState::PAUSED; }
             bool IsRunning() const { return currentState == ConsoleSessionState::RUNNING; }
+            bool DebuggerExists() const { return dbgAvail; }
             const ConsoleID CurrentConsoleID() const { return currentConsole; }
             const ConsoleSessionState GetState() const { return currentState; }
-            const sptr<IConsole>& GetConsole() const { return station; }
-            const sptr<IDebugger>& GetDebugger() const { return debugger; }
+            IConsole* GetConsole() const { return station.get(); }
+            IDebugger* GetDebugger() const { return debugger.get(); }
             const string GetError() const { return lastError; }
     };
 }

@@ -40,7 +40,7 @@ namespace NS_Proteus {
             const AppState& GetAppState() const override { return state; }
             const std::vector<ROM_DATA>& GetGameList(ConsoleID console) const override;
             void LaunchGame(u32 index) override;
-            IDebugger* GetDebugger() const override { return session->GetDebugger().get();  }
+            IDebugger* GetDebugger() const override { return session->GetDebugger();  }
             void ResetConsole() override;
             void ShutdownConsole() override;
             void Resume() override;

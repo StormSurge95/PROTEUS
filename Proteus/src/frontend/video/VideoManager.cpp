@@ -122,7 +122,9 @@ void VideoManager::OnResize(size_t width, size_t height) {
     dispInfo.dispHeight = (int)height;
 }
 
-void VideoManager::InitGameTexture(string title, size_t width, size_t height) {
+void VideoManager::InitGameTexture(string title, size_t width, size_t height, bool canDebug) {
+    if (!canDebug) debugActive = false;
+
     SDL_SetWindowTitle(window, FormatDisplayName(title).c_str());
 
     dispInfo.gameWidth = (u32)width;

@@ -1,5 +1,6 @@
 #include "../PAK/Mappers/NesMapper.h"
 #include "./NesPPU.h"
+#include "../shared/NesProfiles.h"
 
 using namespace NS_NES;
 
@@ -493,17 +494,17 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 
 void PPU::clock() {
     // via https://www.nesdev.org/wiki/PPU_rendering#Line-by-line_timing
-    if (scanline == 261) { // Pre-render scanline (-1 or 261)
+    if (scanline == (GetScanlinesPerFrame(*region) - 1)) { // Pre-render scanline (-1 or 261)
         onPreRenderLine();
         // "This scanline varies in length, depending on whether an even or an odd frame is beig rendered.
         // For odd frames, the cycle at the end of the scanline is skipped (this is done internally by
         // jumping directly from (339,261) to (0,0), replacing the idle tick at the beginning of the first
         // visible scanline with the last tick of the last dummy nametable fetch)."
         // TODO: Maybe instead of skipping (340,261) we should skip (0,0)?
-        if (renderingEnabled() && cycle == 339 && oddFrame) {
+        if (AllowOddFrameSkip(*region) && oddFrame && renderingEnabled() && cycle == 339) {
             cycle++;
         }
-    } else if (scanline >= 0 && scanline <= 239) { // Visible scanlines (0-239)
+    } else if (scanline <= 239) { // Visible scanlines (0-239)
         onVisibleLine();
     } else if (scanline == 241) { // Vertical blanking lines (241-260)
         onStartVBlankLine();
@@ -512,11 +513,11 @@ void PPU::clock() {
     // increment cycle count
     cycle++;
 
-    if (cycle >= 341) { // if we have done all pixels on this, scanline...
+    if (cycle >= GetDotsPerScanline()) { // if we have done all pixels on this, scanline...
         cycle = 0; // ...reset cycle count...
         scanline++; // ...increment scanline count
 
-        if (scanline >= 262) { // if we have done all scanlines on this frame...
+        if (scanline >= GetScanlinesPerFrame(*region)) { // if we have done all scanlines on this frame...
             scanline = 0; // ...reset scanline count...
             frameComplete = true; // ...mark frame as complete (so console can render it)...
             if (eventSink) eventSink->OnFrameComplete();

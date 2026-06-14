@@ -53,5 +53,6 @@ namespace NS_NES {
 
             void init();
             void reset();
+            void shutdown() { init(); }
     };
 }

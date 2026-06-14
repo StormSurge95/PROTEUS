@@ -35,7 +35,7 @@ void InputManager::Connect(SDL_JoystickID id) {
         if (gamepads[i] == nullptr) {
             gamepads[i] = new Gamepad(id);
             numPlayers++;
-            logger->EmitInputEvent(LogEventName::INPUT_GAMEPAD_CONNECTED,
+            if (logger) logger->EmitInputEvent(LogEventName::INPUT_GAMEPAD_CONNECTED,
                 { .device = gamepads[i]->id, .player = (++i) } // TODO: get frame in here somehow
             );
             return;
@@ -45,6 +45,7 @@ void InputManager::Connect(SDL_JoystickID id) {
 
 void InputManager::Disconnect(SDL_JoystickID id) {
     for (u8 i = 0; i < 4; i++) {
+        if (!gamepads[i]) continue;
         if (gamepads[i]->id == id) {
             switch (i) {
                 case 0:
@@ -64,7 +65,7 @@ void InputManager::Disconnect(SDL_JoystickID id) {
                     numPlayers--;
                     return;
             }
-            logger->EmitInputEvent(LogEventName::INPUT_GAMEPAD_DISCONNECTED,
+            if (logger) logger->EmitInputEvent(LogEventName::INPUT_GAMEPAD_DISCONNECTED,
                 { .device = id, .player = (++i) } // TODO: get frame in here somehow
             );
         }
@@ -132,7 +133,8 @@ Inputs* InputManager::ReadKeyboard(bool ui) {
     return kbState.get();
 }
 
-void InputManager::TranslateInputs(const sptr<IConsole>& station, ConsoleID console) {
+void InputManager::TranslateInputs(IConsole* station, ConsoleID console) {
+    if (!station) return;
     for (int i = 0; i < numPlayers; i++) {
         Inputs* inputs = ReadInputs(i);
         if (inputs == nullptr) throw std::exception();

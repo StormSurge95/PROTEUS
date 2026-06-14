@@ -31,8 +31,10 @@ namespace NS_NES {
     }
 
     CORE_DESTROY(DestroyCore) {
-        if (core)
+        if (core) {
+            core->shutdown();
             delete reinterpret_cast<NES*>(core);
+        }
     }
 
     // === OPTIONAL DEBUGGER FUNCTIONS ===

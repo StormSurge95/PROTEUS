@@ -1,22 +1,28 @@
 #include "../NES.h"
 #include "./NesDebugger.h"
 #include "../APU/NesAPU.h"
+#include "./NesProfiles.h"
 
 using namespace NS_NES;
 
 NesDebugger::NesDebugger(NES* station) {
     nes = station;
     nes->connectEventSink(this);
+}
+
+void NesDebugger::Init() {
     evrPrevFrame.reserve(4096);
     evrLastFrame.reserve(4096);
     evrActiveFrame.reserve(4096);
     evEventsSnapshot.reserve(8192);
-    evPixelsSnapshot.reserve(341 * 262);
+    evPixelsSnapshot.reserve(GetDotsPerScanline() * GetScanlinesPerFrame(nes->cart->region));
     traceRecords.reserve(16384);
     traceTextBuffer.reserve(1 << 20);
+    IDebugger::Init();
 }
 
 void NesDebugger::StepInstruction() {
+    if (!enabled) return;
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
 
     u64 startTotalCycles = nes->cpu->totalCycles;
@@ -36,23 +42,21 @@ void NesDebugger::StepInstruction() {
 }
 
 void NesDebugger::StepCycle() {
+    if (!enabled) return;
     // StepCycle() should mean to step one CPU cycle (12 master cycles for NTSC/15 for PAL)
 
     // validate state
     if (nes == nullptr || nes->cpu == nullptr || nes->ppu == nullptr || nes->apu == nullptr) return;
-    u8 div = 1;
-    switch (nes->cart->region) {
-        default:
-        case ConsoleRegion::NTSC: div = 12; break;
-        case ConsoleRegion::PAL: div = 16; break;
-        case ConsoleRegion::DENDY: div = 15; break;
-    }
+    u8 div = GetCpuClockDiv(nes->cart->region);
     for (u8 i = 0; i < div; i++)
         nes->clockMaster();
 }
 
 EventViewerDisplaySize NesDebugger::GetEventViewerDisplaySize() const {
-    return { 341, 262 };
+    if (!enabled || !initialized) return { 0, 0 };
+    u32 dots = GetDotsPerScanline();
+    u32 lines = GetScanlinesPerFrame(nes->cart->region);
+    return { dots, lines };
 }
 
 void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
@@ -60,26 +64,32 @@ void NesDebugger::SetEventViewerConfig(const EventViewerConfig& cfg) {
 }
 
 const EventViewerConfig& NesDebugger::GetEventViewerConfig() const {
+    if (!enabled || !initialized) return {};
     return evConfig;
 }
 
 const vector<u32>& NesDebugger::GetEventViewerPixels() const {
+    if (!enabled || !initialized) return {};
     return evPixelsSnapshot;
 }
 
 const vector<DebugEventRecord>& NesDebugger::GetEventViewerEvents() const {
+    if (!enabled || !initialized) return {};
     return evEventsSnapshot;
 }
 
 const DebugEventRecord& NesDebugger::GetEventAt(u16 scanline, u16 cycle) const {
-    for (const DebugEventRecord& event : evEventsSnapshot | std::views::reverse) {
-        if (event.scanline == scanline && event.cycle == cycle) return event;
+    if (initialized) {
+        for (const DebugEventRecord& event : evEventsSnapshot | std::views::reverse) {
+            if (event.scanline == scanline && event.cycle == cycle) return event;
+        }
     }
 
     return NullEvent;
 }
 
 void NesDebugger::TakeEventViewerSnapshot(bool forAutoRefresh) {
+    if (!enabled || !initialized) return;
     std::fill(evPixelsSnapshot.begin(), evPixelsSnapshot.end(), 0x00000000);
     evEventsSnapshot.clear();
 
@@ -107,18 +117,22 @@ void NesDebugger::TakeEventViewerSnapshot(bool forAutoRefresh) {
     }
 
     for (const DebugEventRecord& evr : evEventsSnapshot) {
-        if (evr.scanline < 262 && evr.cycle < 341)
-            evPixelsSnapshot[evr.scanline * 341 + evr.cycle] = evr.color;
+        u32 dots = GetDotsPerScanline();
+        u32 lines = GetScanlinesPerFrame(nes->cart->region);
+        if (evr.scanline < lines && evr.cycle < dots)
+            evPixelsSnapshot[evr.scanline * dots + evr.cycle] = evr.color;
     }
 
     evSnapshotValid = true;
 }
 
 u32 NesDebugger::GetEventColor(EventType type) {
+    if (!enabled || !initialized) return 0x00000000;
     return defaultEventColors[u8(type)];
 }
 
 void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -132,6 +146,7 @@ void NesDebugger::OnPpuRegisterRead(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -145,6 +160,7 @@ void NesDebugger::OnPpuRegisterWrite(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -158,6 +174,7 @@ void NesDebugger::OnApuRegisterRead(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -171,6 +188,7 @@ void NesDebugger::OnApuRegisterWrite(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -184,6 +202,7 @@ void NesDebugger::OnMapperRegisterRead(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -197,6 +216,7 @@ void NesDebugger::OnMapperRegisterWrite(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnControllerRead(u8 player, u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -210,6 +230,7 @@ void NesDebugger::OnControllerRead(u8 player, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnControllerWrite(u8 player, u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -223,6 +244,7 @@ void NesDebugger::OnControllerWrite(u8 player, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -236,6 +258,7 @@ void NesDebugger::OnDmcDmaRead(string details, u16 addr, u8 data) {
 }
 
 void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -248,6 +271,7 @@ void NesDebugger::OnOamDmaRead(u16 addr, u8 data) {
 }
 
 void NesDebugger::OnOamDmaStart(u8 data) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -260,6 +284,7 @@ void NesDebugger::OnOamDmaStart(u8 data) {
 }
 
 void NesDebugger::OnInterrupt(INTERRUPT_EVENT type) {
+    if (!enabled || !initialized) return;
     const char* label;
     const char* details = INTERRUPT_DETAILS[u8(type)];
     u32 color;
@@ -289,6 +314,7 @@ void NesDebugger::OnInterrupt(INTERRUPT_EVENT type) {
 }
 
 void NesDebugger::OnSpriteZeroHit() {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -299,6 +325,7 @@ void NesDebugger::OnSpriteZeroHit() {
 }
 
 void NesDebugger::OnMarkedBreakpoint(string details) {
+    if (!enabled || !initialized) return;
     PushEventRecord({
         .scanline = nes->ppu->scanline,
         .cycle = nes->ppu->cycle,
@@ -310,6 +337,7 @@ void NesDebugger::OnMarkedBreakpoint(string details) {
 }
 
 void NesDebugger::OnFrameComplete() {
+    if (!enabled || !initialized) return;
     evrPrevFrame.swap(evrLastFrame);
     evrLastFrame.swap(evrActiveFrame);
     evrActiveFrame.clear();
@@ -320,6 +348,7 @@ void NesDebugger::OnFrameComplete() {
 }
 
 vector<array<string, 3>> NesDebugger::GetStateCPU() const {
+    if (!enabled) return {};
     vector<array<string, 3>> lines;
 
     u16 temp = nes->cpu->pc.value();
@@ -360,6 +389,7 @@ vector<array<string, 3>> NesDebugger::GetStateCPU() const {
 }
 
 vector<array<string, 4>> NesDebugger::GetStatePPU() const {
+    if (!enabled) return {};
     vector<array<string, 4>> lines;
 
     u16 temp = 0x00;
@@ -420,6 +450,7 @@ vector<array<string, 4>> NesDebugger::GetStatePPU() const {
 }
 
 vector<string> NesDebugger::GetStateRAM() const {
+    if (!enabled) return {};
     // for NES; there will be 112 lines of RAM; each having 16 bytes
     vector<string> lines;
     lines.reserve(112);
@@ -474,6 +505,7 @@ vector<string> NesDebugger::GetStateRAM() const {
 }
 
 string NesDebugger::DisassembleInstruction(u16 addr) const {
+    if (!enabled) return "";
     u16 line_addr = addr;
     u8 oc = nes->cpu->read(addr++, true);
     u8 val = 0x00;
@@ -619,6 +651,7 @@ string NesDebugger::DisassembleInstruction(u16 addr) const {
 }
 
 void NesDebugger::ScanInstructions(array<u64, 25>& list) const {
+    if (!enabled) return;
     int index = 0;
     for (const u16& e : nes->cpu->prevInstAddrs)
         list[index++] = e;
@@ -635,6 +668,7 @@ void NesDebugger::ScanInstructions(array<u64, 25>& list) const {
 }
 
 vector<string> NesDebugger::GetDisassembly() const {
+    if (!enabled) return {};
     array<u64, 25> addrs;
     ScanInstructions(addrs);
 
@@ -650,6 +684,7 @@ vector<string> NesDebugger::GetDisassembly() const {
 }
 
 vector<u8> NesDebugger::GetPaletteIndices() const {
+    if (!enabled) return {};
     vector<u8> indices;
     for (u8 i = 0; i < 32; i++)
         indices.push_back(nes->ppu->ppuRead(0x3F00 + i, true) & 0x3F);
@@ -657,6 +692,7 @@ vector<u8> NesDebugger::GetPaletteIndices() const {
 }
 
 vector<u32> NesDebugger::GetPaletteColors(const vector<u8>& indices) const {
+    if (!enabled) return {};
     vector<u32> colors;
     for (const u8& index : indices)
         colors.push_back(nes->ppu->masterPalette[index]);
@@ -664,6 +700,7 @@ vector<u32> NesDebugger::GetPaletteColors(const vector<u8>& indices) const {
 }
 
 const PaletteData NesDebugger::GetPaletteData() const {
+    if (!enabled) return {};
     vector<u8> indices = GetPaletteIndices();
     vector<u32> colors = GetPaletteColors(indices);
 
@@ -672,6 +709,8 @@ const PaletteData NesDebugger::GetPaletteData() const {
 
 vector<u32> NesDebugger::GetPatternTable(int tableID, int paletteID) {
     vector<u32> pixels(16384, 0xFF000000);
+    
+    if (!enabled) return pixels;
 
     u16 baseAddr = tableID * 0x1000;
 
@@ -709,6 +748,7 @@ vector<u32> NesDebugger::GetPatternTable(int tableID, int paletteID) {
 }
 
 string NesDebugger::GetFlags(int status) const {
+    if (!enabled) return "0 0 0 0 0 0 0 0";
     stringstream ss;
     ss << ((status & 0x80) > 0 ? "1 " : "0 ");
     ss << ((status & 0x40) > 0 ? "1 " : "0 ");
@@ -723,6 +763,7 @@ string NesDebugger::GetFlags(int status) const {
 
 vector<u32> NesDebugger::GetNameTable(int id) {
     vector<u32> pixels(256 * 240, 0xFF000000);
+    if (!enabled) return pixels;
 
     u16 ntBase = 0x2000 + (id * 0x0400);
     u16 bgPatternBase = nes->ppu->getBackgroundPatternTableAddr();
@@ -782,6 +823,7 @@ vector<u32> NesDebugger::GetSprites() const {
     const u16 atlH = 8 * sprH;
 
     vector<u32> pixels(size_t(atlW) * atlH, 0x00000000);
+    if (!enabled) return pixels;
 
     for (u8 spr = 0; spr < 64; spr++) {
         const array<u8, 4>& oam = nes->ppu->primaryOAM[spr];
@@ -837,6 +879,7 @@ vector<u32> NesDebugger::GetSprites() const {
 }
 
 vector<array<string, 4>> NesDebugger::GetStateAPU() const {
+    if (!enabled) return {};
     vector<array<string, 4>> lines;
 
     // PULSE 1
@@ -865,7 +908,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
     temp = nes->apu->pulse1->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
+    temp = GetCpuClockRate(nes->cart->region) / (16 * (temp + 1));
     lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->pulse1->dutyStep;
     lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
@@ -904,7 +947,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
     temp = nes->apu->pulse2->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    temp = CLOCK_RATE_NTSC / (16 * (temp + 1));
+    temp = GetCpuClockRate(nes->cart->region) / (16 * (temp + 1));
     lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->pulse2->dutyStep;
     lines.push_back({ "--", "Duty Position", to_string(temp), hex(temp, 2) });
@@ -931,7 +974,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
     temp = nes->apu->triangle->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    temp = CLOCK_RATE_NTSC / (32 * (temp + 1));
+    temp = GetCpuClockRate(nes->cart->region) / (32 * (temp + 1));
     lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->triangle->step;
     lines.push_back({ "--", "Sequence Position", to_string(temp), hex(temp, 2) });
@@ -962,7 +1005,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     lines.push_back({ "--", "Enabled", temp ? "True" : "False", "" });
     temp = nes->apu->noise->timer;
     lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    temp = CLOCK_RATE_NTSC / nes->apu->noise->period;
+    temp = GetCpuClockRate(nes->cart->region) / nes->apu->noise->period;
     lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", "" });
     temp = nes->apu->noise->shiftRegister;
     lines.push_back({ "--", "Shift Register", to_string(temp), hex(temp, 4) });
@@ -995,7 +1038,7 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
     //lines.push_back({ "--", "Sample Bytes Remaining", to_string(temp), hex(temp, 4) });
     //temp = nes->apu->dmc->timer;
     //lines.push_back({ "--", "Timer", to_string(temp), hex(temp, 4) });
-    //temp = CLOCK_RATE_NTSC / nes->apu->dmc->period;
+    //temp = GetCpuClockRate(nes->cart->region) / nes->apu->dmc->period;
     //lines.push_back({ "--", "Frequency", to_string(temp) + " Hz", ""});
 
     // FRAME COUNTER
@@ -1020,30 +1063,36 @@ vector<array<string, 4>> NesDebugger::GetStateAPU() const {
 
 // TODO debug Pulse1 channel
 vector<u32> NesDebugger::GetPulse1() {
+    if (!enabled) return {};
     return vector<u32>();
 }
 
 // TODO debug Pulse2 channel
 vector<u32> NesDebugger::GetPulse2() {
+    if (!enabled) return {};
     return vector<u32>();
 }
 
 // TODO debug Triangle channel
 vector<u32> NesDebugger::GetTriangle() {
+    if (!enabled) return {};
     return vector<u32>();
 }
 
 // TODO debug Noise channel
 vector<u32> NesDebugger::GetNoise() {
+    if (!enabled) return {};
     return vector<u32>();
 }
 
 // TODO debug DMC channel
 vector<u32> NesDebugger::GetDMC() {
+    if (!enabled) return {};
     return vector<u32>();
 }
 
 vector<array<string, 2>> NesDebugger::GetPakHeader() const {
+    if (!enabled || !initialized) return {};
     vector<array<string, 2>> values;
 
     switch (nes->cart->hFormat) {
@@ -1180,10 +1229,12 @@ vector<array<string, 2>> NesDebugger::GetPakHeader() const {
 }
 
 vector<array<string, 2>> NesDebugger::GetPakMapper() const {
+    if (!enabled || !initialized) return {};
     return nes->cart->mapper->getDebugData();
 }
 
 bool NesDebugger::BeginTrace() {
+    if (!enabled || !initialized) return false;
     if (traceFile.is_open()) traceFile.close();
     if (traceCfg.filePath.empty()) return false;
 
@@ -1204,6 +1255,7 @@ void NesDebugger::EndTrace() {
 }
 
 void NesDebugger::PushTraceRecord(const TraceRecord& rec) {
+    if (!enabled || !initialized) return;
     if (!traceFile.is_open()) return;
     traceRecords.push_back(rec);
 
@@ -1212,17 +1264,28 @@ void NesDebugger::PushTraceRecord(const TraceRecord& rec) {
 }
 
 void NesDebugger::FlushTrace() {
+    if (!enabled || !initialized) return;
     if (!traceFile.is_open() || traceRecords.empty()) return;
 
     traceTextBuffer.clear();
     for (const TraceRecord& rec : traceRecords)
         AppendFormattedTraceLine(traceTextBuffer, rec);
 
-    traceFile.write(traceTextBuffer.data(), static_cast<std::streamsize>(traceTextBuffer.size()));
+    if (traceCfg.traceToFile && traceFile.is_open()) {
+        traceFile.write(traceTextBuffer.data(), static_cast<std::streamsize>(traceTextBuffer.size()));
+    }
+
+    if (traceCfg.traceToConsole) {
+        /// TODO: In the future, the main application will not have an interactible console window by default.
+        /// Maybe this should do something other than printf?
+        printf("%s", traceTextBuffer.c_str());
+    }
+
     traceRecords.clear();
 }
 
 void NesDebugger::AppendFormattedTraceLine(string& out, const TraceRecord& rec) const {
+    if (!enabled || !initialized) return;
     out += "F=" + to_string(rec.frame);
     out += " CPUC=" + to_string(rec.cpuCycle);
     out += " PPU=" + to_string(rec.scanline) + "," + to_string(rec.dot);
@@ -1246,6 +1309,7 @@ void NesDebugger::AppendFormattedTraceLine(string& out, const TraceRecord& rec) 
 }
 
 void NesDebugger::OnInstructionExecute(u16 pc, u8 oc, u8 a, u8 x, u8 y, u8 sp, u8 status, u64 cycle) {
+    if (!enabled || !initialized) return;
     if (!HasTraceMode(traceCfg.mode, DebugTraceMode::INSTRUCTIONS)) return;
 
     PushTraceRecord({
@@ -1265,6 +1329,7 @@ void NesDebugger::OnInstructionExecute(u16 pc, u8 oc, u8 a, u8 x, u8 y, u8 sp, u
 }
 
 void NesDebugger::PushEventRecord(DebugEventRecord ev) {
+    if (!enabled || !initialized) return;
     evrActiveFrame.push_back(ev);
 
     if (HasTraceMode(traceCfg.mode, DebugTraceMode::EVENTS)) {
@@ -1283,5 +1348,6 @@ void NesDebugger::PushEventRecord(DebugEventRecord ev) {
 }
 
 u16 NesDebugger::ResolveEventDetailID(const DebugEventRecord& ev) const {
+    if (!enabled || !initialized) return 0x0000;
     return 0x0000;
 }

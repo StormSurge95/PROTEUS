@@ -172,7 +172,8 @@ void Proteus::SetMetadata() {
 }
 
 void Proteus::ToggleDebug() {
-    videoManager->ToggleDebug();
+    if (session->DebuggerExists())
+        videoManager->ToggleDebug();
 }
 
 bool Proteus::ProcessQuitEvent(FrameContext& ctx) {
@@ -197,25 +198,30 @@ bool Proteus::ProcessKeyboardEvent(FrameContext& ctx) {
     if (ctx.event.type == SDL_EVENT_KEY_DOWN) {
         switch (ctx.event.key.key) {
             case SDLK_F5:
-                // TODO: backstep/rewind
+                if (session->IsPaused() && session->DebuggerExists()) {
+                    // TODO: backstep/rewind
+                }
                 return ctx.suppressInput = true;
             case SDLK_F6:
-                if (session->GetState() == ConsoleSessionState::PAUSED)
+                if (session->IsPaused())
                     session->Start();
-                else if (session->GetState() == ConsoleSessionState::RUNNING)
+                else if (session->IsRunning())
                     session->Pause();
                 return ctx.suppressInput = true;
             case SDLK_F7:
-                if (session->GetState() == ConsoleSessionState::PAUSED) {
+                if (session->IsPaused() && session->DebuggerExists()) {
                     if ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0)
                         session->GetDebugger()->StepCycle();
                     else
                         session->GetDebugger()->StepInstruction();
                 }
-                return ctx.suppressInput = true;
+                ctx.suppressInput = true;
+                return true;
             case SDLK_F8:
-                ToggleDebug();
-                return ctx.suppressInput = true;
+                if (session->DebuggerExists())
+                    ToggleDebug();
+                ctx.suppressInput = true;
+                return true;
         }
     }
     return false;
@@ -318,6 +324,9 @@ void Proteus::LaunchGame(u32 index) {
 
     if (!r.success) return; // TODO: handle failure
 
+    if (session->DebuggerExists())
+        session->GetDebugger()->Init();
+
     r = session->Start();
 
     if (!r.success) return; // TODO: handle failure
@@ -327,15 +336,14 @@ void Proteus::LaunchGame(u32 index) {
 
     // use data to initialize game texture and update display
     std::string title = "PROTEUS: " + game.gameName;
-    videoManager->InitGameTexture(title, session->GetConsole()->SCREEN_WIDTH(), session->GetConsole()->SCREEN_HEIGHT());
+    videoManager->InitGameTexture(title, session->GetConsole()->SCREEN_WIDTH(), session->GetConsole()->SCREEN_HEIGHT(), session->DebuggerExists());
     state.currentView = AppView::GAME_VIEW;
 }
 
 const u32* Proteus::GetFrameBuffer() const {
-    if (session->GetConsole().get() != nullptr) {
-        return session->GetConsole()->getFrameBuffer();
-    }
-    return nullptr;
+    IConsole* c = session->GetConsole();
+    if (!c) return nullptr;
+    return c->getFrameBuffer();
 }
 
 void Proteus::ResetConsole() {

@@ -8,12 +8,10 @@
 
 namespace NS_Proteus {
     namespace DebuggerFactory {
-        inline static sptr<IDebugger> Create(ConsoleID console, sptr<IConsole> station) {
-            IDebugger* d = PluginManager::CreateDebugger(console, station.get());
+        inline static DebuggerHandle Create(ConsoleID console, IConsole* station) {
+            IDebugger* d = PluginManager::CreateDebugger(console, station);
             if (!d) return nullptr;
-            return sptr<IDebugger>(d, [](IDebugger* p) {
-                PluginManager::DestroyDebugger(p);
-            });
+            return DebuggerHandle(d);
         }
     };
 }

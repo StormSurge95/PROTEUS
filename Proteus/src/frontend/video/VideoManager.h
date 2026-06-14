@@ -34,7 +34,8 @@ namespace NS_Proteus {
              * @brief Initialize GameView texture
              * @param title The new window title to use
              * @param width The width of the game window
-             * @param height The heigh of the game window
+             * @param height The height of the game window
+             * @param canDebug Flag used to force debugActive to false if no debugger is available
              * @details
              * Allows us to change the name of the window to something more relevant
              * and prepare a texture for rendering the pixels provided by the emulated
@@ -46,7 +47,7 @@ namespace NS_Proteus {
              * The `width` and `height` provided are meant to be the width and
              * height of the natural game screen as viewed on its original console.
              */
-            void InitGameTexture(std::string title, size_t width, size_t height);
+            void InitGameTexture(std::string title, size_t width, size_t height, bool canDebug);
 
             /// @brief Deinitialize VideoManager and clean up memory
             void Deinit();

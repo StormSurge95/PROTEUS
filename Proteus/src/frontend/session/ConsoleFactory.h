@@ -6,15 +6,13 @@
 
 namespace NS_Proteus {
     namespace ConsoleFactory {
-        inline static sptr<IConsole> Create(ConsoleID console) {
+        inline static ConsoleHandle Create(ConsoleID console) {
             IConsole* c = PluginManager::CreateConsole(console);
             if (!c) {
                 printf("%s", PluginManager::GetLastError().c_str());
                 return nullptr;
             }
-            return sptr<IConsole>(c, [](IConsole* p) {
-                PluginManager::DestroyConsole(p);
-            });
+            return ConsoleHandle(c);
         }
     }
 }

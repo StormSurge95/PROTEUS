@@ -31,21 +31,21 @@ namespace NS_NES {
                 INTERRUPT_IRQ, INTERRUPT_NMI, ZERO_HIT, BREAKPOINT
             };
             array<u32, 15> defaultEventColors = {
-                0xFF00DFFF,
-                0xFFFFA000,
-                0xFF60E060,
-                0xFF90FF40,
-                0xFF40A0FF,
-                0xFF2080FF,
-                0xFFFF40D0,
-                0xFFFF70F0,
-                0xFF40FF40,
-                0xFFE060A0,
-                0xFFFF60C0,
-                0xFF4040FF,
-                0xFF6060FF,
-                0xFFFFFFFF,
-                0xFF00BFFF
+                0xFF00DFFF, // PPU_READ
+                0xFFFFA000, // PPU_WRITE
+                0xFF60E060, // APU_READ
+                0xFF90FF40, // APU_WRITE
+                0xFF40A0FF, // MAPPER_READ
+                0xFF2080FF, // MAPPER_WRITE
+                0xFFFF40D0, // CONTROLLER_READ
+                0xFFFF70F0, // CONTROLLER_WRITE
+                0xFF40FF40, // DMC_READ
+                0xFFE060A0, // OAM_READ
+                0xFFFF60C0, // OAM_START
+                0xFF4040FF, // INTERRUPT_IRQ
+                0xFF6060FF, // INTERRUPT_NMI
+                0xFFFFFFFF, // ZERO_HIT
+                0xFF00BFFF  // BREAKPOINT
             };
 
             DebugTraceConfig traceCfg = {};
@@ -70,6 +70,8 @@ namespace NS_NES {
              * @brief explicit destructor; simply calls clear in order to detach the NES reference
              */
             ~NesDebugger() = default;
+
+            void Init() override;
 
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;
