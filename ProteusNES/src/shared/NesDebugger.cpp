@@ -38,8 +38,8 @@ void NesDebugger::StepInstruction() {
 
         if (nes->cpu->totalCycles != prevTotal)
             sawClock = true;
-
-        if (nes->cpu->currInst->name == "JAM")
+        NS_NES::INST* i = nes->cpu->currInst;
+        if (i && strcmp(i->name.c_str(), "JAM") == 0)
             break;
     } while (!sawClock || nes->cpu->cycles != 0);
 }

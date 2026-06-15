@@ -173,6 +173,7 @@ void Proteus::SetMetadata() {
 
 void Proteus::ToggleDebug() {
     if (session->DebuggerExists()) {
+        debugActive = !debugActive;
         session->GetDebugger()->Toggle();
         videoManager->ToggleDebug();
     }
@@ -326,8 +327,10 @@ void Proteus::LaunchGame(u32 index) {
 
     if (!r.success) return; // TODO: handle failure
 
-    if (session->DebuggerExists())
+    if (session->DebuggerExists()) {
         session->GetDebugger()->Init();
+        if (debugActive) session->GetDebugger()->Enable();
+    }
 
     r = session->Start();
 
@@ -350,8 +353,7 @@ const u32* Proteus::GetFrameBuffer() const {
 
 void Proteus::ResetConsole() {
     SessionResult r = session->Reset();
-    // TODO: handle failure
-    if (!r.success) {};
+    if (r.success) Resume();
 }
 
 void Proteus::ShutdownConsole() {

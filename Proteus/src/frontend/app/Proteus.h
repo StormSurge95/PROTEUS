@@ -77,6 +77,7 @@ namespace NS_Proteus {
             bool pausedByOverlay = false;
             SDL_Event event = {};
 
+            bool debugActive = false;
             void ToggleDebug();
 
             void SetMetadata();
