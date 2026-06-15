@@ -3,5 +3,14 @@
     "cmake.automaticReconfigure": false,
     "cmake.configureOnEdit": false,
     "cmake.useCMakePresets": "always",
-    "cmake.configurePreset": "windows-x64-debug-tests"
+    "logFileHighlighter.customPatterns": [
+        {
+            "pattern": "PASS",
+            "foreground": "#00FF00"
+        },
+        {
+            "pattern": "FAIL",
+            "foreground": "#FF0000"
+        }
+    ]
 }
