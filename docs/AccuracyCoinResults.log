@@ -1,0 +1,160 @@
+P1 - CPU BEHAVIOR
+    T1 - ROM IS NOT WRITABLE————————————————————PASS
+    T2 - RAM MIRRORING——————————————————————————PASS
+    T3 - PC WRAPAROUND——————————————————————————PASS
+    T4 - THE DECIMAL FLAG———————————————————————PASS
+    T5 - THE B FLAG—————————————————————————————PASS
+    T6 - DUMMY READ CYCLES——————————————————————PASS
+    T7 - DUMMY WRITE CYCLES—————————————————————PASS
+    T8 - OPEN BUS———————————————————————————————PASS
+    T9 - ALL NOP INSTRUCTIONS———————————————————PASS
+P2 - ADDRESSING MODE WRAPAROUND
+    T1 - ABSOLUTE INDEXED———————————————————————PASS
+    T2 - ZERO PAGE INDEXED——————————————————————PASS
+    T3 - INDIRECT———————————————————————————————PASS
+    T4 - INDIRECT, X————————————————————————————PASS
+    T5 - INDIRECT, Y————————————————————————————PASS
+    T6 - RELATIVE———————————————————————————————PASS
+P3 - UNOFFICIAL INSTRUCTIONS: SLO
+    T1 - $03 SLO INDIRECT,X—————————————————————PASS
+    T2 - $07 SLO ZEROPAGE———————————————————————PASS
+    T3 - $0F SLO ABSOLUTE———————————————————————PASS
+    T4 - $13 SLO INDIRECT,Y—————————————————————PASS
+    T5 - $17 SLO ZEROPAGE,X—————————————————————PASS
+    T6 - $1B SLO ABSOLUTE,Y—————————————————————PASS
+    T7 - $1F SLO ABSOLUTE,X—————————————————————PASS
+P4 - UNOFFICIAL INSTRUCTIONS: RLA
+    T1 - $23 RLA INDIRECT,X—————————————————————PASS
+    T2 - $27 RLA ZEROPAGE———————————————————————PASS
+    T3 - $2F RLA ABSOLUTE———————————————————————PASS
+    T4 - $33 RLA INDIRECT,Y—————————————————————PASS
+    T5 - $37 RLA ZEROPAGE,X—————————————————————PASS
+    T6 - $3B RLA ABSOLUTE,Y—————————————————————PASS
+    T7 - $3F RLA ABSOLUTE,X—————————————————————PASS
+P5 - UNOFFICIAL INSTRUCTIONS: SRE
+    T1 - $43 SRE INDIRECT,X—————————————————————PASS
+    T2 - $47 SRE ZEROPAGE———————————————————————PASS
+    T3 - $4F SRE ABSOLUTE———————————————————————PASS
+    T4 - $53 SRE INDIRECT,Y—————————————————————PASS
+    T5 - $57 SRE INDIRECT,X—————————————————————PASS
+    T6 - $5B SRE ABSOLUTE,Y—————————————————————PASS
+    T7 - $5F SRE ABSOLUTE,X—————————————————————PASS
+P6 - UNOFFICIAL INSTRUCTIONS: RRA
+    T1 - $63 RRA INDIRECT,X—————————————————————PASS
+    T2 - $67 SRE ZEROPAGE———————————————————————PASS
+    T3 - $6F SRE ABSOLUTE———————————————————————PASS
+    T4 - $73 SRE INDIRECT,Y—————————————————————PASS
+    T5 - $77 SRE ZEROPAGE,X—————————————————————PASS
+    T6 - $7B SRE ABSOLUTE,Y—————————————————————PASS
+    T7 - $7F SRE ABSOLUTE,X—————————————————————PASS
+P7 - UNOFFICIAL INSTRUCTIONS: *AX
+    T1 - $83 SAX INDIRECT,X—————————————————————PASS
+    T2 - $87 SAX ZEROPAGE———————————————————————PASS
+    T3 - $8F SAX ABSOLUTE———————————————————————PASS
+    T4 - $97 SAX ZEROPAGE,Y—————————————————————PASS
+    T5 - $A3 LAX INDIRECT,X—————————————————————PASS
+    T6 - $A7 LAX ZEROPAGE———————————————————————PASS
+    T7 - $AF LAX ABSOLUTE———————————————————————PASS
+    T8 - $B3 LAX INDIRECT,Y—————————————————————PASS
+    T9 - $B7 LAX ZEROPAGE,Y—————————————————————PASS
+    TA - $BF LAX ABSOLUTE,Y—————————————————————PASS
+P8 - UNOFFICIAL INSTRUCTIONS: DCP
+    T1 - $C3 DCP INDIRECT,X—————————————————————PASS
+    T2 - $C7 DCP ZEROPAGE———————————————————————PASS
+    T3 - $CF DCP ABSOLUTE———————————————————————PASS
+    T4 - $D3 DCP INDIRECT,Y—————————————————————PASS
+    T5 - $D7 DCP ZEROPAGE,X—————————————————————PASS
+    T6 - $DB DCP ABSOLUTE,Y—————————————————————PASS
+    T7 - $DF DCP ABSOLUTE,X—————————————————————PASS
+P9 - UNOFFICIAL INSTRUCTIONS: ISC
+    T1 - $E3 ISC INDIRECT,X—————————————————————PASS
+    T2 - $E7 ISC ZEROPAGE———————————————————————PASS
+    T3 - $EF ISC ABSOLUTE———————————————————————PASS
+    T4 - $F3 ISC INDIRECT,Y—————————————————————PASS
+    T5 - $F7 ISC ZEROPAGE,X—————————————————————PASS
+    T6 - $FB ISC ABSOLUTE,Y—————————————————————PASS
+    T7 - $FF ISC ABSOLUTE———————————————————————PASS
+P10 - UNOFFICIAL INSTRUCTIONS: SH*
+    T1 - $93 SHA INDIRECT,Y—————————————————————FAIL 7
+    T2 - $9F SHA ABSOLUTE,Y—————————————————————FAIL 7
+    T3 - $9B SHS ABSOLUTE,Y—————————————————————FAIL 7
+    T4 - $9C SHY ABSOLUTE,X—————————————————————FAIL 7
+    T5 - $9E SHX ABSOLUTE,Y—————————————————————FAIL 7
+    T6 - $BB LAE ABSOLUTE,Y—————————————————————PASS
+P11 - UNOFFICIAL IMMEDIATES
+    T1 - $0B ANC IMMEDIATE——————————————————————PASS
+    T2 - $2B ANC IMMEDIATE——————————————————————PASS
+    T3 - $4B ASR IMMEDIATE——————————————————————PASS
+    T4 - $6B ARR IMMEDIATE——————————————————————PASS
+    T5 - $8B ANE IMMEDIATE——————————————————————PASS
+    T6 - $AB LXA IMMEDIATE——————————————————————PASS
+    T7 - $CB AXS IMMEDIATE——————————————————————PASS
+    T8 - $EB SBC IMMEDIATE——————————————————————PASS
+P12 - CPU INTERRUPTS
+    T1 - INTERRUPT FLAG LATENCY—————————————————FAIL 3
+    T2 - NMI OVERLAP BRK————————————————————————FAIL 2
+    T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
+P13 - APU REGISTERS AND DMA TESTS
+    T1 - DMA + OPEN BUS—————————————————————————FAIL 2
+    T2 - DMA + $2002 READ———————————————————————FAIL 2
+    T3 - DMA + $2007 READ———————————————————————FAIL 2
+    T4 - DMA + $2007 WRITE——————————————————————FAIL 1
+    T5 - DMA + $4015 READ———————————————————————FAIL 2
+    T6 - DMA + $4016 READ———————————————————————FAIL 1
+    T7 - DMC DMA BUS CONFLICTS——————————————————FAIL 1
+    T8 - DMC DMA + OAM DMA——————————————————————FAIL 1
+    T9 - EXPLICIT DMA ABORT—————————————————————FAIL 1
+    TA - IMPLICIT DMA ABORT—————————————————————FAIL 1
+P14 - APU TESTS
+    T1 - LENGTH COUNTER—————————————————————————PASS
+    T2 - LENGTH TABLE———————————————————————————PASS
+    T3 - FRAME COUNTER IRQ——————————————————————FAIL 7
+    T4 - FRAME COUNTER 4-STEP———————————————————FAIL 2
+    T5 - FRAME COUNTER 5-STEP———————————————————FAIL 2
+    T6 - DELTA MODULATION CHANNEL———————————————FAIL A
+    T7 - APU REGISTER ACTIVATION————————————————FAIL 1
+    T8 - CONTROLLER STROBING————————————————————FAIL 4
+    T9 - CONTROLLER CLOCKING————————————————————PASS
+P16 - PPU BEHAVIOR
+    T1 - CHR ROM IS NOT WRITABLE————————————————PASS
+    T2 - PPU REGISTER MIRRORING—————————————————PASS
+    T3 - PPU REGISTER OPEN BUS——————————————————FAIL 5
+    T4 - PPU READ BUFFER————————————————————————FAIL 6
+    T5 - PALETTE RAM QUIRKS—————————————————————FAIL 1
+    T6 - RENDERING FLAG BEHAVIOR————————————————FAIL 2
+    T7 - $2007 READ W/ RENDERING————————————————FAIL 1
+    T8 - ATTRIBUTES AS TILES————————————————————FAIL 1
+P17 - PPU VBLANK TIMING
+    T1 - VBLANK BEGINNING———————————————————————PASS
+    T2 - VBLANK END—————————————————————————————PASS
+    T3 - NMI CONTROL————————————————————————————FAIL 8
+    T4 - NMI TIMING—————————————————————————————FAIL 1
+    T5 - NMI SUPPRESSION————————————————————————FAIL 1
+    T6 - NMI AT VBLANK END——————————————————————FAIL 1
+    T7 - NMI DISABLED AT VBLANK—————————————————FAIL 1
+P18 - SPRITE EVALUATION
+    T1 - SPRITE OVERFLOW BEHAVIOR———————————————FAIL 1
+    T2 - SPRITE 0 HIT BEHAVIOR——————————————————FAIL 1
+    T3 - $2002 FLAG TIMING——————————————————————FAIL 1
+    T4 - SUDDENLY RESIZE SPRITE—————————————————FAIL 1
+    T5 - ARBITRARY SPRITE ZERO——————————————————FAIL 1
+    T6 - MISALIGNED OAM BEHAVIOR————————————————FAIL 1
+    T7 - ADDRESS $2004 BEHAVIOR—————————————————FAIL 1
+    T8 - OAM CORRUPTION—————————————————————————FAIL 1
+    T9 - INC $4014——————————————————————————————FAIL 1
+P19 - PPU MISC.
+    T1 - T REGISTER QUIRKS——————————————————————FAIL 1
+    T2 - STALE BG SHIFT REGISTERS———————————————FAIL 1
+    T3 - STALE SPRITE SHIFT REGS————————————————FAIL 1
+    T4 - BG SERIAL IN———————————————————————————FAIL 2
+    T5 - SPRITES ON SCANLINE 0——————————————————FAIL 2
+    T6 - $2004 STRESS TEST——————————————————————FAIL 2
+    T7 - $2007 STRESS TEST——————————————————————FAIL 2
+    T8 - ALE + READ—————————————————————————————FAIL 1
+    T9 - HYBRID ADDRESSES———————————————————————FAIL 1
+P20 - CPU BEHAVIOR 2
+    T1 - INSTRUCTION TIMING—————————————————————FAIL 1
+    T2 - IMPLIED DUMMY READS————————————————————FAIL 3
+    T3 - BRANCH DUMMY READS—————————————————————PASS
+    T4 - JSR EDGE CASES—————————————————————————PASS
+    T5 - INTERNAL DATA BUS——————————————————————FAIL 1

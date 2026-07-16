@@ -9,8 +9,12 @@
             "foreground": "#00FF00"
         },
         {
-            "pattern": "FAIL",
+            "pattern": "FAIL .+",
             "foreground": "#FF0000"
+        },
+        {
+            "pattern": "[\\$| ]\\d+",
+            "foreground": "#FFFFFF"
         }
     ],
     "C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe"

@@ -15,13 +15,9 @@ RomLibrary::RomLibrary() {
 
     baseRomPath = curr;
 
-    printf("%s\n", baseRomPath.string().c_str());
-
     curr /= "RomLibrary.json";
 
     libraryPath = curr;
-
-    printf("%s\n", libraryPath.string().c_str());
 
     Load();
 }
