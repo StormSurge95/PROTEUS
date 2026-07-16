@@ -352,5 +352,6 @@ CMakeUserPresets.json
 # Rider
 *.sln.iml
 
-SSTs/**
+**/roms/
+**/sst/
 imgui.ini

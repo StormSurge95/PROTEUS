@@ -27,6 +27,12 @@ if ($clean -and (Test-Path $buildDir)) {
     Remove-Item -LiteralPath $buildDir -Recurse -Force
 }
 
+$toolchainPath = "C:\devenv\vcpkg\scripts\buildsystems\vcpkg.cmake"
+
+if (-not (Test-Path -Path $toolchainPath)) {
+    $toolchainPath = "D:\devenv\vcpkg\scripts\buildsystems\vcpkg.cmake"
+}
+
 $cfgArgs = @(
     "-S", ".",
     "-B", $buildDir,
@@ -34,7 +40,7 @@ $cfgArgs = @(
     "-DPROTEUS_BUILD_TESTS=ON",
     "-DPROTEUS_NES_BUILD_TESTS=ON",
     "-DPROTEUS_GBA_BUILD_TESTS=OFF",    # TODO: change this once GBA emulator is testable
-    "-DCMAKE_TOOLCHAIN_FILE=C:\devenv\vcpkg\scripts\buildsystems\vcpkg.cmake",
+    "-DCMAKE_TOOLCHAIN_FILE=$toolchainPath",
     "-DVCPKG_TARGET_TRIPLET=x64-windows",
     "-DSSTROOT=C:\devenv\PROTEUS\SSTs\NES",
     "-DCMAKE_CXX_COMPILER=clang-cl",

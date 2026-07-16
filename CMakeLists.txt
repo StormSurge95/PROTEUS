@@ -4,6 +4,10 @@ project(Proteus LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(MSVC)
+	add_compile_options(/EHsc)
+endif()
+
 option(PROTEUS_BUILD_TESTS "Build Proteus test targets" OFF)
 option(PROTEUS_NES_BUILD_TESTS "Build ProteusNES test targets" OFF)
 option(PROTEUS_GBA_BUILD_TESTS "Build ProteusGBA test targets" OFF)
@@ -22,7 +26,7 @@ message(STATUS "SDL3_DIR=${SDL3_DIR}")
 find_package(OpenSSL CONFIG REQUIRED)
 message(STATUS "OpenSSL_DIR=${OpenSSL_DIR}")
 
-# locate required nlohmann/json header (headonly-only version; no binaries necessary)
+# locate required nlohmann/json header (header-only version; no binaries necessary)
 find_package(nlohmann_json CONFIG REQUIRED)
 message(STATUS "nlohmann_json_DIR=${nlohmann_json_DIR}")
 

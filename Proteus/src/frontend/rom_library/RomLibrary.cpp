@@ -4,7 +4,27 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
+#include <iostream>
+
 using namespace NS_Proteus;
+
+RomLibrary::RomLibrary() {
+    path curr = std::filesystem::current_path();
+
+    curr /= "roms";
+
+    baseRomPath = curr;
+
+    printf("%s\n", baseRomPath.string().c_str());
+
+    curr /= "RomLibrary.json";
+
+    libraryPath = curr;
+
+    printf("%s\n", libraryPath.string().c_str());
+
+    Load();
+}
 
 void RomLibrary::Save() {
     // open or create our library file
@@ -54,16 +74,6 @@ void RomLibrary::Save() {
 string RomLibrary::GetHash(const string& filepath) {
     // open file to compute hash from
     ifstream file(filepath, ios::binary);
-
-    // This check should no longer be necessary;
-    // `filepath` is obtained by locating the file,
-    // and therefore should always exist by this point
-    //
-    // ensure file exists
-    //if (!file.is_open()) {
-    //    SDL_Log("Failed to open %s file for hashing!", filepath.c_str());
-    //    return "";
-    //}
 
     // init our hashing system
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
