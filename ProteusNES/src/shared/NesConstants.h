@@ -6,14 +6,14 @@
 
 namespace NS_NES {
     /// @brief NTSC Screen Width
-    inline static constexpr u32 SCREEN_WIDTH = 256;
+    inline constexpr u32 SCREEN_WIDTH = 256;
     /// @brief NTSC Screen Height
-    inline static constexpr u32 SCREEN_HEIGHT = 240;
+    inline constexpr u32 SCREEN_HEIGHT = 240;
     /// @brief NTSC Total pixels per frame.
-    inline static constexpr u32 PIXEL_COUNT = SCREEN_WIDTH * SCREEN_HEIGHT;
+    inline constexpr u32 PIXEL_COUNT = SCREEN_WIDTH * SCREEN_HEIGHT;
 
     /// @brief Pulse Channel Duty Table
-    inline static const u8 DUTY_TABLE[4][8] = {
+    inline constexpr u8 DUTY_TABLE[4][8] = {
         {0,0,0,0,0,0,0,1},
         {0,0,0,0,0,0,1,1},
         {0,0,0,0,1,1,1,1},
@@ -21,7 +21,7 @@ namespace NS_NES {
     };
 
     /// @brief APU Length Counter lookup table
-    inline static const u8 LENGTH_TABLE[32] = {
+    inline constexpr u8 LENGTH_TABLE[32] = {
          10, 254, 20,  2, 40,  4, 80,  6,
         160,   8, 60, 10, 14, 12, 26, 14,
          12,  16, 24, 18, 48, 20, 96, 22,
@@ -29,28 +29,28 @@ namespace NS_NES {
     };
 
     /// @brief Triangle Channel Linear Sequence table
-    static const u8 LINEAR_SEQUENCE[32] = {
+    inline constexpr u8 LINEAR_SEQUENCE[32] = {
         15, 14, 13, 12, 11, 10,  9,  8,
          7,  6,  5,  4,  3,  2,  1,  0,
          0,  1,  2,  3,  4,  5,  6,  7,
          8,  9, 10, 11, 12, 13, 14, 15
     };
 
-    inline static const u16 NOISE_RATES_NTSC[16] = {
+    inline constexpr u16 NOISE_RATES_NTSC[16] = {
         4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
     };
-    inline static const u16 NOISE_RATES_PAL[16] = {
+    inline constexpr u16 NOISE_RATES_PAL[16] = {
         4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708,  944, 1890, 3778
     };
 
     /// @brief DMC Channel Rate lookup table
-    inline static const u16 DMC_RATES_NTSC[16] = {
+    inline constexpr u16 DMC_RATES_NTSC[16] = {
         428, 380, 340, 320,
         286, 254, 226, 214,
         190, 160, 142, 128,
         106,  84,  72,  54
     };
-    inline static const u16 DMC_RATES_PAL[16] = {
+    inline constexpr u16 DMC_RATES_PAL[16] = {
         398, 354, 316, 298,
         276, 236, 210, 198,
         176, 148, 132, 118,
