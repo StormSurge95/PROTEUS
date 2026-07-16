@@ -18,9 +18,9 @@ $Config = switch ($Config.ToLowerInvariant()) {
 $ErrorActionPreference = "Stop"
 
 $buildDir = Join-Path $pwd "build-ninja"
-$detCpu = "C:\ROMS\TESTS\NES\blargg_nes_cpu_test5-cpu.nes"
-$detPpu = "C:\ROMS\TESTS\NES\litewall2.nes"
-$detApu = "C:\ROMS\TESTS\NES\volumes.nes"
+$detCpu = "C:\devenv\PROTEUS\roms\TESTS\cpu.nes"
+$detPpu = "C:\devenv\PROTEUS\roms\TESTS\litewall2.nes"
+$detApu = "C:\devenv\PROTEUS\roms\TESTS\volumes.nes"
 
 if ($clean -and (Test-Path $buildDir)) {
     Write-Host "> removing $buildDir..."
@@ -28,10 +28,6 @@ if ($clean -and (Test-Path $buildDir)) {
 }
 
 $toolchainPath = "C:\devenv\vcpkg\scripts\buildsystems\vcpkg.cmake"
-
-if (-not (Test-Path -Path $toolchainPath)) {
-    $toolchainPath = "D:\devenv\vcpkg\scripts\buildsystems\vcpkg.cmake"
-}
 
 $cfgArgs = @(
     "-S", ".",
@@ -42,7 +38,7 @@ $cfgArgs = @(
     "-DPROTEUS_GBA_BUILD_TESTS=OFF",    # TODO: change this once GBA emulator is testable
     "-DCMAKE_TOOLCHAIN_FILE=$toolchainPath",
     "-DVCPKG_TARGET_TRIPLET=x64-windows",
-    "-DSSTROOT=C:\devenv\PROTEUS\SSTs\NES",
+    "-DSSTROOT=C:\devenv\PROTEUS\sst\NES",
     "-DCMAKE_CXX_COMPILER=clang-cl",
     "-DNES_DET_CPU=$detCpu",
     "-DNES_DET_FRAME=$detPpu",
