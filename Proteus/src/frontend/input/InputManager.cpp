@@ -33,8 +33,8 @@ void InputManager::Connect(SDL_JoystickID id) {
     useKB = false;
     for (u8 i = 0; i < 4; i++) {
         if (gamepads[i] == nullptr) {
+            if (i > 0) numPlayers++;
             gamepads[i] = new Gamepad(id);
-            numPlayers++;
             if (logger) logger->EmitInputEvent(LogEventName::INPUT_GAMEPAD_CONNECTED,
                 { .device = gamepads[i]->id, .player = (++i) } // TODO: get frame in here somehow
             );
@@ -50,7 +50,6 @@ void InputManager::Disconnect(SDL_JoystickID id) {
             switch (i) {
                 case 0:
                     DisconnectGP0();
-                    numPlayers--;
                     return;
                 case 1:
                     DisconnectGP1();
@@ -110,7 +109,13 @@ void InputManager::DisconnectGP3() {
     delete gamepads[3]; gamepads[3] = nullptr;
 }
 
-Inputs* InputManager::ReadInputs(int gp, bool ui) {
+Inputs* InputManager::ReadInputs(int player, bool ui) {
+    if (numPlayers == 0 || player >= MAX_PLAYERS) return nullptr;
+    if (useKB && player == 0) return ReadKeyboard(ui);
+    return ReadGamepad(player, ui);
+}
+
+Inputs* InputManager::ReadGamepad(int gp, bool ui) {
     Inputs* i = nullptr;
     if (ui) gp = 0;
     if (gamepads[gp] != nullptr)
@@ -124,7 +129,7 @@ Inputs* InputManager::ReadKeyboard(bool ui) {
     const bool* kb = SDL_GetKeyboardState(nullptr);
     bool btns[15] = {
         kb[kbs.A_BUTTON], kb[kbs.B_BUTTON], kb[kbs.X_BUTTON], kb[kbs.Y_BUTTON],
-        kb[kbs.SELECT], kb[kbs.MENU], kb[kbs.START],
+        kb[kbs.SELECT], kb[kbs.MENU], kb[kbs.START], false, false,
         kb[kbs.LEFT_SHOULDER], kb[kbs.RIGHT_SHOULDER],
         kb[kbs.DPAD_UP], kb[kbs.DPAD_DOWN], kb[kbs.DPAD_LEFT], kb[kbs.DPAD_RIGHT]
     };
@@ -135,7 +140,8 @@ Inputs* InputManager::ReadKeyboard(bool ui) {
 
 void InputManager::TranslateInputs(IConsole* station, ConsoleID console) {
     if (!station) return;
-    for (int i = 0; i < numPlayers; i++) {
+    int activePlayers = useKB ? 1 : numPlayers;
+    for (int i = 0; i < activePlayers; i++) {
         Inputs* inputs = ReadInputs(i);
         if (inputs == nullptr) throw std::exception();
 

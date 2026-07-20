@@ -22,8 +22,7 @@ namespace NS_Proteus {
             void Init();
             void Deinit();
 
-            Inputs* ReadInputs(int gp = 0, bool ui = false);
-            Inputs* ReadKeyboard(bool ui);
+            Inputs* ReadInputs(int player = 0, bool ui = false);
             void TranslateInputs(IConsole* station, ConsoleID console);
 
             void Connect(SDL_JoystickID id);
@@ -34,10 +33,13 @@ namespace NS_Proteus {
             Logger* logger = nullptr;
 
             const int MAX_PLAYERS = 4;
-            int numPlayers = 0;
+            int numPlayers = 1;
             std::array<Gamepad*, 4> gamepads = { nullptr, nullptr, nullptr, nullptr };
             KeyBinds kbs;
             std::unique_ptr<Inputs> kbState;
+
+            Inputs* ReadGamepad(int gp = 0, bool ui = false);
+            Inputs* ReadKeyboard(bool ui);
 
             void DisconnectGP0();
             void DisconnectGP1();

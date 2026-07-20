@@ -12,19 +12,19 @@ namespace NS_Proteus {
     };
 
     struct KeyBinds {
-        u32 A_BUTTON = SDLK_LESS;
-        u32 B_BUTTON = SDLK_GREATER;
-        u32 X_BUTTON = SDLK_N;
-        u32 Y_BUTTON = SDLK_M;
-        u32 SELECT = SDLK_BACKSPACE;
-        u32 MENU = SDLK_ESCAPE;
-        u32 START = SDLK_RETURN;
-        u32 LEFT_SHOULDER = SDLK_Q;
-        u32 RIGHT_SHOULDER = SDLK_E;
-        u32 DPAD_UP = SDLK_W;
-        u32 DPAD_DOWN = SDLK_S;
-        u32 DPAD_LEFT = SDLK_A;
-        u32 DPAD_RIGHT = SDLK_D;
+        u32 A_BUTTON = SDL_SCANCODE_COMMA;
+        u32 B_BUTTON = SDL_SCANCODE_PERIOD;
+        u32 X_BUTTON = SDL_SCANCODE_N;
+        u32 Y_BUTTON = SDL_SCANCODE_M;
+        u32 SELECT = SDL_SCANCODE_BACKSPACE;
+        u32 MENU = SDL_SCANCODE_ESCAPE;
+        u32 START = SDL_SCANCODE_RETURN;
+        u32 LEFT_SHOULDER = SDL_SCANCODE_Q;
+        u32 RIGHT_SHOULDER = SDL_SCANCODE_E;
+        u32 DPAD_UP = SDL_SCANCODE_W;
+        u32 DPAD_DOWN = SDL_SCANCODE_S;
+        u32 DPAD_LEFT = SDL_SCANCODE_A;
+        u32 DPAD_RIGHT = SDL_SCANCODE_D;
 
         KeyBinds() = default;
         void SetA(u32 v) { A_BUTTON = v; }
