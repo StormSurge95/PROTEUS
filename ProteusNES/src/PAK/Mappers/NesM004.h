@@ -82,8 +82,6 @@ namespace NS_NES {
 
             /**
              * @brief Data read request from CPU for PRG memory.
-             * @todo TODO: Ensure that all accesses respect maximum prgBanks.
-             * @todo TODO: Incorporate PRG-RAM
              * @param addr Address to be read.
              * @param readonly Flag to block side-effects.
              * @return The data that was read; or zero if invalid address.

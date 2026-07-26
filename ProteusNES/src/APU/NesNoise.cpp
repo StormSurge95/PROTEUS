@@ -25,7 +25,6 @@ void NoiseChannel::write(u16 addr, u8 data) {
             break;
         case 0x400E: // mode & period control
             mode = ((data >> 7) & 0x01) > 0;
-            // TODO: get period value based on region
             period = GetNoiseRate(*region, data & 0x0F);
             break;
         case 0x400F: // length counter load

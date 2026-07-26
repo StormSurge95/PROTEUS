@@ -71,7 +71,6 @@ namespace NS_NES {
 
             /**
              * @brief Data write request from CPU for PRG memory.
-             * @todo TODO: implement PRG-RAM
              * @param addr Address to be written to.
              * @param data Data to be written.
              */

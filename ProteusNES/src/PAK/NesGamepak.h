@@ -27,8 +27,6 @@ namespace NS_NES {
              * @brief Explicit constructor
              * @param [in] path The full path to the ROM file to be opened for attempted gameplay
              * @details Parses all data within the opened ROM file and constructs based on the header data.
-             * @todo get PRG-RAM implemented and working properly
-             * @todo refactor and separate parsing/processing code and fully implement other header formats
              */
             Gamepak(const string& path);
             /// @brief Default destructor

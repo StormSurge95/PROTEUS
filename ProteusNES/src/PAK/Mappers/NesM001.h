@@ -327,7 +327,6 @@ namespace NS_NES {
              */
             u8 prgBank = 0;
             bool disablePrgRam = false; /// flag for disabling PRG-RAM
-            std::vector<u8> PRGRam; // TODO: move this to base Mapper class
 
             u64 cpuCycle = 0;
             u64 lastWriteCycle = 0xFFFFFFFFFFFFFFFF; // default to max value to allow first write.

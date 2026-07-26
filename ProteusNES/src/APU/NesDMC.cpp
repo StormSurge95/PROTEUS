@@ -24,7 +24,6 @@ void DMC_Channel::write(u16 addr, u8 data) {
             // set loop flag
             loop = ((data >> 6) & 0x01) > 0;
             // set new pariod
-            // TODO: determine period based on region
             period = GetDmcRate(*region, data & 0x0F);
             return;
         case 0x4011:

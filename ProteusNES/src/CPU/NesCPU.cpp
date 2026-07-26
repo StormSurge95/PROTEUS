@@ -157,7 +157,6 @@ u8 CPU::read(u16 addr, bool readonly) {
         if (!cart.lock()->mapper->cpuRead(addr, ret, readonly)) ret = cpuBus;
         if (readonly) return ret;
     }
-    // TODO: Handle PRG-RAM open bus stuff
     // getting here means readonly is clear; so update cpuBus and return it.
     cpuBus = ret;
     return cpuBus;

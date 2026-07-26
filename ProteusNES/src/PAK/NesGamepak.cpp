@@ -84,7 +84,8 @@ void Gamepak::powerdown() {
 }
 
 path Gamepak::GetSavePath() {
-    path p = "C:/ROMS/SAVES/NES"; // base path here is SAVES/NES; TODO: Change "C:/ROMS/" to an install directory for release mode
+    // TODO: Change "C:/ROMS/" to an install directory for release mode
+    path p = "C:/ROMS/SAVES/NES"; // base path here is SAVES/NES;
     p /= filePath.filename(); // get the filename for the rom and use it to name our save file
     p.replace_extension(".sav"); // replace the ".nes" extension with ".sav"
     p = p.make_preferred();
