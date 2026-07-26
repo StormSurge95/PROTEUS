@@ -1,0 +1,84 @@
+- [x] 01 - ROM is not writable
+- [x] 01 - RAM Mirroring
+- [x] 01 - PC Wraparound
+- [x] 01 - The Decimal Flag
+- [x] 01 - The B Flag
+- [x] 02 - Absolute Indexed
+- [x] 02 - Zero Page Indexed
+- [x] 02 - Indirect
+- [x] 02 - Indirect, X
+- [x] 02 - Indirect, Y
+- [x] 02 - Relative
+- [x] 03 - Unofficial Instructions: SLO
+- [x] 04 - Unofficial Instructions: RLA
+- [x] 05 - Unofficial Instructions: SRE
+- [x] 06 - Unofficial Instructions: RRA
+- [x] 07 - Unofficial Instructions: *AX
+- [x] 08 - Unofficial Instructions: DCP
+- [x] 09 - Unofficial Instructions: ISC
+- [x] 11 - Unofficial Immediates
+- [x] 16 - CHR ROM is not writable
+- [x] 16 - PPU Register Mirroring
+- [x] 16 - PPU Register Open Bus
+- [X] 17 - VBlank beginning
+- [X] 17 - VBlank end
+- [ ] 17 - NMI Control
+- [ ] 17 - NMI Timing
+- [ ] 17 - NMI Suppression
+- [ ] 17 - NMI at VBlank end
+- [ ] 17 - NMI disabled at VBlank
+- [ ] 01 - Open Bus
+- [ ] 01 - Dummy read cycles
+- [ ] 01 - Dummy write cycles
+- [ ] 01 - All NOP instructions
+- [ ] 16 - PPU Read Buffer
+- [ ] 16 - Palette RAM Quirks
+- [ ] 13 - DMA + Open Bus
+- [ ] 20 - Instruction Timing
+- [ ] 14 - Delta Modulation Channel
+- [ ] 12 - Interrupt Flag Latency
+- [ ] 20 - JSR Edge Cases
+- [ ] 14 - Frame Counter IRQ
+- [ ] 14 - Controller Strobing
+- [ ] 13 - DMA + $2007 Read
+- [ ] 13 - DMA + $2007 Write
+- [ ] 13 - DMA + $2002 Read
+- [ ] 13 - DMA + $4015 Read
+- [ ] 13 - DMA + $4016 Read
+- [ ] 13 - DMC DMA + OAM DMA
+- [ ] 13 - Explicit DMA Abort
+- [ ] 13 - Implicit DMA Abort
+- [ ] 10 - Unofficial Instructions: SH*
+- [ ] 14 - Length Counter
+- [ ] 14 - Length Table
+- [ ] 14 - Frame Counter 4-step
+- [ ] 14 - Frame Counter 5-step
+- [ ] 18 - Sprite overflow behavior
+- [ ] 18 - Sprite 0 Hit behavior
+- [ ] 18 - Address $2004 behavior
+- [ ] 16 - Rendering Flag Behavior
+- [ ] 16 - $2007 read w/ rendering
+- [ ] 16 - Attributes as Tiles
+- [ ] 18 - $2002 flag timing
+- [ ] 18 - Suddenly Resize Sprite
+- [ ] 18 - Arbitrary Sprite zero
+- [ ] 18 - Misaligned OAM behavior
+- [ ] 18 - OAM Corruption
+- [ ] 18 - INC $4014
+- [ ] 14 - APU Register Activation
+- [ ] 13 - DMC DMA Bus Conflicts
+- [ ] 14 - Controller Clocking
+- [ ] 19 - Attributes As Tiles
+- [ ] 19 - t Register Quirks
+- [ ] 19 - Stale BG Shift Registers
+- [ ] 19 - Stale Sprite Shift Regs
+- [ ] 19 - BG Serial In
+- [ ] 19 - Sprites On Scanline 0
+- [ ] 19 - $2004 Stress Test
+- [ ] 19 - $2007 Stress Test
+- [ ] 19 - ALE + Read
+- [ ] 20 - Branch Dummy Reads
+- [ ] 20 - Internal Data Bus
+- [ ] 20 - Implied Dummy Reads
+- [ ] 12 - NMI Overlap BRK
+- [ ] 12 - NMI Overlap IRQ

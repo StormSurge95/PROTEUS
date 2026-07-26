@@ -34,7 +34,8 @@ void PPU::powerup(u32 s) {
     t = v = x = 0;
     
     // initialize open-bus helpers
-    ppuBus = 0;
+    ppuDataBus = 0;
+    ppuVramBus = 0;
     ppuAddrBus = 0;
 
     // initialize volatile memory containers
@@ -82,7 +83,7 @@ void PPU::powerdown() {
     frameComplete = oddFrame = false;
 
     // clear transient bus/scratch state
-    ppuAddrBus = ppuBus = dataBuffer = 0;
+    ppuAddrBus = ppuDataBus = ppuVramBus = dataBuffer = 0;
 
     clearPipelines();
 
@@ -116,13 +117,13 @@ void PPU::clearPipelines() {
  * The PPU pulls NMI low IF AND ONLY IF both vblank_flag and NMI_output are true.
  */
 u8 PPU::read(u16 addr, bool readonly) {
-    u8 ret = ppuBus;
+    u8 ret = ppuDataBus;
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // mask address due to mirroring
         addr &= 0x0007;
         switch (addr) {
             case 0x02: // read from PPUSTATUS register
-                ret = (PPUSTATUS & 0xE0) | (ppuBus & 0x1F);
+                ret = (PPUSTATUS & 0xE0) | (ppuDataBus & 0x1F);
                 if (!readonly) {
                     updateCounters(0xE0);
                     if (scanline == 241) {
@@ -175,7 +176,7 @@ u8 PPU::read(u16 addr, bool readonly) {
         // by this point, ppubus should have been updated using the requested value;
         // so we can simply update and return ppubus at this point (also this prevents
         // the "not all control paths return a value" issue within VS)
-        ppuBus = ret;
+        ppuDataBus = ret;
     }
     return ret;
 }
@@ -183,7 +184,7 @@ u8 PPU::read(u16 addr, bool readonly) {
 void PPU::write(u16 addr, u8 data) {
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // update ppuBus with new data
-        ppuBus = data;
+        ppuDataBus = data;
         // update counters for bit decay
         updateCounters(0xFF);
         // mask address for mirroring
@@ -305,7 +306,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
     
     if (addr >= 0x0000 && addr <= 0x1FFF) {
         // if address is within CHR memory, read from gamepak/mapper
-        if (!cart.lock()->mapper->ppuRead(addr, ret, readonly)) ret = ppuBus;
+        if (!cart.lock()->mapper->ppuRead(addr, ret, readonly)) ret = ppuVramBus;
     } else if (addr >= 0x2000 && addr <= 0x3EFF) {
         // if address is within nametable memory, get nametable byte
         addr &= 0x0FFF; // mask address for use as array index
@@ -381,7 +382,7 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
         // so that the byte can be used as an index into the 64-byte array
         // of master palette color values; however, the byte returned when
         // reading palettes contains ppu open bus in the top 2 bits
-        u8 p = (palettes[addr] & 0x3F) | (ppuBus & ~0x3F);
+        u8 p = (palettes[addr] & 0x3F) | (ppuVramBus & ~0x3F);
 
         // if greyscale is enabled, the read value is modified before being returned
         if (getGrayscale()) p &= 0xF0; // clear bottom 4 bits to achieve a "gray" color value
@@ -390,14 +391,14 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
         ret = p;
     }
 
-    if (!readonly) ppuBus = ret;
+    if (!readonly) ppuVramBus = ret;
     // return our obtained value
     return ret;
 }
 
 void PPU::ppuWrite(u16 addr, u8 data) {
     ppuAddrBus = addr;
-    ppuBus = data;
+    ppuVramBus = data;
     addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
 
     if (addr <= 0x3EFF)
@@ -519,10 +520,7 @@ void PPU::clock() {
             if (eventSink) eventSink->OnFrameComplete();
             oddFrame = !oddFrame; // ...alternate whether this frame # was odd or even
             // check our counters and update ppuBus based on the bit decay(s)
-            for (int x = 0; x < 8; x++) {
-                decayCounters[x]--;
-                if (decayCounters[x] == 0) ppuBus &= ~(0x01 << x);
-            }
+            bitDecay();
         }
     }
 
@@ -862,9 +860,10 @@ void PPU::updateCounters(u8 bits) {
 
 void PPU::bitDecay() {
     for (int x = 0; x < 8; x++) {
+        decayCounters[x]--;
         if (decayCounters[x] == 0) {
             u8 mask = 1 << x;
-            ppuBus &= ~mask;
+            ppuDataBus &= ~mask;
         }
     }
 }

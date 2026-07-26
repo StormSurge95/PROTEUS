@@ -278,7 +278,8 @@ namespace NS_NES {
             u8 OAMDMA = 0x00;      // $4014 write
 
             u8 dataBuffer = 0x00; // helper variable for emulating the PPUDATA read quirk
-            u8 ppuBus = 0x00; // helper variable for emulating the PPU's open-bus behavior
+            u8 ppuDataBus = 0x00; // helper variable for emulating the PPU's open-bus behavior
+            u8 ppuVramBus = 0x00;
 
             u16 v = 0x0000;  // during rendering, used for scroll position; outside rendering, used as current VRAM address
             u16 t = 0x0000;  // during rendering, specifies starting coarse-x scroll for next scanline and starting y scroll for screen; outside rendering, holds scroll or VRAM before transferring it to v
