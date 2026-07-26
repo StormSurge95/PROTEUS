@@ -46,7 +46,7 @@ CPU::CPU() {
     };
 }
 
-void CPU::init(SingleStateTest::State state) {
+void CPU::initSST(SingleStateTest::State state) {
     pc = state.pc;
     a = state.a;
     x = state.x;
@@ -57,7 +57,8 @@ void CPU::init(SingleStateTest::State state) {
         ram[e[0]] = (e[1] & 0xFF);
     }
 }
-bool CPU::check(SingleStateTest::State state, string& result) {
+
+bool CPU::checkSST(SingleStateTest::State state, string& result) {
     bool pass = true;
     result = "PASS\n";
     stringstream ss;

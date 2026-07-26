@@ -289,8 +289,8 @@ namespace NS_NES {
 
             void connectEventSink(NesEventSink* sink) { eventSink = sink; }
 
-            void init(SingleStateTest::State state);
-            bool check(SingleStateTest::State state, string& result);
+            void initSST(SingleStateTest::State state);
+            bool checkSST(SingleStateTest::State state, string& result);
 
             /**
              * @brief Data read request.

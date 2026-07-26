@@ -157,7 +157,7 @@ const CPU_STATE NES::GetSnapshotCPU() const {
 }
 
 void NES::initSST(SingleStateTest::State state) {
-    cpu->init(state);
+    cpu->initSST(state);
 }
 void NES::runSST() {
     do {
@@ -165,5 +165,5 @@ void NES::runSST() {
     } while (cpu->cycles != 0);
 }
 bool NES::checkSST(SingleStateTest::State state, string& result) {
-    return cpu->check(state, result);
+    return cpu->checkSST(state, result);
 }
