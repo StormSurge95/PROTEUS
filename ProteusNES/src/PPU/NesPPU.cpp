@@ -137,7 +137,7 @@ u8 PPU::read(u16 addr, bool readonly) {
                     w = false;
                     recompNMI();
                     if (eventSink) {
-                        eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
+                        eventSink->OnPpuRegisterRead(0x2002, ret);
                     }
                 }
                 break;
@@ -148,16 +148,17 @@ u8 PPU::read(u16 addr, bool readonly) {
                 // update counters for bit decay
                 updateCounters(0xFF);
                 if (eventSink) {
-                    eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
+                    eventSink->OnPpuRegisterRead(0x2004, ret);
                 }
                 break;
             case 0x07: // read from PPUDATA
                 {
                     u16 addr = v & 0x3FFF;
                     u8 data = ppuRead(addr, readonly);
+                    bool pal = addr >= 0x3F00; // read from Palette RAM
 
-                    if (addr >= 0x3F00) {
-                        ret = data;
+                    if (pal) {
+                        ret = (data & 0x3F) | (ppuDataBus & 0xC0);
                         if (readonly) return ret;
                         dataBuffer = ppuRead(addr - 0x1000);
                     } else {
@@ -166,9 +167,9 @@ u8 PPU::read(u16 addr, bool readonly) {
                         dataBuffer = data;
                     }
                     v = (v + getVRAMIncrement()) & 0x3FFF;
-                    updateCounters(0xFF);
+                    updateCounters(pal ? 0x3F : 0xFF);
                     if (eventSink) {
-                        eventSink->OnPpuRegisterRead(0x2000 | addr, ret);
+                        eventSink->OnPpuRegisterRead(0x2007, ret);
                     }
                 }
                 break;
@@ -382,10 +383,10 @@ u8 PPU::ppuRead(u16 addr, bool readonly) {
         // so that the byte can be used as an index into the 64-byte array
         // of master palette color values; however, the byte returned when
         // reading palettes contains ppu open bus in the top 2 bits
-        u8 p = (palettes[addr] & 0x3F) | (ppuVramBus & ~0x3F);
+        u8 p = (palettes[addr] & 0x3F);
 
         // if greyscale is enabled, the read value is modified before being returned
-        if (getGrayscale()) p &= 0xF0; // clear bottom 4 bits to achieve a "gray" color value
+        if (getGrayscale()) p &= 0x30; // clear bottom 4 bits to achieve a "gray" color value
 
         // update our return value
         ret = p;

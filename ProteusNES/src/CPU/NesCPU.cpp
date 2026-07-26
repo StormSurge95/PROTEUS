@@ -495,32 +495,6 @@ void CPU::clockInstruction() {
 
         // set current instruction based on opcode value
         currInst = &lookup[opcode];
-
-        // temp log
-        if (currInst->name == "LDX") {
-            bool log = true;
-            int bytes[6] = {
-                // LDX #0
-                0xA2, 0x00,
-                // LDA <$50
-                0xA5, 0x50,
-                // CMP #$03
-                0xC9, 0x03
-            };
-            for (int i = 0; i < 6; i++) {
-                if (read(instPC + i, true) != bytes[i]) {
-                    log = false;
-                }
-                if (!log) break;
-            }
-            if (log) {
-                printf("Bytes: ");
-                for (u16 a = 0x0050; a < 0x005A; a++) {
-                    printf("%u ", read(a, true));
-                }
-                printf("\n");
-            }
-        }
     } else {
         if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
             (this->*currInst->address)();

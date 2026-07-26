@@ -119,8 +119,8 @@ P16 - PPU BEHAVIOR
     T1 - CHR ROM IS NOT WRITABLE————————————————PASS
     T2 - PPU REGISTER MIRRORING—————————————————PASS
     T3 - PPU REGISTER OPEN BUS——————————————————PASS
-    T4 - PPU READ BUFFER————————————————————————FAIL 6
-    T5 - PALETTE RAM QUIRKS—————————————————————FAIL 1
+    T4 - PPU READ BUFFER————————————————————————PASS
+    T5 - PALETTE RAM QUIRKS—————————————————————PASS
     T6 - RENDERING FLAG BEHAVIOR————————————————FAIL 2
     T7 - $2007 READ W/ RENDERING————————————————FAIL 1
     T8 - ATTRIBUTES AS TILES————————————————————FAIL 1

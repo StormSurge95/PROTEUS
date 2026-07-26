@@ -31,8 +31,8 @@
 - [x] 01 - Dummy read cycles
 - [x] 01 - Dummy write cycles
 - [x] 01 - All NOP instructions
-- [ ] 16 - PPU Read Buffer
-- [ ] 16 - Palette RAM Quirks
+- [x] 16 - PPU Read Buffer
+- [x] 16 - Palette RAM Quirks
 - [ ] 13 - DMA + Open Bus
 - [ ] 20 - Instruction Timing
 - [ ] 14 - Delta Modulation Channel
