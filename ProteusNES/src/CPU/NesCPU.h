@@ -136,10 +136,27 @@ namespace NS_NES {
                 }
             }
 
+            inline int rank(INTERRUPT source) {
+                switch (source) {
+                    default:
+                    case INTERRUPT::NONE: return 0;
+                    case INTERRUPT::BRK: return 1;
+                    case INTERRUPT::IRQ: return 2;
+                    case INTERRUPT::NMI: return 3;
+                    case INTERRUPT::RST: return 4;
+                }
+            }
+
+            inline void latchInterrupt(INTERRUPT& dst, INTERRUPT src) {
+                if (rank(src) > rank(dst)) {
+                    dst = src;
+                }
+            }
+
             /**
              * @brief  Poll the interrupt lines to determine if the next instruction should be an interrupt.
              */
-            void pollInterrupts();
+            INTERRUPT pollInterrupts();
 
             /**
              * @brief Helper function to obtain the value of a specific status flag

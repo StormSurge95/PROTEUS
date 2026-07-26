@@ -20,9 +20,9 @@
 - [x] 16 - CHR ROM is not writable
 - [x] 16 - PPU Register Mirroring
 - [x] 16 - PPU Register Open Bus
-- [X] 17 - VBlank beginning
-- [X] 17 - VBlank end
-- [ ] 17 - NMI Control
+- [x] 17 - VBlank beginning
+- [x] 17 - VBlank end
+- [x] 17 - NMI Control
 - [ ] 17 - NMI Timing
 - [ ] 17 - NMI Suppression
 - [ ] 17 - NMI at VBlank end

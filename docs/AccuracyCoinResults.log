@@ -91,7 +91,7 @@ P11 - UNOFFICIAL IMMEDIATES
     T7 - $CB AXS IMMEDIATE——————————————————————PASS
     T8 - $EB SBC IMMEDIATE——————————————————————PASS
 P12 - CPU INTERRUPTS
-    T1 - INTERRUPT FLAG LATENCY—————————————————FAIL 3
+    T1 - INTERRUPT FLAG LATENCY—————————————————FAIL 2
     T2 - NMI OVERLAP BRK————————————————————————FAIL 2
     T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
 P13 - APU REGISTERS AND DMA TESTS
@@ -127,7 +127,7 @@ P16 - PPU BEHAVIOR
 P17 - PPU VBLANK TIMING
     T1 - VBLANK BEGINNING———————————————————————PASS
     T2 - VBLANK END—————————————————————————————PASS
-    T3 - NMI CONTROL————————————————————————————FAIL 8
+    T3 - NMI CONTROL————————————————————————————PASS
     T4 - NMI TIMING—————————————————————————————FAIL 1
     T5 - NMI SUPPRESSION————————————————————————FAIL 1
     T6 - NMI AT VBLANK END——————————————————————FAIL 1

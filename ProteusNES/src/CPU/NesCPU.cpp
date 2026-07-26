@@ -460,7 +460,23 @@ void CPU::powerdown() {
 
 void CPU::clock() {
     if (!serviceDMA()) {
+        const INTERRUPT candidate = pollInterrupts();
+        const u8 exeCycle = cycles + 1;
+        const bool wasIseq = interruptSource != INTERRUPT::NONE;
+        const bool wasBranch = cycles != 0 && currInst != nullptr && currInst->address == &CPU::REL_B;
+
         clockInstruction();
+
+        if (!wasIseq) {
+            if (wasBranch) {
+                // branch-specific hardware polling points
+                if (exeCycle == 2 || exeCycle == 4) {
+                    latchInterrupt(pendingInterruptSource, candidate);
+                }
+            } else if (cycles == 0) {
+                latchInterrupt(pendingInterruptSource, candidate);
+            }
+        }
     }
     // increment total cycles
     totalCycles++;
@@ -478,9 +494,6 @@ void CPU::clockInstruction() {
         // carry mid-instruction poll results forward
         interruptSource = pendingInterruptSource;
         pendingInterruptSource = INTERRUPT::NONE;
-
-        // perform default cycle-1 interrupt polling
-        pollInterrupts();
 
         // emit acknowledgement events only after interrupt is actually selected for this instruction
         if (eventSink) {
@@ -519,39 +532,15 @@ void CPU::clockInstruction() {
     }
 }
 
-void CPU::pollInterrupts() {
-    auto rank = [](INTERRUPT src) -> int {
-        switch (src) {
-            case INTERRUPT::NONE: return 0;
-            case INTERRUPT::BRK:  return 1;
-            case INTERRUPT::IRQ:  return 2;
-            case INTERRUPT::NMI:  return 3;
-            case INTERRUPT::RST:  return 4;
-        }
-        return 0;
-    };
-
-    auto latchHigherPriority = [&](INTERRUPT& dst, INTERRUPT src) {
-        if (rank(src) > rank(dst)) {
-            dst = src;
-        }
-    };
-
-    INTERRUPT sampled = INTERRUPT::NONE;
-
+INTERRUPT CPU::pollInterrupts() {
     if (resetPending)
-        sampled = INTERRUPT::RST;
+        return INTERRUPT::RST;
     else if (nmiPending)
-        sampled = INTERRUPT::NMI; // acknowledge NMI
+        return INTERRUPT::NMI; // acknowledge NMI
     else if (hasPendingIrq() && !interruptFlagViaPoll)
-        sampled = INTERRUPT::IRQ; // acknowlege IRQ
+        return INTERRUPT::IRQ; // acknowlege IRQ
 
-    if (sampled == INTERRUPT::NONE) return;
-
-    if (cycles == 1)
-        latchHigherPriority(interruptSource, sampled);
-    else
-        latchHigherPriority(pendingInterruptSource, sampled);
+    return INTERRUPT::NONE;
 }
 
 const CPU_STATE CPU::GetState() const {
