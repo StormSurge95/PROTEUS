@@ -29,6 +29,7 @@ void APU::reset() {
     masterCycle = cycle = resetAt = 0;
     pendingReset = false;
 
+    frameIrqClearPending = false;
     irqRequested = false;
     deassertIrqLines();
 
@@ -163,6 +164,13 @@ void APU::clock() {
     dmc->clockTimer();
     dmc->clockDmcStart();
 
+    sptr<CPU> cpup = cpu.lock();
+    if (frameIrqClearPending && !cpup->isGetCycle()) {
+        frameIrqClearPending = false;
+        irqRequested = false;
+        cpup->setIrqLine_APU(false);
+    }
+
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
 
@@ -182,11 +190,10 @@ u8 APU::read4015() {
     // bit 5 is open bus
     u8 u = apuBus & 0x20;
     u8 f = (irqRequested ? 0x40 : 0x00);
-    // reading the frame counter interrupt flag clears it
-    irqRequested = false;
-    cpu.lock()->setIrqLine_APU(false);
     // reading the dmc interrupt flag DOES NOT clear it
     u8 i = dmc->interrupt << 7;
+
+    frameIrqClearPending = true;
     return p1 | p2 | t | n | d | u | f | i;
 }
 
@@ -211,6 +218,7 @@ void APU::write4017(u8 data) {
     inhibitIRQ = ((data >> 6) & 0x01) > 0;
     // clear IRQ flag if IRQ is inhibited
     if (inhibitIRQ) {
+        frameIrqClearPending = false;
         irqRequested = false;
         cpu.lock()->setIrqLine_APU(false);
     }
@@ -350,6 +358,7 @@ void APU::clearRuntimeState() {
     use5step = false;
     inhibitIRQ = false;
     irqRequested = false;
+    frameIrqClearPending = false;
 }
 
 void APU::clearAudioOutputState() {

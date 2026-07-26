@@ -114,6 +114,7 @@ namespace NS_NES {
             u8 apuBus = 0x00;
             /// @brief Flag to trigger FrameCounter cycle reset.
             bool pendingReset = false;
+            bool frameIrqClearPending = false;
 
             /// @brief Flag for which FrameCounter sequence to use.
             bool use5step = false;
