@@ -240,8 +240,7 @@ bool CPU::serviceDMA() {
 
         dmcPending = false;
         dmcActive = true;
-        dmcDummy = true;
-        dmcAlignment = false;
+        dmcPhase = DMC_PHASE::HALT;
         clockDMC();
         return true;
     }
@@ -300,23 +299,33 @@ void CPU::clockOAM() {
 
 void CPU::clockDMC() {
     halt();
-    if (dmcDummy) {
-        dmcDummy = false;
-        return;
+    
+    switch (dmcPhase) {
+        case DMC_PHASE::HALT:
+            dmcPhase = DMC_PHASE::DUMMY;
+            return;
+        case DMC_PHASE::DUMMY:
+            dmcPhase = isGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
+            return;
+        case DMC_PHASE::ALIGN:
+            dmcPhase = DMC_PHASE::READ;
+            return;
+        case DMC_PHASE::READ:
+            if (!isGetCycle()) return;
+
+            dmcData = read(dmcAddr);
+            apu.lock()->dmcOnByteFetched(dmcData);
+
+            dmcPhase = DMC_PHASE::IDLE;
+            dmcActive = false;
+            halted = false;
+            return;
+        case DMC_PHASE::IDLE:
+        default:
+            dmcActive = false;
+            halted = false;
+            return;
     }
-
-    if (!isGetCycle()) {
-        dmcAlignment = true;
-        return;
-    }
-
-    dmcData = read(dmcAddr);
-    apu.lock()->dmcOnByteFetched(dmcData);
-
-    dmcActive = false;
-    dmcDummy = false;
-    dmcAlignment = false;
-    halted = false;
 }
 
 void CPU::powerup(u32 s) {
@@ -335,7 +344,7 @@ void CPU::powerup(u32 s) {
     lastReadAddr = addrBus = cpuBus = 0;
 
     // clear DMA state
-    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcDummy = dmcAlignment = dmcLoad = false;
+    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcLoad = false;
     oamDummy = true;
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
 
@@ -385,7 +394,7 @@ void CPU::reset() {
     oamActive = false;
     oamDummy = true;
     oamPage = oamAddr = oamData = 0;
-    dmcPending = dmcActive = dmcDummy = dmcAlignment = dmcLoad = false;
+    dmcPending = dmcActive = dmcLoad = false;
     dmcAddr = 0;
     dmcData = 0;
 
@@ -409,7 +418,7 @@ void CPU::powerdown() {
     // cancel DMA state completely
     oamDummy = true;
     delayDMA = oamActive = dmcPending = dmcActive =
-    dmcDummy = dmcAlignment = dmcLoad = false;
+    dmcLoad = false;
     oamPage = oamAddr = oamData = dmcAddr = dmcData = 0;
 
     // clear transient decode/bus helper state
@@ -525,8 +534,6 @@ void CPU::requestDmcDma(u16 addr, bool load) {
     dmcPending = true;
     dmcLoad = load;
     dmcAddr = addr;
-    dmcDummy = false;
-    dmcAlignment = false;
 }
 
 void CPU::sampleNmiLine(bool line) {

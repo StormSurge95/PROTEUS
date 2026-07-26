@@ -161,6 +161,7 @@ void APU::clock() {
     triangle->clockTimer();
     noise->clockTimer();
     dmc->clockTimer();
+    dmc->clockDmcStart();
 
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
@@ -195,7 +196,13 @@ void APU::write4015(u8 data) {
     pulse2->enable(((data >> 1) & 0x01) > 0);
     triangle->enable(((data >> 2) & 0x01) > 0);
     noise->enable(((data >> 3) & 0x01) > 0);
-    if (((data >> 4) & 0x01) > 0) dmc->enable(); else dmc->disable();
+    if (((data >> 4) & 0x01) > 0)
+        dmc->enable();
+    else
+        dmc->disable();
+
+    dmc->interrupt = false;
+    cpu.lock()->setIrqLine_DMC(dmc->interrupt);
 }
 
 void APU::write4017(u8 data) {

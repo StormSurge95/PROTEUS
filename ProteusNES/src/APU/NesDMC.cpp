@@ -58,15 +58,16 @@ void DMC_Channel::write(u16 addr, u8 data) {
 
 void DMC_Channel::clockTimer() {
     // timer outputs a clock signal when timer = 0
-    if (timer <= 0) {
+    if (timer == 0) {
         // timer is automatically restarted
-        timer = period;
+        timer = period - 1;
         // if silence flag is clear, output level changes based on bit 0 of the shift register
         if (!silent) {
+            bool up = ((shifter & 0x01) == 1);
             // if bit is 1 (and output <= 125), add 2
-            if ((shifter & 0x01) == 1 && outputLevel <= 125) outputLevel += 2;
+            if (up && outputLevel <= 125) outputLevel += 2;
             // if bit is 0 (and output >= 2) sub 2
-            else if ((shifter & 0x01) == 0 && outputLevel >= 2) outputLevel -= 2;
+            else if (!up && outputLevel >= 2) outputLevel -= 2;
         }
         // clock the right shifter
         clockShifter();
@@ -98,7 +99,8 @@ void DMC_Channel::newOutputCycle() {
         shifter = sampleBuffer;
         // update helper vars to trigger DMCDMA
         noSample = true;
-        if (bytesRemaining > 0) apu->cpu.lock()->requestDmcDma(currAddr, false);
+        if (bytesRemaining > 0 && !dmcStartPending)
+            apu->cpu.lock()->requestDmcDma(currAddr, false);
     }
 }
 
@@ -123,28 +125,56 @@ void DMC_Channel::onByteFetch(u8 byte) {
 
 void DMC_Channel::enable() {
     enabled = true;
-    if (bytesRemaining == 0) {
-        currAddr = sampleAddr;
-        bytesRemaining = sampleLength;
-    }
+
+    if (bytesRemaining != 0) return;
+
+    currAddr = sampleAddr;
+    bytesRemaining = sampleLength;
 
     if (bytesRemaining == 0) return;
 
-    if (noSample) apu->cpu.lock()->requestDmcDma(currAddr, true);
+    sptr<CPU> cpup = apu->cpu.lock();
+
+    dmcStartPending = dmcStartDelayArmed = true;
+    
+    dmcStartDelay = cpup->isGetCycle() ? 2 : 3;
+}
+
+void DMC_Channel::clockDmcStart() {
+    if (!dmcStartPending) return;
+
+    if (dmcStartDelayArmed) {
+        dmcStartDelayArmed = false;
+        return;
+    }
+
+    if (--dmcStartDelay != 0) return;
+
+    dmcStartPending = false;
+
+    if (noSample && bytesRemaining > 0) {
+        apu->cpu.lock()->requestDmcDma(currAddr, true);
+    }
 }
 
 void DMC_Channel::disable() {
-    enabled = false;
+    dmcStartDelay = 0;
+    enabled = dmcStartDelayArmed = dmcStartPending = false;
     bytesRemaining = 0;
     apu->cpu.lock()->setIrqLine_DMC(interrupt = false);
 }
 
 void DMC_Channel::init(ConsoleRegion* r) {
     region = r;
-    irqEnabled = silent = loop = enabled = interrupt = false;
-    noSample = true;
-    sampleAddr = currAddr = sampleLength = bytesRemaining = timer = 0x0000;
-    sampleBuffer = shifter = bitsRemaining = outputLevel = 0x00;
+    irqEnabled = loop = enabled = interrupt = false;
+    noSample = silent = true;
+    sampleAddr = currAddr = sampleLength = bytesRemaining = 0x0000;
+    sampleBuffer = shifter = outputLevel = 0x00;
+    bitsRemaining = 8;
+    period = GetDmcRate(*region, 0);
+    timer = 0;
+    dmcStartDelay = 0;
+    dmcStartDelayArmed = dmcStartPending = false;
 }
 
 void DMC_Channel::reset() {
@@ -152,7 +182,7 @@ void DMC_Channel::reset() {
     interrupt = false;
     irqEnabled = false;
 
-    silent = false;
+    silent = true;
     noSample = true;
 
     currAddr = sampleAddr;
@@ -160,9 +190,12 @@ void DMC_Channel::reset() {
 
     sampleBuffer = 0;
     shifter = 0;
-    bitsRemaining = 0;
+    bitsRemaining = 8;
 
     timer = 0;
+    
+    dmcStartDelay = 0;
+    dmcStartDelayArmed = dmcStartPending = false;
 
     apu->cpu.lock()->setIrqLine_DMC(false);
 }

@@ -19,9 +19,9 @@ namespace NS_NES {
             /// @brief irq enabled flag (DMC IRQ only)
             bool irqEnabled = false;
             /// @brief silent flag; used to determine whether the output pin sends a value or silence
-            bool silent = false;
+            bool silent = true;
             /// @brief no sample flag; used to determine whether a dmc reload is necessary
-            bool noSample = false;
+            bool noSample = true;
             /// @brief loop flag; if set, we will simply restart from the beginning of the sample rather than request a reload
             bool loop = false;
 
@@ -30,21 +30,25 @@ namespace NS_NES {
             /// @brief address of current byte of current sample
             u16 currAddr = 0x0000;
             /// @brief total number of bytes in current sample
-            u16 sampleLength = 0x0000;
+            u16 sampleLength = 0;
             /// @brief unplayed bytes left in current sample
-            u16 bytesRemaining = 0x0000;
+            u16 bytesRemaining = 0;
 
             /// @brief register to hold the next sample byte to be used for playback
-            u8 sampleBuffer = 0x00;
+            u8 sampleBuffer = 0;
             /// @brief shift register holding the current byte being processed
-            u8 shifter = 0x00;
+            u8 shifter = 0;
             /// @brief number of bits left before shift register is "empty"
-            u8 bitsRemaining = 0x00;
+            u8 bitsRemaining = 8;
 
             /// @brief reload value of channel timer
             u16 period = 1;
             /// @brief current value of channel timer
             u16 timer = 0x0000;
+
+            bool dmcStartPending = false;
+            bool dmcStartDelayArmed = false;
+            u8 dmcStartDelay = 0;
 
             /// @brief current sound volume to output on sample request
             u8 outputLevel = 0x00;
@@ -78,6 +82,8 @@ namespace NS_NES {
 
             /// @brief Clocks the timer of the channel and performs necessary operations based on result
             void clockTimer();
+
+            void clockDmcStart();
 
             /**
              * @brief Provides an output sample

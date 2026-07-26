@@ -33,9 +33,9 @@
 - [x] 01 - All NOP instructions
 - [x] 16 - PPU Read Buffer
 - [x] 16 - Palette RAM Quirks
-- [ ] 13 - DMA + Open Bus
-- [ ] 20 - Instruction Timing
-- [ ] 14 - Delta Modulation Channel
+- [x] 13 - DMA + Open Bus
+- [x] 20 - Instruction Timing
+- [x] 14 - Delta Modulation Channel
 - [ ] 12 - Interrupt Flag Latency
 - [ ] 20 - JSR Edge Cases
 - [ ] 14 - Frame Counter IRQ

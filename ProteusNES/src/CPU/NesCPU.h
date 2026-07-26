@@ -290,10 +290,16 @@ namespace NS_NES {
             /// @brief Helper flag for running OAMDMA with accurate cycle counts
             bool oamDummy = true;
 
+            enum class DMC_PHASE : u8 {
+                IDLE,
+                HALT,
+                DUMMY,
+                ALIGN,
+                READ
+            } dmcPhase = DMC_PHASE::IDLE;
+
             bool dmcPending = false;
             bool dmcActive = false;
-            bool dmcDummy = false;
-            bool dmcAlignment = false;
             bool dmcLoad = false;
             u16 dmcAddr = 0x0000;
             u8 dmcData = 0x00;

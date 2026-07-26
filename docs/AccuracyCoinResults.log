@@ -95,23 +95,23 @@ P12 - CPU INTERRUPTS
     T2 - NMI OVERLAP BRK————————————————————————FAIL 2
     T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
 P13 - APU REGISTERS AND DMA TESTS
-    T1 - DMA + OPEN BUS—————————————————————————FAIL 2
+    T1 - DMA + OPEN BUS—————————————————————————PASS
     T2 - DMA + $2002 READ———————————————————————FAIL 2
     T3 - DMA + $2007 READ———————————————————————FAIL 2
     T4 - DMA + $2007 WRITE——————————————————————FAIL 1
     T5 - DMA + $4015 READ———————————————————————FAIL 2
     T6 - DMA + $4016 READ———————————————————————FAIL 1
-    T7 - DMC DMA BUS CONFLICTS——————————————————FAIL 1
-    T8 - DMC DMA + OAM DMA——————————————————————FAIL 1
-    T9 - EXPLICIT DMA ABORT—————————————————————FAIL 1
-    TA - IMPLICIT DMA ABORT—————————————————————FAIL 1
+    T7 - DMC DMA BUS CONFLICTS——————————————————FAIL 2
+    T8 - DMC DMA + OAM DMA——————————————————————FAIL 2
+    T9 - EXPLICIT DMA ABORT—————————————————————FAIL 2
+    TA - IMPLICIT DMA ABORT—————————————————————FAIL 2
 P14 - APU TESTS
     T1 - LENGTH COUNTER—————————————————————————PASS
     T2 - LENGTH TABLE———————————————————————————PASS
     T3 - FRAME COUNTER IRQ——————————————————————FAIL 7
     T4 - FRAME COUNTER 4-STEP———————————————————FAIL 2
     T5 - FRAME COUNTER 5-STEP———————————————————FAIL 2
-    T6 - DELTA MODULATION CHANNEL———————————————FAIL A
+    T6 - DELTA MODULATION CHANNEL———————————————PASS
     T7 - APU REGISTER ACTIVATION————————————————FAIL 1
     T8 - CONTROLLER STROBING————————————————————FAIL 4
     T9 - CONTROLLER CLOCKING————————————————————PASS
@@ -141,7 +141,7 @@ P18 - SPRITE EVALUATION
     T6 - MISALIGNED OAM BEHAVIOR————————————————FAIL 1
     T7 - ADDRESS $2004 BEHAVIOR—————————————————FAIL 1
     T8 - OAM CORRUPTION—————————————————————————FAIL 1
-    T9 - INC $4014——————————————————————————————FAIL 1
+    T9 - INC $4014——————————————————————————————FAIL 2
 P19 - PPU MISC.
     T1 - T REGISTER QUIRKS——————————————————————FAIL 1
     T2 - STALE BG SHIFT REGISTERS———————————————FAIL 1
@@ -153,8 +153,8 @@ P19 - PPU MISC.
     T8 - ALE + READ—————————————————————————————FAIL 1
     T9 - HYBRID ADDRESSES———————————————————————FAIL 1
 P20 - CPU BEHAVIOR 2
-    T1 - INSTRUCTION TIMING—————————————————————FAIL 1
+    T1 - INSTRUCTION TIMING—————————————————————PASS
     T2 - IMPLIED DUMMY READS————————————————————FAIL 3
     T3 - BRANCH DUMMY READS—————————————————————PASS
     T4 - JSR EDGE CASES—————————————————————————PASS
-    T5 - INTERNAL DATA BUS——————————————————————FAIL 1
+    T5 - INTERNAL DATA BUS——————————————————————FAIL 2
