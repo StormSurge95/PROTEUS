@@ -138,17 +138,6 @@ void DMC_Channel::enable() {
     dmcStartPending = dmcStartDelayArmed = true;
     
     dmcStartDelay = cpup->isGetCycle() ? 3 : 2;
-
-    const CPU_STATE state = cpup->GetState();
-
-    if (state.pc == 0xD0D6) {
-        printf(
-            "[DMC-I START] CPU=%llu get=%u delay=%u\n",
-            static_cast<unsigned long long>(state.cycle),
-            cpup->isGetCycle(),
-            dmcStartDelay
-        );
-    }
 }
 
 void DMC_Channel::clockDmcStart() {

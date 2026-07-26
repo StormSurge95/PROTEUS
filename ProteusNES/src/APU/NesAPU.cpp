@@ -4,6 +4,13 @@
 
 using namespace NS_NES;
 
+namespace {
+    bool traceFrameCounter = false;
+    bool traceFirstFlagPrinted = false;
+    unsigned traceFrameCounterId = 0;
+    u64 traceFrameCounterWriteMaster = 0;
+}
+
 void APU::connectEventSink(NesEventSink* sink) {
     eventSink = sink;
     if (dmc) dmc->connectEventSink(sink);
@@ -30,6 +37,7 @@ void APU::reset() {
     pendingReset = false;
 
     frameIrqClearPending = false;
+    frameIrqFinalizePending = false;
     irqRequested = false;
     deassertIrqLines();
 
@@ -171,6 +179,13 @@ void APU::clock() {
         cpup->setIrqLine_APU(false);
     }
 
+    if (frameIrqFinalizePending) {
+        frameIrqFinalizePending = false;
+
+        irqRequested = !inhibitIRQ;
+        cpup->setIrqLine_APU(irqRequested);
+    }
+
     // clock frame counter sequence every CPU cycle
     clockFrameCounter();
 
@@ -223,15 +238,13 @@ void APU::write4017(u8 data) {
         cpu.lock()->setIrqLine_APU(false);
     }
     // writing to 4017 triggers a delayed FrameCounter reset
-    if ((masterCycle & 0x01) == 1) {
-        // odd cycle = apu cycle
+    sptr<CPU> cpup = cpu.lock();
+    if (cpup->isGetCycle()) {
         resetAt = masterCycle + 3;
-        pendingReset = true;
     } else {
-        // even cycle = cpu cycle
         resetAt = masterCycle + 4;
-        pendingReset = true;
     }
+    pendingReset = true;
     // setting 5-step mode triggers immediate quarter/half frame signals
     if (use5step) {
         quarterFrame();
@@ -243,50 +256,48 @@ void APU::clockFrameCounter() {
     masterCycle++;
     cycle++;
 
-    if (IsQuarterFrame(*region, cycle, !use5step))
+    if (IsQuarterFrame(*region, cycle, !use5step)) {
         quarterFrame();
-
-    if (IsHalfFrame(*region, cycle, !use5step))
-        halfFrame();
-
-    if (!use5step && !inhibitIRQ && (cycle == GetIrqSetA(*region) || cycle == GetIrqSetB(*region))) {
-        irqRequested = true;
-        if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
-        cpu.lock()->setIrqLine_APU(true);
     }
 
-    if (IsResetFrame(*region, cycle, !use5step))
-        cycle = 0;
+    if (IsHalfFrame(*region, cycle, !use5step)) {
+        halfFrame();
+    }
 
-    // switch (cycle) {
-    //     case 7457:
-    //     case 22371: // quarter frames
-    //         quarterFrame();
-    //         break;
-    //     case 14913: // half frame
-    //         quarterFrame();
-    //         halfFrame();
-    //         break;
-    //     case 29828: // irq trigger (only during 4-step with irq enabled)
-    //         if (!use5step && !inhibitIRQ) {
-    //             irqRequested = true;
-    //             if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
-    //             cpu.lock()->setIrqLine_APU(true);
-    //         }
-    //         break;
-    //     case 29829: // end frame (4-step)
-    //         if (!use5step) {
-    //             quarterFrame();
-    //             halfFrame();
-    //             cycle = 0;
-    //         }
-    //         break;
-    //     case 37281: // end frame (5-step)
-    //         quarterFrame();
-    //         halfFrame();
-    //         cycle = 0;
-    //         break;
-    // }
+    const bool resetFrame = IsResetFrame(*region, cycle, !use5step);
+
+    if (!use5step) {
+        const u32 flagSetCycle = GetIrqSetA(*region);
+        const u32 lineSetCycle = GetIrqSetB(*region);
+
+        if (cycle == flagSetCycle) {
+            // The status flag becomes visible regardless of inhibition.
+            irqRequested = true;
+        }
+
+        if (cycle == lineSetCycle) {
+            // The flag is set for a second CPU cycle.
+            irqRequested = true;
+
+            // The external IRQ line respects the inhibit setting.
+            if (!inhibitIRQ) {
+                if (eventSink)
+                    eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_APU);
+
+                cpu.lock()->setIrqLine_APU(true);
+            }
+        }
+    }
+
+    if (resetFrame) {
+        if (!use5step) {
+            // Apply the final inhibit-dependent state on the following
+            // CPU/APU cycle, after the two temporary flag-set phases.
+            frameIrqFinalizePending = true;
+        }
+
+        cycle = 0;
+    }
 }
 
 void APU::quarterFrame() {
@@ -359,6 +370,7 @@ void APU::clearRuntimeState() {
     inhibitIRQ = false;
     irqRequested = false;
     frameIrqClearPending = false;
+    frameIrqFinalizePending = false;
 }
 
 void APU::clearAudioOutputState() {
