@@ -67,38 +67,20 @@ namespace NS_NES {
             struct {
                 bool pending = false;
                 bool value = false;
-                bool armed = false;
 
                 void set(bool val) {
                     pending = true;
                     value = val;
-                    armed = false;
                 }
             } IFVP;
 
             bool interruptFlagViaPoll = false;  // I flag as seen by pollInterrupts()
-            bool pendingSyncIFVP = false;       // whether to sync I flag after next poll
-            bool pendingValueIFVP = false;      // value to apply to I on next sync.
 
-            inline void deferIFVP() {
-                IFVP.set(getFlag(FLAGS::I));
-            }
+            inline void deferIFVP() { IFVP.set(getFlag(FLAGS::I)); }
 
-            inline void newInstruction() {
-                if (IFVP.pending) {
-                    if (IFVP.armed) {
-                        interruptFlagViaPoll = IFVP.value;
-                        IFVP.pending = false;
-                    } else IFVP.armed = true;
-                }
-                absAddr = relAddr = indAddr = offset = fetched = 0;
-                paged = branch = false;
-            }
+            void newInstruction();
 
-            inline void syncIFVP() {
-                interruptFlagViaPoll = getFlag(FLAGS::I) != 0;
-                pendingSyncIFVP = false;
-            }
+            void syncIFVP();
 
             /**
              * @brief Helper function to determine page boundary crossings
@@ -298,6 +280,7 @@ namespace NS_NES {
                 READ
             } dmcPhase = DMC_PHASE::IDLE;
 
+            bool dmcHaltRetry = false;
             bool dmcPending = false;
             bool dmcActive = false;
             bool dmcLoad = false;

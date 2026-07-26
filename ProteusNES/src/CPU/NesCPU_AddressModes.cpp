@@ -41,19 +41,26 @@ void CPU::REL_B() {
         case 2:
             offset = read(pc++);
             (this->*currInst->operate)();
-            if (!branch) cycles = 0;
-            else spage(offset);
+
+            if (!branch) {
+                cycles = 0;
+                break;
+            }
+            
+            relAddr = static_cast<u16>(pc.value() + static_cast<s16>(static_cast<s8>(offset)));
+            paged = pc.hi != relAddr.hi;
             break;
         case 3:
-            read(pc);
+            read(pc.value());
+
+            pc.lo = relAddr.lo;
+
             if (!paged) cycles = 0;
             break;
         case 4:
-            pollInterrupts();
-            if (((offset >> 7) & 0x01) == 0) // page forward
-                pc.hi++;
-            else // page backward
-                pc.hi--;
+            read(pc.value());
+
+            pc.hi = relAddr.hi;
             cycles = 0;
             break;
     }

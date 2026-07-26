@@ -91,7 +91,7 @@ P11 - UNOFFICIAL IMMEDIATES
     T7 - $CB AXS IMMEDIATE——————————————————————PASS
     T8 - $EB SBC IMMEDIATE——————————————————————PASS
 P12 - CPU INTERRUPTS
-    T1 - INTERRUPT FLAG LATENCY—————————————————FAIL 2
+    T1 - INTERRUPT FLAG LATENCY—————————————————PASS
     T2 - NMI OVERLAP BRK————————————————————————FAIL 2
     T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
 P13 - APU REGISTERS AND DMA TESTS

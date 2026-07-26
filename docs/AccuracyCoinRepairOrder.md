@@ -36,8 +36,8 @@
 - [x] 13 - DMA + Open Bus
 - [x] 20 - Instruction Timing
 - [x] 14 - Delta Modulation Channel
-- [ ] 12 - Interrupt Flag Latency
-- [ ] 20 - JSR Edge Cases
+- [x] 12 - Interrupt Flag Latency
+- [x] 20 - JSR Edge Cases
 - [ ] 14 - Frame Counter IRQ
 - [ ] 14 - Controller Strobing
 - [ ] 13 - DMA + $2007 Read

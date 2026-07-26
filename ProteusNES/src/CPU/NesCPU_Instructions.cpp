@@ -291,15 +291,8 @@ void CPU::RTI() { // return from interrupt
             sp++;
             break;
         case 4: // read status from stack
-            {
-                u8 p = read(0x0100 + sp);
-                setFlag(FLAGS::C, (p & 0x01) > 0);
-                setFlag(FLAGS::Z, ((p >> 1) & 0x01) > 0);
-                setFlag(FLAGS::I, ((p >> 2) & 0x01) > 0);
-                setFlag(FLAGS::D, ((p >> 3) & 0x01) > 0);
-                setFlag(FLAGS::V, ((p >> 6) & 0x01) > 0);
-                setFlag(FLAGS::N, ((p >> 7) & 0x01) > 0);
-            }
+            status = ((status & 0x30) | (read(0x0100 + sp) & 0xCF));
+            syncIFVP();
             sp++;
             break;
         case 5: // read pc.lo from stack
@@ -308,7 +301,6 @@ void CPU::RTI() { // return from interrupt
             break;
         case 6: // read pc.hi from stack
             pc.hi = read(0x0100 + sp);
-            syncIFVP();
             cycles = 0;
             break;
     }

@@ -135,10 +135,6 @@ u8 CPU::read(u16 addr, bool readonly) {
         // read from PPU registers
         ret = ppu.lock()->read(addr, readonly);
         if (readonly) return ret;
-    } else if (addr == 0x4014) {
-        // read PPU OAM data
-        ret = ppu.lock()->readOAMByte();
-        if (readonly) return ret;
     } else if (addr == 0x4015) {
         // read APU status
         return (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
@@ -232,15 +228,20 @@ bool CPU::serviceDMA() {
     }
 
     if (dmcPending) {
-        if (delayDMA) return false;
+        const bool initHaltPhase = dmcLoad ? isGetCycle() : !isGetCycle();
 
-        if (dmcLoad && !isGetCycle()) return false;
+        if (!dmcHaltRetry && !initHaltPhase) return false;
 
-        if (!dmcLoad && isGetCycle()) return false;
+        if (delayDMA) {
+            dmcHaltRetry = true;
+            return false;
+        }
 
         dmcPending = false;
+        dmcHaltRetry = false;
         dmcActive = true;
         dmcPhase = DMC_PHASE::HALT;
+
         clockDMC();
         return true;
     }
@@ -344,7 +345,7 @@ void CPU::powerup(u32 s) {
     lastReadAddr = addrBus = cpuBus = 0;
 
     // clear DMA state
-    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcLoad = false;
+    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
     oamDummy = true;
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
 
@@ -352,7 +353,8 @@ void CPU::powerup(u32 s) {
     interruptSource = pendingInterruptSource = INTERRUPT::NONE;
     resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = false;
     nmiPending = nmiLineSampled = false;
-    interruptFlagViaPoll = pendingSyncIFVP = pendingValueIFVP = false;
+    interruptFlagViaPoll = false;
+    IFVP = {};
 
     // reset execution counter
     totalCycles = cycles = 0;
@@ -394,14 +396,14 @@ void CPU::reset() {
     oamActive = false;
     oamDummy = true;
     oamPage = oamAddr = oamData = 0;
-    dmcPending = dmcActive = dmcLoad = false;
+    dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
     dmcAddr = 0;
     dmcData = 0;
 
     // clear cpu-owned pending edge/latch state
     nmiPending = nmiLineSampled = false;
     interruptFlagViaPoll = false;
-    pendingSyncIFVP = pendingValueIFVP = false;
+    IFVP = {};
 }
 
 void CPU::powerdown() {
@@ -412,13 +414,13 @@ void CPU::powerdown() {
 
     // cancel pending reset/interrupt activity
     resetPending = nmiPending = nmiLineSampled = irqLine_APU =
-    irqLine_DMC = irqLine_Mapper = interruptFlagViaPoll =
-    pendingSyncIFVP = pendingValueIFVP = false;
+    irqLine_DMC = irqLine_Mapper = interruptFlagViaPoll = false;
+    IFVP = {};
     
     // cancel DMA state completely
     oamDummy = true;
     delayDMA = oamActive = dmcPending = dmcActive =
-    dmcLoad = false;
+    dmcLoad = dmcHaltRetry = false;
     oamPage = oamAddr = oamData = dmcAddr = dmcData = 0;
 
     // clear transient decode/bus helper state
@@ -532,6 +534,7 @@ void CPU::requestDmcDma(u16 addr, bool load) {
     if (dmcPending || dmcActive) return;
 
     dmcPending = true;
+    dmcHaltRetry = false;
     dmcLoad = load;
     dmcAddr = addr;
 }
@@ -542,4 +545,19 @@ void CPU::sampleNmiLine(bool line) {
     }
 
     nmiLineSampled = line;
+}
+
+void CPU::newInstruction() {
+    if (IFVP.pending) {
+        interruptFlagViaPoll = IFVP.value;
+        IFVP.pending = false;
+    }
+
+    absAddr = relAddr = indAddr = offset = fetched = 0;
+    paged = branch = false;
+}
+
+void CPU::syncIFVP() {
+    IFVP.pending = false;
+    interruptFlagViaPoll = getFlag(FLAGS::I) != 0;
 }
