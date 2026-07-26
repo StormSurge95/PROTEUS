@@ -55,8 +55,6 @@ namespace NS_NES {
             u8 y = 0; /// @brief Current Y register
             u8 sp = 0; /// @brief Current Stack Pointer
             u8 status = 0; /// @brief Current CPU status
-            u8 dStatus = 0; /// @brief delay CPU status; used for delayed status updates
-            bool updateStatus = false; /// @brief update flag; determines whether to update status using `dStatus`
             u8 fetched = 0x00; /// @brief data fetched during instruction sequence
             u8 opcode = 0x00; /// @brief opcode of current instruction sequence
             INST* currInst = nullptr; /// @brief operation information of current instruction sequence
@@ -276,6 +274,7 @@ namespace NS_NES {
             bool irqLine_DMC = false;
             bool irqLine_Mapper = false;
             /// @brief NMI flag
+            bool nmiLineSampled = false;
             bool nmiPending = false;
             /// @brief total cycles completed by CPU
             u64 totalCycles = 0;
@@ -371,6 +370,7 @@ namespace NS_NES {
             void setIrqLine_APU(bool state) { irqLine_APU = state; }
             void setIrqLine_DMC(bool state) { irqLine_DMC = state; }
             void setIrqLine_Mapper(bool state) { irqLine_Mapper = state; }
+            void sampleNmiLine(bool line);
             bool serviceDMA();
             bool hasPendingIrq() const { return irqLine_APU || irqLine_DMC || irqLine_Mapper; }
             bool isGetCycle() const { return (totalCycles & 0x01) == 0; }

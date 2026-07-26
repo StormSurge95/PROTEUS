@@ -100,8 +100,8 @@ void NES::clockCyclePPU() {
     ppu->clock();
     cart->mapper->ppuclock(ppu->cycle);
 
-    cpu->nmiPending |= ppu->nmiRequested;
-    ppu->nmiRequested = false;
+    // cpu->nmiPending |= ppu->nmiRequested;
+    // ppu->nmiRequested = false;
 
     cpu->setIrqLine_Mapper(cart->mapper->irqRequestActive());
 }
@@ -113,8 +113,24 @@ void NES::clockCycleCPU() {
 }
 
 void NES::clockMaster() {
-    if ((masterClock % GetPpuClockDiv(cart->region)) == 0) clockCyclePPU();
-    if ((masterClock % GetCpuClockDiv(cart->region)) == 2) clockCycleCPU();
+    const u8 cpuDiv = GetCpuClockDiv(cart->region);
+    const u8 cpuPhase = masterClock % cpuDiv;
+
+    if ((masterClock % GetPpuClockDiv(cart->region)) == 0) {
+        clockCyclePPU();
+    }
+
+    // CPU exec phase
+    if (cpuPhase == 0) {
+        clockCycleCPU();
+    }
+
+    // TriCNES-style NMI input sampling phase:
+    // four master clocks after CPU microcycle execution
+    if (cpuPhase == 4) {
+        cpu->sampleNmiLine(ppu->getNmiOutput());
+    }
+
     masterClock++;
 }
 

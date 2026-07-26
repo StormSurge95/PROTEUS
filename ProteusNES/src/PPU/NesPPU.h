@@ -29,6 +29,8 @@ namespace NS_NES {
             // default destructor
             ~PPU() = default;
 
+            bool getNmiOutput() const { return nmiOutput; }
+
             /*
                 Primary scheduling function of the PPU.
                 Determines what operations need to be performed based on

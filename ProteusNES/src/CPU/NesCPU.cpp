@@ -342,7 +342,8 @@ void CPU::powerup(u32 s) {
 
     // clear interrupt and poll bookkeeping
     interruptSource = pendingInterruptSource = INTERRUPT::NONE;
-    resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = nmiPending = false;
+    resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = false;
+    nmiPending = nmiLineSampled = false;
     interruptFlagViaPoll = pendingSyncIFVP = pendingValueIFVP = false;
 
     // reset execution counter
@@ -358,8 +359,6 @@ void CPU::powerup(u32 s) {
 
     // `U` flag should always be set; `I` flag will be set by the reset sequence
     status = (u8)FLAGS::U;
-    dStatus = status;
-    updateStatus = false;
 
     // PC is not yet valid; reset sequence will handle setting it properly
     pc = 0x0000;
@@ -392,7 +391,7 @@ void CPU::reset() {
     dmcData = 0;
 
     // clear cpu-owned pending edge/latch state
-    nmiPending = false;
+    nmiPending = nmiLineSampled = false;
     interruptFlagViaPoll = false;
     pendingSyncIFVP = pendingValueIFVP = false;
 }
@@ -404,55 +403,26 @@ void CPU::powerdown() {
     interruptSource = pendingInterruptSource = INTERRUPT::NONE;
 
     // cancel pending reset/interrupt activity
-    resetPending = false;
-    nmiPending = false;
-    irqLine_APU = false;
-    irqLine_DMC = false;
-    irqLine_Mapper = false;
-    interruptFlagViaPoll = false;
-    pendingSyncIFVP = false;
-    pendingValueIFVP = false;
+    resetPending = nmiPending = nmiLineSampled = irqLine_APU =
+    irqLine_DMC = irqLine_Mapper = interruptFlagViaPoll =
+    pendingSyncIFVP = pendingValueIFVP = false;
     
     // cancel DMA state completely
-    delayDMA = false;
-    oamActive = false;
     oamDummy = true;
-    oamPage = 0;
-    oamAddr = 0;
-    oamData = 0;
-    dmcPending = false;
-    dmcActive = false;
-    dmcDummy = false;
-    dmcAlignment = false;
-    dmcLoad = false;
-    dmcAddr = 0;
-    dmcData = 0;
+    delayDMA = oamActive = dmcPending = dmcActive =
+    dmcDummy = dmcAlignment = dmcLoad = false;
+    oamPage = oamAddr = oamData = dmcAddr = dmcData = 0;
 
     // clear transient decode/bus helper state
-    magic = false;
-    fetched = 0;
-    opcode = 0;
     currInst = nullptr;
-    absAddr = 0;
-    relAddr = 0;
-    indAddr = 0;
-    offset = 0;
-    paged = false;
-    branch = false;
-    prevInstAddrs.clear();
-    cpuBus = 0;
-    addrBus = 0;
+    magic = paged = branch = false;
+    fetched = opcode = absAddr = relAddr =
+    indAddr = offset = cpuBus = addrBus =
     lastReadAddr = 0;
+    prevInstAddrs.clear();
 
     // invalidate CPU state
-    pc = 0;
-    a = 0;
-    x = 0;
-    y = 0;
-    sp = 0;
-    status = 0;
-    dStatus = 0;
-    updateStatus = false;
+    pc = a = x = y = sp = status = 0;
 
     // clear lifecycle state
     totalCycles = 0;
@@ -478,6 +448,7 @@ void CPU::clock() {
             }
         }
     }
+    // sampleNmiLine();
     // increment total cycles
     totalCycles++;
 }
@@ -524,6 +495,32 @@ void CPU::clockInstruction() {
 
         // set current instruction based on opcode value
         currInst = &lookup[opcode];
+
+        // temp log
+        if (currInst->name == "LDX") {
+            bool log = true;
+            int bytes[6] = {
+                // LDX #0
+                0xA2, 0x00,
+                // LDA <$50
+                0xA5, 0x50,
+                // CMP #$03
+                0xC9, 0x03
+            };
+            for (int i = 0; i < 6; i++) {
+                if (read(instPC + i, true) != bytes[i]) {
+                    log = false;
+                }
+                if (!log) break;
+            }
+            if (log) {
+                printf("Bytes: ");
+                for (u16 a = 0x0050; a < 0x005A; a++) {
+                    printf("%u ", read(a, true));
+                }
+                printf("\n");
+            }
+        }
     } else {
         if (currInst->address != nullptr) // if this instruction requires addressing mode logic, then perform that function
             (this->*currInst->address)();
@@ -557,4 +554,12 @@ void CPU::requestDmcDma(u16 addr, bool load) {
     dmcAddr = addr;
     dmcDummy = false;
     dmcAlignment = false;
+}
+
+void CPU::sampleNmiLine(bool line) {
+    if (line && !nmiLineSampled) {
+        nmiPending = true;
+    }
+
+    nmiLineSampled = line;
 }

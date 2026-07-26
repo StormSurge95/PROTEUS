@@ -23,14 +23,14 @@
 - [x] 17 - VBlank beginning
 - [x] 17 - VBlank end
 - [x] 17 - NMI Control
-- [ ] 17 - NMI Timing
-- [ ] 17 - NMI Suppression
-- [ ] 17 - NMI at VBlank end
-- [ ] 17 - NMI disabled at VBlank
-- [ ] 01 - Open Bus
-- [ ] 01 - Dummy read cycles
-- [ ] 01 - Dummy write cycles
-- [ ] 01 - All NOP instructions
+- [x] 17 - NMI Timing
+- [x] 17 - NMI Suppression
+- [x] 17 - NMI at VBlank end
+- [x] 17 - NMI disabled at VBlank
+- [x] 01 - Open Bus
+- [x] 01 - Dummy read cycles
+- [x] 01 - Dummy write cycles
+- [x] 01 - All NOP instructions
 - [ ] 16 - PPU Read Buffer
 - [ ] 16 - Palette RAM Quirks
 - [ ] 13 - DMA + Open Bus

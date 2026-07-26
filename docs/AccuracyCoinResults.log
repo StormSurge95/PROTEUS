@@ -128,10 +128,10 @@ P17 - PPU VBLANK TIMING
     T1 - VBLANK BEGINNING———————————————————————PASS
     T2 - VBLANK END—————————————————————————————PASS
     T3 - NMI CONTROL————————————————————————————PASS
-    T4 - NMI TIMING—————————————————————————————FAIL 1
-    T5 - NMI SUPPRESSION————————————————————————FAIL 1
-    T6 - NMI AT VBLANK END——————————————————————FAIL 1
-    T7 - NMI DISABLED AT VBLANK—————————————————FAIL 1
+    T4 - NMI TIMING—————————————————————————————PASS
+    T5 - NMI SUPPRESSION————————————————————————PASS
+    T6 - NMI AT VBLANK END——————————————————————PASS
+    T7 - NMI DISABLED AT VBLANK—————————————————PASS
 P18 - SPRITE EVALUATION
     T1 - SPRITE OVERFLOW BEHAVIOR———————————————FAIL 1
     T2 - SPRITE 0 HIT BEHAVIOR——————————————————FAIL 1
