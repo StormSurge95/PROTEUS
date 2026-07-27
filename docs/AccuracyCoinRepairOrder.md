@@ -39,7 +39,7 @@
 - [x] 12 - Interrupt Flag Latency
 - [x] 20 - JSR Edge Cases
 - [x] 14 - Frame Counter IRQ
-- [ ] 14 - Controller Strobing
+- [x] 14 - Controller Strobing
 - [ ] 13 - DMA + $2007 Read
 - [ ] 13 - DMA + $2007 Write
 - [ ] 13 - DMA + $2002 Read

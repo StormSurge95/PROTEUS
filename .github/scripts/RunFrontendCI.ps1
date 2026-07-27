@@ -79,7 +79,8 @@ Invoke-Checked -FilePath "cmake" -Arguments @(
     "-DPROTEUS_NES_BUILD_TESTS=OFF",
     "-DPROTEUS_GBA_BUILD_TESTS=OFF",
     "-DCMAKE_TOOLCHAIN_FILE=$toolchainFile",
-    "-DVCPKG_TARGET_TRIPLET=$triplet"
+    "-DVCPKG_TARGET_TRIPLET=$triplet",
+    "-DCMAKE_CXX_FLAGS=-g"
 )
 
 Invoke-Checked -FilePath "cmake" -Arguments @(
@@ -92,5 +93,6 @@ Invoke-Checked -FilePath "ctest" -Arguments @(
     "-C", $Config,
     "--output-on-failure",
     "--verbose",
-    "-LE", "timing"
+    "-LE", "timing",
+    "--debug"
 )

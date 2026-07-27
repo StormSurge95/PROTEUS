@@ -179,6 +179,10 @@ namespace NS_NES {
 
             void clockInstruction();
 
+            u8 conWriteVal = 0x00;
+            u8 conWriteDel = 0x00;
+            void clockConWrite();
+
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions
             void ACC_A();
@@ -280,6 +284,7 @@ namespace NS_NES {
                 READ
             } dmcPhase = DMC_PHASE::IDLE;
 
+            bool dmcHaltAttempt = false;
             bool dmcHaltRetry = false;
             bool dmcPending = false;
             bool dmcActive = false;

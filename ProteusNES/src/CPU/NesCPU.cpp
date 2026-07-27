@@ -181,7 +181,8 @@ void CPU::write(u16 addr, u8 data) {
         oamDummy = true;
     } else if (addr == 0x4016) {
         // write to player1 controller
-        player1.lock()->onWrite(data);
+        conWriteVal = data;
+        conWriteDel = isGetCycle() ? 2 : 1;
         if (eventSink) eventSink->OnControllerWrite(1, 0x4016, data);
     } else if (addr >= 0x4000 && addr <= 0x4017) {
         apu.lock()->write(addr, data);
@@ -203,6 +204,12 @@ void CPU::connectCONT(sptr<Controller>& c, u8 player) {
         // ...but oh well I guess
         player1.lock()->other = player2;
         player2.lock()->other = player1;
+    }
+}
+
+void CPU::clockConWrite() {
+    if (conWriteDel != 0 && --conWriteDel == 0) {
+        player1.lock()->onWrite(conWriteVal);
     }
 }
 
@@ -303,12 +310,15 @@ void CPU::clockDMC() {
     
     switch (dmcPhase) {
         case DMC_PHASE::HALT:
+            read(lastReadAddr);
             dmcPhase = DMC_PHASE::DUMMY;
             return;
         case DMC_PHASE::DUMMY:
+            read(lastReadAddr);
             dmcPhase = isGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
             return;
         case DMC_PHASE::ALIGN:
+            read(lastReadAddr);
             dmcPhase = DMC_PHASE::READ;
             return;
         case DMC_PHASE::READ:
@@ -334,6 +344,9 @@ void CPU::powerup(u32 s) {
 
     // initialize WRAM with random values
     for (u8& byte : ram) byte = nextByte();
+
+    conWriteVal = 0x00;
+    conWriteDel = 0x00;
 
     // clear instruction/decode scratch state
     magic = paged = branch = false;
@@ -416,6 +429,9 @@ void CPU::powerdown() {
     resetPending = nmiPending = nmiLineSampled = irqLine_APU =
     irqLine_DMC = irqLine_Mapper = interruptFlagViaPoll = false;
     IFVP = {};
+
+    conWriteVal = 0x00;
+    conWriteDel = 0x00;
     
     // cancel DMA state completely
     oamDummy = true;
@@ -439,6 +455,8 @@ void CPU::powerdown() {
 }
 
 void CPU::clock() {
+    clockConWrite();
+
     if (!serviceDMA()) {
         const INTERRUPT candidate = pollInterrupts();
         const u8 exeCycle = cycles + 1;

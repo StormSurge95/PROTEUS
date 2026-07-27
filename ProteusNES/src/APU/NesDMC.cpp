@@ -171,7 +171,7 @@ void DMC_Channel::init(ConsoleRegion* r) {
     sampleAddr = currAddr = sampleLength = bytesRemaining = 0x0000;
     sampleBuffer = shifter = outputLevel = 0x00;
     bitsRemaining = 8;
-    period = GetDmcRate(*region, 0);
+    period = (r == nullptr ? 0 : GetDmcRate(*region, 0));
     timer = 0;
     dmcStartDelay = 0;
     dmcStartDelayArmed = dmcStartPending = false;
