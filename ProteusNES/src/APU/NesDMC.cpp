@@ -99,8 +99,9 @@ void DMC_Channel::newOutputCycle() {
         shifter = sampleBuffer;
         // update helper vars to trigger DMCDMA
         noSample = true;
-        if (bytesRemaining > 0 && !dmcStartPending)
+        if (bytesRemaining > 0 && !dmcStartPending) {
             apu->cpu.lock()->requestDmcDma(currAddr, false);
+        }
     }
 }
 
@@ -111,6 +112,9 @@ void DMC_Channel::onByteFetch(u8 byte) {
         currAddr = 0x8000;
     else
         currAddr++;
+    
+    if (bytesRemaining == 0) return;
+    
     bytesRemaining--;
     if (bytesRemaining == 0) {
         if (loop) {
@@ -137,7 +141,7 @@ void DMC_Channel::enable() {
 
     dmcStartPending = dmcStartDelayArmed = true;
     
-    dmcStartDelay = cpup->isGetCycle() ? 3 : 2;
+    dmcStartDelay = cpup->isDmaGetCycle() ? 3 : 2;
 }
 
 void DMC_Channel::clockDmcStart() {
@@ -153,7 +157,8 @@ void DMC_Channel::clockDmcStart() {
     dmcStartPending = false;
 
     if (noSample && bytesRemaining > 0) {
-        apu->cpu.lock()->requestDmcDma(currAddr, true);
+        sptr<CPU> cpup = apu->cpu.lock();
+        cpup->requestDmcDma(currAddr, true);
     }
 }
 

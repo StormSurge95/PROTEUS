@@ -12,6 +12,7 @@ namespace NS_NES {
             // Allow Debugger class to access all private members of the DMC_Channel class
             friend class Debugger;
         private:
+            u64 prevRelReq = 0;
             NesEventSink* eventSink = nullptr;
             ConsoleRegion* region = nullptr;
             /// @brief reference to the parent APU object

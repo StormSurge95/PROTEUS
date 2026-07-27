@@ -143,10 +143,7 @@ namespace NS_NES {
                         cMode = ((bankSelect >> 7) & 0x01);
                         details = "MMC3/MMC6 - set bank select and PRG/CHR modes";
                     } else { // Odd: Bank Data
-                        // printf("chrMem->size() = %llu\n", chrMem->size());
-                        // printf("size / 0x0400 = %llu\n", chrMem->size() / 0x0400);
                         u16 cdiv = chrMem->size() / 0x0400;
-                        // printf("cdiv = %du\n\n", cdiv);
                         switch (bankSelect & 0x07) {
                             case 0:
                                 bankData.R0 = (data % cdiv) & ~1;

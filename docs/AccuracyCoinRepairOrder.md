@@ -40,11 +40,11 @@
 - [x] 20 - JSR Edge Cases
 - [x] 14 - Frame Counter IRQ
 - [x] 14 - Controller Strobing
-- [ ] 13 - DMA + $2007 Read
-- [ ] 13 - DMA + $2007 Write
-- [ ] 13 - DMA + $2002 Read
-- [ ] 13 - DMA + $4015 Read
-- [ ] 13 - DMA + $4016 Read
+- [x] 13 - DMA + $2007 Read
+- [x] 13 - DMA + $2007 Write
+- [x] 13 - DMA + $2002 Read
+- [x] 13 - DMA + $4015 Read
+- [x] 13 - DMA + $4016 Read
 - [ ] 13 - DMC DMA + OAM DMA
 - [ ] 13 - Explicit DMA Abort
 - [ ] 13 - Implicit DMA Abort

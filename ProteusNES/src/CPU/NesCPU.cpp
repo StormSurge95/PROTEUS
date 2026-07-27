@@ -136,7 +136,6 @@ u8 CPU::read(u16 addr, bool readonly) {
         ret = ppu.lock()->read(addr, readonly);
         if (readonly) return ret;
     } else if (addr == 0x4015) {
-        // read APU status
         return (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
     } else if (addr == 0x4016) {
         // read Player 1 Controller
@@ -153,6 +152,7 @@ u8 CPU::read(u16 addr, bool readonly) {
         if (!cart.lock()->mapper->cpuRead(addr, ret, readonly)) ret = cpuBus;
         if (readonly) return ret;
     }
+
     // getting here means readonly is clear; so update cpuBus and return it.
     cpuBus = ret;
     return cpuBus;
@@ -190,6 +190,29 @@ void CPU::write(u16 addr, u8 data) {
         // write to Cartridge memory (including SRAM, if present)
         cart.lock()->mapper->cpuWrite(addr, data);
     }
+
+    if (logArmed && addr >= 0x0050 && addr <= 0x006F) {
+        static constexpr u8 expected[0x20] = {
+            0x04, 0x03, 0x04, 0x03,
+            0x04, 0x03, 0x02, 0x01,
+            0x02, 0x01, 0x02, 0x01,
+            0x02, 0x01, 0x02, 0x01,
+
+            0x02, 0x01, 0x02, 0x01,
+            0x02, 0x00, 0x01, 0x02,
+            0x03, 0x03, 0x04, 0x03,
+            0x04, 0x03, 0x04, 0x03
+        };
+
+        const u8 index = static_cast<u8>(addr - 0x0050);
+
+        printf(
+            "[DMA-X] RESULT slot=%02X actual=%02X expected=%02X %s\n",
+            index, data, expected[index],
+            data == expected[index] ? "OK" : "BAD"
+        );
+    }
+
     #endif
 }
 
@@ -229,17 +252,29 @@ void CPU::halt() {
 }
 
 bool CPU::serviceDMA() {
+    if (logArmed && oamActive && (dmcPending || dmcActive)) {
+        printf(
+            "[DMA-X] BOTH cpu=%llu get=%u "
+            "pending=%u active=%u phase=%u "
+            "oamDummy=%u oamAddr=%02X\n",
+            totalCycles, isDmaGetCycle(),
+            dmcPending, dmcActive,
+            static_cast<unsigned>(dmcPhase),
+            oamDummy, oamAddr
+        );
+    }
+
     if (dmcActive) {
         clockDMC();
         return true;
     }
 
     if (dmcPending) {
-        const bool initHaltPhase = dmcLoad ? isGetCycle() : !isGetCycle();
+        const bool initHaltPhase = dmcLoad ? isDmaGetCycle() : !isDmaGetCycle();
 
         if (!dmcHaltRetry && !initHaltPhase) return false;
 
-        if (delayDMA) {
+        if (nextCycleWrites()) {
             dmcHaltRetry = true;
             return false;
         }
@@ -307,30 +342,73 @@ void CPU::clockOAM() {
 
 void CPU::clockDMC() {
     halt();
+
+    u16 stalledAddr = lastReadAddr;
+
+    if (currInst && currInst->address == &CPU::ABS_R && cycles == 3) {
+        const u16 effAddr = absAddr.value();
+        const u16 decAddr = effAddr >= 0x2000 && effAddr <= 0x3FFF
+            ? 0x2000 | (effAddr & 0x0007) : effAddr;
+        
+        switch (decAddr) {
+            case 0x2002: case 0x2007:
+            case 0x4015: case 0x4016:
+            case 0x4017:
+                stalledAddr = effAddr;
+                break;
+            default:
+                if ((effAddr & 0xFFE0) == 0x4000)
+                    stalledAddr = effAddr;
+                break;
+        }
+    }
+
+    const u16 stalledReg = stalledAddr >= 0x2000 && stalledAddr <= 0x3FFF
+        ? 0x2000 | (stalledAddr & 0x0007) : stalledAddr;
+    
+    const bool stalledJoy = stalledReg == 0x4016 || stalledReg == 0x4017;
     
     switch (dmcPhase) {
-        case DMC_PHASE::HALT:
-            read(lastReadAddr);
+        case DMC_PHASE::HALT: {
+            read(stalledReg);
             dmcPhase = DMC_PHASE::DUMMY;
             return;
+        }
         case DMC_PHASE::DUMMY:
-            read(lastReadAddr);
-            dmcPhase = isGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
+            if (!stalledJoy)
+                read(stalledReg);
+            dmcPhase = isDmaGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
             return;
         case DMC_PHASE::ALIGN:
-            read(lastReadAddr);
+            if (!stalledJoy)
+                read(stalledReg);
             dmcPhase = DMC_PHASE::READ;
             return;
-        case DMC_PHASE::READ:
-            if (!isGetCycle()) return;
+        case DMC_PHASE::READ: {
+            if (!isDmaGetCycle()) return;
+            
+            const u8 sampleData = read(dmcAddr);
 
-            dmcData = read(dmcAddr);
+            if ((stalledAddr & 0xFFE0) == 0x4000) {
+                const u16 internalAddr = 0x4000 | (dmcAddr & 0x001F);
+
+                switch (internalAddr) {
+                    case 0x4015:
+                    case 0x4016:
+                    case 0x4017:
+                        read(internalAddr);
+                        break;
+                }
+            }
+
+            dmcData = sampleData;
             apu.lock()->dmcOnByteFetched(dmcData);
 
             dmcPhase = DMC_PHASE::IDLE;
             dmcActive = false;
             halted = false;
             return;
+        }
         case DMC_PHASE::IDLE:
         default:
             dmcActive = false;
@@ -455,6 +533,8 @@ void CPU::powerdown() {
 }
 
 void CPU::clock() {
+    onGetCycle = (totalCycles & 0x01) == 0;
+
     clockConWrite();
 
     if (!serviceDMA()) {
@@ -505,6 +585,22 @@ void CPU::clockInstruction() {
 
         // save current pc for use in event emit(s)
         u16 instPC = pc.value();
+
+        if (false && read(instPC,      true) == 0xA5 && // LDA $12
+            read(instPC + 1,  true) == 0x12 &&
+            read(instPC + 2,  true) == 0xC9 && // CMP #$01
+            read(instPC + 3,  true) == 0x01 &&
+            read(instPC + 4,  true) == 0xD0 && // BNE <offset>
+            read(instPC + 6,  true) == 0x20 && // JSR CheckDMATiming
+            read(instPC + 9,  true) == 0x84 && // STY $50
+            read(instPC + 10, true) == 0x50 &&
+            read(instPC + 11, true) == 0xC0 && // CPY #$04
+            read(instPC + 12, true) == 0x04
+        ) {
+            logArmed = true;
+        }
+
+        if (logArmed && instPC == 0x80DF) logArmed = false;
 
         // On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
         if (interruptSource != INTERRUPT::NONE) {
@@ -578,4 +674,39 @@ void CPU::newInstruction() {
 void CPU::syncIFVP() {
     IFVP.pending = false;
     interruptFlagViaPoll = getFlag(FLAGS::I) != 0;
+}
+
+bool CPU::nextCycleWrites() const {
+    if (cycles == 0 || currInst == nullptr) return false;
+
+    const u8 next = cycles + 1;
+    const auto mode = currInst->address;
+
+    if (mode == &CPU::ABS_W) return next == 4;
+    if (mode == &CPU::ABS_M) return (next == 5 || next == 6);
+
+    if (mode == &CPU::ABX_W || mode == &CPU::ABY_W) return next == 5;
+
+    if (mode == &CPU::ABX_M || mode == &CPU::ABY_M) return (next == 6 || next == 7);
+
+    if (mode == &CPU::ZP0_W) return next == 3;
+    if (mode == &CPU::ZP0_M) return (next == 4 || next == 5);
+
+    if (mode == &CPU::ZPX_W || mode == &CPU::ZPY_W) return next == 4;
+
+    if (mode == &CPU::ZPX_M || mode == &CPU::ZPY_M) return (next == 5 || next == 6);
+
+    if (mode == &CPU::IZX_W || mode == &CPU::IZY_W) return next == 6;
+
+    if (mode == &CPU::IZX_M || mode == &CPU::IZY_M) return (next == 7 || next == 8);
+
+    const auto oper = currInst->operate;
+
+    if (oper == &CPU::JSR) return (next == 4 || next == 5);
+
+    if (oper == &CPU::BRK) {
+        return interruptSource != INTERRUPT::RST && next >= 3 && next <= 5;
+    }
+
+    return (oper == &CPU::PHA || oper == &CPU::PHP) && next == 3;
 }

@@ -173,7 +173,7 @@ void APU::clock() {
     dmc->clockDmcStart();
 
     sptr<CPU> cpup = cpu.lock();
-    if (frameIrqClearPending && !cpup->isGetCycle()) {
+    if (frameIrqClearPending && cpup->isGetCycle()) {
         frameIrqClearPending = false;
         irqRequested = false;
         cpup->setIrqLine_APU(false);
@@ -181,7 +181,6 @@ void APU::clock() {
 
     if (frameIrqFinalizePending) {
         frameIrqFinalizePending = false;
-
         irqRequested = !inhibitIRQ;
         cpup->setIrqLine_APU(irqRequested);
     }

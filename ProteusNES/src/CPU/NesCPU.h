@@ -31,6 +31,7 @@ namespace NS_NES {
 
             ConsoleRegion* region = nullptr;
 
+            bool onGetCycle = false;
             bool magic = false; /// @brief 'magic' of instable opcode(s)
             #ifdef TEST_SST
             array<u8, 65536> ram; /// @brief CPU ram container for SSTs
@@ -183,6 +184,16 @@ namespace NS_NES {
             u8 conWriteDel = 0x00;
             void clockConWrite();
 
+            bool nextCycleWrites() const;
+            /**
+             * @brief Clock function for OAMDMA.
+             */
+            void clockOAM();
+            /**
+             * @brief Clock function for DMCDMA.
+             */
+            void clockDMC();
+
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions
             void ACC_A();
@@ -253,6 +264,7 @@ namespace NS_NES {
             void JAM();
             #pragma endregion
         public:
+            bool logArmed = false;
             /// @brief reset flag
             bool resetPending = false;
             /// @brief device-specific IRQ flags
@@ -338,14 +350,6 @@ namespace NS_NES {
              * @param p The player this controller refers to.
              */
             void connectCONT(sptr<Controller>& c, u8 p);
-            /**
-             * @brief Clock function for OAMDMA.
-             */
-            void clockOAM();
-            /**
-             * @brief Clock function for DMCDMA.
-             */
-            void clockDMC();
 
             /// @brief 'power on' function
             void powerup(u32 seed) override;
@@ -367,7 +371,8 @@ namespace NS_NES {
             void sampleNmiLine(bool line);
             bool serviceDMA();
             bool hasPendingIrq() const { return irqLine_APU || irqLine_DMC || irqLine_Mapper; }
-            bool isGetCycle() const { return (totalCycles & 0x01) == 0; }
+            bool isGetCycle() const { return onGetCycle; }
+            bool isDmaGetCycle() const { return !onGetCycle; }
 
             void setRegion(ConsoleRegion* r) { region = r; }
     };
