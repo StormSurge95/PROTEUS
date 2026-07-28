@@ -281,16 +281,12 @@ void APU::clockFrameCounter() {
 
                 cpu.lock()->setIrqLine_APU(true);
             }
+
+            frameIrqFinalizePending = true;
         }
     }
 
     if (resetFrame) {
-        if (!use5step) {
-            // Apply the final inhibit-dependent state on the following
-            // CPU/APU cycle, after the two temporary flag-set phases.
-            frameIrqFinalizePending = true;
-        }
-
         cycle = 0;
     }
 }

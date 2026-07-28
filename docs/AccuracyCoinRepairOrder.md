@@ -51,8 +51,8 @@
 - [x] 10 - Unofficial Instructions: SH*
 - [x] 14 - Length Counter
 - [x] 14 - Length Table
-- [ ] 14 - Frame Counter 4-step
-- [ ] 14 - Frame Counter 5-step
+- [x] 14 - Frame Counter 4-step
+- [x] 14 - Frame Counter 5-step
 - [ ] 18 - Sprite overflow behavior
 - [ ] 18 - Sprite 0 Hit behavior
 - [ ] 18 - Address $2004 behavior

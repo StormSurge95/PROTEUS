@@ -22,7 +22,7 @@ namespace NS_NES {
         .half4 = { 14913, 29829 },
         .irqSet4a = 29828,
         .irqSet4b = 29829,
-        .reset4 = 29829,
+        .reset4 = 29830,
 
         .quarter5 = { 7457, 14913, 22371 },
         .half5 = { 14913, 37281 },
@@ -34,7 +34,7 @@ namespace NS_NES {
         .half4 = { 16626, 33252 },
         .irqSet4a = 33252,
         .irqSet4b = 33253,
-        .reset4 = 33253,
+        .reset4 = 33254,
 
         .quarter5 = { 8313, 16626, 24939 },
         .half5 = { 16626, 41565 },
