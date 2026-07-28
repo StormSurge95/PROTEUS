@@ -489,21 +489,27 @@ void CPU::SHS() {
     sp = a & x;
     u8 h = absAddr.hi;
     if (!paged) h++;
+    if (magic) h = 0xFF;
     // {adr}:=S&H
     fetched = a & x & h;
     if (paged) absAddr.hi = fetched;
+    magic = false;
 }
 void CPU::SHY() {
     u8 h = absAddr.hi;
     if (!paged) h++;
+    if (magic) h = 0xFF;
     fetched = y & h;
     if (paged) absAddr.hi = fetched;
+    magic = false;
 }
 void CPU::SHX() {
     u8 h = absAddr.hi;
     if (!paged) h++;
+    if (magic) h = 0xFF;
     fetched = x & h;
     if (paged) absAddr.hi = fetched;
+    magic = false;
 }
 void CPU::LAS() {
     a = x = sp = fetched & sp;

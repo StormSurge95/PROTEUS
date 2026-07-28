@@ -255,12 +255,12 @@ void CPU::halt() {
 
     switch (opcode) {
         case 0x93:
-            if (cycles == 5) magic = true;
+            if (cycles == 4) magic = true;
             break;
         case 0x9B: case 0x9C:
         case 0x9E: case 0x9F:
         case 0xBB:
-            if (cycles == 4) magic = true;
+            if (cycles == 3) magic = true;
             break;
         default:
             magic = false;

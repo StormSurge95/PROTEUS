@@ -48,9 +48,9 @@
 - [x] 13 - DMC DMA + OAM DMA
 - [x] 13 - Explicit DMA Abort
 - [x] 13 - Implicit DMA Abort
-- [ ] 10 - Unofficial Instructions: SH*
-- [ ] 14 - Length Counter
-- [ ] 14 - Length Table
+- [x] 10 - Unofficial Instructions: SH*
+- [x] 14 - Length Counter
+- [x] 14 - Length Table
 - [ ] 14 - Frame Counter 4-step
 - [ ] 14 - Frame Counter 5-step
 - [ ] 18 - Sprite overflow behavior

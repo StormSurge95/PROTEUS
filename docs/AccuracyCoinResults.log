@@ -75,11 +75,11 @@ P9 - UNOFFICIAL INSTRUCTIONS: ISC
     T6 - $FB ISC ABSOLUTE,Y—————————————————————PASS
     T7 - $FF ISC ABSOLUTE———————————————————————PASS
 P10 - UNOFFICIAL INSTRUCTIONS: SH*
-    T1 - $93 SHA INDIRECT,Y—————————————————————FAIL 7
-    T2 - $9F SHA ABSOLUTE,Y—————————————————————FAIL 7
-    T3 - $9B SHS ABSOLUTE,Y—————————————————————FAIL 7
-    T4 - $9C SHY ABSOLUTE,X—————————————————————FAIL 7
-    T5 - $9E SHX ABSOLUTE,Y—————————————————————FAIL 7
+    T1 - $93 SHA INDIRECT,Y—————————————————————PASS
+    T2 - $9F SHA ABSOLUTE,Y—————————————————————PASS
+    T3 - $9B SHS ABSOLUTE,Y—————————————————————PASS
+    T4 - $9C SHY ABSOLUTE,X—————————————————————PASS
+    T5 - $9E SHX ABSOLUTE,Y—————————————————————PASS
     T6 - $BB LAE ABSOLUTE,Y—————————————————————PASS
 P11 - UNOFFICIAL IMMEDIATES
     T1 - $0B ANC IMMEDIATE——————————————————————PASS
