@@ -89,10 +89,10 @@ void DMC_Channel::newOutputCycle() {
     // bits remaining counter is loaded with 8
     bitsRemaining = 8;
     // if sample buffer is empty, silence flag is set
-    if (noSample)
+    if (noSample || bufferFilledThisCycle) {
         silent = true;
     // otherwise:
-    else {
+    } else {
         // silence flag is cleared
         silent = false;
         // sample buffer emptied into shift register
@@ -108,6 +108,7 @@ void DMC_Channel::newOutputCycle() {
 void DMC_Channel::onByteFetch(u8 byte) {
     sampleBuffer = byte;
     noSample = false;
+    bufferFilledThisCycle = true;
     if (currAddr == 0xFFFF)
         currAddr = 0x8000;
     else
@@ -124,6 +125,26 @@ void DMC_Channel::onByteFetch(u8 byte) {
             apu->cpu.lock()->setIrqLine_DMC(interrupt = true);
             if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::IRQ_REQ_DMC);
         }
+    }
+
+    /**
+     * A one-byte, non-looping load that finishes immediately before
+     * the output-cycle boundary can briefly restart the reader.
+     * The resulting reload DMA is then stopped after its HALT cycle.
+     */
+    if (!dmcDisablePending && bytesRemaining == 0 && sampleLength == 1 &&
+        !loop && bitsRemaining == 1 && (timer == 1 || timer == 2)) {
+        // Model the internal transfer/restart responsible for the glitch.
+        shifter = sampleBuffer;
+        noSample = false;
+
+        currAddr = sampleAddr;
+        bytesRemaining = sampleLength;
+
+        // Schedule the aborting reload so its successful
+        // HALT occurs on teh third following CPU cycle.
+        dmcDisablePending = dmcDisableDelayArmed = true;
+        dmcDisableDelay = 3;
     }
 }
 
@@ -145,6 +166,8 @@ void DMC_Channel::enable() {
 }
 
 void DMC_Channel::clockDmcStart() {
+    bufferFilledThisCycle = false;
+
     if (dmcDisablePending) {
         if (dmcDisableDelayArmed) {
             dmcDisableDelayArmed = false;
@@ -203,6 +226,7 @@ void DMC_Channel::init(ConsoleRegion* r) {
     dmcStartDelayArmed = dmcStartPending = false;
     dmcDisableDelay = 0;
     dmcDisableDelayArmed = dmcDisablePending = false;
+    bufferFilledThisCycle = false;
 }
 
 void DMC_Channel::reset() {
@@ -227,6 +251,7 @@ void DMC_Channel::reset() {
     
     dmcDisableDelay = 0;
     dmcDisableDelayArmed = dmcDisablePending = false;
+    bufferFilledThisCycle = false;
 
     apu->cpu.lock()->setIrqLine_DMC(false);
 }

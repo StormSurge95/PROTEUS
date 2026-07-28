@@ -47,7 +47,7 @@
 - [x] 13 - DMA + $4016 Read
 - [x] 13 - DMC DMA + OAM DMA
 - [x] 13 - Explicit DMA Abort
-- [ ] 13 - Implicit DMA Abort
+- [x] 13 - Implicit DMA Abort
 - [ ] 10 - Unofficial Instructions: SH*
 - [ ] 14 - Length Counter
 - [ ] 14 - Length Table

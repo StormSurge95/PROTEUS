@@ -53,6 +53,7 @@ namespace NS_NES {
 
             bool dmcDisablePending = false;
             bool dmcDisableDelayArmed = false;
+            bool bufferFilledThisCycle = false;
             u8 dmcDisableDelay = 0;
 
             /// @brief current sound volume to output on sample request
