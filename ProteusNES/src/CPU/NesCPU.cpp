@@ -192,21 +192,16 @@ void CPU::write(u16 addr, u8 data) {
 
     if (logArmed && addr >= 0x0050 && addr <= 0x006F) {
         static constexpr u8 expected[0x20] = {
-            0x04, 0x03, 0x04, 0x03,
-            0x04, 0x03, 0x02, 0x01,
-            0x02, 0x01, 0x02, 0x01,
-            0x02, 0x01, 0x02, 0x01,
-
-            0x02, 0x01, 0x02, 0x01,
-            0x02, 0x00, 0x01, 0x02,
-            0x03, 0x03, 0x04, 0x03,
-            0x04, 0x03, 0x04, 0x03
+            0x04, 0x04, 0x04, 0x04,
+            0x04, 0x04, 0x03, 0x04,
+            0x01, 0x01, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
         };
 
         const u8 index = static_cast<u8>(addr - 0x0050);
 
         printf(
-            "[DMA-X] RESULT slot=%02X actual=%02X expected=%02X %s\n",
+            "[DMA-ABORT] slot=%02X actual=%02X expected=%02X %s\n",
             index, data, expected[index],
             data == expected[index] ? "OK" : "BAD"
         );
@@ -274,6 +269,15 @@ void CPU::halt() {
 }
 
 bool CPU::serviceDMA() {
+    if (dmcAbort) {
+        dmcAbort = false;
+        dmcActive = false;
+        dmcPhase = DMC_PHASE::IDLE;
+
+        // OAM may still own the CPU after DMC aborts.
+        halted = oamActive;
+    }
+
     const bool getCycle = isGetCycle();
 
     /**
@@ -470,7 +474,8 @@ void CPU::powerup(u32 s) {
     lastReadAddr = addrBus = cpuBus = 0;
 
     // clear DMA state
-    halted = oamActive = dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
+    halted = oamActive = dmcPending = dmcActive =
+    dmcLoad = dmcHaltRetry = dmcAbort = false;
     oamPhase = OAM_PHASE::IDLE;
     dmcPhase = DMC_PHASE::IDLE;
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
@@ -520,7 +525,8 @@ void CPU::reset() {
     halted = false;
     oamActive = false;
     oamPage = oamAddr = oamData = 0;
-    dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
+    dmcPending = dmcActive = dmcLoad =
+    dmcHaltRetry = dmcAbort = false;
     dmcAddr = 0;
     dmcData = 0;
     oamPhase = OAM_PHASE::IDLE;
@@ -548,7 +554,7 @@ void CPU::powerdown() {
     
     // cancel DMA state completely
     oamActive = dmcPending = dmcActive =
-    dmcLoad = dmcHaltRetry = false;
+    dmcLoad = dmcHaltRetry = dmcAbort = false;
     oamPage = oamAddr = oamData = dmcAddr = dmcData = 0;
     oamPhase = OAM_PHASE::IDLE;
     dmcPhase = DMC_PHASE::IDLE;
@@ -621,16 +627,17 @@ void CPU::clockInstruction() {
         // save current pc for use in event emit(s)
         u16 instPC = pc.value();
 
-        if (false && read(instPC,      true) == 0xA5 && // LDA $12
+        if (false && read(instPC,      true) == 0xA5 && // LDA <result_DMCDMASync_PreTest
             read(instPC + 1,  true) == 0x12 &&
             read(instPC + 2,  true) == 0xC9 && // CMP #$01
             read(instPC + 3,  true) == 0x01 &&
-            read(instPC + 4,  true) == 0xD0 && // BNE <offset>
+            read(instPC + 4,  true) == 0xD0 && // BNE FAIL_ExplicitDMAAbort
             read(instPC + 6,  true) == 0x20 && // JSR CheckDMATiming
-            read(instPC + 9,  true) == 0x84 && // STY $50
-            read(instPC + 10, true) == 0x50 &&
-            read(instPC + 11, true) == 0xC0 && // CPY #$04
-            read(instPC + 12, true) == 0x04
+            read(instPC + 9,  true) == 0xC0 && // CPY #4
+            read(instPC + 10, true) == 0x04 && 
+            read(instPC + 11, true) == 0xD0 && // BNE FAIL_ExplicitDMAAbort
+            read(instPC + 13, true) == 0xA2 && // LDX #0
+            read(instPC + 14, true) == 0x00
         ) {
             logArmed = true;
         }
@@ -686,6 +693,23 @@ void CPU::requestDmcDma(u16 addr, bool load) {
     dmcHaltRetry = false;
     dmcLoad = load;
     dmcAddr = addr;
+}
+
+void CPU::stopDmcDma() {
+    if (dmcPending) {
+        // The DMA has been scheduled but has not halted the CPU.
+        // Cancelling here also prevents a failed halt from retrying.
+        dmcPending = false;
+        dmcHaltRetry = false;
+        dmcLoad = false;
+        return;
+    }
+
+    if (dmcActive && dmcPhase == DMC_PHASE::DUMMY) {
+        // The halt cycle already occurred. The arbiter will terminate
+        // the DMA before its dummy/alignment/read cycles.
+        dmcAbort = true;
+    }
 }
 
 void CPU::sampleNmiLine(bool line) {

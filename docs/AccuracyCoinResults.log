@@ -103,7 +103,7 @@ P13 - APU REGISTERS AND DMA TESTS
     T6 - DMA + $4016 READ———————————————————————PASS
     T7 - DMC DMA BUS CONFLICTS——————————————————PASS
     T8 - DMC DMA + OAM DMA——————————————————————PASS
-    T9 - EXPLICIT DMA ABORT—————————————————————FAIL 2
+    T9 - EXPLICIT DMA ABORT—————————————————————PASS
     TA - IMPLICIT DMA ABORT—————————————————————FAIL 2
 P14 - APU TESTS
     T1 - LENGTH COUNTER—————————————————————————PASS

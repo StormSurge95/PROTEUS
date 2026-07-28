@@ -309,6 +309,7 @@ namespace NS_NES {
             bool dmcHaltRetry = false;
             bool dmcPending = false;
             bool dmcActive = false;
+            bool dmcAbort = false;
             bool dmcLoad = false;
 
             u16 dmaHaltAddr = 0x0000;
@@ -376,6 +377,7 @@ namespace NS_NES {
             const CPU_STATE GetState() const;
 
             void requestDmcDma(u16 addr, bool load);
+            void stopDmcDma();
             void setIrqLine_APU(bool state) { irqLine_APU = state; }
             void setIrqLine_DMC(bool state) { irqLine_DMC = state; }
             void setIrqLine_Mapper(bool state) { irqLine_Mapper = state; }

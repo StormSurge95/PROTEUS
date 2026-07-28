@@ -145,6 +145,17 @@ void DMC_Channel::enable() {
 }
 
 void DMC_Channel::clockDmcStart() {
+    if (dmcDisablePending) {
+        if (dmcDisableDelayArmed) {
+            dmcDisableDelayArmed = false;
+        } else if (--dmcDisableDelay == 0) {
+            dmcDisablePending = false;
+            bytesRemaining = 0;
+
+            apu->cpu.lock()->stopDmcDma();
+        }
+    }
+
     if (!dmcStartPending) return;
 
     if (dmcStartDelayArmed) {
@@ -163,10 +174,20 @@ void DMC_Channel::clockDmcStart() {
 }
 
 void DMC_Channel::disable() {
-    dmcStartDelay = 0;
-    enabled = dmcStartDelayArmed = dmcStartPending = false;
-    bytesRemaining = 0;
-    apu->cpu.lock()->setIrqLine_DMC(interrupt = false);
+    enabled = false;
+
+    sptr<CPU> cpup = apu->cpu.lock();
+
+    if (!dmcDisablePending) {
+        dmcDisablePending = dmcDisableDelayArmed = true;
+
+        // The disable becomes visible at the appropriate following
+        // DMC/APU phase rather than immediately on the $4015 write.
+        dmcDisableDelay = cpup->isGetCycle() ? 3 : 2;
+    }
+
+    // A $4015 write still clears the DMC IRQ immediately.
+    cpup->setIrqLine_DMC(interrupt = false);
 }
 
 void DMC_Channel::init(ConsoleRegion* r) {
@@ -180,6 +201,8 @@ void DMC_Channel::init(ConsoleRegion* r) {
     timer = 0;
     dmcStartDelay = 0;
     dmcStartDelayArmed = dmcStartPending = false;
+    dmcDisableDelay = 0;
+    dmcDisableDelayArmed = dmcDisablePending = false;
 }
 
 void DMC_Channel::reset() {
@@ -201,6 +224,9 @@ void DMC_Channel::reset() {
     
     dmcStartDelay = 0;
     dmcStartDelayArmed = dmcStartPending = false;
+    
+    dmcDisableDelay = 0;
+    dmcDisableDelayArmed = dmcDisablePending = false;
 
     apu->cpu.lock()->setIrqLine_DMC(false);
 }
