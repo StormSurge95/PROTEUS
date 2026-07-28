@@ -185,14 +185,18 @@ namespace NS_NES {
             void clockConWrite();
 
             bool nextCycleWrites() const;
+
             /**
              * @brief Clock function for OAMDMA.
+             * @returns true if OAM consumed the get cycle
              */
-            void clockOAM();
+            bool clockOAM(bool isBusAvail);
+
             /**
              * @brief Clock function for DMCDMA.
+             * @returns true if DMC consumed the get cycle
              */
-            void clockDMC();
+            bool clockDMC();
 
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions
@@ -279,15 +283,21 @@ namespace NS_NES {
             /// @brief cycle tracker for instruction operation
             u8 cycles = 0;
 
-            /// @brief Delay flag for the DMA operations
-            bool delayDMA = false;
             /// @brief Halted flag to stop regular CPU ops during DMA
             bool halted = false;
+
             /// @brief Flag for OAMDMA
             bool oamActive = false;
-            /// @brief Helper flag for running OAMDMA with accurate cycle counts
-            bool oamDummy = true;
 
+            /// @brief Helper enum for running OAMDMA with accurate cycle counts
+            enum class OAM_PHASE : u8 {
+                IDLE,
+                HALT,
+                GET,
+                PUT
+            } oamPhase = OAM_PHASE::IDLE;
+
+            /// @brief Helper enum for running DMCDMA with accurate cycle counts
             enum class DMC_PHASE : u8 {
                 IDLE,
                 HALT,
@@ -296,11 +306,12 @@ namespace NS_NES {
                 READ
             } dmcPhase = DMC_PHASE::IDLE;
 
-            bool dmcHaltAttempt = false;
             bool dmcHaltRetry = false;
             bool dmcPending = false;
             bool dmcActive = false;
             bool dmcLoad = false;
+
+            u16 dmaHaltAddr = 0x0000;
             u16 dmcAddr = 0x0000;
             u8 dmcData = 0x00;
 
@@ -372,7 +383,6 @@ namespace NS_NES {
             bool serviceDMA();
             bool hasPendingIrq() const { return irqLine_APU || irqLine_DMC || irqLine_Mapper; }
             bool isGetCycle() const { return onGetCycle; }
-            bool isDmaGetCycle() const { return !onGetCycle; }
 
             void setRegion(ConsoleRegion* r) { region = r; }
     };

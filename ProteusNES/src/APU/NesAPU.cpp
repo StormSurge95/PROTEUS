@@ -173,7 +173,7 @@ void APU::clock() {
     dmc->clockDmcStart();
 
     sptr<CPU> cpup = cpu.lock();
-    if (frameIrqClearPending && cpup->isGetCycle()) {
+    if (frameIrqClearPending && !cpup->isGetCycle()) {
         frameIrqClearPending = false;
         irqRequested = false;
         cpup->setIrqLine_APU(false);
@@ -238,11 +238,7 @@ void APU::write4017(u8 data) {
     }
     // writing to 4017 triggers a delayed FrameCounter reset
     sptr<CPU> cpup = cpu.lock();
-    if (cpup->isGetCycle()) {
-        resetAt = masterCycle + 3;
-    } else {
-        resetAt = masterCycle + 4;
-    }
+    resetAt = masterCycle + (cpup->isGetCycle() ? 4 : 3);
     pendingReset = true;
     // setting 5-step mode triggers immediate quarter/half frame signals
     if (use5step) {

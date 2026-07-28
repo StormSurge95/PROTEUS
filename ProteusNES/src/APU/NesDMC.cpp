@@ -141,7 +141,7 @@ void DMC_Channel::enable() {
 
     dmcStartPending = dmcStartDelayArmed = true;
     
-    dmcStartDelay = cpup->isDmaGetCycle() ? 3 : 2;
+    dmcStartDelay = cpup->isGetCycle() ? 3 : 2;
 }
 
 void DMC_Channel::clockDmcStart() {

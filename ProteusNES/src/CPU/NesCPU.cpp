@@ -163,7 +163,6 @@ void CPU::write(u16 addr, u8 data) {
     #ifdef TEST_SST
     ram[addr] = data;
     #else
-    delayDMA = true;
     addrBus = addr;
     // all writes fully update open bus
     cpuBus = data;
@@ -178,11 +177,11 @@ void CPU::write(u16 addr, u8 data) {
         oamPage = data;
         oamAddr = 0x00;
         oamActive = true;
-        oamDummy = true;
+        oamPhase = OAM_PHASE::HALT;
     } else if (addr == 0x4016) {
         // write to player1 controller
         conWriteVal = data;
-        conWriteDel = isGetCycle() ? 2 : 1;
+        conWriteDel = isGetCycle() ? 1 : 2;
         if (eventSink) eventSink->OnControllerWrite(1, 0x4016, data);
     } else if (addr >= 0x4000 && addr <= 0x4017) {
         apu.lock()->write(addr, data);
@@ -237,183 +236,218 @@ void CPU::clockConWrite() {
 }
 
 void CPU::halt() {
+    if (halted) return;
+
+    dmaHaltAddr = cycles == 0 ? pc.value() : lastReadAddr;
+
+    if (currInst && currInst->address == &CPU::ABS_R && cycles == 3) {
+        const u16 effAddr = absAddr.value();
+        const u16 decAddr = effAddr >= 0x2000 && effAddr <= 0x3FFF ? 0x2000 | (effAddr & 0x0007) : effAddr;
+
+        switch (decAddr) {
+            case 0x2002: case 0x2007:
+            case 0x4015: case 0x4016: case 0x4017:
+                dmaHaltAddr = effAddr;
+                break;
+            default:
+                if ((effAddr & 0xFFE0) == 0x4000)
+                    dmaHaltAddr = effAddr;
+                break;
+        }
+    }
+
     halted = true;
+
     switch (opcode) {
         case 0x93:
             if (cycles == 5) magic = true;
             break;
-        case 0x9C: case 0x9F: case 0x9B:
-        case 0x9E: case 0xBB:
+        case 0x9B: case 0x9C:
+        case 0x9E: case 0x9F:
+        case 0xBB:
             if (cycles == 4) magic = true;
             break;
         default:
             magic = false;
+            break;
     }
 }
 
 bool CPU::serviceDMA() {
-    if (logArmed && oamActive && (dmcPending || dmcActive)) {
-        printf(
-            "[DMA-X] BOTH cpu=%llu get=%u "
-            "pending=%u active=%u phase=%u "
-            "oamDummy=%u oamAddr=%02X\n",
-            totalCycles, isDmaGetCycle(),
-            dmcPending, dmcActive,
-            static_cast<unsigned>(dmcPhase),
-            oamDummy, oamAddr
-        );
-    }
+    const bool getCycle = isGetCycle();
 
-    if (dmcActive) {
-        clockDMC();
-        return true;
-    }
+    /**
+     * "Load DMCDMA" attempts to halt on get.
+     * "Reload DMCDMA" attempts to halt on put.
+     * 
+     * After a failed halt caused by a CPU write, it retries every
+     * cycle without again requiring the original scheduled phase.
+     */
+    const bool schedDmcHalt = dmcLoad ? getCycle : !getCycle;
 
-    if (dmcPending) {
-        const bool initHaltPhase = dmcLoad ? isDmaGetCycle() : !isDmaGetCycle();
+    const bool dmcCanStart = dmcPending && (dmcHaltRetry || schedDmcHalt);
 
-        if (!dmcHaltRetry && !initHaltPhase) return false;
+    /**
+     * A pending DMC request that has not reached its halt phase does
+     * not consume the CPU cycle. Active OAM must still continue.
+     */
+    if (!halted && !oamActive && !dmcActive && !dmcCanStart) return false;
 
+    /**
+     * Capture the CPU only once. DMA cannot halt during a CPU write.
+     * This also permits both writes of an RMW instruction to finish.
+     */
+    if (!halted) {
         if (nextCycleWrites()) {
-            dmcHaltRetry = true;
+            if (dmcCanStart) dmcHaltRetry = true;
             return false;
         }
 
-        dmcPending = false;
-        dmcHaltRetry = false;
+        halt();
+    }
+
+    /**
+     * If OAM already halted the CPU, DMC can begin without consulting
+     * `nextCycleWrites()`: the CPU is no longer executing instruction
+     * microcycles.
+     */
+    if (dmcCanStart) {
+        dmcPending = dmcHaltRetry = dmcLoad = false;
         dmcActive = true;
         dmcPhase = DMC_PHASE::HALT;
-
-        clockDMC();
-        return true;
     }
 
-    if (oamActive) {
-        if (delayDMA) return false;
+    /**
+     * Preserve DMC phase as it existed during this bus cycle.
+     * This is needed to decide whether repeated joypad reads
+     * should be suppressed.
+     */
+    const bool dmcWasActive = dmcActive;
+    const DMC_PHASE prevDmcPhase = dmcPhase;
 
-        clockOAM();
-        return true;
+    /**
+     * DMC is evaluated first because a ready DMC read owns a get
+     * cycle. DMC halt/dummy/alignment return false, allowing OAM
+     * to continue on those cycles.
+     */
+    const bool dmcUsedBus = clockDMC();
+    const bool oamUsedBus = clockOAM(!dmcUsedBus);
+    const bool busUsed = dmcUsedBus || oamUsedBus;
+
+    if (!busUsed) {
+        const u16 stalledReg = dmaHaltAddr >= 0x2000 && dmaHaltAddr <= 0x3FFF ? 0x2000 | (dmaHaltAddr & 0x0007) : dmaHaltAddr;
+
+        const bool stalledJoy = stalledReg == 0x4016 || stalledReg == 0x4017;
+
+        /**
+         * The DMC halt cycle performs the first read, while subsequent
+         * DMC dummy/alignment cycles do not produce separate joypad clocks.
+         * 
+         * OAM-only idle/alignment cycles retain their existing read.
+         */
+        const bool suppressJoyRead = dmcWasActive && prevDmcPhase != DMC_PHASE::HALT && stalledJoy;
+
+        if (!suppressJoyRead) read(stalledReg);
     }
 
-    return false;
+    /**
+     * Only the arbiter releases the CPU. Completing one DMA cannot
+     * resume execution while the other remains active.
+     */
+    halted = oamActive || dmcActive;
+
+    return true;
 }
 
-/**
- * via https://nesdev.org/wiki/DMA#OAM_DMA:
- * OAM DMA copies 256 bytes from a CPU page to PPU OAM via the OAMDATA ($2004) register.
- * It is triggered by writing the page number (the high byte of the address) to OAMDMA ($4014).
- * OAM DMA is scheduled to halt the CPU on the first cycle after the register write.
- * In the common case, it performs a halt cycle, an optional alignment cycle, and 256 get/put pairs.
- * The 256 get/put pairs copy forward from the start of the page. Because DMA can only read on get cycles,
- * an alignment cycle performing no useful work may be required before being able to read. All together,
- * OAM DMA on its own takes 513 or 514 cycles, depending on whether alignment is needed.
- * OAM DMA will copy from the page most recently written to $4014. This means that read-modify-write
- * instructions such as INC $4014, which are able to perform a second write before the CPU can be halted, will copy from the second page written, not the first.
- * OAM DMA has a lower priority than DMC DMA. If a DMC DMA get occurs during OAM DMA, OAM DMA is briefly paused.
- */
-void CPU::clockOAM() {
-    halt();
-    bool put = !isGetCycle(); // determine first cycle; odd = put, !odd = get
-    if (oamDummy) { // initial halt cycle
-        if (put) // no alignment needed
-            oamDummy = false;
-        else // alignment cycle (dummy read) needed
-            read(lastReadAddr);
-    } else {
-        if (!put) { // 'get' oam data from WRAM
-            oamData = read(((u16)oamPage << 8) | oamAddr);
-        } else { // 'put' oam data into PPU memory
-            sptr<PPU> ppup = ppu.lock();
-            u8 i = (ppup->getOAMADDR() + oamAddr) & 0xFF;
-            ppup->writeOAMByte(i, oamData);
+bool CPU::clockOAM(bool isBusAvail) {
+    if (!oamActive) return false;
 
-            // DMA should not update OAMADDR within the ppu
-            // instead, increment helper variable
-            oamAddr++;
-            if (oamAddr == 0x00) {
-                // helper variable is 8 bits; overflow to 0 means we
-                // have performed the put operation 256 times precisely
-                oamActive = false;
-                halted = false;
-            }
-        }
-    }
-}
+    switch (oamPhase) {
+        case OAM_PHASE::HALT:
+            /**
+             * The caller (`serviceDMA`) performs the repeated CPU read(s) if
+             * neither DMA engine otherwise uses the bus.
+             * 
+             * Leaving HALT always advances OAM to the GET phase.
+             * If the following cycles is a put cycle, the GET phase simply
+             * waits, producing the required OAM alignment cycle.
+             */
+            oamPhase = OAM_PHASE::GET;
+            return false;
+        case OAM_PHASE::GET:
+            if (!isBusAvail || !isGetCycle()) return false;
 
-void CPU::clockDMC() {
-    halt();
+            oamData = read((static_cast<u16>(oamPage) << 8) | oamAddr);
 
-    u16 stalledAddr = lastReadAddr;
-
-    if (currInst && currInst->address == &CPU::ABS_R && cycles == 3) {
-        const u16 effAddr = absAddr.value();
-        const u16 decAddr = effAddr >= 0x2000 && effAddr <= 0x3FFF
-            ? 0x2000 | (effAddr & 0x0007) : effAddr;
-        
-        switch (decAddr) {
-            case 0x2002: case 0x2007:
-            case 0x4015: case 0x4016:
-            case 0x4017:
-                stalledAddr = effAddr;
-                break;
-            default:
-                if ((effAddr & 0xFFE0) == 0x4000)
-                    stalledAddr = effAddr;
-                break;
-        }
-    }
-
-    const u16 stalledReg = stalledAddr >= 0x2000 && stalledAddr <= 0x3FFF
-        ? 0x2000 | (stalledAddr & 0x0007) : stalledAddr;
-    
-    const bool stalledJoy = stalledReg == 0x4016 || stalledReg == 0x4017;
-    
-    switch (dmcPhase) {
-        case DMC_PHASE::HALT: {
-            read(stalledReg);
-            dmcPhase = DMC_PHASE::DUMMY;
-            return;
-        }
-        case DMC_PHASE::DUMMY:
-            if (!stalledJoy)
-                read(stalledReg);
-            dmcPhase = isDmaGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
-            return;
-        case DMC_PHASE::ALIGN:
-            if (!stalledJoy)
-                read(stalledReg);
-            dmcPhase = DMC_PHASE::READ;
-            return;
-        case DMC_PHASE::READ: {
-            if (!isDmaGetCycle()) return;
+            oamPhase = OAM_PHASE::PUT;
+            return true;
+        case OAM_PHASE::PUT:
+            if (!isBusAvail || isGetCycle()) return false;
             
-            const u8 sampleData = read(dmcAddr);
+            ppu.lock()->writeOAMByte(
+                static_cast<u8>(
+                    ppu.lock()->getOAMADDR() + oamAddr
+                ),
+                oamData
+            );
 
-            if ((stalledAddr & 0xFFE0) == 0x4000) {
+            oamAddr++;
+
+            if (oamAddr == 0x00) {
+                // OAMDMA is complete
+                oamActive = false;
+                oamPhase = OAM_PHASE::IDLE;
+            } else {
+                // there are more OAM bytes to copy
+                oamPhase = OAM_PHASE::GET;
+            }
+
+            return true;
+        case OAM_PHASE::IDLE: default:
+            oamActive = false;
+            return false;
+    }
+}
+
+bool CPU::clockDMC() {
+    if (!dmcActive) return false;
+
+    switch (dmcPhase) {
+        case DMC_PHASE::HALT:
+            // No DMC bus access. OAM may use this same cycle.
+            dmcPhase = DMC_PHASE::DUMMY;
+            return false;
+        case DMC_PHASE::DUMMY:
+            /**
+             * If the dummy occurs on a get, the following put must
+             * be consumed as alignment. If it occurs on a put, the
+             * following get can perform the DMC read immediately.
+             */
+            dmcPhase = isGetCycle() ? DMC_PHASE::ALIGN : DMC_PHASE::READ;
+            return false;
+        case DMC_PHASE::ALIGN:
+            // No DMC bus access. OAM may write on this put cycle.
+            dmcPhase = DMC_PHASE::READ;
+            return false;
+        case DMC_PHASE::READ:
+            if (!isGetCycle()) return false;
+
+            dmcData = read(dmcAddr);
+
+            if ((dmaHaltAddr & 0xFFE0) == 0x4000) {
                 const u16 internalAddr = 0x4000 | (dmcAddr & 0x001F);
 
-                switch (internalAddr) {
-                    case 0x4015:
-                    case 0x4016:
-                    case 0x4017:
-                        read(internalAddr);
-                        break;
-                }
+                if (internalAddr >= 0x4015 && internalAddr <= 0x4017) read(internalAddr);
             }
 
-            dmcData = sampleData;
             apu.lock()->dmcOnByteFetched(dmcData);
 
+            dmcActive = false;
             dmcPhase = DMC_PHASE::IDLE;
+            return true;
+        case DMC_PHASE::IDLE: default:
             dmcActive = false;
-            halted = false;
-            return;
-        }
-        case DMC_PHASE::IDLE:
-        default:
-            dmcActive = false;
-            halted = false;
-            return;
+            return false;
     }
 }
 
@@ -436,8 +470,9 @@ void CPU::powerup(u32 s) {
     lastReadAddr = addrBus = cpuBus = 0;
 
     // clear DMA state
-    delayDMA = halted = oamActive = dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
-    oamDummy = true;
+    halted = oamActive = dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
+    oamPhase = OAM_PHASE::IDLE;
+    dmcPhase = DMC_PHASE::IDLE;
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
 
     // clear interrupt and poll bookkeeping
@@ -483,13 +518,13 @@ void CPU::reset() {
 
     // cancle cpu-side dma/halt state so reset is not delayed by interops
     halted = false;
-    delayDMA = false;
     oamActive = false;
-    oamDummy = true;
     oamPage = oamAddr = oamData = 0;
     dmcPending = dmcActive = dmcLoad = dmcHaltRetry = false;
     dmcAddr = 0;
     dmcData = 0;
+    oamPhase = OAM_PHASE::IDLE;
+    dmcPhase = DMC_PHASE::IDLE;
 
     // clear cpu-owned pending edge/latch state
     nmiPending = nmiLineSampled = false;
@@ -512,10 +547,11 @@ void CPU::powerdown() {
     conWriteDel = 0x00;
     
     // cancel DMA state completely
-    oamDummy = true;
-    delayDMA = oamActive = dmcPending = dmcActive =
+    oamActive = dmcPending = dmcActive =
     dmcLoad = dmcHaltRetry = false;
     oamPage = oamAddr = oamData = dmcAddr = dmcData = 0;
+    oamPhase = OAM_PHASE::IDLE;
+    dmcPhase = DMC_PHASE::IDLE;
 
     // clear transient decode/bus helper state
     currInst = nullptr;
@@ -565,7 +601,6 @@ void CPU::clockInstruction() {
     if (halted) return;
     /// We initialize `cycles` to `0`, but only start operations when it is `1`; so our logic requires pre-incrementing.
     cycles++;
-    delayDMA = false;
     if (cycles == 1) {
         // reset helper variables and process delayed I-flag
         newInstruction();

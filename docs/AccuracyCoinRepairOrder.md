@@ -45,7 +45,7 @@
 - [x] 13 - DMA + $2002 Read
 - [x] 13 - DMA + $4015 Read
 - [x] 13 - DMA + $4016 Read
-- [ ] 13 - DMC DMA + OAM DMA
+- [x] 13 - DMC DMA + OAM DMA
 - [ ] 13 - Explicit DMA Abort
 - [ ] 13 - Implicit DMA Abort
 - [ ] 10 - Unofficial Instructions: SH*
