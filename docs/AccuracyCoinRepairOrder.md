@@ -55,10 +55,10 @@
 - [x] 14 - Frame Counter 5-step
 - [x] 18 - Sprite overflow behavior
 - [x] 18 - Sprite 0 Hit behavior
-- [ ] 18 - Address $2004 behavior
-- [ ] 16 - Rendering Flag Behavior
-- [ ] 16 - $2007 read w/ rendering
-- [ ] 16 - Attributes as Tiles
+- [x] 18 - Address $2004 behavior
+- [x] 16 - Rendering Flag Behavior
+- [x] 16 - $2007 read w/ rendering
+- [x] 16 - Attributes as Tiles
 - [ ] 18 - $2002 flag timing
 - [ ] 18 - Suddenly Resize Sprite
 - [ ] 18 - Arbitrary Sprite zero

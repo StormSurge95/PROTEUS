@@ -141,16 +141,22 @@ u8 PPU::read(u16 addr, bool readonly) {
                     }
                 }
                 break;
-            case 0x04: // read from OAMDATA
-                // set our return value to the byte within OAM1
-                ret = readOAMByte(OAMADDR); // reads do not increment OAMADDR
+            case 0x04: { // read from OAMDATA
+                const bool visRend = renderingEnabled() && scanline <= 239;
+
+                if (!visRend) ret = readOAMByte(OAMADDR);
+                else if (cycle >= 1 && cycle <= 64) ret = 0xFF;
+                else if (cycle >= 65 && cycle <= 320) ret = oamLatch;
+                else ret = readOAMByte(OAMADDR);
+
                 if (readonly) return ret;
-                // update counters for bit decay
+
                 updateCounters(0xFF);
-                if (eventSink) {
-                    eventSink->OnPpuRegisterRead(0x2004, ret);
-                }
+
+                if (eventSink) eventSink->OnPpuRegisterRead(0x2004, ret);
+
                 break;
+            }
             case 0x07: // read from PPUDATA
                 {
                     u16 addr = v & 0x3FFF;
@@ -166,7 +172,20 @@ u8 PPU::read(u16 addr, bool readonly) {
                         if (readonly) return ret;
                         dataBuffer = data;
                     }
-                    v = (v + getVRAMIncrement()) & 0x3FFF;
+                    
+                    if (
+                        renderingEnabled() &&
+                        (
+                            scanline <= 239 ||
+                            scanline == (GetScanlinesPerFrame(*region) - 1)
+                        )
+                    ) {
+                        incrementCoarseX();
+                        incrementFineY();
+                    } else {
+                        v = (v + getVRAMIncrement()) & 0x3FFF;
+                    }
+
                     updateCounters(pal ? 0x3F : 0xFF);
                     if (eventSink) {
                         eventSink->OnPpuRegisterRead(0x2007, ret);
@@ -217,13 +236,25 @@ void PPU::write(u16 addr, u8 data) {
                     eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }
                 return;
-            case 0x04: // write to OAMDATA
-                writeOAMByte(OAMADDR, data); // update OAM
-                OAMADDR++; // increment address
+            case 0x04: { // write to OAMDATA
+                const bool rsl = scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1);
+
+                if (renderingEnabled() && rsl) {
+                    // When rendering, OAM bus is owned by sprite-eval circuitry
+                    // This causes the written data to be discarded, but still
+                    // causes sprite advancement and alignment.
+                    OAMADDR = static_cast<u8>((OAMADDR + 4) & 0xFC);
+                } else {
+                    // Outside rendering, the CPU write is processed as normal.
+                    writeOAMByte(OAMADDR, data); // update OAM
+                    OAMADDR++; // increment address
+                }
+
                 if (eventSink) {
                     eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }
                 return;
+            }
             case 0x05: // write to PPUSCROLL
                 if (!ignoreEarlyCtrlWrites) {
                     PPUSCROLL = data;
@@ -287,7 +318,20 @@ void PPU::write(u16 addr, u8 data) {
             case 0x07: // write to PPUDATA
                 PPUDATA = data; // update register
                 ppuWrite(v, PPUDATA); // update vram using value
-                v = (v + getVRAMIncrement()) & 0x3FFF; // increment vram address
+
+                if (
+                    renderingEnabled() &&
+                    (
+                        scanline <= 239 ||
+                        scanline == (GetScanlinesPerFrame(*region) - 1)
+                    )
+                ) {
+                    incrementCoarseX();
+                    incrementFineY();
+                } else {
+                    v = (v + getVRAMIncrement()) & 0x3FFF;
+                }
+
                 if (eventSink) {
                     eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
                 }

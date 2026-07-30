@@ -56,7 +56,11 @@ u8 PPU::readOAMByte(int i) const {
     u8 s = i / 4;
     u8 b = i % 4;
 
-    return primaryOAM[s][b];
+    u8 data = primaryOAM[s][b];
+
+    if (b == 2) data &= 0xE3;
+
+    return data;
 }
 
 void PPU::writeOAMByte(u8 i, u8 b) {
@@ -72,10 +76,17 @@ void PPU::initSecondaryOAM() {
     // index / 8 gives us sprites 0-7
     // rather than doing one byte per cycle and missing one byte from
     // each sprite, this allows us to 'clear' the index byte as well
+
+    // nesdev says that the internal OAM bus is forced to $FF during dots 1-64
+    oamLatch = 0xFF;
+
+    // decide whether we even need to run during this cycle
     u8 index = (cycle - 1);
+    if (index % 8 != 0) return;
+
+    // we need to run; decide which sprite's OAM data to clear
     u8 sprite = index / 8;
-    if (index % 8 == 0)
-        secondaryOAM[sprite].fill(0xFF);
+    secondaryOAM[sprite].fill(0xFF);
 }
 
 void PPU::beginSpriteEval() {
@@ -95,13 +106,17 @@ bool PPU::spriteInRange(u8 y) const {
 void PPU::spriteEvalRead() {
     switch (evalMode) {
         case EvalMode::SearchY:
-            oamLatch = primaryOAM[n][0];
-            break;
+            // oamLatch = primaryOAM[n][0];
+            oamLatch = readOAMByte((n << 2) | 0);
+            return;
         case EvalMode::CopyBytes:
-            oamLatch = primaryOAM[n][byteIndex];
-            break;
+            // oamLatch = primaryOAM[n][byteIndex];
+            oamLatch = readOAMByte((n << 2) | byteIndex);
+            return;
         case EvalMode::OverflowScan:
-            oamLatch = primaryOAM[n][m];
+            //oamLatch = primaryOAM[n][m];
+            oamLatch = readOAMByte((n << 2) | m);
+            return;
         case EvalMode::Done:
         default: return;
     }
@@ -208,6 +223,13 @@ void PPU::spriteFetch() {
 
     u8 sprite = (cycle - 257) / 8;
     u8 step = (cycle - 257) % 8;
+
+    const u8 oamByte = step < 4 ? step : 3;
+
+    oamLatch = secondaryOAM[sprite][oamByte];
+
+    if (oamByte == 2) oamLatch &= 0xE3;
+
     switch (step) {
         case 0:
         case 1:

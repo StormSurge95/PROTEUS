@@ -122,7 +122,7 @@ P16 - PPU BEHAVIOR
     T4 - PPU READ BUFFER————————————————————————PASS G
     T5 - PALETTE RAM QUIRKS—————————————————————PASS
     T6 - RENDERING FLAG BEHAVIOR————————————————PASS
-    T7 - $2007 READ W/ RENDERING————————————————FAIL 2
+    T7 - $2007 READ W/ RENDERING————————————————PASS
     T8 - ATTRIBUTES AS TILES————————————————————PASS
 P17 - PPU VBLANK TIMING
     T1 - VBLANK BEGINNING———————————————————————PASS
@@ -139,7 +139,7 @@ P18 - SPRITE EVALUATION
     T4 - SUDDENLY RESIZE SPRITE—————————————————FAIL 4
     T5 - ARBITRARY SPRITE ZERO——————————————————FAIL 2
     T6 - MISALIGNED OAM BEHAVIOR————————————————FAIL 1
-    T7 - ADDRESS $2004 BEHAVIOR—————————————————FAIL 3
+    T7 - ADDRESS $2004 BEHAVIOR—————————————————PASS G
     T8 - OAM CORRUPTION—————————————————————————FAIL 2
     T9 - INC $4014——————————————————————————————PASS
 P19 - PPU MISC.

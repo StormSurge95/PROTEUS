@@ -172,7 +172,7 @@ namespace NS_NES {
             u8 n = 0x00;
             /// @brief helper variable for sprite evaluation
             u8 m = 0x00;
-            /// @brief ???
+            /// @brief helper variable representing the internal OAM bus
             u8 oamLatch = 0x00;
             /// @brief current sprites evaluated to be present on the current scanline
             u8 spritesOnScanline = 0x00;
