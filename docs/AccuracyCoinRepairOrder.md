@@ -53,8 +53,8 @@
 - [x] 14 - Length Table
 - [x] 14 - Frame Counter 4-step
 - [x] 14 - Frame Counter 5-step
-- [ ] 18 - Sprite overflow behavior
-- [ ] 18 - Sprite 0 Hit behavior
+- [x] 18 - Sprite overflow behavior
+- [x] 18 - Sprite 0 Hit behavior
 - [ ] 18 - Address $2004 behavior
 - [ ] 16 - Rendering Flag Behavior
 - [ ] 16 - $2007 read w/ rendering

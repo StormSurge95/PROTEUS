@@ -15,9 +15,9 @@ class IDevice {
     public:
         /// @brief default virtual destructor
         ~IDevice() = default;
-        /// @brief required for the data read operations
+        /// @brief required for data read operations
         virtual DataSize read(AddressSize, bool = false) = 0;
-        /// @brief required for the data write operations
+        /// @brief required for data write operations
         virtual void write(AddressSize, DataSize) = 0;
 
         virtual void powerup(u32) {};

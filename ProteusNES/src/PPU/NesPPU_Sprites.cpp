@@ -84,7 +84,6 @@ void PPU::beginSpriteEval() {
     byteIndex = 0;
     spritesOnScanline = 0;
     evalMode = EvalMode::SearchY;
-    spritesOverflowed(false);
 }
 
 bool PPU::spriteInRange(u8 y) const {
@@ -123,7 +122,7 @@ void PPU::advanceOverflowHit() {
 
 void PPU::spriteEvalWrite() {
     switch (evalMode) {
-        case EvalMode::SearchY:
+        case EvalMode::SearchY: {
             if (spriteInRange(oamLatch)) {
                 secondaryOAM[spritesOnScanline][0] = oamLatch;
                 if (n == 0) sprite0HitOnNextScanline = true;
@@ -134,6 +133,7 @@ void PPU::spriteEvalWrite() {
                 if (n >= 64) evalMode = EvalMode::Done;
             }
             break;
+        }
         case EvalMode::CopyBytes:
             secondaryOAM[spritesOnScanline][byteIndex] = oamLatch;
             if (byteIndex < 3) byteIndex++;
@@ -142,12 +142,12 @@ void PPU::spriteEvalWrite() {
                 spritesOnScanline++;
                 n++;
                 byteIndex = 0;
-            }
-            if (n >= 64) evalMode = EvalMode::Done;
-            else if (spritesOnScanline < 8) evalMode = EvalMode::SearchY;
-            else {
-                m = 0;
-                evalMode = EvalMode::OverflowScan;
+                if (n >= 64) evalMode = EvalMode::Done;
+                else if (spritesOnScanline < 8) evalMode = EvalMode::SearchY;
+                else {
+                    m = 0;
+                    evalMode = EvalMode::OverflowScan;
+                }
             }
             break;
         case EvalMode::OverflowScan:
@@ -203,8 +203,10 @@ void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
 }
 
 void PPU::spriteFetch() {
-    u8 sprite = (cycle - 257) / 8;
+    // "OAMADDR is set to 0 during each of ticks 257—320 (the sprite tile loading interval) of the pre-render and visible scanlines."
+    OAMADDR = 0x00;
 
+    u8 sprite = (cycle - 257) / 8;
     u8 step = (cycle - 257) % 8;
     switch (step) {
         case 0:
@@ -236,7 +238,13 @@ void PPU::spriteFetch() {
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:
-            activeSprites[sprite] = ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition, secondaryOAM[sprite][4]);
+            activeSprites[sprite] = ActiveSprite(
+                sprPatternLo,
+                sprPatternHi,
+                sprAttributes,
+                sprXPosition,
+                secondaryOAM[sprite][4]
+            );
             break;
 
     }

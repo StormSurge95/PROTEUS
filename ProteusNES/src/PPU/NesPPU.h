@@ -10,7 +10,7 @@ namespace NS_NES {
     class PPU : public IDevice<u8, u16> {
             // allow Debugger class to access all private members of the PPU class
             friend class NesDebugger;
-        public:
+        public: // variables
             // current scanline of current frame
             u16 scanline = 0;
             // current dot/pixel of current scanline
@@ -23,86 +23,7 @@ namespace NS_NES {
             // suppress nmi flag
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
-
-            // default constructor
-            PPU() = default;
-            // default destructor
-            ~PPU() = default;
-
-            bool getNmiOutput() const { return nmiOutput; }
-
-            /*
-                Primary scheduling function of the PPU.
-                Determines what operations need to be performed based on
-                which pixel of the screen we are on.
-            */
-            void clock();
-
-            /**
-             * @brief Power On function of the PPU.
-             * @details Handles and performs any operations/changes necessary to
-             *          initialize the PPU to it's "power on" state.
-             */
-            void powerup(u32 seed) override;
-
-            /**
-             * @brief Reset function of the PPU.
-             * @details Handles and performs any operations/changes necessary to
-             *          reset the PPU to a known and predetermined state.
-             */
-            void reset() override;
-
-            /**
-             * @brief Power Down function of the PPU.
-             * @details Handles and performs any operations/changes necessary to
-             *          shut down the PPU and cease all internal operations.
-             */
-            void powerdown() override;
-
-            /*
-                Performs intra-device read operations on the various
-                registers that are visible to other devices for reading.
-            */
-            u8 read(u16, bool = false) override;
-            // returns the value of the OAMADDR register
-            u8 getOAMADDR() const { return OAMADDR; };
-
-            /*
-                Performs intra-device write operations on the various
-                registers that are visible to other devices for writing.
-            */
-            void write(u16, u8) override;
-
-            /*
-                Collects and returns OAM byte data from memory.
-                If `i` is provided, then the requested byte is
-                returned; otherwise, the byte pointed to by 
-                `OAMADDR` is returned.
-
-                `i`: any integer value from 0-255.
-            */
-            u8 readOAMByte(int = -1) const;
-
-            /*
-                Writes a provided byte of data to the requested
-                location within OAM memory.
-
-                `i`: integer value 0-255 representing where to write
-                `b`: actual byte of data to write
-            */
-            void writeOAMByte(u8, u8);
-
-            // returns a pointer to the pixel data produced by the PPU
-            const u32* getFrameBuffer() const { return frameBuffer.data(); }
-            // connects a cartridge/gamepak/ROM to the ppu (mainly for oamdma)
-            void connectCART(sptr<Gamepak>& c) { cart = c; }
-            // connects the cpu to the ppu
-            void connectCPU(sptr<CPU>& c) { cpu = c; }
-            // connects the event sink instance to the PPU
-            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
-
-            void setRegion(ConsoleRegion* r) { region = r; }
-        private:
+        private: // variables
             // current nmi output value
             bool nmiOutput = false;
             // odd frame flag
@@ -115,37 +36,16 @@ namespace NS_NES {
             ConsoleRegion* region = nullptr;
 
             NesEventSink* eventSink = nullptr;
-
-            void clearPipelines();
-
-            /*
-                Performs read operations by reading from VRAM on
-                the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
-            */
-            u8 ppuRead(u16, bool = false);
-
-            /*
-                Performs write operations by writing to VRAM on
-                the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
-            */
-            void ppuWrite(u16, u8);
-
-            void recompNMI();
-
-            // Fakes the bit decay of the analogue NES system PPU
-            void bitDecay();
-            // Updates the counters used for bit decay
-            void updateCounters(u8);
-            // actual decay counters for ppu bus bit decay
+            /// @brief actual decay counters for ppu bus bit decay
             u8 decayCounters[8] = { 20, 20, 20, 20, 20, 20, 20, 20 };
 
-            // reference to the gamepak
+            /// @brief reference to the gamepak
             wptr<Gamepak> cart;
-            // reference to the cpu
+            /// @brief reference to the cpu
             wptr<CPU> cpu;
-            // array to hold the processed and assembled frame pixels
+            /// @brief array to hold the processed and assembled frame pixels
             array<u32, 61440> frameBuffer{ 0 };
-            // NES master color palette in ABGR format
+            /// @brief NES master color palette in ABGR format
             array<u32, 64> masterPalette = {
                 /* 0x00 */ 0xff626262,
                 /* 0x01 */ 0xff902001,
@@ -217,57 +117,6 @@ namespace NS_NES {
             // array to hold the various master palette indexes within vram
             array<u8, 32> palettes{ 0 };
 
-            // Performs Pre-Render Scanline operations
-            void onPreRenderLine();
-            // Performs Visible Scanline operations
-            void onVisibleLine();
-            // Performs Start-of-VBlank Scanline operations
-            void onStartVBlankLine();
-
-            // Helper function to return the requested bit-flag value from the PPUCTRL register
-            u8 getControlData(CONTROL which) const;
-            // Gets the nametable base address based on PPUCTRL values
-            inline u16 getNametableBase() const { return 0x2000 + (getControlData(CONTROL::NAMETABLE_BASE) * 0x400); }
-            // Gets the current VRAM increment amount based on PPUCTRL values
-            inline u8 getVRAMIncrement() const { return (getControlData(CONTROL::VRAM_INCREMENT) ? 32 : 1); }
-            // Gets the Sprite Pattern Table base address based on PPUCTRL values; NOTE: THIS IS ONLY VALID FOR 8x8 SPRITES
-            inline u16 getSpritePatternTableAddr8x8() const { return (getControlData(CONTROL::SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
-            // Gets the Background Pattern Table base address based on PPUCTRL values
-            inline u16 getBackgroundPatternTableAddr() const { return (getControlData(CONTROL::BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
-            // Gets the current Sprite mode (8x8 or 8x16) we are in based on PPUCTRL values
-            inline u8 getSpriteHeight() const { return (getControlData(CONTROL::SPRITE_SIZE) ? 16 : 8); }
-            // Gets whether or not NMI is currently enabled based on PPUCTRL values
-            inline bool getNMIEnabled() const { return !!(getControlData(CONTROL::NMI_ENABLED)); }
-
-            // Helper function to return the requested bit-flag value from the PPUMASK register
-            u8 getMaskData(MASK which) const { return ((PPUMASK >> (u8)which) & 0x01); }
-            // Gets whether or not rendering should be monochromatic.
-            inline bool getGrayscale() const { return !!(getMaskData(MASK::GRAYSCALE)); }
-            // Gets whether or not the first column of background tiles should be rendered.
-            inline bool renderBackgroundLeft() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND_LEFT)); }
-            // Gets whether or not any sprites should be rendered within the first column of tiles.
-            inline bool renderSpritesLeft() const { return !!(getMaskData(MASK::ENABLE_SPRITES_LEFT)); }
-            // Gets whether or not background should be rendered for this frame
-            inline bool renderBackground() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND)); }
-            // Gets whether or not sprites should be rendered for this frame
-            inline bool renderSprites() const { return !!(getMaskData(MASK::ENABLE_SPRITES)); }
-            // helper function to apply R/G/B color emphasis based on their individual bit-flag values
-            u32 applyEmphasis(u32 color) const;
-
-            // Helper function to GET the requested bit-flag value from teh PPU Status register
-            bool getStatusData(STATUS which) const { return ((PPUSTATUS >> (u8)which) & 0x01); }
-            // Helper function to SET the requested bit-flag value from the PPU Status register
-            void setStatusData(STATUS which, bool v);
-            // Gets/Sets whether sprite overflow has occurred on the current scanline.
-            inline bool spritesOverflowed() const { return getStatusData(STATUS::SPRITE_OVERFLOW); } // GETTER
-            inline void spritesOverflowed(bool v) { setStatusData(STATUS::SPRITE_OVERFLOW, v); } // SETTER
-            // Gets/Sets whether sprite zero hit has occurred on the current scanline.
-            inline bool spriteZeroHit() const { return getStatusData(STATUS::SPRITE_ZERO_HIT); } // GETTER
-            inline void spriteZeroHit(bool v) { setStatusData(STATUS::SPRITE_ZERO_HIT, v); } // SETTER
-            // Gets/Sets whether or not we are currently in VBlank status.
-            inline bool inVBlank() const { return getStatusData(STATUS::VBLANK); } // GETTER
-            inline void inVBlank(bool v) { setStatusData(STATUS::VBLANK, v); } // SETTER
-
             // REGISTERS
             u8 PPUCTRL = 0x00;     // $2000 write
             u8 PPUMASK = 0x00;     // $2001 write
@@ -287,9 +136,6 @@ namespace NS_NES {
             u16 t = 0x0000;  // during rendering, specifies starting coarse-x scroll for next scanline and starting y scroll for screen; outside rendering, holds scroll or VRAM before transferring it to v
             u8 x = 0x00;  // fine-x position of current scroll, used during rendering alongside v
             bool w = false; // write-latch for PPUSCROLL/PPUADDR; clears on read of PPUSTATUS
-
-            // Helper function for determining whether or not ANY form of rendering is enabled at any given point.
-            inline bool renderingEnabled() const { return ((renderBackground() || renderSprites()) && !inVBlank()); }
 
             // the next nametable byte for use during the background pipeline process
             u8 nextNametableByte = 0x00;
@@ -311,163 +157,339 @@ namespace NS_NES {
             // high byte attribute table shift register
             u16 attributeShiftHi = 0x0000;
 
-            // helper function for copying horizontal-scroll related bits from v to t
-            inline void copyHorizontalBits() { if (renderingEnabled()) v = (v & ~0b0000010000011111) | (t & 0b0000010000011111); }
-            // helper function for copying vertical-scroll related bits from v to t
-            inline void copyVerticalBits() { if (renderingEnabled()) v = (v & ~0b0111101111100000) | (t & 0b0111101111100000); }
-            // helper function to obtain the current Tile-wise horizontal-scroll
-            inline u8 coarseX() const { return v & 0x1F; }
-            // helper function to obtain the current Tile-wise vertical-scroll
-            inline u8 coarseY() const { return ((v & 0x03E0) >> 5); }
-            // helper function to obtain the current pixel-wise vertical-scroll
-            inline u8 fineY() const { return ((v & 0x7000) >> 12); }
-
             // container for Primary OAM data; i.e. the pixel data for each of the 64 possible sprites within the game
             std::array<std::array<u8, 4>, 64> primaryOAM{ 0 };
             // container for Secondary OAM data; i.e. the pixel data for each of the 8 possible sprites on the next scanline
             std::array<std::array<u8, 5>, 8> secondaryOAM{ 0 };
 
-            /*
-                Sprite Attribute byte flags
-                7..bit..0
-                YXP- --pp
-                |||    ++-> index into the current palette selections for sprite coloring
-                ||+-------> whether this sprite has priority over the background (0 = higher priority)
-                |+--------> whether this sprite should be horizontally flipped
-                +---------> whether this sprite should be vertically flipped
-            */
-            enum SPRITE_ATTR {
-                PALETTE,
-                PRIORITY,
-                XFLIP,
-                YFLIP
-            };
-            // helper function for reading sprite attribute byte flags
-            u8 readSpriteAttr(SPRITE_ATTR which, u8 attr);
-            // returns the palette index of the current sprite
-            inline u8 getSpritePalette(u8 attr) { return readSpriteAttr(PALETTE, attr); }
-            // returns whether or not the current sprite should be rendered above the background
-            inline bool spriteAboveBackground(u8 attr) { return readSpriteAttr(PRIORITY, attr) == 0; }
-            // returns whether or not the current sprite should be h-flipped
-            inline bool flipX(u8 attr) { return readSpriteAttr(XFLIP, attr) > 0; }
-            // returns whether or not the current sprite should be v-flipped
-            inline bool flipY(u8 attr) { return readSpriteAttr(YFLIP, attr) > 0; }
-
-            // helper function to encompass the entirety of the NES PPU background pipeline
-            void backgroundPipeline();
-
-            // fetches the next nametable byte
-            void fetchBGNametableByte();
-            // fetches the next attribute byte
-            void fetchBGAttributeByte();
-
-            // fetches the next LOW pattern byte
-            void fetchBGPatternByteLo();
-            // fetches the next HIGH pattern byte
-            void fetchBGPatternByteHi();
-
-            // helper function to increment the Coarse X scroll value
-            void incrementCoarseX();
-            // helper function to increment the Fine Y scroll value
-            void incrementFineY();
-
-            // loads the background shift registers with the related previously fetched bytes
-            void loadBackgroundShifters();
-            // shifts the background shift registers to access the next relevant bit
-            void shiftBackgroundShifters();
-
-            /*
-                Performs the necessary calculations to determine the values
-                related to the background pixel at the current dot.
-            */
-            void getBackgroundPixel(u8& pixel, u8& attr) const;
-
-            /*
-                Performs comparisons and processing necessary to determine how
-                the current pixel should be rendered (ie. via background or via
-                sprite).
-            */
-            void renderPixel();
-
-            /*
-                Reinitializes secondaryOAM and clears it in preparation for
-                the next round of sprite evaluation(s). The NES expects a
-                "cleared" byte to be equal to 0xFF; so on every EVEN cycle,
-                we set the corresponding byte in secondaryOAM to 0xFF.
-            */
-            void initSecondaryOAM();
-            
             enum class EvalMode {
                 SearchY,        // normal phase: checking OAM[n][0]
                 CopyBytes,      // normal phase: copying bytes 1..3
                 OverflowScan,   // bugged diagonal scan after 8 sprites
                 Done            // no more meaningful eval work this scanline
             } evalMode = EvalMode::SearchY;
-            // helper variable for sprite evaluation
+            /// @brief helper variable for sprite evaluation
             u8 n = 0x00;
-            // helper variable for sprite evaluation
+            /// @brief helper variable for sprite evaluation
             u8 m = 0x00;
-            // ???
+            /// @brief ???
             u8 oamLatch = 0x00;
-            // current sprites evaluated to be present on the current scanline
+            /// @brief current sprites evaluated to be present on the current scanline
             u8 spritesOnScanline = 0x00;
-            // flags to properly emulate sprite 0 hit
+            /// @brief flags to properly emulate sprite 0 hit
             bool sprite0HitOnNextScanline = false;
             bool sprite0HitOnThisScanline = false;
-            // index into the SPRITE being processed; i.e. y-pos/tile-index/attr/x-pos
+            /// @brief index into the SPRITE being processed; i.e. y-pos/tile-index/attr/x-pos
             u8 byteIndex = 0x00;
-            // address of the sprite's pattern tile
+            /// @brief address of the sprite's pattern tile
             u16 spritePatternAddr = 0x0000;
 
-            // sprite's tile index (duh)
+            /// @brief sprite's tile index (duh)
             u8 sprTileIndex = 0x00;
-            // sprite's attribute byte
+            /// @brief sprite's attribute byte
             u8 sprAttributes = 0x00;
-            // sprite's x-pos value (duh)
+            /// @brief sprite's x-pos value (duh)
             u8 sprXPosition = 0x00;
-            // sprite's LOW pattern byte (duh)
+            /// @brief sprite's LOW pattern byte (duh)
             u8 sprPatternLo = 0x00;
-            // sprite's HIGH pattern byte (duh)
+            /// @brief sprite's HIGH pattern byte (duh)
             u8 sprPatternHi = 0x00;
 
-            // container for the sprites to be placed on the CURRENT scanline
+            /// @brief container for the sprites to be placed on the CURRENT scanline
             array<ActiveSprite, 8> activeSprites;
 
-            // sprite eval helper funcs
+            /**
+             * @enum SPRITE_ATTR
+             * @brief Sprite Attribute byte flags
+             */
+            enum SPRITE_ATTR {
+                PALETTE,    // bit 1-0: index into the current palette selections for sprite coloring
+                PRIORITY,   // bit 5: whether this sprite has priority over the background (0 = higher priority)
+                XFLIP,      // bit 6: whether this sprite should be flipped horizontally
+                YFLIP       // bit 7: whether this sprite should be flipped vertically
+            };
+        public: // functions
+            // default constructor
+            PPU() = default;
+            // default destructor
+            ~PPU() = default;
+
+            /// @brief Getter function for NMI signal pin
+            bool getNmiOutput() const { return nmiOutput; }
+
+            /**
+             * @brief Primary scheduling function of the PPU.
+             * @details Determines what operations need to be performed based on
+             *           which pixel of the screen we are on.
+             */
+            void clock();
+
+            /**
+             * @brief Power On function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          initialize the PPU to it's "power on" state.
+             */
+            void powerup(u32 seed) override;
+
+            /**
+             * @brief Reset function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          reset the PPU to a known and predetermined state.
+             */
+            void reset() override;
+
+            /**
+             * @brief Power Down function of the PPU.
+             * @details Handles and performs any operations/changes necessary to
+             *          shut down the PPU and cease all internal operations.
+             */
+            void powerdown() override;
+
+            /**
+             * @brief Allows PPU to read data from memory.
+             * @details Performs intra-device read operations on the various
+             *          registers that are visible to other devices for reading.
+             */
+            u8 read(u16, bool = false) override;
+            /// @brief Getter function for the value of the OAMADDR register
+            u8 getOAMADDR() const { return OAMADDR; };
+
+            /**
+             * @brief Allows PPU to write data to memory.
+             * @details Performs intra-device write operations on the various
+             *          registers that are visible to other devices for writing.
+             */
+            void write(u16, u8) override;
+
+            /**
+             * @brief Collects and returns OAM byte data from memory.
+             * @details If `i` is provided, then the requested byte is
+             *          returned; otherwise, the byte pointed to by 
+             *          `OAMADDR` is returned.
+             * @param int `i`: any integer value from 0-255.
+             */
+            u8 readOAMByte(int = -1) const;
+
+            /**
+             * @brief Writes byte data to OAM memory.
+             * @param u8 `i`: integer value 0-255 representing where to write
+             * @param u8 `b`: actual byte of data to write
+             */
+            void writeOAMByte(u8, u8);
+
+            /// @brief returns a pointer to the pixel data produced by the PPU
+            const u32* getFrameBuffer() const { return frameBuffer.data(); }
+            /// @brief connects a cartridge/gamepak/ROM to the ppu (mainly for oamdma)
+            void connectCART(sptr<Gamepak>& c) { cart = c; }
+            /// @brief connects the cpu to the ppu
+            void connectCPU(sptr<CPU>& c) { cpu = c; }
+            /// @brief connects the event sink instance to the PPU
+            void connectEventSink(NesEventSink* sink) { eventSink = sink; }
+
+            /// @brief helper function for initialization
+            void setRegion(ConsoleRegion* r) { region = r; }
+        private: // functions
+            /// @brief helper function for resetting bg/spr pipelines
+            void clearPipelines();
+
+            /**
+             * @brief Internal memory-read operation function
+             * @details Performs read operations by reading from VRAM on
+             *          the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
+             * @param u16 addr
+             * @param bool readonly
+             */
+            u8 ppuRead(u16, bool = false);
+
+            /**
+             * @brief Internal memory-write operation function
+             * @details Performs write operations by writing to VRAM on
+             *          the PPU and/or CHR-ROM/CHR-RAM on the cartridge.
+             * @param u16 addr
+             * @param u8 data
+             */
+            void ppuWrite(u16, u8);
+
+            /// @brief helper function to recompute NMI output signal
+            void recompNMI();
+
+            /// @brief Fakes the bit decay of the analogue NES system PPU
+            void bitDecay();
+            /// @brief Updates the counters used for bit decay
+            void updateCounters(u8);
+
+            /// @brief Performs Pre-Render Scanline operations
+            void onPreRenderLine();
+            /// @brief Performs Visible Scanline operations
+            void onVisibleLine();
+            /// @brief Performs Start-of-VBlank Scanline operations
+            void onStartVBlankLine();
+
+            /// @brief Helper function to return the requested bit-flag value from the PPUCTRL register
+            u8 getControlData(CONTROL which) const;
+            /// @brief Gets the nametable base address based on PPUCTRL values
+            inline u16 getNametableBase() const { return 0x2000 + (getControlData(CONTROL::NAMETABLE_BASE) * 0x400); }
+            /// @brief Gets the current VRAM increment amount based on PPUCTRL values
+            inline u8 getVRAMIncrement() const { return (getControlData(CONTROL::VRAM_INCREMENT) ? 32 : 1); }
+            /// @brief Gets the Sprite Pattern Table base address based on PPUCTRL values; NOTE: THIS IS ONLY VALID FOR 8x8 SPRITES
+            inline u16 getSpritePatternTableAddr8x8() const { return (getControlData(CONTROL::SPRITE_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+            /// @brief Gets the Background Pattern Table base address based on PPUCTRL values
+            inline u16 getBackgroundPatternTableAddr() const { return (getControlData(CONTROL::BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0x0000); }
+            /// @brief Gets the current Sprite mode (8x8 or 8x16) we are in based on PPUCTRL values
+            inline u8 getSpriteHeight() const { return (getControlData(CONTROL::SPRITE_SIZE) ? 16 : 8); }
+            /// @brief Gets whether or not NMI is currently enabled based on PPUCTRL values
+            inline bool getNMIEnabled() const { return !!(getControlData(CONTROL::NMI_ENABLED)); }
+
+            /// @brief Helper function to return the requested bit-flag value from the PPUMASK register
+            u8 getMaskData(MASK which) const { return ((PPUMASK >> (u8)which) & 0x01); }
+            /// @brief Gets whether or not rendering should be monochromatic.
+            inline bool getGrayscale() const { return !!(getMaskData(MASK::GRAYSCALE)); }
+            /// @brief Gets whether or not the first column of background tiles should be rendered.
+            inline bool renderBackgroundLeft() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND_LEFT)); }
+            /// @brief Gets whether or not any sprites should be rendered within the first column of tiles.
+            inline bool renderSpritesLeft() const { return !!(getMaskData(MASK::ENABLE_SPRITES_LEFT)); }
+            /// @brief Gets whether or not background should be rendered for this frame
+            inline bool renderBackground() const { return !!(getMaskData(MASK::ENABLE_BACKGROUND)); }
+            /// @brief Gets whether or not sprites should be rendered for this frame
+            inline bool renderSprites() const { return !!(getMaskData(MASK::ENABLE_SPRITES)); }
+            /// @brief helper function to apply R/G/B color emphasis based on their individual bit-flag values
+            u32 applyEmphasis(u32 color) const;
+
+            /// @brief Helper function to GET the requested bit-flag value from teh PPU Status register
+            bool getStatusData(STATUS which) const { return ((PPUSTATUS >> (u8)which) & 0x01); }
+            /// @brief Helper function to SET the requested bit-flag value from the PPU Status register
+            void setStatusData(STATUS which, bool v);
+            /// @brief Gets/Sets whether sprite overflow has occurred on the current scanline.
+            inline bool spritesOverflowed() const { return getStatusData(STATUS::SPRITE_OVERFLOW); } // GETTER
+            inline void spritesOverflowed(bool v) { setStatusData(STATUS::SPRITE_OVERFLOW, v); } // SETTER
+            /// @brief Gets/Sets whether sprite zero hit has occurred on the current scanline.
+            inline bool spriteZeroHit() const { return getStatusData(STATUS::SPRITE_ZERO_HIT); } // GETTER
+            inline void spriteZeroHit(bool v) { setStatusData(STATUS::SPRITE_ZERO_HIT, v); } // SETTER
+            /// @brief Gets/Sets whether or not we are currently in VBlank status.
+            inline bool inVBlank() const { return getStatusData(STATUS::VBLANK); } // GETTER
+            inline void inVBlank(bool v) { setStatusData(STATUS::VBLANK, v); } // SETTER
+
+            /// @brief Helper function for determining whether or not ANY form of rendering is enabled at any given point.
+            inline bool renderingEnabled() const { return ((renderBackground() || renderSprites()) && !inVBlank()); }
+
+            /// @brief helper function for copying horizontal-scroll related bits from v to t
+            inline void copyHorizontalBits() { if (renderingEnabled()) v = (v & ~0b0000010000011111) | (t & 0b0000010000011111); }
+            /// @brief helper function for copying vertical-scroll related bits from v to t
+            inline void copyVerticalBits() { if (renderingEnabled()) v = (v & ~0b0111101111100000) | (t & 0b0111101111100000); }
+            /// @brief helper function to obtain the current Tile-wise horizontal-scroll
+            inline u8 coarseX() const { return v & 0x1F; }
+            /// @brief helper function to obtain the current Tile-wise vertical-scroll
+            inline u8 coarseY() const { return ((v & 0x03E0) >> 5); }
+            /// @brief helper function to obtain the current pixel-wise vertical-scroll
+            inline u8 fineY() const { return ((v & 0x7000) >> 12); }
+
+            /// @brief helper function for reading sprite attribute byte flags
+            u8 readSpriteAttr(SPRITE_ATTR which, u8 attr);
+            /// @brief returns the palette index of the current sprite
+            inline u8 getSpritePalette(u8 attr) { return readSpriteAttr(PALETTE, attr); }
+            /// @brief returns whether or not the current sprite should be rendered above the background
+            inline bool spriteAboveBackground(u8 attr) { return readSpriteAttr(PRIORITY, attr) == 0; }
+            /// @brief returns whether or not the current sprite should be h-flipped
+            inline bool flipX(u8 attr) { return readSpriteAttr(XFLIP, attr) > 0; }
+            /// @brief returns whether or not the current sprite should be v-flipped
+            inline bool flipY(u8 attr) { return readSpriteAttr(YFLIP, attr) > 0; }
+
+            /// @brief helper function to encompass the entirety of the NES PPU background pipeline
+            void backgroundPipeline();
+
+            /// @brief fetches the next nametable byte
+            void fetchBGNametableByte();
+            /// @brief fetches the next attribute byte
+            void fetchBGAttributeByte();
+
+            /// @brief fetches the next LOW pattern byte
+            void fetchBGPatternByteLo();
+            /// @brief fetches the next HIGH pattern byte
+            void fetchBGPatternByteHi();
+
+            /// @brief helper function to increment the Coarse X scroll value
+            void incrementCoarseX();
+            /// @brief helper function to increment the Fine Y scroll value
+            void incrementFineY();
+
+            /// @brief loads the background shift registers with the related previously fetched bytes
+            void loadBackgroundShifters();
+            /// @brief shifts the background shift registers to access the next relevant bit
+            void shiftBackgroundShifters();
+
+            /**
+             * @brief Gets the current pixel of the background image.
+             * @details Performs the necessary calculations to determine the values
+             *          related to the background pixel at the current dot.
+             * @param [out] u8 pixel - reference to an `unsigned char` in which to store the pixel value
+             * @param [out] u8 attr - reference to an `unsigned char` in which to store the attr value
+             */
+            void getBackgroundPixel(u8& pixel, u8& attr) const;
+
+            /**
+             * @brief Sets the currently visible pixel on the screen.
+             * @details Performs comparisons and processing necessary to determine how
+             *          the current pixel should be rendered (ie. via background or via
+             *          sprite).
+             */
+            void renderPixel();
+
+            /**
+             * @brief Reinitializes the secondary OAM region
+             * @details Clears `secondaryOAM` in preparation for
+             *          the next round of sprite evaluation(s). The NES expects a
+             *          "cleared" byte to be equal to 0xFF; so on every EVEN cycle,
+             *          we set the corresponding byte in secondaryOAM to 0xFF.
+             */
+            void initSecondaryOAM();
+
+            /// @brief initializes helper variables for sprite evaluation
             void beginSpriteEval();
+            /// @brief helper function for performing read operations during sprite eval
             void spriteEvalRead();
+            /// @brief helper function for performing write operations during sprite eval
             void spriteEvalWrite();
+            /// @brief helper function to determine whether the current sprite is within range
             bool spriteInRange(u8 y) const;
+            /// @brief helper function for sprite overflow hardware bug
             void advanceOverflowMiss();
+            /// @brief helper function for sprite overflow hardware bug
             void advanceOverflowHit();
 
-            /*
-                Evaluates one sprite each cycle during cycles 65-256
-                This functions tests sprite position compared to scanline to ensure
-                that the sprite actually appears on the scanline. If it does,
-                then we copy its data into secondaryOAM for later testing to determine
-                whether it will be printed during any particular cycle.
-                Each scanline can only support up to 8 sprites. If more than 8 are
-                found, then the spriteOverflow flag within PPUSTATUS is set.
-            */
+            /**
+             * @brief Evaluates one sprite each cycle during cycles 65-256
+             * @details This functions tests sprite position compared to scanline to ensure
+             *          that the sprite actually appears on the scanline. If it does,
+             *          then we copy its data into secondaryOAM for later testing to determine
+             *          whether it will be printed during any particular cycle.
+             *          Each scanline can only support up to 8 sprites. If more than 8 are
+             *          found, then the spriteOverflow flag within PPUSTATUS is set.
+             */
             void spriteEval();
 
-            /*
-                Fetches various data for the sprite being processed. Each
-                sprite takes a total of 8 cycles to fetch all necessary data.
-                This allows the process to perfectly fit in cycles 257-320.
-            */
+            /**
+             * @brief Fetches various data for the sprite being processed.
+             * @details Each sprite takes a total of 8 cycles to fetch all
+             *          necessary data. This allows the process to perfectly
+             *          fit in cycles 257-320.
+             */
             void spriteFetch();
 
-            /*
-                Helper function to calculate address of sprite pattern table.
-            */
+            /**
+             * @brief Helper function to calculate address of sprite pattern table.
+             * @param u8 index
+             * @param u8 id
+             * @param u8 y
+             */
             void calcSPRPatternAddr(u8 index, u8 id, u8 y);
 
-            /*
-                Performs the necessary calculations to determine the values
-                related to the sprite pixel (if there is one) at the current dot.
-            */
+            /**
+             * @brief Gets the current sprite pixel
+             * @details Performs the necessary calculations to determine the values
+             *          related to the sprite pixel (if there is one) at the current dot.
+             * @param [out] u8 pixel - reference to an `unsigned char` in which to store the pixel value
+             * @param [out] u8 attr - reference to an `unsigned char` in which to store the attr value
+             */
             u8 getSpritePixel(u8& pixel, u8& attr);
     };
 }
