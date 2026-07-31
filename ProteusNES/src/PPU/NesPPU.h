@@ -24,6 +24,7 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
+            bool sprFetchValid = false;
             bool pendingSZS = false;
             bool pendingSOS = false;
             u8 statusReadLatch = 0x00;

@@ -245,15 +245,22 @@ void PPU::spriteFetch() {
             sprXPosition = secondaryOAM[sprite][3];
             break;
         case 5:
-            if (secondaryOAM[sprite][4] == 0xFF) {
+            sprFetchValid = secondaryOAM[sprite][4] != 0xFF && spriteInRange(secondaryOAM[sprite][0]);
+
+            if (!sprFetchValid) {
                 if (getSpriteHeight() == 8) {
                     spritePatternAddr = getSpritePatternTableAddr8x8() + (0xFF * 16);
                 } else {
-                    spritePatternAddr = (((0xFF & 1) ? 0x1000 : 0x0000) | ((0xFF & ~1) << 4));
+                    spritePatternAddr = (((0xFF & 0x01) ? 0x1000 : 0x0000) | ((0xFF & ~0x01) << 4));
                 }
             } else {
-                calcSPRPatternAddr(sprite, sprTileIndex, secondaryOAM[sprite][0]);
+                calcSPRPatternAddr(
+                    sprite,
+                    sprTileIndex,
+                    secondaryOAM[sprite][0]
+                );
             }
+
             sprPatternLo = ppuRead(spritePatternAddr, false);
             break;
         case 6:
@@ -261,11 +268,11 @@ void PPU::spriteFetch() {
             break;
         case 7:
             activeSprites[sprite] = ActiveSprite(
-                sprPatternLo,
-                sprPatternHi,
+                sprFetchValid ? sprPatternLo : 0x00,
+                sprFetchValid ? sprPatternHi : 0x00,
                 sprAttributes,
                 sprXPosition,
-                secondaryOAM[sprite][4]
+                sprFetchValid ? secondaryOAM[sprite][4] : 0xFF
             );
             break;
 

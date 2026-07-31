@@ -114,21 +114,9 @@ void PPU::clearPipelines() {
     activeSprites.fill({});
 
     pendingSZS = pendingSOS = false;
+    sprFetchValid = false;
 }
 
-/** via https://nesdev.org/wiki/NMI#Operation
- * Two 1-bit registers inside the PPU control the generation of NMI signals. Frame timing and accesses to the PPU's
- * PPUCTRL and PPUSTATUS registers change these registers as follows, regardless of whether rendering is enabled:
- *      1. Start of vertical blanking (scanline 241, dot 1): Set vblank_flag in PPU to true.
- *      2. End of vertical blanking (scanline 261, dot 1): Set vblank_flag to false.
- *      3. Read PPUSTATUS: Return old status of vblank_flag in bit 7, then set vblank_flag to false.
- *      4. Write to PPUCTRL: Set NMI_output to the state of bit 7.
- * 
- * If 1 and 3 happen simultaneously, PPUSTATUS bit 7 is read as false, and vblank_flag is set to false anyway.
- * This means that the NMI won't fire, and that the program will be unaware that the hardware is in VBLANK.
- * 
- * The PPU pulls NMI low IF AND ONLY IF both vblank_flag and NMI_output are true.
- */
 u8 PPU::read(u16 addr, bool readonly) {
     u8 ret = ppuDataBus;
     if (addr >= 0x2000 && addr <= 0x3FFF) {
