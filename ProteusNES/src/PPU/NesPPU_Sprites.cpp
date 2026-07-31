@@ -12,7 +12,6 @@ u8 PPU::getSpritePixel(u8& pixel, u8& attr) {
     for (u8 i = 0; i < activeSprites.size(); i++) {
         ActiveSprite* spr = &activeSprites[i];
         if (spr->xCounter > 0) {
-            spr->xCounter--;
             continue;
         }
 
@@ -321,4 +320,10 @@ void PPU::applyOamCorruption() {
     secondaryOAM[row >> 2][row & 0x03] = secondaryOAM[0][0];
 
     oamCorruptionPending = false;
+}
+
+void PPU::clockSpriteCounters() {
+    for (ActiveSprite& spr : activeSprites) {
+        if (spr.xCounter > 0) spr.xCounter--;
+    }
 }

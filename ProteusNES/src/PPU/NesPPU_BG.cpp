@@ -9,6 +9,9 @@ void PPU::shiftBackgroundShifters() {
 
     attributeShiftLo <<= 1;
     attributeShiftHi <<= 1;
+
+    // "Background shift registers should bring in a 1 into bit 0 when shifted."
+    patternShiftHi |= 1;
 }
 
 void PPU::loadBackgroundShifters() {

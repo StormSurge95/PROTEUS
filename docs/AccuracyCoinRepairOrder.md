@@ -71,7 +71,7 @@
 - [x] 19 - t Register Quirks
 - [x] 19 - Stale BG Shift Registers
 - [x] 19 - Stale Sprite Shift Regs
-- [ ] 19 - BG Serial In
+- [x] 19 - BG Serial In
 - [ ] 19 - Sprites On Scanline 0
 - [ ] 19 - $2004 Stress Test
 - [ ] 19 - $2007 Stress Test

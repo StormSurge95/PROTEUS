@@ -65,6 +65,8 @@ void PPU::powerup(u32 s) {
     clearPipelines();
 
     ignoreEarlyCtrlWrites = true;
+
+    pendingPPUMASK = delayPPUMASK = 0;
 }
 
 void PPU::reset() {
@@ -83,6 +85,8 @@ void PPU::reset() {
     clearPipelines();
 
     ignoreEarlyCtrlWrites = true;
+
+    pendingPPUMASK = delayPPUMASK = 0;
 }
 
 void PPU::powerdown() {
@@ -99,6 +103,8 @@ void PPU::powerdown() {
     clearPipelines();
 
     ignoreEarlyCtrlWrites = false;
+
+    pendingPPUMASK = delayPPUMASK = 0;
 }
 
 void PPU::clearPipelines() {
@@ -150,8 +156,16 @@ u8 PPU::read(u16 addr, bool readonly) {
 
                 if (!visRend) ret = readOAMByte(OAMADDR);
                 else if (cycle >= 1 && cycle <= 64) ret = 0xFF;
-                else if (cycle >= 65 && cycle <= 320) ret = oamLatch;
-                else ret = readOAMByte(OAMADDR);
+                else if (cycle >= 65 && cycle <= 256) ret = oamLatch;
+                else if (cycle >= 257 && cycle <= 320) {
+                    const u8 spr = static_cast<u8>((cycle - 257) / 8);
+                    const u8 stp = static_cast<u8>((cycle - 257) % 8);
+                    const u8 byte = stp < 4 ? stp : 3;
+
+                    ret = secondaryOAM[spr][byte];
+
+                    if (byte == 2) ret &= 0xE3;
+                } else ret = readOAMByte(OAMADDR);
 
                 if (readonly) return ret;
 
@@ -206,6 +220,8 @@ u8 PPU::read(u16 addr, bool readonly) {
 }
 
 void PPU::write(u16 addr, u8 data) {
+    const u16 rawAddr = addr;
+
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // update ppuBus with new data
         ppuDataBus = data;
@@ -228,25 +244,8 @@ void PPU::write(u16 addr, u8 data) {
                 }
             case 0x01: // write to PPUMASK
                 if (!ignoreEarlyCtrlWrites) {
-                    const bool wasRendering = (PPUMASK & 0x18) != 0;
-                    const bool willRender = (data & 0x18) != 0;
-
-                    const bool renderingScanline = scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1);
-
-                    if (wasRendering && !willRender && renderingScanline) {
-                        u8 row = oamAddr2;
-
-                        // during eval, oam corruption destination is rounded
-                        // upward to the next four-row boundary
-                        if (cycle >= 65 && cycle <= 256) {
-                            row = static_cast<u8>((row + 3) & 0x1C);
-                        }
-
-                        oamCorruptionRow = row;
-                        oamCorruptionPending = true;
-                    }
-
-                    PPUMASK = data;
+                    pendingPPUMASK = data;
+                    delayPPUMASK = 4;
 
                     if (eventSink) eventSink->OnPpuRegisterWrite(0x2001, data);
                 }
@@ -560,6 +559,10 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 }
 
 void PPU::clock() {
+    if (delayPPUMASK > 0 && --delayPPUMASK == 0) {
+        applyPPUMASK(pendingPPUMASK);
+    }
+
     if (pendingSZS) {
         pendingSZS = false;
 
@@ -790,6 +793,11 @@ void PPU::onVisibleLine() {
 
         if (cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
     }
+
+    // Sprite X counters continue during forced blanking.
+    // This must occur after `renderPixel()` to preserve
+    // the current counter-to-first-pixel relationship.
+    if (cycle >= 1 && cycle <= 256) clockSpriteCounters();
 }
 
 void PPU::onStartVBlankLine() {
@@ -1008,4 +1016,21 @@ u8 PPU::finishStatusRead() {
     if (eventSink) eventSink->OnPpuRegisterRead(0x2002, result);
 
     return result;
+}
+
+void PPU::applyPPUMASK(u8 data) {
+    if (
+        (PPUMASK & 0x18) != 0 &&
+        !((data & 0x18) != 0) &&
+        (scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1))
+    ) {
+        u8 row = oamAddr2;
+
+        if (cycle >= 65 && cycle <= 256) row = (row + 3) & 0x1C;
+
+        oamCorruptionRow = row;
+        oamCorruptionPending = true;
+    }
+
+    PPUMASK = data;
 }

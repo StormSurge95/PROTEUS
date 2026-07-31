@@ -24,6 +24,10 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
+            bool bgSerialTrace = false;
+            bool bgSerialTraceDone = false;
+            u64 bgSerialTraceEnd = 0;    
+
             bool sprFetchValid = false;
             bool pendingSZS = false;
             bool pendingSOS = false;
@@ -135,6 +139,11 @@ namespace NS_NES {
             u8 dataBuffer = 0x00; // helper variable for emulating the PPUDATA read quirk
             u8 ppuDataBus = 0x00; // helper variable for emulating the PPU's open-bus behavior
             u8 ppuVramBus = 0x00;
+
+            u8 pendingPPUMASK = 0;
+            u8 delayPPUMASK = 0;
+
+            void applyPPUMASK(u8 data);
 
             u16 v = 0x0000;  // during rendering, used for scroll position; outside rendering, used as current VRAM address
             u16 t = 0x0000;  // during rendering, specifies starting coarse-x scroll for next scanline and starting y scroll for screen; outside rendering, holds scroll or VRAM before transferring it to v
@@ -494,6 +503,8 @@ namespace NS_NES {
              * @param u8 y
              */
             void calcSPRPatternAddr(u8 index, u8 id, u8 y);
+
+            void clockSpriteCounters();
 
             /**
              * @brief Gets the current sprite pixel
