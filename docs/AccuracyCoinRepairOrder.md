@@ -65,11 +65,10 @@
 - [x] 18 - Misaligned OAM behavior
 - [x] 18 - OAM Corruption
 - [x] 18 - INC $4014
-- [ ] 14 - APU Register Activation
-- [ ] 13 - DMC DMA Bus Conflicts
-- [ ] 14 - Controller Clocking
-- [ ] 19 - Attributes As Tiles
-- [ ] 19 - t Register Quirks
+- [x] 14 - APU Register Activation
+- [x] 13 - DMC DMA Bus Conflicts
+- [x] 14 - Controller Clocking
+- [x] 19 - t Register Quirks
 - [ ] 19 - Stale BG Shift Registers
 - [ ] 19 - Stale Sprite Shift Regs
 - [ ] 19 - BG Serial In
@@ -77,6 +76,7 @@
 - [ ] 19 - $2004 Stress Test
 - [ ] 19 - $2007 Stress Test
 - [ ] 19 - ALE + Read
+- [ ] 19 - Hybrid Addresses
 - [ ] 20 - Branch Dummy Reads
 - [ ] 20 - Internal Data Bus
 - [ ] 20 - Implied Dummy Reads

@@ -112,7 +112,7 @@ P14 - APU TESTS
     T4 - FRAME COUNTER 4-STEP———————————————————PASS
     T5 - FRAME COUNTER 5-STEP———————————————————PASS
     T6 - DELTA MODULATION CHANNEL———————————————PASS
-    T7 - APU REGISTER ACTIVATION————————————————FAIL 4
+    T7 - APU REGISTER ACTIVATION————————————————PASS 2
     T8 - CONTROLLER STROBING————————————————————PASS
     T9 - CONTROLLER CLOCKING————————————————————PASS 2
 P16 - PPU BEHAVIOR

@@ -378,15 +378,53 @@ bool CPU::clockOAM(bool isBusAvail) {
              */
             oamPhase = OAM_PHASE::GET;
             return false;
-        case OAM_PHASE::GET:
+        case OAM_PHASE::GET: {
             if (!isBusAvail || !isGetCycle()) return false;
 
-            oamData = read((static_cast<u16>(oamPage) << 8) | oamAddr);
+            const u16 srcAddr = (static_cast<u16>(oamPage) << 8) | oamAddr;
+
+            const bool srcInInternalWindow = (srcAddr & 0xFFE0) == 0x4000;
+
+            /**
+             * $4000-$401F has no ordinary memory-mapped value in the
+             * current bus implementation. If the stalled 6502 address
+             * does not activate the internal registers, this is open bus.
+             * 
+             * Do not call read(srcAddr) here because that would decode $4015-$4017 from the DMA address itself.
+             */
+            if (srcInInternalWindow) {
+                addrBus = srcAddr;
+                oamData = cpuBus;
+            } else {
+                oamData = read(srcAddr);
+            }
+
+            /**
+             * A15-A5 come from the stalled 6502 address. A4-A0 come from
+             * the DMA address currently selected by the address multiplexer.
+             */
+            if ((dmaHaltAddr & 0xFFE0) == 0x4000) {
+                const u16 internalAddr = 0x4000 | (srcAddr & 0x001F);
+
+                switch (internalAddr) {
+                    case 0x4015: case 0x4016: case 0x4017:
+                        oamData = read(internalAddr);
+                        break;
+                    default: break;
+                }
+            }
 
             oamPhase = OAM_PHASE::PUT;
             return true;
+        }
         case OAM_PHASE::PUT:
             if (!isBusAvail || isGetCycle()) return false;
+
+            // $2004 is the OAMDATA register; so we hardcode that
+            // here because there's nowhere else that OAMDMA would
+            // be writing OAM data to.
+            addrBus = 0x2004;
+            cpuBus = oamData;
             
             ppu.lock()->writeOAMByte(
                 static_cast<u8>(
