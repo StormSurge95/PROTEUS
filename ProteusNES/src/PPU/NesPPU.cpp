@@ -576,12 +576,20 @@ void PPU::clock() {
         if (!spritesOverflowed()) spritesOverflowed(true);
     }
 
+    const bool rsl = (scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1));
+
     if (
         oamCorruptionPending &&
         (PPUMASK & 0x18) != 0 &&
-        (scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1))
+        rsl
     ) {
         applyOamCorruption();
+    }
+
+    if (rsl && cycle == 339 && !renderingEnabled()) {
+        for (ActiveSprite& spr : activeSprites) {
+            spr.xCounter = 0;
+        }
     }
 
     if (scanline == (GetScanlinesPerFrame(*region) - 1)) { // Pre-render scanline (-1 or 261)
@@ -875,7 +883,7 @@ void PPU::renderPixel() {
         finalAttr = bgAttr;
     } else {
         // handle sprite 0 hit
-        if (!spriteZeroHit() && !pendingSZS && sprite0HitOnThisScanline && sprIndex == 0 && cycle > 1 && cycle < 256) {
+        if (!spriteZeroHit() && !pendingSZS && sprite0HitOnThisScanline && sprIndex == 0 && cycle >= 1 && cycle < 256) {
             pendingSZS = true;
         }
 

@@ -233,7 +233,12 @@ void PPU::spriteFetch() {
     // "OAMADDR is set to 0 during each of ticks 257—320 (the sprite tile loading interval) of the pre-render and visible scanlines."
     OAMADDR = 0x00;
 
-    if (cycle == 257) oamAddr2 = 0;
+    if (cycle == 257) {
+        oamAddr2 = 0;
+
+        sprite0HitOnThisScanline = sprite0HitOnNextScanline;
+        sprite0HitOnNextScanline = false;
+    }
 
     u8 sprite = (cycle - 257) / 8;
     u8 step = (cycle - 257) % 8;
@@ -293,11 +298,6 @@ void PPU::spriteFetch() {
     }
 
     if (step <= 2 || step == 7) oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
-
-    if (cycle == 320) {
-        sprite0HitOnThisScanline = sprite0HitOnNextScanline;
-        sprite0HitOnNextScanline = false;
-    }
 }
 
 void PPU::applyOamCorruption() {

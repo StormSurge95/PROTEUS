@@ -144,8 +144,8 @@ P18 - SPRITE EVALUATION
     T9 - INC $4014——————————————————————————————PASS
 P19 - PPU MISC.
     T1 - T REGISTER QUIRKS——————————————————————PASS
-    T2 - STALE BG SHIFT REGISTERS———————————————FAIL 1
-    T3 - STALE SPRITE SHIFT REGS————————————————FAIL 3
+    T2 - STALE BG SHIFT REGISTERS———————————————PASS
+    T3 - STALE SPRITE SHIFT REGS————————————————PASS
     T4 - BG SERIAL IN———————————————————————————FAIL 2
     T5 - SPRITES ON SCANLINE 0——————————————————FAIL 2
     T6 - $2004 STRESS TEST——————————————————————FAIL 2
