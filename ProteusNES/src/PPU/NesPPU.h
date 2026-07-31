@@ -188,6 +188,12 @@ namespace NS_NES {
             /// @brief address of the sprite's pattern tile
             u16 spritePatternAddr = 0x0000;
 
+            u8 oamAddr2 = 0x00;
+            bool oamCorruptionPending = false;
+            u8 oamCorruptionRow = 0x00;
+
+            void applyOamCorruption();
+
             /// @brief sprite's tile index (duh)
             u8 sprTileIndex = 0x00;
             /// @brief sprite's attribute byte

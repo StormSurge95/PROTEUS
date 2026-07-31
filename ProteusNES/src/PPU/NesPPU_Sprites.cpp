@@ -80,6 +80,8 @@ void PPU::initSecondaryOAM() {
     // nesdev says that the internal OAM bus is forced to $FF during dots 1-64
     oamLatch = 0xFF;
 
+    oamAddr2 = static_cast<u8>((cycle - 1) >> 1);
+
     // decide whether we even need to run during this cycle
     u8 index = (cycle - 1);
     if (index % 8 != 0) return;
@@ -94,6 +96,7 @@ void PPU::beginSpriteEval() {
     m = OAMADDR & 0x03;
     byteIndex = 0;
     spritesOnScanline = 0;
+    oamAddr2 = 0;
     evalMode = EvalMode::SearchY;
 }
 
@@ -144,6 +147,7 @@ void PPU::spriteEvalWrite() {
         case EvalMode::SearchY: {
             if (spriteInRange(oamLatch)) {
                 secondaryOAM[spritesOnScanline][0] = oamLatch;
+                oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
                 // "cycle == 66" refers to the first `spriteEvalWrite`
                 // cycle after beginning sprite evaluation; and, therefore,
                 // refers to the processing of the first sprite within secondary OAM.
@@ -158,6 +162,7 @@ void PPU::spriteEvalWrite() {
         }
         case EvalMode::CopyBytes:
             secondaryOAM[spritesOnScanline][byteIndex] = oamLatch;
+            oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
             if (byteIndex < 3) byteIndex++;
             else {
                 secondaryOAM[spritesOnScanline][4] = n;
@@ -228,6 +233,8 @@ void PPU::spriteFetch() {
     // "OAMADDR is set to 0 during each of ticks 257—320 (the sprite tile loading interval) of the pre-render and visible scanlines."
     OAMADDR = 0x00;
 
+    if (cycle == 257) oamAddr2 = 0;
+
     u8 sprite = (cycle - 257) / 8;
     u8 step = (cycle - 257) % 8;
 
@@ -285,8 +292,33 @@ void PPU::spriteFetch() {
 
     }
 
+    if (step <= 2 || step == 7) oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
+
     if (cycle == 320) {
         sprite0HitOnThisScanline = sprite0HitOnNextScanline;
         sprite0HitOnNextScanline = false;
     }
+}
+
+void PPU::applyOamCorruption() {
+    const u8 row = oamCorruptionRow & 0x1F;
+    const u8 dst = static_cast<u8>(row << 3);
+    
+    array<u8, 8> source{};
+
+    // preserve the complete source row before overwriting anything
+    for (u8 i = 0; i < 8; i++) {
+        source[i] = readOAMByte(i);
+    }
+
+    for (u8 i = 0; i < 8; i++) {
+        writeOAMByte(
+            static_cast<u8>(dst + i),
+            source[i]
+        );
+    }
+
+    secondaryOAM[row >> 2][row & 0x03] = secondaryOAM[0][0];
+
+    oamCorruptionPending = false;
 }

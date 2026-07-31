@@ -140,7 +140,7 @@ P18 - SPRITE EVALUATION
     T5 - ARBITRARY SPRITE ZERO——————————————————PASS
     T6 - MISALIGNED OAM BEHAVIOR————————————————PASS
     T7 - ADDRESS $2004 BEHAVIOR—————————————————PASS G
-    T8 - OAM CORRUPTION—————————————————————————FAIL 2
+    T8 - OAM CORRUPTION—————————————————————————PASS
     T9 - INC $4014——————————————————————————————PASS
 P19 - PPU MISC.
     T1 - T REGISTER QUIRKS——————————————————————PASS

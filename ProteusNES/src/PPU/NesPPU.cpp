@@ -115,6 +115,9 @@ void PPU::clearPipelines() {
 
     pendingSZS = pendingSOS = false;
     sprFetchValid = false;
+
+    oamAddr2 = oamCorruptionRow = 0;
+    oamCorruptionPending = false;
 }
 
 u8 PPU::read(u16 addr, bool readonly) {
@@ -225,10 +228,27 @@ void PPU::write(u16 addr, u8 data) {
                 }
             case 0x01: // write to PPUMASK
                 if (!ignoreEarlyCtrlWrites) {
-                    PPUMASK = data;
-                    if (eventSink) {
-                        eventSink->OnPpuRegisterWrite(0x2000 | addr, data);
+                    const bool wasRendering = (PPUMASK & 0x18) != 0;
+                    const bool willRender = (data & 0x18) != 0;
+
+                    const bool renderingScanline = scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1);
+
+                    if (wasRendering && !willRender && renderingScanline) {
+                        u8 row = oamAddr2;
+
+                        // during eval, oam corruption destination is rounded
+                        // upward to the next four-row boundary
+                        if (cycle >= 65 && cycle <= 256) {
+                            row = static_cast<u8>((row + 3) & 0x1C);
+                        }
+
+                        oamCorruptionRow = row;
+                        oamCorruptionPending = true;
                     }
+
+                    PPUMASK = data;
+
+                    if (eventSink) eventSink->OnPpuRegisterWrite(0x2001, data);
                 }
                 return;
             case 0x03: // write to OAMADDR
@@ -554,6 +574,14 @@ void PPU::clock() {
         pendingSOS = false;
 
         if (!spritesOverflowed()) spritesOverflowed(true);
+    }
+
+    if (
+        oamCorruptionPending &&
+        (PPUMASK & 0x18) != 0 &&
+        (scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1))
+    ) {
+        applyOamCorruption();
     }
 
     if (scanline == (GetScanlinesPerFrame(*region) - 1)) { // Pre-render scanline (-1 or 261)

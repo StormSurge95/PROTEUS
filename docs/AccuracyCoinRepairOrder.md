@@ -63,8 +63,8 @@
 - [x] 18 - Suddenly Resize Sprite
 - [x] 18 - Arbitrary Sprite zero
 - [x] 18 - Misaligned OAM behavior
-- [ ] 18 - OAM Corruption
-- [ ] 18 - INC $4014
+- [x] 18 - OAM Corruption
+- [x] 18 - INC $4014
 - [ ] 14 - APU Register Activation
 - [ ] 13 - DMC DMA Bus Conflicts
 - [ ] 14 - Controller Clocking
