@@ -236,20 +236,6 @@ void PPU::spriteFetch() {
     OAMADDR = 0x00;
 
     if (cycle == 257) {
-        if (logSL0 && scanline == GetScanlinesPerFrame(*region) - 1) {
-            printf(
-                "[SL0] PRE257 next=%u this=%u "
-                "sec=%02X,%02X,%02X,%02X idx=%02X\n",
-                sprite0HitOnNextScanline,
-                sprite0HitOnThisScanline,
-                secondaryOAM[0][0],
-                secondaryOAM[0][1],
-                secondaryOAM[0][2],
-                secondaryOAM[0][3],
-                secondaryOAM[0][4]
-            );
-        }
-
         oamAddr2 = 0;
 
         if (scanline != GetScanlinesPerFrame(*region) - 1) {
@@ -299,22 +285,6 @@ void PPU::spriteFetch() {
             }
 
             sprPatternLo = ppuRead(spritePatternAddr, false);
-
-            if (logSL0 && scanline == GetScanlinesPerFrame(*region) - 1 && sprite == 0) {
-                printf(
-                    "[SL0] FETCH valid=%u line=%u y=%02X fine=%u "
-                    "tile=%02X addr=%04X lo=%02X next=%u this=%u\n",
-                    sprFetchValid,
-                    static_cast<u8>(scanline),
-                    secondaryOAM[0][0],
-                    static_cast<u8>(scanline) - secondaryOAM[0][0],
-                    sprTileIndex,
-                    spritePatternAddr,
-                    sprPatternLo,
-                    sprite0HitOnNextScanline,
-                    sprite0HitOnThisScanline
-                );
-            }
             break;
         case 6:
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);

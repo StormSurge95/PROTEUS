@@ -222,30 +222,6 @@ u8 PPU::read(u16 addr, bool readonly) {
 void PPU::write(u16 addr, u8 data) {
     const u16 rawAddr = addr;
 
-    if (
-        rawAddr == 0x3E01 &&
-        data == 0x00 &&
-        primaryOAM[0][0] == 0x00 &&
-        primaryOAM[0][1] == 0xC6 &&
-        primaryOAM[0][2] == 0x00 &&
-        primaryOAM[0][3] == 0x80
-    ) {
-        logSL0 = true;
-
-        printf(
-            "[SL0] ARM sl=%u dot=%u next=%u this=%u "
-            "sec=%02X,%02X,%02X,%02X idx=%02X\n",
-            scanline, cycle,
-            sprite0HitOnNextScanline,
-            sprite0HitOnThisScanline,
-            secondaryOAM[0][0],
-            secondaryOAM[0][1],
-            secondaryOAM[0][2],
-            secondaryOAM[0][3],
-            secondaryOAM[0][4]
-        );
-    }
-
     if (addr >= 0x2000 && addr <= 0x3FFF) {
         // update ppuBus with new data
         ppuDataBus = data;
@@ -883,20 +859,6 @@ void PPU::renderPixel() {
         sprIndex = getSpritePixel(sprPixel, sprAttr);
     }
 
-    if (logSL0 && scanline == 0 && cycle >= 127 && cycle <= 131) {
-        printf(
-            "[SL0] PIX dot=%u bg=%u spr=%u slot=%02X "
-            "x=%u lo=%02X hi=%02X next=%u this=%u hit=%u pending=%u\n",
-            cycle, bgPixel, sprPixel, sprIndex,
-            activeSprites[0].xCounter,
-            activeSprites[0].patternLo,
-            activeSprites[0].patternHi,
-            sprite0HitOnNextScanline,
-            sprite0HitOnThisScanline,
-            spriteZeroHit(), pendingSZS
-        );
-    }
-
     if (!renderBackground()) {
         bgPixel = 0;
         bgAttr = 0;
@@ -1051,16 +1013,6 @@ void PPU::beginStatusRead() {
 
 u8 PPU::finishStatusRead() {
     const u8 result = (statusReadLatch & 0x9F) | (PPUSTATUS & 0x60);
-
-    if (logSL0) {
-        printf(
-            "[SL0] RESULT sl=%u dot=%u ret=%02X next=%u this=%u hit=%u pending=%u\n",
-            scanline, cycle, result, sprite0HitOnNextScanline, sprite0HitOnThisScanline,
-            spriteZeroHit(), pendingSZS
-        );
-
-        logSL0 = false;
-    }
 
     ppuDataBus = result;
     updateCounters(0xE0);

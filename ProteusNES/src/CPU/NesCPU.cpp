@@ -190,23 +190,6 @@ void CPU::write(u16 addr, u8 data) {
         cart.lock()->mapper->cpuWrite(addr, data);
     }
 
-    if (logArmed && addr >= 0x0540 && addr <= 0x054F) {
-        static constexpr u8 expected[0x10] = {
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x04, 0x04,
-            0x04, 0x04, 0x04, 0x04
-        };
-
-        const u8 index = static_cast<u8>(addr - 0x0540);
-
-        printf(
-            "[DMA-IMPLICIT-LOOP] slot=%02X actual=%02X expected=%02X %s\n",
-            index, data, expected[index],
-            data == expected[index] ? "OK" : "BAD"
-        );
-    }
-
     #endif
 }
 
@@ -673,25 +656,6 @@ void CPU::clockInstruction() {
 
         // save current pc for use in event emit(s)
         u16 instPC = pc.value();
-
-        if (false && read(instPC,      true) == 0xA5 && // LDA <result_DMCDMASync_PreTest
-            read(instPC + 1,  true) == 0x12 &&
-            read(instPC + 2,  true) == 0xC9 && // CMP #$01
-            read(instPC + 3,  true) == 0x01 &&
-            read(instPC + 4,  true) == 0xD0 && // BNE FAIL_ImplicitDMAAbort
-            read(instPC + 6,  true) == 0x20 && // JSR CheckDMATiming
-            read(instPC + 9,  true) == 0xC0 && // CPY #4
-            read(instPC + 10, true) == 0x04 && 
-            read(instPC + 11, true) == 0xD0 && // BNE FAIL_ImplicitDMAAbort
-            read(instPC + 13, true) == 0xE6 && // INC <ErrorCode
-            read(instPC + 14, true) == 0x10 &&
-            read(instPC + 15, true) == 0xA2 && // LDX #0
-            read(instPC + 16, true) == 0x00
-        ) {
-            logArmed = true;
-        }
-
-        if (logArmed && instPC == 0x80DF) logArmed = false;
 
         // On cycle `1`, we either trigger an interrupt/reset, or read the next opcode to prepare for the next instruction.
         if (interruptSource != INTERRUPT::NONE) {

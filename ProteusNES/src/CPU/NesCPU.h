@@ -273,8 +273,6 @@ namespace NS_NES {
             #pragma endregion
         public:
             void completeDeferredRead();
-
-            bool logArmed = false;
             /// @brief reset flag
             bool resetPending = false;
             /// @brief device-specific IRQ flags
