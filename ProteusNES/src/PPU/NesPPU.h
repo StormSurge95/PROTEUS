@@ -11,7 +11,7 @@ namespace NS_NES {
             // allow Debugger class to access all private members of the PPU class
             friend class NesDebugger;
         public: // variables
-            bool logSL0 = false;
+            u8 stress2004TraceCount = 0;
             // current scanline of current frame
             u16 scanline = 0;
             // current dot/pixel of current scanline
@@ -25,10 +25,6 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
-            bool bgSerialTrace = false;
-            bool bgSerialTraceDone = false;
-            u64 bgSerialTraceEnd = 0;    
-
             bool sprFetchValid = false;
             bool pendingSZS = false;
             bool pendingSOS = false;
@@ -180,8 +176,10 @@ namespace NS_NES {
                 SearchY,        // normal phase: checking OAM[n][0]
                 CopyBytes,      // normal phase: copying bytes 1..3
                 OverflowScan,   // bugged diagonal scan after 8 sprites
+                OverflowCopy,
                 Done            // no more meaningful eval work this scanline
             } evalMode = EvalMode::SearchY;
+            u8 overflowCopyRemaining = 0;
             /// @brief helper variable for sprite evaluation
             u8 n = 0x00;
             /// @brief helper variable for sprite evaluation
@@ -311,6 +309,9 @@ namespace NS_NES {
             /// @brief helper function for initialization
             void setRegion(ConsoleRegion* r) { region = r; }
         private: // functions
+            u8 readSecondaryOAMByte(u8 addr) const { addr &= 0x1F; return secondaryOAM[addr >> 2][addr & 0x03]; }
+            void writeSecondaryOAMByte(u8 addr, u8 data) { addr &= 0x1F; secondaryOAM[addr >> 2][addr & 0x03] = data; }
+
             /// @brief helper function for resetting bg/spr pipelines
             void clearPipelines();
 

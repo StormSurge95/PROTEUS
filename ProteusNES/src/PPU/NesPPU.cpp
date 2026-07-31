@@ -4,17 +4,6 @@
 
 using namespace NS_NES;
 
-namespace {
-    bool fct2Capture = false;
-    unsigned fct2Batch = 0;
-    unsigned fct2Slot = 0;
-    unsigned fct2Remaining = 0;
-
-    u16 fct2BeginScanline = 0;
-    u16 fct2BeginCycle = 0;
-    u8 fct2BeginStatus = 0;
-}
-
 void PPU::powerup(u32 s) {
     initPRNG(s);
 
@@ -154,18 +143,17 @@ u8 PPU::read(u16 addr, bool readonly) {
             case 0x04: { // read from OAMDATA
                 const bool visRend = renderingEnabled() && scanline <= 239;
 
-                if (!visRend) ret = readOAMByte(OAMADDR);
-                else if (cycle >= 1 && cycle <= 64) ret = 0xFF;
-                else if (cycle >= 65 && cycle <= 256) ret = oamLatch;
-                else if (cycle >= 257 && cycle <= 320) {
-                    const u8 spr = static_cast<u8>((cycle - 257) / 8);
-                    const u8 stp = static_cast<u8>((cycle - 257) % 8);
-                    const u8 byte = stp < 4 ? stp : 3;
-
-                    ret = secondaryOAM[spr][byte];
-
-                    if (byte == 2) ret &= 0xE3;
-                } else ret = readOAMByte(OAMADDR);
+                if (
+                    renderingEnabled() &&
+                    (
+                        scanline <= 239 ||
+                        scanline == (GetScanlinesPerFrame(*region) - 1)
+                    )
+                ) {
+                    ret = oamLatch;
+                } else {
+                    ret = readOAMByte(OAMADDR);
+                }
 
                 if (readonly) return ret;
 
@@ -580,6 +568,10 @@ void PPU::clock() {
     }
 
     const bool rsl = (scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1));
+
+    if (rsl && renderingEnabled() && (cycle == 0 || cycle >= 321)) {
+        oamLatch = readSecondaryOAMByte(0);
+    }
 
     if (
         oamCorruptionPending &&

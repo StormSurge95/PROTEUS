@@ -98,6 +98,7 @@ void PPU::beginSpriteEval() {
     spritesOnScanline = 0;
     oamAddr2 = 0;
     evalMode = EvalMode::SearchY;
+    overflowCopyRemaining = 0;
 }
 
 bool PPU::spriteInRange(u8 y) const {
@@ -121,10 +122,12 @@ void PPU::spriteEvalRead() {
             );
             return;
         case EvalMode::OverflowScan:
-            //oamLatch = primaryOAM[n][m];
+        case EvalMode::OverflowCopy:
             oamLatch = readOAMByte(evalAddr);
             return;
         case EvalMode::Done:
+            oamLatch = readOAMByte(static_cast<u8>(n << 2));
+            return;
         default: return;
     }
 }
@@ -145,18 +148,22 @@ void PPU::advanceOverflowHit() {
 void PPU::spriteEvalWrite() {
     switch (evalMode) {
         case EvalMode::SearchY: {
+            writeSecondaryOAMByte(oamAddr2, oamLatch);
+
             if (spriteInRange(oamLatch)) {
-                secondaryOAM[spritesOnScanline][0] = oamLatch;
-                oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
                 // "cycle == 66" refers to the first `spriteEvalWrite`
                 // cycle after beginning sprite evaluation; and, therefore,
                 // refers to the processing of the first sprite within secondary OAM.
                 if (cycle == 66) sprite0HitOnNextScanline = true;
+                oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);
                 byteIndex = 1;
                 evalMode = EvalMode::CopyBytes;
             } else {
                 n++;
-                if (n >= 64) evalMode = EvalMode::Done;
+                if (n >= 64) {
+                    n = m = 0;
+                    evalMode = EvalMode::Done;
+                }
             }
             break;
         }
@@ -180,13 +187,49 @@ void PPU::spriteEvalWrite() {
         case EvalMode::OverflowScan:
             if (spriteInRange(oamLatch)) {
                 if (!spritesOverflowed() && !pendingSOS) pendingSOS = true;
+
+                // Advance to the first byte following the falsely identified Y byte.
                 advanceOverflowHit();
+
+                if (n >= 64) n = 0;
+
+                // Three more primary-OAM bytes must be read.
+                // Values 2, 1, and 0 represent the three subsequent write phases.
+                overflowCopyRemaining = 2;
+                evalMode = EvalMode::OverflowCopy;
             } else {
                 advanceOverflowMiss();
+
+                if (n >= 64) {
+                    n = m = 0;
+                    evalMode = EvalMode::Done;
+                }
             }
-            if (n >= 64) evalMode = EvalMode::Done;
+
+            // Secondary OAM is full, so its write cycle becomes a read.
+            oamLatch = readSecondaryOAMByte(oamAddr2);
+            break;
+        case EvalMode::OverflowCopy:
+            advanceOverflowHit();
+
+            if (n >= 64) n = 0;
+
+            if (overflowCopyRemaining > 0) {
+                overflowCopyRemaining--;
+            } else {
+                // Evaluation completion aligns the primary OAM address
+                // back to its Y-byte boundary.
+                m = 0;
+                evalMode = EvalMode::Done;
+            }
+
+            // Writes remain disabled because secondary OAM is full.
+            oamLatch = readSecondaryOAMByte(oamAddr2);
             break;
         case EvalMode::Done:
+            oamLatch = readSecondaryOAMByte(oamAddr2);
+            n = static_cast<u8>((n + 1) & 0x3F);
+            break;
         default: return;
     }
 }
@@ -197,7 +240,9 @@ void PPU::spriteEval() {
         sprite0HitOnNextScanline = false;
     }
 
-    if (evalMode == EvalMode::Done) return;
+    const EvalMode prevMode = evalMode;
+    const u8 prevN = n;
+    const u8 prevM = m;
 
     if (cycle & 0x01)
         spriteEvalRead();
@@ -249,9 +294,11 @@ void PPU::spriteFetch() {
 
     const u8 oamByte = step < 4 ? step : 3;
 
+    const bool slotValid = secondaryOAM[sprite][4] != 0xFF;
+
     oamLatch = secondaryOAM[sprite][oamByte];
 
-    if (oamByte == 2) oamLatch &= 0xE3;
+    if (oamByte == 2 && slotValid) oamLatch &= 0xE3;
 
     switch (step) {
         case 0:
