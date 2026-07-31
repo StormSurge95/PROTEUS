@@ -24,6 +24,9 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
+            bool pendingSZS = false;
+            bool pendingSOS = false;
+            u8 statusReadLatch = 0x00;
             // current nmi output value
             bool nmiOutput = false;
             // odd frame flag
@@ -209,6 +212,8 @@ namespace NS_NES {
                 YFLIP       // bit 7: whether this sprite should be flipped vertically
             };
         public: // functions
+            void beginStatusRead();
+            u8 finishStatusRead();
             // default constructor
             PPU() = default;
             // default destructor

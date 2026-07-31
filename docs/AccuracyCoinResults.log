@@ -135,7 +135,7 @@ P17 - PPU VBLANK TIMING
 P18 - SPRITE EVALUATION
     T1 - SPRITE OVERFLOW BEHAVIOR———————————————PASS
     T2 - SPRITE 0 HIT BEHAVIOR——————————————————PASS
-    T3 - $2002 FLAG TIMING——————————————————————FAIL 1
+    T3 - $2002 FLAG TIMING——————————————————————PASS
     T4 - SUDDENLY RESIZE SPRITE—————————————————FAIL 4
     T5 - ARBITRARY SPRITE ZERO——————————————————FAIL 2
     T6 - MISALIGNED OAM BEHAVIOR————————————————FAIL 1
@@ -143,9 +143,9 @@ P18 - SPRITE EVALUATION
     T8 - OAM CORRUPTION—————————————————————————FAIL 2
     T9 - INC $4014——————————————————————————————PASS
 P19 - PPU MISC.
-    T1 - T REGISTER QUIRKS——————————————————————FAIL 1
-    T2 - STALE BG SHIFT REGISTERS———————————————FAIL 3
-    T3 - STALE SPRITE SHIFT REGS————————————————FAIL 2
+    T1 - T REGISTER QUIRKS——————————————————————PASS
+    T2 - STALE BG SHIFT REGISTERS———————————————FAIL 1
+    T3 - STALE SPRITE SHIFT REGS————————————————FAIL 3
     T4 - BG SERIAL IN———————————————————————————FAIL 2
     T5 - SPRITES ON SCANLINE 0——————————————————FAIL 2
     T6 - $2004 STRESS TEST——————————————————————FAIL 2

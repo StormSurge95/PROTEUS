@@ -487,6 +487,9 @@ void CPU::powerup(u32 s) {
     interruptFlagViaPoll = false;
     IFVP = {};
 
+    deferredStatusRead = false;
+    deferredStatusOperate = nullptr;
+
     // reset execution counter
     totalCycles = cycles = 0;
 
@@ -536,6 +539,9 @@ void CPU::reset() {
     nmiPending = nmiLineSampled = false;
     interruptFlagViaPoll = false;
     IFVP = {};
+
+    deferredStatusRead = false;
+    deferredStatusOperate = nullptr;
 }
 
 void CPU::powerdown() {
@@ -572,6 +578,9 @@ void CPU::powerdown() {
 
     // clear lifecycle state
     totalCycles = 0;
+
+    deferredStatusRead = false;
+    deferredStatusOperate = nullptr;
 }
 
 void CPU::clock() {
@@ -770,4 +779,34 @@ bool CPU::nextCycleWrites() const {
     }
 
     return (oper == &CPU::PHA || oper == &CPU::PHP) && next == 3;
+}
+
+bool CPU::beginDeferredRead(u16 addr) {
+    if (addr >= 0x2000 && addr <= 0x3FFF && (addr & 0x0007) == 0x0002) {
+        lastReadAddr = addrBus = addr;
+
+        deferredStatusRead = true;
+        deferredStatusOperate = currInst->operate;
+
+        ppu.lock()->beginStatusRead();
+
+        cycles = 0;
+
+        return true;
+    }
+
+    return false;
+}
+
+void CPU::completeDeferredRead() {
+    if (!deferredStatusRead) return;
+
+    cpuBus = fetched = ppu.lock()->finishStatusRead();
+    
+    auto operate = deferredStatusOperate;
+
+    deferredStatusRead = false;
+    deferredStatusOperate = nullptr;
+
+    (this->*operate)();
 }

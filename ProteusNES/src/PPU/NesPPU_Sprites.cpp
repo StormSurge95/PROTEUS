@@ -167,7 +167,7 @@ void PPU::spriteEvalWrite() {
             break;
         case EvalMode::OverflowScan:
             if (spriteInRange(oamLatch)) {
-                spritesOverflowed(true);
+                if (!spritesOverflowed() && !pendingSOS) pendingSOS = true;
                 advanceOverflowHit();
             } else {
                 advanceOverflowMiss();

@@ -90,9 +90,11 @@ void CPU::ABS_R() {
             absAddr.hi = read(pc++);
             break;
         case 4:
-            fetched = read(absAddr.value());
-            (this->*currInst->operate)();
-            cycles = 0;
+            if (!beginDeferredRead(absAddr.value())) {
+                fetched = read(absAddr.value());
+                (this->*currInst->operate)();
+                cycles = 0;
+            }
             break;
     }
 }
@@ -167,9 +169,11 @@ void CPU::ABX_R() {
                 absAddr.hi++;
                 paged = false;
             } else {
-                fetched = read(absAddr.value());
-                (this->*currInst->operate)();
-                cycles = 0;
+                if (!beginDeferredRead(absAddr.value())) {
+                    fetched = read(absAddr.value());
+                    (this->*currInst->operate)();
+                    cycles = 0;
+                }
             }
             break;
     }
@@ -238,9 +242,11 @@ void CPU::ABY_R() {
                 absAddr.hi++;
                 paged = false;
             } else {
-                fetched = read(absAddr.value());
-                (this->*currInst->operate)();
-                cycles = 0;
+                if (!beginDeferredRead(absAddr.value())) {
+                    fetched = read(absAddr.value());
+                    (this->*currInst->operate)();
+                    cycles = 0;
+                }
             }
             break;
     }
@@ -463,9 +469,11 @@ void CPU::IZX_R() {
             absAddr.hi = read(offset);
             break;
         case 6:
-            fetched = read(absAddr.value());
-            (this->*currInst->operate)();
-            cycles = 0;
+            if (!beginDeferredRead(absAddr.value())) {
+                fetched = read(absAddr.value());
+                (this->*currInst->operate)();
+                cycles = 0;
+            }
             break;
     }
 }
@@ -536,14 +544,18 @@ void CPU::IZY_R() {
             break;
         case 5:
         case 6:
-            fetched = read(absAddr.value());
             if (paged) {
+                fetched = read(absAddr.value());
                 absAddr.hi++;
                 paged = false;
                 break;
             }
-            (this->*currInst->operate)();
-            cycles = 0;
+            
+            if (!beginDeferredRead(absAddr.value())) {
+                fetched = read(absAddr.value());
+                (this->*currInst->operate)();
+                cycles = 0;
+            }
             break;
     }
 }

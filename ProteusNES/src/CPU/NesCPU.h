@@ -27,6 +27,10 @@ namespace NS_NES {
              */
             friend class NesDebugger;
         private:
+            bool deferredStatusRead = false;
+            void (CPU::*deferredStatusOperate)(void) = nullptr;
+            bool beginDeferredRead(u16 addr);
+
             NesEventSink* eventSink = nullptr;
 
             ConsoleRegion* region = nullptr;
@@ -268,6 +272,8 @@ namespace NS_NES {
             void JAM();
             #pragma endregion
         public:
+            void completeDeferredRead();
+
             bool logArmed = false;
             /// @brief reset flag
             bool resetPending = false;

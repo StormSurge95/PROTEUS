@@ -4,6 +4,17 @@
 
 using namespace NS_NES;
 
+namespace {
+    bool fct2Capture = false;
+    unsigned fct2Batch = 0;
+    unsigned fct2Slot = 0;
+    unsigned fct2Remaining = 0;
+
+    u16 fct2BeginScanline = 0;
+    u16 fct2BeginCycle = 0;
+    u8 fct2BeginStatus = 0;
+}
+
 void PPU::powerup(u32 s) {
     initPRNG(s);
 
@@ -101,6 +112,8 @@ void PPU::clearPipelines() {
     spritePatternAddr = 0;
     sprite0HitOnNextScanline = sprite0HitOnThisScanline = false;
     activeSprites.fill({});
+
+    pendingSZS = pendingSOS = false;
 }
 
 /** via https://nesdev.org/wiki/NMI#Operation
@@ -539,6 +552,22 @@ void PPU::ppuWrite(u16 addr, u8 data) {
 }
 
 void PPU::clock() {
+    if (pendingSZS) {
+        pendingSZS = false;
+
+        if (!spriteZeroHit()) {
+            spriteZeroHit(true);
+
+            if (eventSink) eventSink->OnSpriteZeroHit();
+        }
+    }
+
+    if (pendingSOS) {
+        pendingSOS = false;
+
+        if (!spritesOverflowed()) spritesOverflowed(true);
+    }
+
     if (scanline == (GetScanlinesPerFrame(*region) - 1)) { // Pre-render scanline (-1 or 261)
         onPreRenderLine();
         // Scanline 261 belongs to the NEXT frame (effectively scanline -1), while oddFrame represents
@@ -586,6 +615,8 @@ void PPU::onPreRenderLine() {
      */
 
     if (cycle == 1) {
+        pendingSOS = pendingSZS = false;
+
         // if we're on cycle 1, we clear our status flags.
         spriteZeroHit(false);
         spritesOverflowed(false);
@@ -828,9 +859,8 @@ void PPU::renderPixel() {
         finalAttr = bgAttr;
     } else {
         // handle sprite 0 hit
-        if (!spriteZeroHit() && sprite0HitOnThisScanline && sprIndex == 0 && cycle > 1 && cycle < 256) {
-            spriteZeroHit(true);
-            if (eventSink) eventSink->OnSpriteZeroHit();
+        if (!spriteZeroHit() && !pendingSZS && sprite0HitOnThisScanline && sprIndex == 0 && cycle > 1 && cycle < 256) {
+            pendingSZS = true;
         }
 
         if (spriteAboveBackground(sprAttr)) {
@@ -930,4 +960,28 @@ void PPU::recompNMI() {
         nmiRequested = true;
         if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_REQ);
     }
+}
+
+void PPU::beginStatusRead() {
+    statusReadLatch = (PPUSTATUS & 0x80) | (ppuDataBus & 0x1F);
+
+    if (scanline == 241) {
+        if (cycle <= 1) suppressVBL = true;
+        else if (cycle == 2) suppressNMI = true;
+    }
+
+    inVBlank(false);
+    w = false;
+    recompNMI();
+}
+
+u8 PPU::finishStatusRead() {
+    const u8 result = (statusReadLatch & 0x9F) | (PPUSTATUS & 0x60);
+
+    ppuDataBus = result;
+    updateCounters(0xE0);
+
+    if (eventSink) eventSink->OnPpuRegisterRead(0x2002, result);
+
+    return result;
 }

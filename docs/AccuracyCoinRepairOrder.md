@@ -59,7 +59,7 @@
 - [x] 16 - Rendering Flag Behavior
 - [x] 16 - $2007 read w/ rendering
 - [x] 16 - Attributes as Tiles
-- [ ] 18 - $2002 flag timing
+- [x] 18 - $2002 flag timing
 - [ ] 18 - Suddenly Resize Sprite
 - [ ] 18 - Arbitrary Sprite zero
 - [ ] 18 - Misaligned OAM behavior

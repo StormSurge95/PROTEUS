@@ -116,6 +116,10 @@ void NES::clockMaster() {
     const u8 cpuDiv = GetCpuClockDiv(cart->region);
     const u8 cpuPhase = masterClock % cpuDiv;
 
+    if (cpuPhase == 8) {
+        cpu->completeDeferredRead();
+    }
+
     if ((masterClock % GetPpuClockDiv(cart->region)) == 0) {
         clockCyclePPU();
     }
