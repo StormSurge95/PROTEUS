@@ -90,8 +90,8 @@ void PPU::initSecondaryOAM() {
 }
 
 void PPU::beginSpriteEval() {
-    n = 0;
-    m = 0;
+    n = OAMADDR >> 2;
+    m = OAMADDR & 0x03;
     byteIndex = 0;
     spritesOnScanline = 0;
     evalMode = EvalMode::SearchY;
@@ -104,18 +104,22 @@ bool PPU::spriteInRange(u8 y) const {
 }
 
 void PPU::spriteEvalRead() {
+    const u8 evalAddr = static_cast<u8>((n << 2) | m);
+
     switch (evalMode) {
         case EvalMode::SearchY:
             // oamLatch = primaryOAM[n][0];
-            oamLatch = readOAMByte((n << 2) | 0);
+            oamLatch = readOAMByte(evalAddr);
             return;
         case EvalMode::CopyBytes:
             // oamLatch = primaryOAM[n][byteIndex];
-            oamLatch = readOAMByte((n << 2) | byteIndex);
+            oamLatch = readOAMByte(
+                static_cast<u8>(evalAddr + byteIndex)
+            );
             return;
         case EvalMode::OverflowScan:
             //oamLatch = primaryOAM[n][m];
-            oamLatch = readOAMByte((n << 2) | m);
+            oamLatch = readOAMByte(evalAddr);
             return;
         case EvalMode::Done:
         default: return;
@@ -140,7 +144,10 @@ void PPU::spriteEvalWrite() {
         case EvalMode::SearchY: {
             if (spriteInRange(oamLatch)) {
                 secondaryOAM[spritesOnScanline][0] = oamLatch;
-                if (n == 0) sprite0HitOnNextScanline = true;
+                // "cycle == 66" refers to the first `spriteEvalWrite`
+                // cycle after beginning sprite evaluation; and, therefore,
+                // refers to the processing of the first sprite within secondary OAM.
+                if (cycle == 66) sprite0HitOnNextScanline = true;
                 byteIndex = 1;
                 evalMode = EvalMode::CopyBytes;
             } else {

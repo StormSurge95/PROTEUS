@@ -61,8 +61,8 @@
 - [x] 16 - Attributes as Tiles
 - [x] 18 - $2002 flag timing
 - [x] 18 - Suddenly Resize Sprite
-- [ ] 18 - Arbitrary Sprite zero
-- [ ] 18 - Misaligned OAM behavior
+- [x] 18 - Arbitrary Sprite zero
+- [x] 18 - Misaligned OAM behavior
 - [ ] 18 - OAM Corruption
 - [ ] 18 - INC $4014
 - [ ] 14 - APU Register Activation
