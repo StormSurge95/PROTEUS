@@ -1,5 +1,6 @@
 #include "NesPPU.h"
 #include "../PAK/Mappers/NesMapper.h"
+#include "../shared/NesProfiles.h"
 
 using namespace NS_NES;
 
@@ -100,8 +101,8 @@ void PPU::beginSpriteEval() {
 }
 
 bool PPU::spriteInRange(u8 y) const {
-    u16 tgt = scanline + 1;
-    u16 top = u16(y) + 1;
+    u16 tgt = static_cast<u8>(scanline);
+    u16 top = u16(y);
     return (tgt >= top && tgt < (top + getSpriteHeight()));
 }
 
@@ -191,19 +192,21 @@ void PPU::spriteEvalWrite() {
 }
 
 void PPU::spriteEval() {
-    if (cycle == 65) beginSpriteEval();
+    if (cycle == 65) {
+        beginSpriteEval();
+        sprite0HitOnNextScanline = false;
+    }
 
     if (evalMode == EvalMode::Done) return;
 
-    bool oddCycle = cycle & 0x01;
-    if (oddCycle)
+    if (cycle & 0x01)
         spriteEvalRead();
     else
         spriteEvalWrite();
 }
 
 void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
-    u16 sprFineY = scanline - y;
+    u16 sprFineY = static_cast<u8>(scanline) - y;
 
     if (getSpriteHeight() == 8) {
         if (flipY(secondaryOAM[index][2]))
@@ -233,10 +236,26 @@ void PPU::spriteFetch() {
     OAMADDR = 0x00;
 
     if (cycle == 257) {
+        if (logSL0 && scanline == GetScanlinesPerFrame(*region) - 1) {
+            printf(
+                "[SL0] PRE257 next=%u this=%u "
+                "sec=%02X,%02X,%02X,%02X idx=%02X\n",
+                sprite0HitOnNextScanline,
+                sprite0HitOnThisScanline,
+                secondaryOAM[0][0],
+                secondaryOAM[0][1],
+                secondaryOAM[0][2],
+                secondaryOAM[0][3],
+                secondaryOAM[0][4]
+            );
+        }
+
         oamAddr2 = 0;
 
-        sprite0HitOnThisScanline = sprite0HitOnNextScanline;
-        sprite0HitOnNextScanline = false;
+        if (scanline != GetScanlinesPerFrame(*region) - 1) {
+            sprite0HitOnThisScanline = sprite0HitOnNextScanline;
+            sprite0HitOnNextScanline = false;
+        }
     }
 
     u8 sprite = (cycle - 257) / 8;
@@ -280,6 +299,22 @@ void PPU::spriteFetch() {
             }
 
             sprPatternLo = ppuRead(spritePatternAddr, false);
+
+            if (logSL0 && scanline == GetScanlinesPerFrame(*region) - 1 && sprite == 0) {
+                printf(
+                    "[SL0] FETCH valid=%u line=%u y=%02X fine=%u "
+                    "tile=%02X addr=%04X lo=%02X next=%u this=%u\n",
+                    sprFetchValid,
+                    static_cast<u8>(scanline),
+                    secondaryOAM[0][0],
+                    static_cast<u8>(scanline) - secondaryOAM[0][0],
+                    sprTileIndex,
+                    spritePatternAddr,
+                    sprPatternLo,
+                    sprite0HitOnNextScanline,
+                    sprite0HitOnThisScanline
+                );
+            }
             break;
         case 6:
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);

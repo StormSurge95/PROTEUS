@@ -820,6 +820,7 @@ bool CPU::nextCycleWrites() const {
 }
 
 bool CPU::beginDeferredRead(u16 addr) {
+    #ifndef TEST_SST
     if (addr >= 0x2000 && addr <= 0x3FFF && (addr & 0x0007) == 0x0002) {
         lastReadAddr = addrBus = addr;
 
@@ -832,8 +833,10 @@ bool CPU::beginDeferredRead(u16 addr) {
 
         return true;
     }
+    #endif
 
     return false;
+
 }
 
 void CPU::completeDeferredRead() {
