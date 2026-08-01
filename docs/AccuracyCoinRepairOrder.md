@@ -75,9 +75,9 @@
 - [x] 19 - Sprites On Scanline 0
 - [x] 19 - $2004 Stress Test
 - [x] 19 - $2007 Stress Test
-- [ ] 19 - ALE + Read
-- [ ] 19 - Hybrid Addresses
-- [ ] 20 - Branch Dummy Reads
+- [x] 19 - ALE + Read
+- [x] 19 - Hybrid Addresses
+- [x] 20 - Branch Dummy Reads
 - [ ] 20 - Internal Data Bus
 - [ ] 20 - Implied Dummy Reads
 - [ ] 12 - NMI Overlap BRK

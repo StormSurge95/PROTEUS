@@ -61,6 +61,10 @@ void PPU::powerup(u32 s) {
     dataReadRenderIncrement = false;
     dataReadDelay = 0;
     dataReadAddress = 0;
+
+    ppuAddrTransferPending = false;
+    ppuAddrTransferDelay = 0;
+    pendingV = 0;
 }
 
 void PPU::reset() {
@@ -86,6 +90,10 @@ void PPU::reset() {
     dataReadRenderIncrement = false;
     dataReadDelay = 0;
     dataReadAddress = 0;
+
+    ppuAddrTransferPending = false;
+    ppuAddrTransferDelay = 0;
+    pendingV = 0;
 }
 
 void PPU::powerdown() {
@@ -109,6 +117,10 @@ void PPU::powerdown() {
     dataReadRenderIncrement = false;
     dataReadDelay = 0;
     dataReadAddress = 0;
+    
+    ppuAddrTransferPending = false;
+    ppuAddrTransferDelay = 0;
+    pendingV = 0;
 }
 
 void PPU::clearPipelines() {
@@ -184,20 +196,6 @@ u8 PPU::read(u16 addr, bool readonly) {
 
                 const bool renderLine = scanline <= 239 || scanline == GetScanlinesPerFrame(*region) - 1;
                 const bool renderedRead = renderingEnabled() && renderLine;
-                if (
-                    !readonly &&
-                    !s7TraceDone &&
-                    !s7SamplePending &&
-                    !s7AwaitingReturn &&
-                    renderedRead
-                ) {
-                    s7SamplePending = true;
-                    s7StartScanline = scanline;
-                    s7StartDot = cycle;
-                    s7StartV = requestAddr;
-                    s7StartBus = ppuVramBus;
-                    s7OldBuffer = dataBuffer;
-                }
 
                 if (paletteRead) {
                     const u8 paletteData = ppuRead(requestAddr, true);
@@ -208,27 +206,6 @@ u8 PPU::read(u16 addr, bool readonly) {
                 }
 
                 if (readonly) return ret;
-                else if (false && s7AwaitingReturn && !renderedRead) {
-                    if ((s7TraceIndex & 0x01) != 0) {
-                        printf(
-                            "[2007S-KEY] key=%03u raw=%03u actual=%02X "
-                            "start=%u:%u fill=%u:%u addr=%04X\n",
-                            static_cast<unsigned>(s7TraceIndex >> 1),
-                            static_cast<unsigned>(s7TraceIndex),
-                            ret,
-                            s7StartScanline,
-                            s7StartDot,
-                            s7FillScanline,
-                            s7FillDot,
-                            s7FillAddrBus
-                        );
-                    }
-
-                    s7AwaitingReturn = false;
-                    s7TraceIndex++;
-
-                    if (s7TraceIndex >= 341) s7TraceDone = true;
-                }
 
                 // Palette reads refill the buffer from the underlying mirrored address.
                 dataReadAddress = paletteRead ? static_cast<u16>((requestAddr - 0x1000) & 0x3FFF) : requestAddr;
@@ -359,10 +336,27 @@ void PPU::write(u16 addr, u8 data) {
                         // clear previous low byte of 't'
                         t &= 0x7F00;
                         // update 't' with new low byte (here we simply use all supplied bits)
-                        t |= ((u16)data);
+                        t |= static_cast<u16>(data);
+
+                        const u16 nextV = t & 0x3FFF;
+
+                        const bool renderLine = scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1);
+
+                        if (renderingEnabled() && renderLine) {
+                            pendingV = nextV;
+                            ppuAddrTransferPending = true;
+
+                            // CPU::write() currently occurs at the beginning of its emulated
+                            // CPU cycle. Complete the visible PPU-side effect one CPU cycle later.
+                            ppuAddrTransferDelay = 3;
+                        } else {
+                            v = nextV;
+                        }
+
                         // transfer 't' to 'v'
                         // theoretically, the mask here is unnecessary; but better safe than sorry.
-                        v = t & 0x3FFF;
+                        // v = t & 0x3FFF;
+
                         // clear write latch so next write works properly
                         w = false;
                     }
@@ -397,8 +391,24 @@ void PPU::write(u16 addr, u8 data) {
 }
 
 u8 PPU::ppuRead(u16 addr, bool readonly) {
+    addr &= 0x3FFF;
+
+    const bool renderLine = scanline <= 239 || scanline == (GetScanlinesPerFrame(*region) - 1);
+
+    const bool aleReadConflict = !readonly && dataReadPending && dataReadDelay == 1 && renderingEnabled() && renderLine;
+
+    if (aleReadConflict) {
+        // ALE and /RD are simultaneously active. The existing value on
+        // the multiplexed address/data pins feeds back into the external
+        // low-address latch.
+        addr = static_cast<u16>(
+            (addr & 0x3F00) |
+            ppuVramBus
+        );
+    }
+
     if (!readonly) ppuAddrBus = addr;
-    addr &= 0x3FFF; // mask address because ppu memory map only goes up to 0x3FFF
+
     u8 ret = 0x00; // temp var for return value
 
     if (!readonly && addr <= 0x3EFF) {
@@ -665,16 +675,6 @@ void PPU::clock() {
             dataBuffer = ppuRead(dataReadAddress, false);
         }
 
-        if (s7SamplePending) {
-            s7FilledValue = dataBuffer;
-            s7FillScanline = scanline;
-            s7FillDot = cycle;
-            s7FillAddrBus = ppuAddrBus;
-
-            s7SamplePending = false;
-            s7AwaitingReturn = true;
-        }
-
         if (dataReadRenderIncrement) {
             incrementCoarseX();
             incrementFineY();
@@ -682,6 +682,34 @@ void PPU::clock() {
         }
 
         dataReadPending = false;
+    }
+
+    if (
+        ppuAddrTransferPending &&
+        ppuAddrTransferDelay > 0 &&
+        --ppuAddrTransferDelay == 0
+    ) {
+        const u16 prevAddr = ppuAddrBus;
+        const u8 fetchPhase = cycle & 0x07;
+
+        v = pendingV;
+
+        const bool completedNametableFetch = (
+            (fetchPhase == 1 || fetchPhase == 2) &&
+            prevAddr >= 0x2000 &&
+            prevAddr <= 0x3EFF
+        );
+        
+        if (renderingEnabled() && completedNametableFetch) {
+            const u16 hybridAddress = static_cast<u16>(
+                (v & 0x3F00) |
+                (prevAddr & 0x00FF)
+            );
+
+            nextNametableByte = ppuRead(hybridAddress, false);
+        }
+
+        ppuAddrTransferPending = false;
     }
 
     // increment cycle count

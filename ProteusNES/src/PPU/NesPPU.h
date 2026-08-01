@@ -25,22 +25,6 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
-            bool s7TraceDone = false;
-            bool s7SamplePending = false;
-            bool s7AwaitingReturn = false;
-
-            u16 s7TraceIndex = 0;
-            u8 s7OldBuffer = 0;
-            u8 s7FilledValue = 0;
-            u8 s7StartBus = 0;
-
-            u16 s7StartScanline = 0;
-            u16 s7StartDot = 0;
-            u16 s7StartV = 0;
-            u16 s7FillScanline = 0;
-            u16 s7FillDot = 0;
-            u16 s7FillAddrBus = 0;
-
             bool dataReadPending = false;
             bool dataReadRenderIncrement = false;
             u8 dataReadDelay = 0;
@@ -159,6 +143,10 @@ namespace NS_NES {
 
             u8 pendingPPUMASK = 0;
             u8 delayPPUMASK = 0;
+
+            bool ppuAddrTransferPending = false;
+            u8 ppuAddrTransferDelay = 0;
+            u16 pendingV = 0;
 
             void applyPPUMASK(u8 data);
 
