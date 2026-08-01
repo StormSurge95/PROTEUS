@@ -75,9 +75,9 @@ P9 - UNOFFICIAL INSTRUCTIONS: ISC
     T6 - $FB ISC ABSOLUTE,Y—————————————————————PASS
     T7 - $FF ISC ABSOLUTE———————————————————————PASS
 P10 - UNOFFICIAL INSTRUCTIONS: SH*
-    T1 - $93 SHA INDIRECT,Y—————————————————————PASS 1
-    T2 - $9F SHA ABSOLUTE,Y—————————————————————PASS 1
-    T3 - $9B SHS ABSOLUTE,Y—————————————————————PASS 1
+    T1 - $93 SHA INDIRECT,Y—————————————————————PASS 1 — "The Address-Bus-High-Byte-Corruption performed a bitwise AND upon ABH with both X and A."
+    T2 - $9F SHA ABSOLUTE,Y—————————————————————PASS 1 — "The Address-Bus-High-Byte-Corruption performed a bitwise AND upon ABH with both X and A."
+    T3 - $9B SHS ABSOLUTE,Y—————————————————————PASS 1 — "The Address-Bus-High-Byte-Corruption performed a bitwise AND upon ABH with both X and A."
     T4 - $9C SHY ABSOLUTE,X—————————————————————PASS
     T5 - $9E SHX ABSOLUTE,Y—————————————————————PASS
     T6 - $BB LAE ABSOLUTE,Y—————————————————————PASS
@@ -96,15 +96,15 @@ P12 - CPU INTERRUPTS
     T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
 P13 - APU REGISTERS AND DMA TESTS
     T1 - DMA + OPEN BUS—————————————————————————PASS
-    T2 - DMA + $2002 READ———————————————————————PASS 1
+    T2 - DMA + $2002 READ———————————————————————PASS 1 — "The DMC Load DMA occurred after 2 APU cycles. (The common behavior)"
     T3 - DMA + $2007 READ———————————————————————PASS
     T4 - DMA + $2007 WRITE——————————————————————PASS
     T5 - DMA + $4015 READ———————————————————————PASS
-    T6 - DMA + $4016 READ———————————————————————PASS 1
+    T6 - DMA + $4016 READ———————————————————————PASS 1 — "The controller was read the way a US-released NES/AV Famicom should read controllers."
     T7 - DMC DMA BUS CONFLICTS——————————————————PASS
     T8 - DMC DMA + OAM DMA——————————————————————PASS
     T9 - EXPLICIT DMA ABORT—————————————————————PASS
-    TA - IMPLICIT DMA ABORT—————————————————————PASS 2
+    TA - IMPLICIT DMA ABORT—————————————————————PASS 2 — "The abort behaved the way a pre-mid-1990 CPU would behave."
 P14 - APU TESTS
     T1 - LENGTH COUNTER—————————————————————————PASS
     T2 - LENGTH TABLE———————————————————————————PASS
@@ -112,14 +112,14 @@ P14 - APU TESTS
     T4 - FRAME COUNTER 4-STEP———————————————————PASS
     T5 - FRAME COUNTER 5-STEP———————————————————PASS
     T6 - DELTA MODULATION CHANNEL———————————————PASS
-    T7 - APU REGISTER ACTIVATION————————————————PASS 2
+    T7 - APU REGISTER ACTIVATION————————————————PASS 2 — "The controllers were clocked by the bus conflict with the OAM DMA."
     T8 - CONTROLLER STROBING————————————————————PASS
-    T9 - CONTROLLER CLOCKING————————————————————PASS 2
+    T9 - CONTROLLER CLOCKING————————————————————PASS 2 — "The controller was read the way a Famicom should read controllers."
 P16 - PPU BEHAVIOR
     T1 - CHR ROM IS NOT WRITABLE————————————————PASS
     T2 - PPU REGISTER MIRRORING—————————————————PASS
     T3 - PPU REGISTER OPEN BUS——————————————————PASS
-    T4 - PPU READ BUFFER————————————————————————PASS G
+    T4 - PPU READ BUFFER————————————————————————PASS G — "The Picture Processing Unit behaved like revision G or earlier."
     T5 - PALETTE RAM QUIRKS—————————————————————PASS
     T6 - RENDERING FLAG BEHAVIOR————————————————PASS
     T7 - $2007 READ W/ RENDERING————————————————PASS
@@ -139,7 +139,7 @@ P18 - SPRITE EVALUATION
     T4 - SUDDENLY RESIZE SPRITE—————————————————PASS
     T5 - ARBITRARY SPRITE ZERO——————————————————PASS
     T6 - MISALIGNED OAM BEHAVIOR————————————————PASS
-    T7 - ADDRESS $2004 BEHAVIOR—————————————————PASS G
+    T7 - ADDRESS $2004 BEHAVIOR—————————————————PASS G — "The Picture Processing Unit behaved like revision G or earlier."
     T8 - OAM CORRUPTION—————————————————————————PASS
     T9 - INC $4014——————————————————————————————PASS
 P19 - PPU MISC.
@@ -147,14 +147,14 @@ P19 - PPU MISC.
     T2 - STALE BG SHIFT REGISTERS———————————————PASS
     T3 - STALE SPRITE SHIFT REGS————————————————PASS
     T4 - BG SERIAL IN———————————————————————————PASS
-    T5 - SPRITES ON SCANLINE 0——————————————————PASS 2
+    T5 - SPRITES ON SCANLINE 0——————————————————PASS 2 — "This test was ran on an RGB PPU."
     T6 - $2004 STRESS TEST——————————————————————PASS
     T7 - $2007 STRESS TEST——————————————————————PASS
     T8 - ALE + READ—————————————————————————————PASS
     T9 - HYBRID ADDRESSES———————————————————————PASS
 P20 - CPU BEHAVIOR 2
     T1 - INSTRUCTION TIMING—————————————————————PASS
-    T2 - IMPLIED DUMMY READS————————————————————FAIL 5
+    T2 - IMPLIED DUMMY READS————————————————————PASS
     T3 - BRANCH DUMMY READS—————————————————————PASS
     T4 - JSR EDGE CASES—————————————————————————PASS
     T5 - INTERNAL DATA BUS——————————————————————PASS

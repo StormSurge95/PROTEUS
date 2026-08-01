@@ -229,6 +229,7 @@ void CPU::RTS() { // return from subroutine
             break;
         case 6: // update pc to the read values and increment
             pc = absAddr;
+            read(pc.value());
             pc++;
             cycles = 0;
             break;

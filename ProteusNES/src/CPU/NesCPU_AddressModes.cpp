@@ -3,6 +3,7 @@
 using namespace NS_NES;
 
 void CPU::ACC_A() {
+    read(pc.value());
     fetched = a;
     (this->*currInst->operate)();
     a = fetched;
@@ -14,6 +15,7 @@ void CPU::IMM_A() {
     cycles = 0;
 }
 void CPU::IMP_A() {
+    read(pc.value());
     (this->*currInst->operate)();
     cycles = 0;
 }
