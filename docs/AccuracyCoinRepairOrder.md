@@ -74,7 +74,7 @@
 - [x] 19 - BG Serial In
 - [x] 19 - Sprites On Scanline 0
 - [x] 19 - $2004 Stress Test
-- [ ] 19 - $2007 Stress Test
+- [x] 19 - $2007 Stress Test
 - [ ] 19 - ALE + Read
 - [ ] 19 - Hybrid Addresses
 - [ ] 20 - Branch Dummy Reads

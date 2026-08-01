@@ -149,7 +149,7 @@ P19 - PPU MISC.
     T4 - BG SERIAL IN———————————————————————————PASS
     T5 - SPRITES ON SCANLINE 0——————————————————PASS 2
     T6 - $2004 STRESS TEST——————————————————————PASS
-    T7 - $2007 STRESS TEST——————————————————————FAIL 2
+    T7 - $2007 STRESS TEST——————————————————————PASS
     T8 - ALE + READ—————————————————————————————FAIL 2
     T9 - HYBRID ADDRESSES———————————————————————FAIL 2
 P20 - CPU BEHAVIOR 2

@@ -508,7 +508,8 @@ void CPU::powerup(u32 s) {
     interruptFlagViaPoll = false;
     IFVP = {};
 
-    deferredStatusRead = false;
+    deferredStatusRead = deferredDataRead = false;
+    deferredDataReadAddr = 0;
     deferredStatusOperate = nullptr;
 
     // reset execution counter
@@ -561,7 +562,8 @@ void CPU::reset() {
     interruptFlagViaPoll = false;
     IFVP = {};
 
-    deferredStatusRead = false;
+    deferredStatusRead = deferredDataRead = false;
+    deferredDataReadAddr = 0;
     deferredStatusOperate = nullptr;
 }
 
@@ -600,7 +602,8 @@ void CPU::powerdown() {
     // clear lifecycle state
     totalCycles = 0;
 
-    deferredStatusRead = false;
+    deferredStatusRead = deferredDataRead = false;
+    deferredDataReadAddr = 0;
     deferredStatusOperate = nullptr;
 }
 
@@ -785,17 +788,25 @@ bool CPU::nextCycleWrites() const {
 
 bool CPU::beginDeferredRead(u16 addr) {
     #ifndef TEST_SST
-    if (addr >= 0x2000 && addr <= 0x3FFF && (addr & 0x0007) == 0x0002) {
-        lastReadAddr = addrBus = addr;
+    if (addr >= 0x2000 && addr <= 0x3FFF) {
+        const u8 reg = addr & 0x07;
 
-        deferredStatusRead = true;
-        deferredStatusOperate = currInst->operate;
+        if (reg == 0x02 || reg == 0x07) {
+            lastReadAddr = addrBus = addr;
+            deferredStatusOperate = currInst->operate;
 
-        ppu.lock()->beginStatusRead();
+            if (reg == 0x02) {
+                deferredStatusRead = true;
+                ppu.lock()->beginStatusRead();
+            } else {
+                deferredDataRead = true;
+                deferredDataReadAddr = addr;
+            }
 
-        cycles = 0;
+            cycles = 0;
 
-        return true;
+            return true;
+        }
     }
     #endif
 
@@ -804,13 +815,15 @@ bool CPU::beginDeferredRead(u16 addr) {
 }
 
 void CPU::completeDeferredRead() {
-    if (!deferredStatusRead) return;
+    if (!deferredStatusRead && !deferredDataRead) return;
 
-    cpuBus = fetched = ppu.lock()->finishStatusRead();
-    
+    if (deferredStatusRead) cpuBus = fetched = ppu.lock()->finishStatusRead();
+    else cpuBus = fetched = read(deferredDataReadAddr);
+
     auto operate = deferredStatusOperate;
 
-    deferredStatusRead = false;
+    deferredStatusRead = deferredDataRead = false;
+    deferredDataReadAddr = 0;
     deferredStatusOperate = nullptr;
 
     (this->*operate)();

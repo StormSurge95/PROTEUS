@@ -56,6 +56,11 @@ void PPU::powerup(u32 s) {
     ignoreEarlyCtrlWrites = true;
 
     pendingPPUMASK = delayPPUMASK = 0;
+
+    dataReadPending = false;
+    dataReadRenderIncrement = false;
+    dataReadDelay = 0;
+    dataReadAddress = 0;
 }
 
 void PPU::reset() {
@@ -76,6 +81,11 @@ void PPU::reset() {
     ignoreEarlyCtrlWrites = true;
 
     pendingPPUMASK = delayPPUMASK = 0;
+    
+    dataReadPending = false;
+    dataReadRenderIncrement = false;
+    dataReadDelay = 0;
+    dataReadAddress = 0;
 }
 
 void PPU::powerdown() {
@@ -94,6 +104,11 @@ void PPU::powerdown() {
     ignoreEarlyCtrlWrites = false;
 
     pendingPPUMASK = delayPPUMASK = 0;
+    
+    dataReadPending = false;
+    dataReadRenderIncrement = false;
+    dataReadDelay = 0;
+    dataReadAddress = 0;
 }
 
 void PPU::clearPipelines() {
@@ -163,41 +178,74 @@ u8 PPU::read(u16 addr, bool readonly) {
 
                 break;
             }
-            case 0x07: // read from PPUDATA
-                {
-                    u16 addr = v & 0x3FFF;
-                    u8 data = ppuRead(addr, readonly);
-                    bool pal = addr >= 0x3F00; // read from Palette RAM
+            case 0x07: { // read from PPUDATA
+                const u16 requestAddr = v & 0x3FFF;
+                const bool paletteRead = requestAddr >= 0x3F00;
 
-                    if (pal) {
-                        ret = (data & 0x3F) | (ppuDataBus & 0xC0);
-                        if (readonly) return ret;
-                        dataBuffer = ppuRead(addr - 0x1000);
-                    } else {
-                        ret = dataBuffer;
-                        if (readonly) return ret;
-                        dataBuffer = data;
-                    }
-                    
-                    if (
-                        renderingEnabled() &&
-                        (
-                            scanline <= 239 ||
-                            scanline == (GetScanlinesPerFrame(*region) - 1)
-                        )
-                    ) {
-                        incrementCoarseX();
-                        incrementFineY();
-                    } else {
-                        v = (v + getVRAMIncrement()) & 0x3FFF;
-                    }
-
-                    updateCounters(pal ? 0x3F : 0xFF);
-                    if (eventSink) {
-                        eventSink->OnPpuRegisterRead(0x2007, ret);
-                    }
+                const bool renderLine = scanline <= 239 || scanline == GetScanlinesPerFrame(*region) - 1;
+                const bool renderedRead = renderingEnabled() && renderLine;
+                if (
+                    !readonly &&
+                    !s7TraceDone &&
+                    !s7SamplePending &&
+                    !s7AwaitingReturn &&
+                    renderedRead
+                ) {
+                    s7SamplePending = true;
+                    s7StartScanline = scanline;
+                    s7StartDot = cycle;
+                    s7StartV = requestAddr;
+                    s7StartBus = ppuVramBus;
+                    s7OldBuffer = dataBuffer;
                 }
+
+                if (paletteRead) {
+                    const u8 paletteData = ppuRead(requestAddr, true);
+                    ret = (paletteData & 0x3F) | (ppuDataBus & 0xC0);
+                } else {
+                    // The CPU receives the previous read-buffer contents.
+                    ret = dataBuffer;
+                }
+
+                if (readonly) return ret;
+                else if (false && s7AwaitingReturn && !renderedRead) {
+                    if ((s7TraceIndex & 0x01) != 0) {
+                        printf(
+                            "[2007S-KEY] key=%03u raw=%03u actual=%02X "
+                            "start=%u:%u fill=%u:%u addr=%04X\n",
+                            static_cast<unsigned>(s7TraceIndex >> 1),
+                            static_cast<unsigned>(s7TraceIndex),
+                            ret,
+                            s7StartScanline,
+                            s7StartDot,
+                            s7FillScanline,
+                            s7FillDot,
+                            s7FillAddrBus
+                        );
+                    }
+
+                    s7AwaitingReturn = false;
+                    s7TraceIndex++;
+
+                    if (s7TraceIndex >= 341) s7TraceDone = true;
+                }
+
+                // Palette reads refill the buffer from the underlying mirrored address.
+                dataReadAddress = paletteRead ? static_cast<u16>((requestAddr - 0x1000) & 0x3FFF) : requestAddr;
+
+                dataReadPending = true;
+                dataReadDelay = 4;
+
+                dataReadRenderIncrement = renderedRead;
+
+                if (!renderedRead) v = (v + getVRAMIncrement()) & 0x3FFF;
+
+                updateCounters(paletteRead ? 0x3F : 0xFF);
+
+                if (eventSink) eventSink->OnPpuRegisterRead(0x2007, ret);
+
                 break;
+            }
         }
         // by this point, ppubus should have been updated using the requested value;
         // so we can simply update and return ppubus at this point (also this prevents
@@ -600,6 +648,42 @@ void PPU::clock() {
         onStartVBlankLine();
     }
 
+    if (
+        dataReadPending &&
+        dataReadDelay > 0 &&
+        --dataReadDelay == 0
+    ) {
+        if (
+            renderingEnabled() &&
+            (
+                scanline <= 239 ||
+                scanline == (GetScanlinesPerFrame(*region) - 1)
+            )
+        ) {
+            dataBuffer = ppuVramBus;
+        } else {
+            dataBuffer = ppuRead(dataReadAddress, false);
+        }
+
+        if (s7SamplePending) {
+            s7FilledValue = dataBuffer;
+            s7FillScanline = scanline;
+            s7FillDot = cycle;
+            s7FillAddrBus = ppuAddrBus;
+
+            s7SamplePending = false;
+            s7AwaitingReturn = true;
+        }
+
+        if (dataReadRenderIncrement) {
+            incrementCoarseX();
+            incrementFineY();
+            dataReadRenderIncrement = false;
+        }
+
+        dataReadPending = false;
+    }
+
     // increment cycle count
     cycle++;
 
@@ -672,7 +756,7 @@ void PPU::onPreRenderLine() {
         // dummy nametable fetch on 337
         // ppuRead((0x2000 | (v & 0x0FFF)), false);
         // dummy nametable fetch on 339
-        if (cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
+        if (cycle == 337 || cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
     }
 }
 
@@ -787,7 +871,7 @@ void PPU::onVisibleLine() {
         // copy all horizontal bits after all rendering is complete so that we can get the correct horizontal scroll
         if (cycle == 257) copyHorizontalBits();
 
-        if (cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
+        if (cycle == 337 || cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
     }
 
     // Sprite X counters continue during forced blanking.
@@ -906,7 +990,7 @@ void PPU::renderPixel() {
         paletteAddr += 0x10;
     }
 
-    u8 index = ppuRead(paletteAddr, false);
+    u8 index = ppuRead(paletteAddr, true);
 
     frameBuffer[(size_t)scanline * 256 + ((size_t)cycle - 1)] = masterPalette[index & 0x3F];
 }

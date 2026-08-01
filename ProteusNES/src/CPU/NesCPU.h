@@ -28,6 +28,8 @@ namespace NS_NES {
             friend class NesDebugger;
         private:
             bool deferredStatusRead = false;
+            bool deferredDataRead = false;
+            u16 deferredDataReadAddr = 0;
             void (CPU::*deferredStatusOperate)(void) = nullptr;
             bool beginDeferredRead(u16 addr);
 

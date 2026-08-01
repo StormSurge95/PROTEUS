@@ -302,10 +302,15 @@ void PPU::spriteFetch() {
 
     switch (step) {
         case 0:
-        case 1:
+            // First garbage nametable fetch; using old v on dot 257
             ppuRead((0x2000 | (v & 0x0FFF)), false);
             break;
+        case 1:
+            // second half of the first fetch
+            break;
         case 2:
+            // second garbage nametable fetch
+            ppuRead((0x2000 | (v & 0x0FFF)), false);
             sprTileIndex = secondaryOAM[sprite][1];
             break;
         case 3:
@@ -313,39 +318,32 @@ void PPU::spriteFetch() {
             break;
         case 4:
             sprXPosition = secondaryOAM[sprite][3];
-            break;
-        case 5:
+            
             sprFetchValid = secondaryOAM[sprite][4] != 0xFF && spriteInRange(secondaryOAM[sprite][0]);
 
             if (!sprFetchValid) {
                 if (getSpriteHeight() == 8) {
                     spritePatternAddr = getSpritePatternTableAddr8x8() + (0xFF * 16);
                 } else {
-                    spritePatternAddr = (((0xFF & 0x01) ? 0x1000 : 0x0000) | ((0xFF & ~0x01) << 4));
+                    spritePatternAddr = ((0xFF & 0x01) ? 0x1000 : 0x0000) | ((0xFF & ~0x01) << 4);
                 }
             } else {
-                calcSPRPatternAddr(
-                    sprite,
-                    sprTileIndex,
-                    secondaryOAM[sprite][0]
-                );
+                calcSPRPatternAddr(sprite, sprTileIndex, secondaryOAM[sprite][0]);
             }
 
             sprPatternLo = ppuRead(spritePatternAddr, false);
+            break;
+        case 5:
+            // second half of the low-pattern fetch
             break;
         case 6:
             sprPatternHi = ppuRead(spritePatternAddr + 8, false);
             break;
         case 7:
-            activeSprites[sprite] = ActiveSprite(
-                sprFetchValid ? sprPatternLo : 0x00,
-                sprFetchValid ? sprPatternHi : 0x00,
-                sprAttributes,
-                sprXPosition,
-                sprFetchValid ? secondaryOAM[sprite][4] : 0xFF
-            );
+            activeSprites[sprite] = sprFetchValid ?
+                ActiveSprite(sprPatternLo, sprPatternHi, sprAttributes, sprXPosition, secondaryOAM[sprite][4]) :
+                ActiveSprite(0x00, 0x00, sprAttributes, sprXPosition, 0xFF);
             break;
-
     }
 
     if (step <= 2 || step == 7) oamAddr2 = static_cast<u8>((oamAddr2 + 1) & 0x1F);

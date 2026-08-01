@@ -25,6 +25,26 @@ namespace NS_NES {
             bool suppressNMI = false;
             u16 ppuAddrBus = 0x0000;
         private: // variables
+            bool s7TraceDone = false;
+            bool s7SamplePending = false;
+            bool s7AwaitingReturn = false;
+
+            u16 s7TraceIndex = 0;
+            u8 s7OldBuffer = 0;
+            u8 s7FilledValue = 0;
+            u8 s7StartBus = 0;
+
+            u16 s7StartScanline = 0;
+            u16 s7StartDot = 0;
+            u16 s7StartV = 0;
+            u16 s7FillScanline = 0;
+            u16 s7FillDot = 0;
+            u16 s7FillAddrBus = 0;
+
+            bool dataReadPending = false;
+            bool dataReadRenderIncrement = false;
+            u8 dataReadDelay = 0;
+            u16 dataReadAddress = 0;
             bool sprFetchValid = false;
             bool pendingSZS = false;
             bool pendingSOS = false;
