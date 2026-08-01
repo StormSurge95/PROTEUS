@@ -95,7 +95,7 @@ namespace NS_NES {
              * @brief Provides an output sample
              * @return current `outputLevel` value, or zero if `silent` flag is set
              */
-            inline u8 output() const { return silent ? 0x00 : outputLevel; }
+            inline u8 output() const { return outputLevel; }
 
             /**
              * @brief Getter for DMC channel status
