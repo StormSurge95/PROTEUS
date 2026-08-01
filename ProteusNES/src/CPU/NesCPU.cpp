@@ -509,7 +509,7 @@ void CPU::powerup(u32 s) {
     dmcAddr = dmcData = oamPage = oamAddr = oamData = 0;
 
     // clear interrupt and poll bookkeeping
-    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = interruptVectorSource = INTERRUPT::NONE;
     resetPending = irqLine_APU = irqLine_DMC = irqLine_Mapper = false;
     nmiPending = nmiLineSampled = false;
     interruptFlagViaPoll = false;
@@ -546,7 +546,7 @@ void CPU::reset() {
 
     // abort current instruction context so next CPU step starts from interrupt polling
     cycles = 0;
-    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = interruptVectorSource = INTERRUPT::NONE;
     currInst = nullptr;
     opcode = fetched = 0;
     absAddr = relAddr = indAddr = 0;
@@ -578,7 +578,7 @@ void CPU::powerdown() {
     // stop active execution state
     halted = false;
     cycles = 0;
-    interruptSource = pendingInterruptSource = INTERRUPT::NONE;
+    interruptSource = pendingInterruptSource = interruptVectorSource = INTERRUPT::NONE;
 
     // cancel pending reset/interrupt activity
     resetPending = nmiPending = nmiLineSampled = irqLine_APU =
