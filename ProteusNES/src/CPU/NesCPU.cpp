@@ -679,6 +679,8 @@ void CPU::clockInstruction() {
             if (opcode == 0x00) interruptSource = INTERRUPT::BRK;
         }
 
+        interruptVectorSource = interruptSource;
+
         // emit instruction event
         if (eventSink) eventSink->OnInstructionExecute(instPC, opcode, a, x, y, sp, status, totalCycles);
 

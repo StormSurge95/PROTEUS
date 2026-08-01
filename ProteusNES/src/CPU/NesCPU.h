@@ -260,6 +260,7 @@ namespace NS_NES {
             #pragma region Interrupts
             INTERRUPT interruptSource = INTERRUPT::NONE;
             INTERRUPT pendingInterruptSource = INTERRUPT::NONE;
+            INTERRUPT interruptVectorSource = INTERRUPT::NONE;
             map<INTERRUPT, u16> interruptVector{
                 { INTERRUPT::RST, 0xFFFC },
                 { INTERRUPT::NMI, 0xFFFA },

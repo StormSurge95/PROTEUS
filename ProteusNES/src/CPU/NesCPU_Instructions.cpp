@@ -242,20 +242,22 @@ void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
             if (interruptSource == INTERRUPT::BRK) pc++; // only increment pc on software interrupts
             break;
         case 3: // save pc.hi to stack
-            if (interruptSource == INTERRUPT::RST)
-                read(0x0100 + sp); // Reset disables writes; so we read instead
-            else
-                write(0x0100 + sp, pc.hi);
+            if (interruptSource == INTERRUPT::RST) read(0x0100 + sp); // Reset disables writes; so we read instead
+            else write(0x0100 + sp, pc.hi);
             sp--;
             break;
         case 4: // save pc.lo to stack
-            if (interruptSource == INTERRUPT::RST)
-                read(0x0100 + sp);
-            else
-                write(0x0100 + sp, pc.lo);
+            if (interruptSource == INTERRUPT::RST) read(0x0100 + sp);
+            else write(0x0100 + sp, pc.lo);
             sp--;
             break;
         case 5: // save status to stack with B flag SET
+            if ((interruptSource == INTERRUPT::BRK || interruptSource == INTERRUPT::IRQ) && nmiPending) {
+                interruptVectorSource = INTERRUPT::NMI;
+
+                if (eventSink) eventSink->OnInterrupt(INTERRUPT_EVENT::NMI_ACK);
+            }
+
             if (interruptSource != INTERRUPT::RST) {
                 setFlag(FLAGS::U, true);
                 setFlag(FLAGS::B, interruptSource == INTERRUPT::BRK);
@@ -269,15 +271,13 @@ void CPU::BRK() { // software interrupt (NMI and IRQ are hardware interrupts)
         case 6: // set I flag and read pc.lo from BRK vector
             setFlag(FLAGS::I, true);
             syncIFVP();
-            pc.lo = read(interruptVector[interruptSource]);
+            pc.lo = read(interruptVector[interruptVectorSource]);
             break;
         case 7: // read pc.hi from BRK vector and reset cycles
-            pc.hi = read(interruptVector[interruptSource] + 1);
-            if (interruptSource == INTERRUPT::RST)
-                resetPending = false;
-            else if (interruptSource == INTERRUPT::NMI)
-                nmiPending = false;
-            interruptSource = INTERRUPT::NONE;
+            pc.hi = read(interruptVector[interruptVectorSource] + 1);
+            if (interruptSource == INTERRUPT::RST) resetPending = false;
+            else if (interruptSource == INTERRUPT::NMI) nmiPending = false;
+            interruptSource = interruptVectorSource = INTERRUPT::NONE;
             cycles = 0;
             break;
     }
