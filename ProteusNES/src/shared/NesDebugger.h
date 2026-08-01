@@ -67,9 +67,11 @@ namespace NS_NES {
             /**
              * @brief explicit destructor; simply calls clear in order to detach the NES reference
              */
-            ~NesDebugger() = default;
+            ~NesDebugger() override;
 
             void Init() override;
+            void Enable() override;
+            void Disable() override;
 
             /// @brief Performs one entire CPU instruction within the emulator.
             void StepInstruction() override;

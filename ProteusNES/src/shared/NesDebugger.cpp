@@ -10,6 +10,11 @@ NesDebugger::NesDebugger(NES* station) {
     // nes->connectEventSink(this);
 }
 
+NesDebugger::~NesDebugger() {
+    Disable();
+    nes = nullptr;
+}
+
 void NesDebugger::Init() {
     evrPrevFrame.reserve(4096);
     evrLastFrame.reserve(4096);
@@ -22,6 +27,22 @@ void NesDebugger::Init() {
     traceRecords.reserve(16384);
     traceTextBuffer.reserve(1 << 20);
     IDebugger::Init();
+}
+
+void NesDebugger::Enable() {
+    if (enabled) return;
+
+    IDebugger::Enable();
+
+    if (nes) nes->connectEventSink(this);
+}
+
+void NesDebugger::Disable() {
+    if (!enabled) return;
+
+    IDebugger::Disable();
+
+    if (nes) nes->connectEventSink(nullptr);
 }
 
 void NesDebugger::StepInstruction() {
