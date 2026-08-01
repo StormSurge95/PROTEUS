@@ -11,7 +11,6 @@ namespace NS_NES {
             // allow Debugger class to access all private members of the PPU class
             friend class NesDebugger;
         public: // variables
-            u8 stress2004TraceCount = 0;
             // current scanline of current frame
             u16 scanline = 0;
             // current dot/pixel of current scanline

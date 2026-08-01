@@ -4,13 +4,6 @@
 
 using namespace NS_NES;
 
-namespace {
-    bool traceFrameCounter = false;
-    bool traceFirstFlagPrinted = false;
-    unsigned traceFrameCounterId = 0;
-    u64 traceFrameCounterWriteMaster = 0;
-}
-
 void APU::connectEventSink(NesEventSink* sink) {
     eventSink = sink;
     if (dmc) dmc->connectEventSink(sink);
