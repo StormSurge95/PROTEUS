@@ -125,7 +125,7 @@ u8 CPU::read(u16 addr, bool readonly) {
     // update last read address for use during dummy dma reads.
     lastReadAddr = addrBus = addr;
     // create helper variable to prevent updating open bus when readonly is set
-    u8 ret = cpuBus;
+    u8 ret = cpuExtBus;
     // all reads directly update the open bus in some way, sometimes only partially.
     if (addr >= 0x0000 && addr <= 0x1FFF) {
         // read from WRAM
@@ -136,26 +136,33 @@ u8 CPU::read(u16 addr, bool readonly) {
         ret = ppu.lock()->read(addr, readonly);
         if (readonly) return ret;
     } else if (addr == 0x4015) {
-        return (cpuBus & 0x20) | (apu.lock()->read(addr, readonly) & 0xDF);
+        const u8 val = static_cast<u8>(
+            (cpuIntBus & 0x20) |
+            (apu.lock()->read(addr, readonly) & 0xDF)
+        );
+        
+        if (!readonly) cpuIntBus = val;
+
+        return val;
     } else if (addr == 0x4016) {
         // read Player 1 Controller
-        ret = (cpuBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
+        ret = (cpuExtBus & 0xE0) | (player1.lock()->onRead() & 0x1F);
         if (readonly) return ret;
         else if (eventSink) eventSink->OnControllerRead(1, 0x4016, ret);
     } else if (addr == 0x4017) {
         // read Player 2 Controller
-        ret = (cpuBus & 0xE0) | (player2.lock()->onRead() & 0x1F);
+        ret = (cpuExtBus & 0xE0) | (player2.lock()->onRead() & 0x1F);
         if (readonly) return ret;
         else if (eventSink) eventSink->OnControllerRead(2, 0x4017, ret);
     } else if (addr >= 0x6000 && addr <= 0xFFFF) {
         // read cartridge memory (including SRAM, if present)
-        if (!cart.lock()->mapper->cpuRead(addr, ret, readonly)) ret = cpuBus;
+        if (!cart.lock()->mapper->cpuRead(addr, ret, readonly)) ret = cpuExtBus;
         if (readonly) return ret;
     }
 
-    // getting here means readonly is clear; so update cpuBus and return it.
-    cpuBus = ret;
-    return cpuBus;
+    // getting here means readonly is clear; so update cpuExtBus and return it.
+    cpuExtBus = cpuIntBus = ret;
+    return cpuExtBus;
     #endif
 }
 
@@ -165,7 +172,7 @@ void CPU::write(u16 addr, u8 data) {
     #else
     addrBus = addr;
     // all writes fully update open bus
-    cpuBus = data;
+    cpuExtBus = cpuIntBus = data;
     if (addr >= 0x0000 && addr <= 0x1FFF) {
         // write to WRAM
         ram[addr & 0x07FF] = data;
@@ -377,7 +384,7 @@ bool CPU::clockOAM(bool isBusAvail) {
              */
             if (srcInInternalWindow) {
                 addrBus = srcAddr;
-                oamData = cpuBus;
+                oamData = cpuExtBus;
             } else {
                 oamData = read(srcAddr);
             }
@@ -407,7 +414,7 @@ bool CPU::clockOAM(bool isBusAvail) {
             // here because there's nowhere else that OAMDMA would
             // be writing OAM data to.
             addrBus = 0x2004;
-            cpuBus = oamData;
+            cpuExtBus = oamData;
             
             ppu.lock()->writeOAMByte(
                 static_cast<u8>(
@@ -457,7 +464,7 @@ bool CPU::clockDMC() {
         case DMC_PHASE::READ:
             if (!isGetCycle()) return false;
 
-            dmcData = read(dmcAddr);
+            dmcData = readExtDMA(dmcAddr);
 
             if ((dmaHaltAddr & 0xFFE0) == 0x4000) {
                 const u16 internalAddr = 0x4000 | (dmcAddr & 0x001F);
@@ -492,7 +499,7 @@ void CPU::powerup(u32 s) {
     prevInstAddrs.clear();
 
     // clear cpu bus/open bus helpers
-    lastReadAddr = addrBus = cpuBus = 0;
+    lastReadAddr = addrBus = cpuExtBus = cpuIntBus = 0;
 
     // clear DMA state
     halted = oamActive = dmcPending = dmcActive =
@@ -592,7 +599,7 @@ void CPU::powerdown() {
     currInst = nullptr;
     magic = paged = branch = false;
     fetched = opcode = absAddr = relAddr =
-    indAddr = offset = cpuBus = addrBus =
+    indAddr = offset = cpuExtBus = cpuIntBus = addrBus =
     lastReadAddr = 0;
     prevInstAddrs.clear();
 
@@ -817,8 +824,8 @@ bool CPU::beginDeferredRead(u16 addr) {
 void CPU::completeDeferredRead() {
     if (!deferredStatusRead && !deferredDataRead) return;
 
-    if (deferredStatusRead) cpuBus = fetched = ppu.lock()->finishStatusRead();
-    else cpuBus = fetched = read(deferredDataReadAddr);
+    if (deferredStatusRead) cpuExtBus = cpuIntBus = fetched = ppu.lock()->finishStatusRead();
+    else cpuExtBus = fetched = read(deferredDataReadAddr);
 
     auto operate = deferredStatusOperate;
 
@@ -827,4 +834,14 @@ void CPU::completeDeferredRead() {
     deferredStatusOperate = nullptr;
 
     (this->*operate)();
+}
+
+u8 CPU::readExtDMA(u16 addr) {
+    const u8 savedIntBus = cpuIntBus;
+    const u8 val = read(addr);
+
+    // A DMA owned external read does not enter the CPU core's internal bus.
+    cpuIntBus = savedIntBus;
+
+    return val;
 }

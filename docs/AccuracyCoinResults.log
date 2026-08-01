@@ -157,4 +157,4 @@ P20 - CPU BEHAVIOR 2
     T2 - IMPLIED DUMMY READS————————————————————FAIL 5
     T3 - BRANCH DUMMY READS—————————————————————PASS
     T4 - JSR EDGE CASES—————————————————————————PASS
-    T5 - INTERNAL DATA BUS——————————————————————FAIL 2
+    T5 - INTERNAL DATA BUS——————————————————————PASS

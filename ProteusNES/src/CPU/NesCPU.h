@@ -49,7 +49,8 @@ namespace NS_NES {
             wptr<Gamepak> cart; /// @brief The current cartridge that is connected.
             wptr<Controller> player1; /// @brief Player 1 controller
             wptr<Controller> player2; /// @brief Player 2 controller
-            u8 cpuBus = 0x00; /// @brief Current open-bus value to be updated/returned on read/write calls.
+            u8 cpuExtBus = 0x00; /// @brief External CPU/open bus
+            u8 cpuIntBus = 0x00; /// @brief Internal 2A03 data bus
             u8 oamPage = 0x00; /// @brief Helper variable for OAMDMA; refers to the page of WRAM to read OAM data from.
             u8 oamAddr = 0x00; /// @brief Helper variable for OAMDMA; refers to the OAM address to write the WRAM data to.
             u8 oamData = 0x00; /// @brief Helper variable for OAMDMA; refers to the OAM data to be written after it is read from WRAM.
@@ -203,6 +204,8 @@ namespace NS_NES {
              * @returns true if DMC consumed the get cycle
              */
             bool clockDMC();
+
+            u8 readExtDMA(u16 addr);
 
             #pragma region Addressing Modes
             /// @brief Accumulator Instructions

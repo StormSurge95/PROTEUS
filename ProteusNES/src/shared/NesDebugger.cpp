@@ -367,7 +367,7 @@ vector<array<string, 3>> NesDebugger::GetStateCPU() const {
     lines.push_back({ "Stack Pointer", hex(0x0100 + temp, 4), hex(temp, 2) });
     temp = nes->cpu->addrBus;
     lines.push_back({ "Address Bus", to_string(temp), hex(temp, 4) });
-    temp = nes->cpu->cpuBus;
+    temp = nes->cpu->cpuExtBus;
     lines.push_back({ "Data Bus", to_string(temp), hex(temp, 2) });
     lines.push_back({ "", "STATUS", "" });
     temp = nes->cpu->getFlag(FLAGS::C);
