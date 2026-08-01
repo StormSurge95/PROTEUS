@@ -7,7 +7,7 @@ using namespace NS_NES;
 
 NesDebugger::NesDebugger(NES* station) {
     nes = station;
-    nes->connectEventSink(this);
+    // nes->connectEventSink(this);
 }
 
 void NesDebugger::Init() {
