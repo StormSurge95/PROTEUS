@@ -73,7 +73,7 @@ APU::APU() : HPF1(90.0f, 44100.0f), HPF2(440.0f, 44100.0f), LPF(14000.0f, 44100.
 
 u8 APU::read(u16 addr, bool readonly) {
     if (addr == 0x4015) {
-        apuBus = read4015();
+        apuBus = read4015(readonly);
         if (eventSink) eventSink->OnApuRegisterRead(0x4015, apuBus);
     }
     return apuBus;
@@ -185,7 +185,7 @@ void APU::clock() {
     generateSample();
 }
 
-u8 APU::read4015() {
+u8 APU::read4015(bool readonly) {
     // each channel's status() function returns a full 8bit value with the status in bit0
     // so we can simply acquire these values and use bitshifts and bit-OR to create the
     // final data to be returned.
@@ -200,7 +200,7 @@ u8 APU::read4015() {
     // reading the dmc interrupt flag DOES NOT clear it
     u8 i = dmc->interrupt << 7;
 
-    frameIrqClearPending = true;
+    if (!readonly) frameIrqClearPending = true;
     return p1 | p2 | t | n | d | u | f | i;
 }
 

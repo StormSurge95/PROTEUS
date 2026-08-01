@@ -164,7 +164,7 @@ namespace NS_NES {
              * @brief Helper function for reading the APU status from $4015
              * @return The current status of the APU and it's channels.
              */
-            u8 read4015();
+            u8 read4015(bool readonly = false);
             /**
              * @brief Helper function for writing to APU Control at $4015
              * @param data The data to be written.
