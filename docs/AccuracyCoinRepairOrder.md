@@ -80,5 +80,5 @@
 - [x] 20 - Branch Dummy Reads
 - [x] 20 - Internal Data Bus
 - [x] 20 - Implied Dummy Reads
-- [ ] 12 - NMI Overlap BRK
-- [ ] 12 - NMI Overlap IRQ
+- [x] 12 - NMI Overlap BRK
+- [x] 12 - NMI Overlap IRQ

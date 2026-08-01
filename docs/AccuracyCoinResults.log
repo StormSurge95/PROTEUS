@@ -92,8 +92,8 @@ P11 - UNOFFICIAL IMMEDIATES
     T8 - $EB SBC IMMEDIATE——————————————————————PASS
 P12 - CPU INTERRUPTS
     T1 - INTERRUPT FLAG LATENCY—————————————————PASS
-    T2 - NMI OVERLAP BRK————————————————————————FAIL 2
-    T3 - NMI OVERLAP IRQ————————————————————————FAIL 1
+    T2 - NMI OVERLAP BRK————————————————————————PASS
+    T3 - NMI OVERLAP IRQ————————————————————————PASS
 P13 - APU REGISTERS AND DMA TESTS
     T1 - DMA + OPEN BUS—————————————————————————PASS
     T2 - DMA + $2002 READ———————————————————————PASS 1 — "The DMC Load DMA occurred after 2 APU cycles. (The common behavior)"
