@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../../Proteus/src/shared/CorePCH.h"
+
 namespace NS_GBA {
     enum class CpuMode {
         ARM,    // ARM7TDMI 32bit RISC CPU, 16.78MHz, 32bit opcodes (GBA)
@@ -128,26 +130,26 @@ namespace NS_GBA {
         u16 attr2;
 
         // attr 0
-        u8 GetYCoord() const { return (attr0 & 0xFF); }
-        bool RotateScale() const { return ((attr0 >> 8) & 0x01) > 0; }
-        bool DoubleSize() const { return RotateScale() ? ((attr0 >> 9) & 0x01) > 0 : false; }
-        bool Disabled() const { return RotateScale() ? false : ((attr0 >> 9) & 0x01) > 0; }
-        ObjectMode Mode() const { return ObjectMode((attr0 >> 10) & 0x03); }
-        bool Mosaic() const { return ((attr0 >> 12) & 0x01) > 0; }
-        ObjectColors Colors() const { return ObjectColors((attr0 >> 13) & 0x01); }
-        ObjectShape Shape() const { return ObjectShape((attr0 >> 14) & 0x03); }
+        u8 GetYCoord() const;
+        bool RotateScale() const;
+        bool DoubleSize() const;
+        bool Disabled() const;
+        ObjectMode Mode() const;
+        bool Mosaic() const;
+        ObjectColors Colors() const;
+        ObjectShape Shape() const;
 
         // attr 1
-        u8 GetXCoord() const { return (attr1 & 0xFF); }
-        u8 GetRotateScaleParam() const { return RotateScale() ? ((attr1 >> 9) & 0x1F) : 0xFF; }
-        bool FlipX() const { return RotateScale() ? false : ((attr1 >> 12) & 0x01) > 0; }
-        bool FlipY() const { return RotateScale() ? false : ((attr1 >> 13) & 0x01) > 0; }
-        ObjectSize Size() const { return ObjectSize(((u8)Shape() << 2) | ((attr1 >> 14) & 0x03)); } // TODO: Test and confirm this
+        u16 GetXCoord() const;
+        u8 GetRotateScaleParam() const;
+        bool FlipX() const;
+        bool FlipY() const;
+        ObjectSize Size() const;
 
         // attr 2
-        u16 Name() const { return (attr2 & 0x03FF); }
-        u8 PriorityToBG() const { return ((attr2 >> 10) & 0x03); }
-        u8 PaletteNumber() const { return (Colors() == ObjectColors::SINGLE_PALETTE ? 0 : ((attr2 >> 12) & 0x0F)); }
+        u16 Name() const;
+        u8 PriorityToBG() const;
+        u8 PaletteNumber() const;
     };
 
     enum class Button {

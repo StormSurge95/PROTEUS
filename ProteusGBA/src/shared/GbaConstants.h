@@ -11,6 +11,6 @@ namespace NS_GBA {
     static const u8 BACKGROUND_LAYERS = 4;
     static const u16 DOTS_PER_LINE = 308;
     static const u16 LINES_PER_FRAME = 228;
-    static const u32 SYSTEM_CLOCK = 1677216;
+    static const u32 SYSTEM_CLOCK = 16777216;
     static const u32 BASE_HEADER_SIZE = 192;
 }
