@@ -22,7 +22,7 @@ void PPU::powerup(u32 s) {
     // initialize register/latch state(s)
     PPUCTRL = 0;
     PPUMASK = 0;
-    PPUSTATUS = 0xA0 | (nextByte() & ~0xA0);
+    PPUSTATUS = static_cast<u8>(0x20 | (nextByte() & 0x1F));
     OAMADDR = 0;
     OAMDATA = 0;
     PPUSCROLL = 0;

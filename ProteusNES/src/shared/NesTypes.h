@@ -658,9 +658,9 @@ namespace NS_NES {
 
     struct MemInfo {
         u16 romBanks = 0;
-        u32 romSize = 0;
-        u32 vramSize = 0;
-        u32 nvramSize = 0;
+        u64 romSize = 0;
+        u64 vramSize = 0;
+        u64 nvramSize = 0;
     };
 
     struct PakInfo {

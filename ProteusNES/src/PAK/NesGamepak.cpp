@@ -14,43 +14,65 @@ Gamepak::Gamepak(const string& path) {
 
     // read header metadata
     Header header = {};
-    file.read(reinterpret_cast<char*>(&header), sizeof(Header));
+    if (!file.read(reinterpret_cast<char*>(&header), sizeof(Header))) {
+        valid = false;
+        file.close();
+        return;
+    }
 
-    valid = readHeader(header);
-
-    if (valid) {
-        if (hasTrainer) file.seekg(512, ios::cur);
+    if (readHeader(header)) {
+        if (hasTrainer) {
+            if (!file.read(reinterpret_cast<char*>(trainer.data()), trainer.size())) {
+                valid = false;
+                file.close();
+                return;
+            }
+        }
 
         // read prg-rom memory
         prgMemory.resize(memory.prg.romSize);
-        file.read(reinterpret_cast<char*>(prgMemory.data()), prgMemory.size());
+        if (!file.read(reinterpret_cast<char*>(prgMemory.data()), prgMemory.size())) {
+            valid = false;
+            file.close();
+            return;
+        }
 
         // resolve region to what will actually be used by the emulator
         region = ResolveConsoleRegion(romRegion);
         
         if (memory.prg.nvramSize > 0) // initialize prg-nvram
             prgRamNonVolatile.resize(memory.prg.nvramSize, 0x00);
-        else if (memory.prg.vramSize > 0) // initialize prg-vram
+        if (memory.prg.vramSize > 0) // initialize prg-vram
             prgRamVolatile.resize(memory.prg.vramSize, 0x00);
 
         // read chr-rom memory (if present)
         if (memory.chr.romSize > 0) {
             chrMemory.resize(memory.chr.romSize);
-            file.read(reinterpret_cast<char*>(chrMemory.data()), chrMemory.size());
+            if (!file.read(reinterpret_cast<char*>(chrMemory.data()), chrMemory.size())) {
+                valid = false;
+                file.close();
+                return;
+            }
         }
 
         if (memory.chr.nvramSize > 0) // initialize chr-nvram
             chrRamNonVolatile.resize(memory.chr.nvramSize, 0x00);
-        else if (memory.chr.vramSize > 0) // initialize chr-vram
+        if (memory.chr.vramSize > 0) // initialize chr-vram
             chrRamVolatile.resize(memory.chr.vramSize, 0x00);
         // iNES fallback: CHR-ROM size of 0 implies 8KB CHR-RAM unless NES 2.0 declared RAM sizes.
-        else if (memory.chr.romSize == 0 && chrRamVolatile.empty() && chrRamNonVolatile.empty())
+        if (memory.chr.romSize == 0 && chrRamVolatile.empty() && chrRamNonVolatile.empty())
             chrRamVolatile.resize(8192, 0x00);
 
         // initialize mapper only after all memory vectors have been allocated/read.
-        initMapper(mapperID);
+        if (!initMapper(mapperID)) {
+            valid = false;
+            file.close();
+            return;
+        }
 
         if (prgRamNonVolatile.size() > 0) LoadRAM();
+
+        valid = true;
     }
 
     file.close();
@@ -139,7 +161,9 @@ bool Gamepak::readHeader(const Header& h) {
 
 bool Gamepak::readHeaderANES(const Header& h) {
     memory.prg.romBanks = h.byte4;
+    memory.prg.romSize = h.byte4 << 14;
     memory.chr.romBanks = h.byte5;
+    memory.chr.romSize = h.byte5 << 13;
 
     mapperID = (h.byte6 >> 4);
 
@@ -195,21 +219,44 @@ bool Gamepak::readHeaderNES2(const Header& h) {
     u16 prgMSB = (h.byte9 & 0x0F);
     // if MSB is $F, an exponent-multiplier notation is used
     if (prgMSB == 0x0F) {
-        u8 m = memory.prg.romBanks & 0x03;
-        u8 e = (memory.prg.romBanks & 0xFC) >> 2;
+        u8 m = h.byte4 & 0x03;
+        u8 e = h.byte4 >> 2;
 
-        memory.prg.romBanks = (u16)(pow(2, e) * (m * 2 + 1));
-    } else memory.prg.romBanks |= (prgMSB << 8);
-    memory.prg.romSize = ((u32)memory.prg.romBanks << 14);
+        memory.prg.romSize = (
+            (1ULL << e) *
+            (static_cast<u64>(m) * 2ULL + 1ULL)
+        );
+        memory.prg.romBanks = memory.prg.romSize >> 14;
+    } else {
+        memory.prg.romBanks |= (prgMSB << 8);
+        memory.prg.romSize = ((u32)memory.prg.romBanks << 14);
+    }
     // byte 9 - CHR-ROM MSB
     u16 chrMSB = (h.byte9 & 0xF0) >> 4;
     if (chrMSB == 0x0F) {
-        u8 m = memory.chr.romBanks & 0x03;
-        u8 e = (memory.chr.romBanks & 0xFC) >> 2;
+        u8 m = h.byte5 & 0x03;
+        u8 e = h.byte5 >> 2;
 
-        memory.chr.romBanks = (u16)(pow(2, e) * (m * 2 + 1));
-    } else memory.chr.romBanks |= (chrMSB << 8);
-    memory.chr.romSize = ((u32)memory.chr.romBanks << 13);
+        memory.chr.romSize = (
+            (1ULL << e) *
+            (static_cast<u64>(m) * 2ULL + 1ULL)
+        );
+        memory.chr.romBanks = memory.chr.romSize >> 13;
+    } else {
+        memory.chr.romBanks |= (chrMSB << 8);
+        memory.chr.romSize = ((u32)memory.chr.romBanks << 13);
+    }
+
+    // After calculating PRG/CHR rom sizes, we can test to ensure
+    // that we are, in fact, reading a valid NES 2.0 header.
+    const u64 reqSize = (
+        sizeof(Header) +
+        (hasTrainer ? trainer.size() : 0ULL) +
+        memory.prg.romSize +
+        memory.chr.romSize
+    );
+    const u64 fSize = std::filesystem::file_size(filePath);
+    if (reqSize > fSize) return false;    
 
     // byte 10 - PRG-RAM info
     u8 vshift = h.byteA & 0x0F;
@@ -244,7 +291,9 @@ bool Gamepak::readHeaderNES2(const Header& h) {
     miscRoms = (h.byteE & 0x03);
 
     // byte 15 - expansion device
-    expDev = ExpansionDevice(max(h.byteF & 0x7F, 0x4F));
+    const u8 expID = h.byteF & 0x7F;
+    const u8 deviceCount = static_cast<u8>(ExpansionDevice::TOTAL_DEVICES);
+    expDev = expID < deviceCount ? static_cast<ExpansionDevice>(expID) : ExpansionDevice::UNSPECIFIED;
 
     return true;
 }
@@ -276,7 +325,7 @@ void Gamepak::ppuWrite(u16 addr, u8 data) const {
     mapper->ppuWrite(addr, data);
 }
 
-void Gamepak::initMapper(u16 id) {
+bool Gamepak::initMapper(u16 id) {
     vector<u8>& cMem = (memory.chr.romBanks > 0 ? chrMemory : (memory.chr.nvramSize > 0 ? chrRamNonVolatile : chrRamVolatile));
     vector<u8>* pRam = hasPrgRam() ? (prgRamNonVolatile.size() > 0 ? &prgRamNonVolatile : &prgRamVolatile) : nullptr;
     switch (id) {
@@ -287,14 +336,13 @@ void Gamepak::initMapper(u16 id) {
         case 4: mapper = make_shared<M004>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, pRam, subMapperID); break;
         case 7: mapper = make_shared<M007>(memory.prg.romBanks, &prgMemory, memory.chr.romBanks, &cMem, nullptr, subMapperID); break;
         default:
-            // TODO: render this as a message box and return to GAME_LIST view
-            string num = to_string(id);
-            string msg = "THIS MAPPER (M" + num.insert(0, 3 - num.size(), '0') + ") IS CURRENTLY NOT IMPLEMENTED";
-            printf("%s", msg.c_str());
-            exit(EXIT_FAILURE);
+            mapper.reset();
+            return false;
     }
 
     if (eventSink) mapper->connectEventSink(eventSink);
+
+    return true;
 }
 
 void Gamepak::connectEventSink(NesEventSink* sink) {

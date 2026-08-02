@@ -118,6 +118,8 @@ namespace NS_NES {
             vector<u8> chrRamVolatile = {};
             vector<u8> chrRamNonVolatile = {};
 
+            array<u8, 512> trainer = {};
+
             u8 miscRoms = 0;
 
             /**
@@ -137,8 +139,9 @@ namespace NS_NES {
             /**
              * @brief Initializes and attaches the mapper specified by the ROM header file.
              * @param mapperID ID number for the mapper implemented by this ROM.
+             * @returns true if mapper is successfully initialized; false otherwise
              */
-            void initMapper(u16 mapperID);
+            bool initMapper(u16 mapperID);
 
             path GetSavePath();
 
