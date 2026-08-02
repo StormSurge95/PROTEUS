@@ -34,7 +34,8 @@ namespace NS_NES {
                 if (addr < 0x8000) return;
 
                 u8 tmp;
-                u8 latched = emulateBusConflicts ? (data & cpuRead(addr, tmp, true)) : data;
+                cpuRead(addr, tmp, true);
+                u8 latched = emulateBusConflicts ? (data & tmp) : data;
                 prgBank = normalizeBank(latched & 0x07);
                 mirrorMode = (latched & 0x10) ? MIRROR::ONE_SCREEN_HI : MIRROR::ONE_SCREEN_LO;
 
