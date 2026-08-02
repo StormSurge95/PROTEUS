@@ -55,6 +55,8 @@ void PPU::fetchBGPatternByteHi() {
 }
 
 void PPU::backgroundPipeline() {
+    if (!renderingEnabled()) return;
+
     if ((cycle > 1 && cycle <= 257) || (cycle > 321 && cycle <= 337))
         shiftBackgroundShifters();
 

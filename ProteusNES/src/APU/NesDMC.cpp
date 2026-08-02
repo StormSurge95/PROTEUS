@@ -60,7 +60,7 @@ void DMC_Channel::clockTimer() {
     // timer outputs a clock signal when timer = 0
     if (timer == 0) {
         // timer is automatically restarted
-        timer = period - 1;
+        timer = period - 1; // timer is clocked AFTER reaching 0; so we need "period - 1" instead of "period"
         // if silence flag is clear, output level changes based on bit 0 of the shift register
         if (!silent) {
             bool up = ((shifter & 0x01) == 1);

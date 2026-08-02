@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <span>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -30,6 +31,7 @@ using std::find;
 
 // array
 using std::array;
+using std::span;
 
 // chrono
 using std::chrono::steady_clock;

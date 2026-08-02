@@ -39,7 +39,7 @@ void NoiseChannel::clockTimer() {
     // timer outputs a clock signal at 0
     if (timer <= 0) {
         // when clock signal happens, calculate feedback
-        timer = period;
+        timer = period - 1; // timer is clocked AFTER reaching 0; so we need "period - 1" instead of "period"
         feedback();
     } else
         timer--;

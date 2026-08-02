@@ -873,34 +873,33 @@ void PPU::onVisibleLine() {
      * of the next scanline (tile 3, in other words). At least one mapper - MMC5 - is known to use this
      * string of three consecutive nametable fetches to clock a scanline counter.
      */
-    if (renderingEnabled()) { // the rendering process is only possible when rendering is enabled
-        // sprite rendering process
-        if (cycle >= 1 && cycle <= 64) {
-            initSecondaryOAM(); // clear OAM2
-        } else if (cycle >= 65 && cycle <= 256) {
-            spriteEval(); // evaluate sprites and fill OAM2
-        } else if (cycle >= 257 && cycle <= 320) {
-            spriteFetch(); // fetch sprite data based on OAM2 contents
-        }
-
-        // background rendering process
-        if ((cycle >= 1 && cycle <= 257) || (cycle >= 321 && cycle <= 337)) {
-            // background pipeline operations happen during cycles 1-256 and 321-337
-            backgroundPipeline();
-        }
-
-        if (cycle >= 1 && cycle <= 256) {
-            // render visible pixels to the screen
-            renderPixel();
-        }
-
-        // increment fineY only on last visible cycle; after all other rendering processes have completed
-        if (cycle == 256) incrementFineY();
-        // copy all horizontal bits after all rendering is complete so that we can get the correct horizontal scroll
-        if (cycle == 257) copyHorizontalBits();
-
-        if (cycle == 337 || cycle == 339) ppuRead((0x2000 | (v & 0x0FFF)), false);
+    
+     // sprite rendering process
+    if (cycle >= 1 && cycle <= 64) {
+        initSecondaryOAM(); // clear OAM2
+    } else if (cycle >= 65 && cycle <= 256) {
+        spriteEval(); // evaluate sprites and fill OAM2
+    } else if (cycle >= 257 && cycle <= 320) {
+        spriteFetch(); // fetch sprite data based on OAM2 contents
     }
+
+    // background rendering process
+    if ((cycle >= 1 && cycle <= 257) || (cycle >= 321 && cycle <= 337)) {
+        // background pipeline operations happen during cycles 1-256 and 321-337
+        backgroundPipeline();
+    }
+
+    if (cycle >= 1 && cycle <= 256) {
+        // render visible pixels to the screen
+        renderPixel();
+    }
+
+    // increment fineY only on last visible cycle; after all other rendering processes have completed
+    if (cycle == 256) incrementFineY();
+    // copy all horizontal bits after all rendering is complete so that we can get the correct horizontal scroll
+    if (cycle == 257) copyHorizontalBits();
+
+    if (renderingEnabled() && (cycle == 337 || cycle == 339)) ppuRead((0x2000 | (v & 0x0FFF)), false);
 
     // Sprite X counters continue during forced blanking.
     // This must occur after `renderPixel()` to preserve
@@ -950,7 +949,22 @@ void PPU::incrementFineY() {
 }
 
 void PPU::renderPixel() {
+    u16 pixelIndex = (size_t)scanline * 256 + ((size_t)cycle - 1);
+    
     u16 paletteAddr = 0x3F00;
+
+    if (!renderingEnabled()) {
+        if ((v & 0x3F00) == 0x3F00) {
+            paletteAddr = v & 0x3FFF;
+        }
+
+        const u8 paletteIndex = ppuRead(paletteAddr, true) & 0x3F;
+
+        frameBuffer[pixelIndex] = applyEmphasis(masterPalette[paletteIndex]);
+
+        return;
+    }
+
     bool sprSource = false;
 
     u8 bgPixel = 0;
@@ -958,10 +972,9 @@ void PPU::renderPixel() {
     u8 sprPixel = 0;
     u8 sprAttr = 0;
     u8 sprIndex = 0;
-    if (renderingEnabled()) {
-        getBackgroundPixel(bgPixel, bgAttr);
-        sprIndex = getSpritePixel(sprPixel, sprAttr);
-    }
+
+    getBackgroundPixel(bgPixel, bgAttr);
+    sprIndex = getSpritePixel(sprPixel, sprAttr);
 
     if (!renderBackground()) {
         bgPixel = 0;
@@ -1020,7 +1033,7 @@ void PPU::renderPixel() {
 
     u8 index = ppuRead(paletteAddr, true);
 
-    frameBuffer[(size_t)scanline * 256 + ((size_t)cycle - 1)] = masterPalette[index & 0x3F];
+    frameBuffer[pixelIndex] = applyEmphasis(masterPalette[index & 0x3F]);
 }
 
 u8 PPU::getControlData(CONTROL which) const {
@@ -1041,8 +1054,8 @@ u32 PPU::applyEmphasis(u32 color) const {
     u32 g = (color >> 8) & 0xFF;
     u32 b = (color >> 16) & 0xFF;
 
-    if (this->getGrayscale())
-        r = g = b = (u32)std::floor((r + g + b) / 3);
+    // if (this->getGrayscale())
+    //     r = g = b = (u32)std::floor((r + g + b) / 3);
 
     bool eR = this->getMaskData(MASK::EMPHASIZE_RED);
     bool eG = this->getMaskData(MASK::EMPHASIZE_GREEN);

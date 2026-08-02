@@ -71,6 +71,8 @@ void PPU::writeOAMByte(u8 i, u8 b) {
 }
 
 void PPU::initSecondaryOAM() {
+    if (!renderingEnabled()) return;
+
     // called from cycle 1 to 64 (inclusive)
     // cycle - 1 gives us indexes 0-63 (inclusive)
     // index / 8 gives us sprites 0-7
@@ -235,6 +237,8 @@ void PPU::spriteEvalWrite() {
 }
 
 void PPU::spriteEval() {
+    if (!renderingEnabled()) return;
+
     if (cycle == 65) {
         beginSpriteEval();
         sprite0HitOnNextScanline = false;
@@ -277,6 +281,8 @@ void PPU::calcSPRPatternAddr(u8 index, u8 id, u8 y) {
 }
 
 void PPU::spriteFetch() {
+    if (!renderingEnabled()) return;
+
     // "OAMADDR is set to 0 during each of ticks 257—320 (the sprite tile loading interval) of the pre-render and visible scanlines."
     OAMADDR = 0x00;
 

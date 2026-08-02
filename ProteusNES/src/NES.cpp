@@ -74,6 +74,8 @@ bool NES::shutdown() {
 }
 
 bool NES::loadROM(const string& path) {
+    if (cart) return cart->isValid();
+
     cart = make_shared<Gamepak>(path);
 
     if (cart->isValid()) {
