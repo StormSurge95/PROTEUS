@@ -65,10 +65,16 @@ bool OBJ::FlipY() const {
 }
 
 ObjectSize OBJ::Size() const {
-    u8 shapeVal = static_cast<u8>(Shape());
+    // TODO: test and confirm that this calculation is accurate
+    const ObjectShape shape = Shape();
 
-    // TODO: Test and confirm this
-    return ObjectSize((shapeVal << 2) | ((attr1 >> 14) & 0x03));
+    if (shape == ObjectShape::PROHIBITED)
+        return ObjectSize::INVALID;
+
+    const u8 shapeVal = static_cast<u8>(shape);
+    const u8 sizeVal = static_cast<u8>((attr1 >> 14) & 0x03);
+
+    return static_cast<ObjectSize>((shapeVal << 2) | sizeVal);
 }
 
 u16 OBJ::Name() const {

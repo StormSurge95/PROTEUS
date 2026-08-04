@@ -3,53 +3,61 @@
 #include "../../../Proteus/src/shared/CorePCH.h"
 
 namespace NS_GBA {
-    enum class CpuMode {
-        ARM,    // ARM7TDMI 32bit RISC CPU, 16.78MHz, 32bit opcodes (GBA)
-        THUMB,  // ARM7TDMI 32bit RISC CPU, 16.78MHz, 16bit opcodes (GBA)
-        CGB,    // Z80/8080-style 8bit CPU, 4.2MHz or 8.4MHz (CGB compatibility)
-        CMG     // Z80/8080-style 8bit CPU, 4.2MHz (monochrome gameboy compatibility)
+    enum class GB_Version : u8 {
+        GBA, // Gameboy Advance
+        CGB, // Gameboy Color
+        DMG  // Original Gameboy
     };
 
-    enum class BackgroundType {
+    enum class GbaInstructionSet : u8 {
+        ARM,    // ARM7TDMI 32bit RISC CPU, 16.78MHz, 32bit opcodes
+        THUMB,  // ARM7TDMI 32bit RISC CPU, 16.78MHz, 16bit opcodes
+    };
+
+    enum class BackgroundType : u8 {
         TILEMAP,
         BITMAP
     };
 
-    enum class BackgroundColors {
+    enum class BackgroundColors: u8 {
         SINGLE_PALETTE, // one palette of 256 colors
         MULTI_PALETTE,  // 16 palettes of 16 colors each
         UNLIMITED       // "32768 colors" ???
     };
 
-    enum class ObjectColors {
+    enum class ObjectColors : u8 {
         SINGLE_PALETTE, // one palette of 256 colors
         MULTI_PALETTE   // 16 palettes of 16 colors each
     };
 
-    enum class ObjectMode {
+    enum class ObjectMode : u8 {
         NORMAL,
         SEMI_TRANSPARENT,
         OBJ_WINDOW,
         PROHIBITED
     };
 
-    enum class ObjectSize {
+    enum class ObjectSize : u8 {
         // "12 types (in range 8x8 up to 64x64 dots)"
-        SQUARE8,
-        TALL8,
-        FAT8,
-        SQUARE16,
-        TALL16,
-        FAT16,
-        SQUARE32,
-        TALL32,
-        FAT32,
-        SQUARE64,
-        TALL64,
-        FAT64
+        SQUARE_8x8      = 0,
+        SQUARE_16x16    = 1,
+        SQUARE_32x32    = 2,
+        SQUARE_64x64    = 3,
+
+        WIDE_16x8        = 4,
+        WIDE_32x8        = 5,
+        WIDE_32x16       = 6,
+        WIDE_64x32       = 7,
+
+        TALL_8x16       = 8,
+        TALL_8x32       = 9,
+        TALL_16x32      = 10,
+        TALL_32x64      = 11,
+
+        INVALID         = 0xFF
     };
 
-    enum class ObjectShape {
+    enum class ObjectShape : u8 {
         SQUARE,
         HORIZONTAL,
         VERTICAL,
@@ -152,7 +160,7 @@ namespace NS_GBA {
         u8 PaletteNumber() const;
     };
 
-    enum class Button {
+    enum class Button : u8 {
         BUTTON_A,
         BUTTON_B,
         SELECT,
@@ -193,5 +201,11 @@ namespace NS_GBA {
         u8 SlaveID = 0x00;              // init as $00; BIOS OVERWRITES THIS VALUE
         u8 Unused[26] = { 0x00 };       // seems to be unused
         u32 EntryPointJOY = 0x00000000; // 32bit ARM branch opcode
+    };
+
+    enum class BiosMode : u8 {
+        EXTERNAL,   // user-supplied original BIOS dump
+        HLE,        // PROTEUS implementes BIOS services independently in C++
+        SKIP        // PROTEUS bypasses BIOD execution and directly establishes a documented post-BIOS state
     };
 }
