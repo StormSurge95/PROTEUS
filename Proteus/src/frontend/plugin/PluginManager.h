@@ -6,7 +6,9 @@
 namespace NS_Proteus {
     /// @brief mapping table from ConsoleID values to plugin registry IDs
     static map<ConsoleID, string> ConsolePluginMap = {
-        { ConsoleID::NES, "nes" }
+        { ConsoleID::NES, "nes" },
+        { ConsoleID::GBA, "gba" }
+        // TODO: add other consoles as they become available
     };
 
     class PluginManager {

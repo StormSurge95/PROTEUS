@@ -208,4 +208,35 @@ namespace NS_GBA {
         HLE,        // PROTEUS implementes BIOS services independently in C++
         SKIP        // PROTEUS bypasses BIOD execution and directly establishes a documented post-BIOS state
     };
+
+    enum class GbaBusMaster : u8 {
+        ARM7TDMI,
+        DMA_0,
+        DMA_1,
+        DMA_2,
+        DMA_3,
+        GAMEPAK_PREFETCH,
+        SM83
+    };
+
+    enum class GbaAccessDirection : u8 {
+        READ,
+        WRITE
+    };
+
+    enum class GbaAccessWidth : u8 {
+        BYTE = 1,
+        HALFWORD = 2,
+        WORD = 4
+    };
+
+    enum class GbaAccessSequence : u8 {
+        NONSEQUENTIAL,
+        SEQUENTIAL
+    };
+
+    enum class GbaAccessPurpose : u8 {
+        OPCODE,
+        DATA
+    };
 }

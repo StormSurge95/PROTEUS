@@ -4,7 +4,8 @@
 
 namespace NS_GBA {
     static const u32 BIOS_ROM_SIZE = 16'384;
-    static const u32 WRAM_SIZE = 294'912;
+    static const u32 EWRAM_SIZE = 0x0004'0000;
+    static const u32 IWRAM_SIZE = 0x0000'8000;
     static const u32 VRAM_SIZE = 98'304;
     static const u32 OAM_SIZE = 1'024;
     static const u32 PALETTE_RAM_SIZE = 1'024;

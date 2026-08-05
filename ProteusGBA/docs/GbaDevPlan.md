@@ -4,7 +4,7 @@
 - [x] Correct constants and data types.
 - [x] Define the global scheduler and deterministic reset state.
 - [x] Separate `InstructionSet { Arm, Thumb }` from hardware compatibility mode.
-- [ ] Establish trace records for every bus access and hardware event.
+- [x] Establish trace records for every bus access and hardware event.
 
 ## 2. Bus and Memory Map
 - [ ] BIOS, EWRAM, IWRAM, I/O, palette, VRAM, OAM, ROM and save-memory regions.

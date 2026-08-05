@@ -27,7 +27,7 @@ bool GBA::loadROM(const string& path) {
 bool GBA::poweron() {
     if (powered) return true;
 
-    if (!pak) return false;
+    // if (!pak) return false;
 
     // TODO: validate game pak
 

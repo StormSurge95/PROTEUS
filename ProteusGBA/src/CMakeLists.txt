@@ -2,24 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ProteusGBACore VERSION 1.0.0 LANGUAGES CXX)
 
-# Build as shared library (plugin)
-add_library(ProteusGBA SHARED
-	# Core contract info TODO
-
-	### emulator implementation(s) ###
-
-	# core TODO
-
-	# APU TODO
-
-	# CPU TODO
-
-	# PAK
-	PAK/GbaGamepak.cpp
-
-	# PPU TODO
-
-	# shared TODO
+set(GBA_CORE_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/GBA.cpp	# GBA console core
+	# TODO: include other source files
 )
 
 # locate shared headers
@@ -33,10 +18,21 @@ else()
 	message(FATAL_ERROR "Could not locate Proteus shared headers (expected Proteus/src).")
 endif()
 
+if (PROTEUS_GBA_BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
+
+# Build as shared library (plugin)
+add_library(ProteusGBA SHARED
+	# core contract info
+	GbaCoreExports.cpp
+	### emulator implementation(s) ###
+	${GBA_CORE_SOURCES}
+)
+
 # Include directories
 target_include_directories(ProteusGBA PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${PROTEUS_SRC_DIR}
 	${PROTEUS_SRC_DIR}/shared
 	${PROTEUS_SRC_DIR}/shared/plugin_utils
@@ -51,7 +47,7 @@ target_link_libraries(ProteusGBA PRIVATE
 
 # Compiler settings
 set_target_properties(ProteusGBA PROPERTIES
-	CXX_STANDARD 17
+	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_VISIBILITY_PRESET hidden
 	VISIBILITY_INLINES_HIDDEN ON

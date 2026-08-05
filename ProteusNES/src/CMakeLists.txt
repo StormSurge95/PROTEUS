@@ -3,21 +3,21 @@ cmake_minimum_required(VERSION 3.16)
 project(ProteusNESCore VERSION 1.0.0 LANGUAGES CXX)
 
 set(NES_CORE_SOURCES
-	${CMAKE_CURRENT_SOURCE_DIR}/NES.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/NesController.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesAPU.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesDMC.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesNoise.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesPulse.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesTriangle.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_AddressModes.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_Instructions.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/PAK/NesGamepak.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_BG.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_Sprites.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/shared/NesDebugger.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/NES.cpp						# NES console core
+	${CMAKE_CURRENT_SOURCE_DIR}/NesController.cpp			# controller
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesAPU.cpp				# audio processing unit
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesDMC.cpp				# apu - delta modulation channel
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesNoise.cpp			# apu - noise channel
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesPulse.cpp			# apu - pulse channel
+	${CMAKE_CURRENT_SOURCE_DIR}/APU/NesTriangle.cpp			# apu - triangle channel
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU.cpp				# central processing unit
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_AddressModes.cpp	# cpu - addressing modes
+	${CMAKE_CURRENT_SOURCE_DIR}/CPU/NesCPU_Instructions.cpp	# cpu - instructions
+	${CMAKE_CURRENT_SOURCE_DIR}/PAK/NesGamepak.cpp			# gamepak cartridge
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU.cpp				# picture processing unit
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_BG.cpp			# ppu - backgrounds
+	${CMAKE_CURRENT_SOURCE_DIR}/PPU/NesPPU_Sprites.cpp		# ppu - sprites
+	${CMAKE_CURRENT_SOURCE_DIR}/shared/NesDebugger.cpp		# debugger
 )
 
 # locate shared headers
