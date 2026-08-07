@@ -1,9 +1,16 @@
 #include "./GBA.h"
+#include "./BUS/GbaBus.h"
+#include "./CPU/ARM7.h"
+#include "./CPU/SM83.h"
 
 using namespace NS_GBA;
 
 GBA::GBA() {
     // TODO: construct permanent devices
+    // ARM7, SM83, PPU, APU
+    bus = make_unique<GbaBus>();
+    armCpu = make_unique<ARM7>();
+    legCpu = make_unique<SM83>();
 
     // TODO: establish permanent devices/bus connections
 }
@@ -18,7 +25,7 @@ bool GBA::loadROM(const string& path) {
     
     // TODO: connect gamepak
 
-    // TODO: derive deterministic seed
+    // derive deterministic seed
     deriveSeed("GBA", path);
 
     return poweron();

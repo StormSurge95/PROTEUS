@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.16)
 project(ProteusGBACore VERSION 1.0.0 LANGUAGES CXX)
 
 set(GBA_CORE_SOURCES
-	${CMAKE_CURRENT_SOURCE_DIR}/GBA.cpp	# GBA console core
+	${CMAKE_CURRENT_SOURCE_DIR}/GBA.cpp			# GBA console core
+	${CMAKE_CURRENT_SOURCE_DIR}/BUS/GbaBus.cpp 	# memory-bus
 	# TODO: include other source files
 )
 

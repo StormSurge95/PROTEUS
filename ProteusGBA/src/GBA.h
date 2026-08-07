@@ -3,8 +3,8 @@
 #include "./shared/GbaPCH.h"
 
 namespace NS_GBA {
-    class Arm7Tdmi;
-    class Sm83;
+    class ARM7;
+    class SM83;
     class GbaBus;
     class GbaPPU;
     class GbaAPU;
@@ -51,12 +51,12 @@ namespace NS_GBA {
             GB_Version hardwareMode = GB_Version::GBA;
 
             /// @brief The 32-bit ARM7TDMI CPU of the GBA console
-            // uptr<Arm7Tdmi> armCpu;
+            uptr<ARM7> armCpu;
             /// @brief The 8-bit SM83 CPU of the CGB/DMG console
-            // uptr<Sm83> legCpu;
+            uptr<SM83> legCpu;
 
             /// @brief Abstraction of the GBA data/communication bus
-            // uptr<GbaBus> bus;
+            uptr<GbaBus> bus;
             /// @brief Abstraction of the GBA PPU video-controller
             // uptr<GbaPPU> ppu;
             /// @brief Abstraction of the GBA APU audio-controller

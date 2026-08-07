@@ -183,7 +183,7 @@ namespace NS_GBA {
      */
     struct GbaHeader {
         // standard header entries
-        u32 EntryPointROM = 0x00000000; // 32bit ARM branch opcode
+        u32 EP_ROM = 0x00000000;        // 32bit ARM branch opcode
         u8 Logo[156] = {};              // compressed bitmap, REQUIRED
         u8 GameTitle[12] = {};          // uppercase ascii, max 12 characters
         u8 GameCode[4] = {};            // uppercase ascii, 4 characters
@@ -196,11 +196,11 @@ namespace NS_GBA {
         u8 ComplementCheck = 0x00;      // header checksum; REQUIRED
         u16 ReservedArea2 = 0x0000;     // should be zero filled
         // additional multiboot header entries
-        u32 EntryPointRAM = 0x00000000; // 32bit ARM branch opcode
+        u32 EP_RAM = 0x00000000;        // 32bit ARM branch opcode
         u8 BootMode = 0x00;             // init as $00; BIOS OVERWRITES THIS VALUE
         u8 SlaveID = 0x00;              // init as $00; BIOS OVERWRITES THIS VALUE
         u8 Unused[26] = { 0x00 };       // seems to be unused
-        u32 EntryPointJOY = 0x00000000; // 32bit ARM branch opcode
+        u32 EP_JOY = 0x00000000;        // 32bit ARM branch opcode
     };
 
     enum class BiosMode : u8 {
@@ -210,7 +210,7 @@ namespace NS_GBA {
     };
 
     enum class GbaBusMaster : u8 {
-        ARM7TDMI,
+        ARM7,
         DMA_0,
         DMA_1,
         DMA_2,
@@ -219,24 +219,34 @@ namespace NS_GBA {
         SM83
     };
 
-    enum class GbaAccessDirection : u8 {
-        READ,
-        WRITE
-    };
-
     enum class GbaAccessWidth : u8 {
         BYTE = 1,
         HALFWORD = 2,
         WORD = 4
     };
 
-    enum class GbaAccessSequence : u8 {
-        NONSEQUENTIAL,
-        SEQUENTIAL
-    };
-
     enum class GbaAccessPurpose : u8 {
         OPCODE,
         DATA
+    };
+
+    enum class MemoryRegion : u8 {
+        BIOS,
+        EWRAM,
+        IWRAM,
+        IO,
+        PALETTE,
+        VRAM,
+        OAM,
+        GAMEPAK_WS0,
+        GAMEPAK_WS1,
+        GAMEPAK_WS2,
+        GAMEPAK_RAM,
+        UNMAPPED
+    };
+
+    struct DecodedAddress {
+        MemoryRegion region = MemoryRegion::UNMAPPED;
+        u32 offset = 0;
     };
 }

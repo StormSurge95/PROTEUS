@@ -14,7 +14,7 @@ template<typename DataSize, typename AddressSize>
 class IDevice {
     public:
         /// @brief default virtual destructor
-        ~IDevice() = default;
+        virtual ~IDevice() = default;
         /// @brief required for data read operations
         virtual DataSize read(AddressSize, bool = false) = 0;
         /// @brief required for data write operations

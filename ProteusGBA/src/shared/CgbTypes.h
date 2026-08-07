@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../../Proteus/src/shared/CorePCH.h"
+
 namespace NS_GBA {
     enum class CgbCartridgeType : u8 {
         ROM_ONLY,
